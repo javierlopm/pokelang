@@ -6,7 +6,39 @@ This language supports most of common types, arithmetic and logical operators, c
 This document is designed to give the specification for the language syntax and semantics, required to know in order to implement any program using it.
 
 ## Lexical considerations
-Nabil
+The following are keywords. They are all reserved, which means they cannot be used as identifiers or redefined.
+
+> `pINTachu, BOOLbasaur, squirtrue, squirfalse, CHARmander, VOIDtorb, butterFloat, STRUCTtabuzz, arcticUNION, ENUManyte, GLOBAt, nullikarp`
+
+An identifier is a sequence of letters, digits, and underscores, starting with a letter. Decaf is case-sensitive,
+e.g., if is a keyword, but IF is an identifier; binky and Binky are two distinct identifiers. Identifiers can
+be at most 31 characters long.
+Whitespace (i.e. spaces, tabs, and newlines) serves to separate tokens, but is otherwise ignored. Keywords
+and identifiers must be separated by whitespace or a token that is neither a keyword nor an identifier.
+ifintthis is a single identifier, not three keywords. if(23this scans as four tokens.
+A boolean constant is either true or false. Like keywords, these words are reserved.
+An integer constant can either be specified in decimal (base 10) or hexadecimal (base 16). A decimal integer
+is a sequence of decimal digits (0-9). A hexadecimal integer must begin with 0X or 0x (that is a zero, not
+the letter oh) and is followed by a sequence of hexadecimal digits. Hexadecimal digits include the decimal
+digits and the letters a through f (either upper or lowercase). Examples of valid integers: 8, 012, 0x0,
+0X12aE
+A double constant is a sequence of digits, a period, followed by any sequence of digits, maybe none. Thus,
+.12 is not a valid double but both 0.12 and 12. are valid. A double can also have an optional exponent,
+e.g., 12.2E+2 For a double in this sort of scientific notation, the decimal point is required, the sign of
+1
+the exponent is optional (if not specified, + is assumed), and the E can be lower or upper case. As above,
+.12E+2 is invalid, but 12.E+2 is valid. Leading zeroes on the mantissa and exponent are allowed.
+A string constant is a sequence of characters enclosed in double quotes. Strings can contain any character
+except a newline or double quote. A string must start and end on a single line, it cannot be split over multiple
+lines:
+‘‘this string is missing its close quote
+this is not a part of the string above
+Operators and punctuation characters used by the language includes:
++ - * / % < <= > >= = == != && || ! ; , . [ ] ( ) { }
+A single-line comment is started by // and extends to the end of the line. Multi-line comments start with
+/* and end with the first subsequent */. Any symbol is allowed in a comment except the sequence */
+which ends the current comment. Multi-line comments do not nest.
+
 
 ## Grammar examples
 Nabil
