@@ -8,6 +8,7 @@ union  arcticUNION
 enum   ENUManyte
 nullikarp
 
+GLOBAt butterFloat = 3.141592;
 
 #Arreglos:
 
@@ -53,9 +54,10 @@ vamo_mientra Expr:
 vamo_a_calmano
 
 #Saltos
-vamo_a_para   #break
-vamo_a_segui  #continue
-vamo_a_sali   #return
+vamo_a_para     #break
+vamo_a_segui    #continue
+vamos_a_retorna # return
+vamo_a_sali     #exit
 
 pINTachu myInt;
 
