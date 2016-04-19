@@ -47,6 +47,12 @@ Nabil
 ## Arrays
 Javier
 
+## Structs
+Javier
+
+## Unions
+Nabil
+
 ## Enums
 Javier
 
