@@ -1,18 +1,20 @@
 # pokelang
 Pokelang is a general purpose, pokemon-based programming language. It was developed as a six-month project for the elective course of Programming Languages at Universidad Simón Bolívar. 
 
-This language supports most of common types, arithmetic and logical operators, control structures (if, while, for, and case), 2d-class procedures and functions, recursion, block nesting, line and block comments, compound data structures (record) and unions. Likewise, this is an imperative and strongly typed language, it is designed to be compiled. In this lenguage you might find some similarities with C, python, ruby and haskell. Learn it if you want to be the very best, like no one ever was, to compile it’s your real test and to program is your cause.
+
+This language supports most of common types, arithmetic and logical operators, control structures (if, while, for, and case), procedures and functions, recursion, block nesting, line and block comments, compound data structures (record) and unions. Likewise, this is an imperative and strongly typed language, it is designed to be compiled. In this lenguage you might find some similarities with C, python, ruby and haskell. Learn it if you want to be the very best, like no one ever was, to compile it’s your real test and to program is your cause.
 
 This document is designed to give the specification for the language syntax and semantics, required to know in order to implement any program using it.
 
 ## Lexical considerations
 The following are keywords. They are all reserved, which means they cannot be used as identifiers or redefined.
 
-> `pINTachu, BOOLbasaur, squirtrue, squirfalse, CHARmander, VOIDtorb, butterFloat, STRUCTtabuzz, arcticUNION, ENUManyte, GLOBAt, nullikarp`
+> `pINTachu, BOOLbasaur, squirtrue, squirfalse, CHARmander, VOIDtorb, butterFloat, STRUCTtabuzz, arcticUNION, ENUManyte, GLOBAt, nullikarp, procball, funcball, vamo_a_para, vamo_a_segui, vamos_a_retorna, vamo_a_sali, vamo_a_lee, vamo_a_escribi, vamo_a_imprimi, vamo_a_itera, vamo_mientra, vamo_a_para, vamo_a_segui, vamos_a_retorna, vamo_a_sali, si, y_si, si_no, vamo_a_empeza, vamo_a_calmano, atrapar, liberar`
 
-An identifier is a sequence of letters, digits, and underscores, starting with a letter. Decaf is case-sensitive,
-e.g., if is a keyword, but IF is an identifier; binky and Binky are two distinct identifiers. Identifiers can
-be at most 31 characters long.
+An identifier is a sequence of letters, digits, underscores and the character '?', starting always with a letter. This language is case-sensitive and has no size limit for identifiers. 
+
+If the identifier stars with the 
+
 Whitespace (i.e. spaces, tabs, and newlines) serves to separate tokens, but is otherwise ignored. Keywords
 and identifiers must be separated by whitespace or a token that is neither a keyword nor an identifier.
 ifintthis is a single identifier, not three keywords. if(23this scans as four tokens.
@@ -93,11 +95,22 @@ This data type is indexed starting at 0, static array declarations must include 
 Pokelang array's are homogenous,
 
 ## Structs
-Structs are a data type, will be implemented as a reference to the first field of it.
-
+Structs is implemented as a reference to the first field of it.
 Every struct field has a name and type.
 
 Structs can only be allocated in the heap.
+
+Struct definitions must start with the prefix poke.
+
+i.e 
+
+
+    articunion pokeTrainer {
+        name                 :: CHARmander[],
+        socialSecurityNumber :: pINTachu
+    }
+    pokeTrainer ash;
+
 
 ## Unions
 Nabil
@@ -142,7 +155,7 @@ The structure of a bounded iteration must include explicitly the begining,values
 
 i.e
 
-    vamo_a_itera x|1|10|1:
+    vamo_a_itera x = 1 |10|1: /* var = first | last | step */
         instruccion0;
     vamo_a_calmano
 
