@@ -80,8 +80,8 @@ Fin de comentario--
 
 
 #Operadores
-*(unario) + - ^ * / // % < <= > >= = == != && || ! ; . [ ] ( ) -> += *=
-acceso apuntdaor, suma, resta, ´potencia, multiplicacion, division, div, mod, lt, le, gt, ge, asignacion, comparacion, diferente, /\, \/, negacion, secuenciacion, acceso a campo, arreglos, cambio de precedencia, acceso apuntadores struc (no se si se use, creo que no), sumar al valor, multiplicar el valor por 
+*(unario) + - ^ * / // % < <= > >= = == != && || ! ; . [ ] ( ) { } -> += *=
+acceso apuntdaor, suma, resta, ´potencia, multiplicacion, division, div, mod, lt, le, gt, ge, asignacion, comparacion, diferente, /\, \/, negacion, secuenciacion, acceso a campo, arreglos, cambio de precedencia, definición en datatype, acceso apuntadores struc (no se si se use, creo que no), sumar al valor, multiplicar el valor por 
 
 #Tiene corto circuito
 #Izq a derecha
@@ -105,7 +105,7 @@ butterFloat funcball hola2(butterFloat[] w,CHARmander z,BOOLbasaur b):      #Tod
 		w[4]=(butterFloat) h // 2;
 	vamo_a_calmano;
 
-	vamo_a_devolve w[4];
+	vamo_a_devolve w !! 4;
 vamo_a_calmano;
 
 nullikarp
