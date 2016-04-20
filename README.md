@@ -138,11 +138,11 @@ Pokelang supports case statements and provives some low level optimizations over
 ### Bounded iterations
 Bounded iterations work over integers ranges and enumerated types.
 
-The structure of a bounded iteration must include explicitly the begining and end values as constants (Integers or enum types)
+The structure of a bounded iteration must include explicitly the begining,values as constants (Integers or enum types) or as variables that cannot be changed during the execution of the block.
 
 i.e
 
-    vamo_a_itera x desde 1 hasta 10:
+    vamo_a_itera x|1|10|1:
         instruccion0;
     vamo_a_calmano
 
@@ -159,11 +159,25 @@ Unbounded iterations require the keyword *vamo_mientra* followed by an expressio
 
 Instructions between the tokens *:* and *vamo_a_calmano* introduce a new non-empty code block.
 
+i.e 
+
+    vamo_mientra  i < 10 :
+        vamo_a_escribi(i);
+        i += 1;
+    vamo_a_calmano
+
 ## Program Stucture
-Every pokelang program must have a *VOIDtorb* function with the identifier *hitMAINlee*, even though it isn't a reserved word it is needed to define where does the program begins.
+Every pokelang program must have a *VOIDtorb* function with the identifier *hitMAINlee*, even though it isn't a reserved word it is needed to define where does the program begins. This function won't have arguments.
+
+i.e 
+
+    VOIDtorb funcball hitMAINlee():
+        pInktachu p = 21 * 2;
+    vamo_a_calmano
 
 ## Expressions
 Nabil
+
 
 ### Final notes
 Javier & Nabil
