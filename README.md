@@ -23,23 +23,25 @@ Whitespace (i.e. spaces, tabs, and newlines) serves to separate tokens, but is o
 
 ------
 
-A boolean (BOOLbasaur) constant is either true or false. Like keywords, these words are reserved.
-An integer constant can either be specified in decimal (base 10) or hexadecimal (base 16). A decimal integer
-is a sequence of decimal digits (0-9). A hexadecimal integer must begin with 0X or 0x (that is a zero, not
-the letter oh) and is followed by a sequence of hexadecimal digits. Hexadecimal digits include the decimal
-digits and the letters a through f (either upper or lowercase). Examples of valid integers: 8, 012, 0x0,
-0X12aE
-A double constant is a sequence of digits, a period, followed by any sequence of digits, maybe none. Thus,
-.12 is not a valid double but both 0.12 and 12. are valid. A double can also have an optional exponent,
-e.g., 12.2E+2 For a double in this sort of scientific notation, the decimal point is required, the sign of
-1
-the exponent is optional (if not specified, + is assumed), and the E can be lower or upper case. As above,
-.12E+2 is invalid, but 12.E+2 is valid. Leading zeroes on the mantissa and exponent are allowed.
-A string constant is a sequence of characters enclosed in double quotes. Strings can contain any character
-except a newline or double quote. A string must start and end on a single line, it cannot be split over multiple
-lines:
-‘‘this string is missing its close quote
+A boolean (BOOLbasaur) constant is either `squirtrue` or `squirfalse`. Like keywords, these words are reserved.
+
+An integer constant can only be specified in decimal (base 10). A decimal integer is a sequence of decimal digits (0-9). Examples of valid integers: `8`, `12`, `-50`, `9999999`.
+
+A float constant is a sequence of digits, a period, followed by any sequence of digits, maybe none. Thus, `.12` is not a valid double but both `0.12` and `12`. are valid. A double can also have an optional exponent, e.g., 12.2E+2 For a float in this sort of scientific notation, the decimal point is required, likewise the sign of the exponent, and the E can be lower or upper case. As above, `.12E+2` and `0.12E2` are invalid, but 12.E+2 is valid. Leading zeroes on the mantissa and exponent are allowed.
+
+A string constant is a sequence of characters enclosed in double or simple quotes (`"`|`'`). Strings can contain any character except a newline (must be especified by `\n`) or quote. A string must start and end on a single line, it cannot be split over multiple lines:
+
+~~~
+>"this string is missing its close quote
 this is not a part of the string above
+
+>"even though,\n this one is a valid example split in two lines."
+
+>"this is," this is not"
+
+
+
+~~~
 Operators and punctuation characters used by the language includes:
 + - * / % < <= > >= = == != && || ! ; , . [ ] ( ) { }
 A single-line comment is started by // and extends to the end of the line. Multi-line comments start with
