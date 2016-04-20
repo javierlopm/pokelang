@@ -1,0 +1,111 @@
+int    pINTachu 
+bool   BOOLbasaur   - squirtrue/squirfalse
+char   CHARmander
+void   VOIDtorb
+float  butterFloat
+struct STRUCTtabuzz
+union  arcticUNION
+enum   ENUManyte
+nullikarp
+
+GLOBAt butterFloat = 3.141592;
+
+#Arreglos:
+
+int[]    pINTachu [int]
+bool[]   BOOLbasaur  [int]
+char[]   CHARmander[int]
+void[]   VOIDtorb[int]
+float[]  butterFloat[int]
+struct[] STRUCTtabuzz[int]
+union[]  arcticUNION[int]
+enum[]   ENUManyte[int]
+
+
+structabuzz pokeball {
+    type  :: CHARmander[],
+    price :: Pintachu
+}
+
+articunion trainer {
+    name                 :: CHARmander[],
+    socialSecurityNumber :: pINTachem
+}
+
+
+si var1:
+	esto1;
+y_si var2:
+	esto2;
+si_no:
+	esto3;
+vamo_a_calmano
+
+
+vamo_a_itera x|1|10|1:
+	esto
+vamo_a_calmano
+
+
+vamo_mientra Expr:
+	vamo_a_empeza
+		esto;
+	vamo_a_calmano
+vamo_a_calmano
+
+#Saltos
+vamo_a_para     #break
+vamo_a_segui    #continue
+vamos_a_retorna # return
+vamo_a_sali     #exit
+
+pINTachu myInt;
+
+vamo_a_lee myInt;
+
+myInt += 3;
+
+vamo_a_escribi myInt;
+
+butterFloat myFloat;
+
+myFloat = (butterFloat) myInt + 3;  #Casteo
+
+vamo_a_imprimi('hola %s',[myInt]);
+
+# Comentario random
+-- Comentario multilinea
+sadasdasd
+Fin de comentario--
+
+
+#Operadores
+*(unario) + - ^ * / // % < <= > >= = == != && || ! ; . [ ] ( ) -> += *=
+acceso apuntdaor, suma, resta, ´potencia, multiplicacion, division, div, mod, lt, le, gt, ge, asignacion, comparacion, diferente, /\, \/, negacion, secuenciacion, acceso a campo, arreglos, cambio de precedencia, acceso apuntadores struc (no se si se use, creo que no), sumar al valor, multiplicar el valor por 
+
+#Tiene corto circuito
+#Izq a derecha
+#Definir precedencia
+
+
+procball hola(pInktachu[] w,CHARmander z,BOOLbasaur b):       #Todo por referencia
+	si *b==squirTRUE:
+		vamo_a_imprimi *z;
+	si_no
+		butterFloat h = 3.5;
+		*w[4]=(butterFloat) h // 2;
+	vamo_a_calmano;
+vamo_a_calmano;
+
+pInktachu funcball hola2(pInktachu[] w,CHARmander z,BOOLbasaur b):      #Todo por valor
+	si b==squirTRUE:
+		vamo_a_imprimi z;
+	si_no
+		butterFloat h = 3.5;
+		w[4]=(butterFloat) h // 2;
+	vamo_a_calmano;
+
+	vamo_a_devolve w[4];
+vamo_a_calmano;
+
+nullikarp
