@@ -77,7 +77,7 @@ Pokelang includes the primitives data types.
 |  float| butterFloat | 4             |
 |  char | CHARmander  | 4             |
 |  void | VOIDtorb    | NO            |
-|  char | CHARmander  |               |
+|  char | CHARmander  | 4             |
 |  enum | ENUManyte   | 4             |
 |  pointer | *        | 4             |
 
@@ -162,7 +162,7 @@ Every element from an enum has an integer asociated starting form 0, this number
 A function declaration includes the name of the function and its associated typesignature, which includes the return type as well as number and types of formal parameters. In pokelang, functions are pure, meaning that any change inside of the function will only affect that scope. 
 
 #REVISAR
-* Functions are either global or declared within a block scope; functions may not be nested within other
+* Functions are either global or local within a block scope; functions may not be nested within other
 functions. 
 * The function may have zero or more formal parameters.
 * Formal parameters can be of any base type, array type, pointers or named types.
