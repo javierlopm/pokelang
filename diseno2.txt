@@ -42,7 +42,7 @@ si_no:
 vamo_a_calmano
 
 
-vamo_a_itera x|1|10|1:
+vamo_a_itera x=1|10|1:
 	esto
 vamo_a_calmano
 
