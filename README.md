@@ -159,6 +159,9 @@ Unbounded iterations require the keyword *vamo_mientra* followed by an expressio
 
 Instructions between the tokens *:* and *vamo_a_calmano* introduce a new non-empty code block.
 
+## Program Stucture
+Every pokelang program must have a *VOIDtorb* function with the identifier *hitMAINlee*, even though it isn't a reserved word it is needed to define where does the program begins.
+
 ## Expressions
 Nabil
 
