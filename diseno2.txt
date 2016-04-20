@@ -71,7 +71,7 @@ butterFloat myFloat;
 
 myFloat = (butterFloat) myInt + 3;  #Casteo
 
-vamo_a_imprimi('hola %s',[myInt]);
+vamo_a_imprimi 'hola %s' [myInt];
 
 # Comentario random
 -- Comentario multilinea
@@ -88,20 +88,20 @@ acceso apuntdaor, suma, resta, ´potencia, multiplicacion, division, div, mod, l
 #Definir precedencia
 
 
-procball hola(pInktachu[] w,CHARmander z,BOOLbasaur b):       #Todo por referencia
+procball hola(butterFloat[] w,CHARmander z,BOOLbasaur b):       #Todo por referencia
 	si *b==squirTRUE:
-		vamo_a_imprimi *z;
+		vamo_a_escribi *z;
 	si_no
-		butterFloat h = 3.5;
+		pInktachu h = 3;
 		*w[4]=(butterFloat) h // 2;
 	vamo_a_calmano;
 vamo_a_calmano;
 
-pInktachu funcball hola2(pInktachu[] w,CHARmander z,BOOLbasaur b):      #Todo por valor
+butterFloat funcball hola2(butterFloat[] w,CHARmander z,BOOLbasaur b):      #Todo por valor
 	si b==squirTRUE:
-		vamo_a_imprimi z;
+		vamo_a_escribi z;
 	si_no
-		butterFloat h = 3.5;
+		pInktachu h = 3;
 		w[4]=(butterFloat) h // 2;
 	vamo_a_calmano;
 
@@ -109,3 +109,10 @@ pInktachu funcball hola2(pInktachu[] w,CHARmander z,BOOLbasaur b):      #Todo po
 vamo_a_calmano;
 
 nullikarp
+
+#Main
+
+VOIDtorb funcball hitMAINlee():      #main
+	pInktachu h = 3;
+	vamo_a_escribi 'hola';
+vamo_a_calmano;
