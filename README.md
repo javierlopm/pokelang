@@ -145,7 +145,7 @@ articUNION poketrainer {
     socialSecurityNumber :: pINTachu
 }
 ~~~
-
+ 
 As may be seen, to declare an articUNION, must first appear the keyword `articUNION` followed by an identifier starting with `poke` and then the elements definition, specifying  `name :: type` for each member, separated by commas (except for the last one) inside of braces. All identifiers on the definition of an `articUNION`, must be different.
 
 ## Enums
@@ -161,22 +161,16 @@ Every element from an enum has an integer asociated starting form 0, this number
 
 A function declaration includes the name of the function and its associated typesignature, which includes the return type as well as number and types of formal parameters. In pokelang, functions are pure, meaning that any change inside of the function will only affect that scope. 
 
-#REVISAR
-* Functions are either global or local within a block scope; functions may not be nested within other
-functions. 
-* The function may have zero or more formal parameters.
 * Formal parameters can be of any base type, array type, pointers or named types.
-* Identifiers used in the formal parameter list must be distinct.
-* The formal parameters are declared in the same scope from the function’s local variables (thus, a local
-variable can shadow a parameter).
-* The function return type can be any base, array, or named type. `VOIDtorb` type is used to indicate the
-function returns no value.
-* Function overloading is not allowed i.e., the use of the same name for functions with different type
-signatures.
-* If a function has a non-VOIDtorb return type, any `vamos_a_retorna` statement must return a value compatible with that
-type.
+* Parameters identifiers are unique within a function definition.
+* Function may have zero or more formal parameters.
 * If a function has a `VOIDtorb` return type, it may only use the empty `vamos_a_retorna` statement.
-* Recursive functions are allowed.
+* If a function has a non-VOIDtorb return type, any `vamos_a_retorna` statement must return a value compatible with that
+* The function return type can be any base, array, or named type. `VOIDtorb` type is used to indicate the function returns no value.
+* Functions do not nest. 
+* Functions identifiers have global scope.
+* Mutual recursion can be done with forward declations.
+* Function overloading is not allowed.
 
 ####Function Declaration
 
