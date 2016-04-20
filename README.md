@@ -10,14 +10,20 @@ The following are keywords. They are all reserved, which means they cannot be us
 
 > `pINTachu, BOOLbasaur, squirtrue, squirfalse, CHARmander, VOIDtorb, butterFloat, STRUCTtabuzz, arcticUNION, ENUManyte, GLOBAt, nullikarp, procball, funcball, vamo_a_para, vamo_a_segui, vamos_a_retorna, vamo_a_sali, vamo_a_lee, vamo_a_escribi, vamo_a_imprimi, vamo_a_itera, vamo_mientra, vamo_a_para, vamo_a_segui, vamos_a_retorna, vamo_a_sali, si, y_si, si_no, vamo_a_empeza, vamo_a_calmano`
 
+___
+
 An identifier is a sequence of letters, digits, underscores and the character '?', starting always with a letter. This language is case-sensitive and has no size limit for identifiers. 
 
-If the identifier stars with the 
+In the case of having an identifier that starts with 'poke', we're speaking of a data type identifier. 
 
-Whitespace (i.e. spaces, tabs, and newlines) serves to separate tokens, but is otherwise ignored. Keywords
-and identifiers must be separated by whitespace or a token that is neither a keyword nor an identifier.
-ifintthis is a single identifier, not three keywords. if(23this scans as four tokens.
-A boolean constant is either true or false. Like keywords, these words are reserved.
+___
+
+Whitespace (i.e. spaces, tabs, and newlines) serves to separate tokens, but is otherwise ignored. Keywords and identifiers must be separated by whitespace or a token that is neither a keyword nor an identifier.
+`vamo_a_sufri` is a single identifier, not three keywords. `vamo_a sufri` and `(pINTachu)vamo_a` scans both as two tokens.
+
+___
+
+A boolean (BOOLbasaur) constant is either true or false. Like keywords, these words are reserved.
 An integer constant can either be specified in decimal (base 10) or hexadecimal (base 16). A decimal integer
 is a sequence of decimal digits (0-9). A hexadecimal integer must begin with 0X or 0x (that is a zero, not
 the letter oh) and is followed by a sequence of hexadecimal digits. Hexadecimal digits include the decimal

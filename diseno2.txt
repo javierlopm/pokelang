@@ -27,7 +27,7 @@ structabuzz pokeball {
     price :: Pintachu
 }
 
-articunion trainer {
+articunion poketrainer {
     name                 :: CHARmander[],
     socialSecurityNumber :: pINTachem
 }
