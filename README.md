@@ -11,36 +11,51 @@ The following are keywords. They are all reserved, which means they cannot be us
 
 > `pINTachu, BOOLbasaur, squirtrue, squirfalse, CHARmander, VOIDtorb, butterFloat, STRUCTtabuzz, arcticUNION, ENUManyte, GLOBAt, nullikarp, procball, funcball, vamo_a_para, vamo_a_segui, vamos_a_retorna, vamo_a_sali, vamo_a_lee, vamo_a_escribi, vamo_a_imprimi, vamo_a_itera, vamo_mientra, vamo_a_para, vamo_a_segui, vamos_a_retorna, vamo_a_sali, si, y_si, si_no, vamo_a_empeza, vamo_a_calmano, atrapar, liberar`
 
+------
+
 An identifier is a sequence of letters, digits, underscores and the character '?', starting always with a letter. This language is case-sensitive and has no size limit for identifiers. 
 
-If the identifier stars with the 
+In the case of having an identifier that starts with 'poke', we're speaking of a data type identifier. 
 
-Whitespace (i.e. spaces, tabs, and newlines) serves to separate tokens, but is otherwise ignored. Keywords
-and identifiers must be separated by whitespace or a token that is neither a keyword nor an identifier.
-ifintthis is a single identifier, not three keywords. if(23this scans as four tokens.
-A boolean constant is either true or false. Like keywords, these words are reserved.
-An integer constant can either be specified in decimal (base 10) or hexadecimal (base 16). A decimal integer
-is a sequence of decimal digits (0-9). A hexadecimal integer must begin with 0X or 0x (that is a zero, not
-the letter oh) and is followed by a sequence of hexadecimal digits. Hexadecimal digits include the decimal
-digits and the letters a through f (either upper or lowercase). Examples of valid integers: 8, 012, 0x0,
-0X12aE
-A double constant is a sequence of digits, a period, followed by any sequence of digits, maybe none. Thus,
-.12 is not a valid double but both 0.12 and 12. are valid. A double can also have an optional exponent,
-e.g., 12.2E+2 For a double in this sort of scientific notation, the decimal point is required, the sign of
-1
-the exponent is optional (if not specified, + is assumed), and the E can be lower or upper case. As above,
-.12E+2 is invalid, but 12.E+2 is valid. Leading zeroes on the mantissa and exponent are allowed.
-A string constant is a sequence of characters enclosed in double quotes. Strings can contain any character
-except a newline or double quote. A string must start and end on a single line, it cannot be split over multiple
-lines:
-‘‘this string is missing its close quote
+------
+
+Whitespace (i.e. spaces, tabs, and newlines) serves to separate tokens, but is otherwise ignored. Keywords and identifiers must be separated by whitespace or a token that is neither a keyword nor an identifier.
+`vamo_a_sufri` is a single identifier, not three keywords. `vamo_a sufri` and `(pINTachu)vamo_a` scans both as two tokens.
+
+------
+
+A boolean (BOOLbasaur) constant is either `squirtrue` or `squirfalse`. Like keywords, these words are reserved.
+
+An integer constant can only be specified in decimal (base 10). A decimal integer is a sequence of decimal digits (0-9). Examples of valid integers: `8`, `12`, `-50`, `9999999`.
+
+A float constant is a sequence of digits, a period, followed by any sequence of digits, maybe none. Thus, `.12` is not a valid double but both `0.12` and `12`. are valid. A double can also have an optional exponent, e.g., 12.2E+2 For a float in this sort of scientific notation, the decimal point is required, likewise the sign of the exponent, and the E can be lower or upper case. As above, `.12E+2` and `0.12E2` are invalid, but 12.E+2 is valid. Leading zeroes on the mantissa and exponent are allowed.
+
+A string constant is a sequence of characters enclosed in double or simple quotes (`"`|`'`). Strings can contain any character except a newline (must be especified by `\n`) or quote. A string must start and end on a single line, it cannot be split over multiple lines:
+
+~~~
+>"this string is missing its close quote
 this is not a part of the string above
-Operators and punctuation characters used by the language includes:
-+ - * / % < <= > >= = == != && || ! ; , . [ ] ( ) { }
-A single-line comment is started by // and extends to the end of the line. Multi-line comments start with
-/* and end with the first subsequent */. Any symbol is allowed in a comment except the sequence */
-which ends the current comment. Multi-line comments do not nest.
 
+>"even though,\n this one is a valid example split in two lines."
+
+>"this is," this is not"
+
+>"some declarations:
+ CHARmander  charma;
+ pINTachu    pika  = 2;
+ butterFLOAT bfree = 3.4e-10;"
+
+~~~
+
+###Operators
+
+Operators and punctuation characters used by the language includes:
+
+>`*`, `+`, `-`, `^`, `/`, `//`, `%`, `<`, `<=`, `>`, `>=`, `=`, `==`, `!=`, `&&`, `and`, `||`, `or`, `!`, `!!`, `;`, `.`, `[`, `]`, `(`, `)`, `{`, `}`, `+=`, `*=`
+
+------
+
+A single-line comment is started by `#` and extends to the end of the line. Multi-line comments start with `--` and end with the first subsequent `--` . Any symbol is allowed in a comment except the sequence `--` which ends the current comment. Multi-line comments do not nest.
 
 ## Grammar examples
 Nabil
@@ -83,7 +98,12 @@ Pokelang requires explicit casting, no type conversion will be done implicitly.
 Dynamic structures as dynamic arrays and structs can be allocated in heap with the built-in procedure *atrapar* and can be freed with *liberar*
 
 ## Variables
-Nabil
+
+* Variables can be declared of non-VOIDtorb base type, array type, or named type. 
+* Variables declared outside any function have global scope likewise those declarde using GLOBAt. 
+* Variables declared within a subrutine declaration have subrutine scope. 
+* Variables declared in the formal parameter list or function body have local scope. A variable is visible from scope entry to exit.
+* Variables identifiers must only start by `poke` if it refers to an articUNION, ENUManyte or STRUCTabuzz (or a pointer to these).
 
 ## Arrays
 Arrays are a reference that points to the first element of it. 
@@ -113,7 +133,20 @@ i.e
 
 
 ## Unions
-Nabil
+Like the already existent in C, a union in pokelang is a special data type that allows to store different data types in the same memory location. You can define a union with many members, but only one member can contain a value at any given time. Unions provide an efficient way of using the same memory location for multiple-purpose.
+
+The keyword `articUNION` is reserver to declare an Union. Also, the identifier of the data type that will referer to the declaration, must staring with the sub-string `'poke'`.
+
+For example:
+
+~~~
+articUNION poketrainer {
+    name                 :: CHARmander[],
+    socialSecurityNumber :: pINTachu
+}
+~~~
+
+As may be seen, to declare an articUNION, must first appear the keyword `articUNION` followed by an identifier starting with `poke` and then the elements definition, specifying  `name :: type` for each member, separated by commas (except for the last one) inside of braces. All identifiers on the definition of an `articUNION`, must be different.
 
 ## Enums
 Pokelang provides enums and the built-in functions *evolucion* and *preevolucion* to get the successor and predecessor of an element from an enum element. 
@@ -123,7 +156,74 @@ The elements that are part from an enum enum are unique (cannot be in another en
 Every element from an enum has an integer asociated starting form 0, this number can be obtained using the function *obtener_numero*
 
 ## Functions and Procedures
-Nabil
+
+### Functions
+
+A function declaration includes the name of the function and its associated typesignature, which includes the return type as well as number and types of formal parameters. In pokelang, functions are pure, meaning that any change inside of the function will only affect that scope. 
+
+#REVISAR
+* Functions are either global or declared within a block scope; functions may not be nested within other
+functions. 
+* The function may have zero or more formal parameters.
+* Formal parameters can be of any base type, array type, pointers or named types.
+* Identifiers used in the formal parameter list must be distinct.
+* The formal parameters are declared in the same scope from the function’s local variables (thus, a local
+variable can shadow a parameter).
+* The function return type can be any base, array, or named type. `VOIDtorb` type is used to indicate the
+function returns no value.
+* Function overloading is not allowed i.e., the use of the same name for functions with different type
+signatures.
+* If a function has a non-VOIDtorb return type, any `vamos_a_retorna` statement must return a value compatible with that
+type.
+* If a function has a `VOIDtorb` return type, it may only use the empty `vamos_a_retorna` statement.
+* Recursive functions are allowed.
+
+####Function Declaration
+
+The reserved keyword `funcball` indicates that we're dealing with a function. We must indicate its return type, followed by `funcball`,
+the name of the function and then the formal agurments with their respective types and the keychar `:`. Declaration finishes with the reserved keyword `vamo_a_calmano`.
+
+For example:
+~~~
+butterFloat funcball hola2(butterFloat[] w,CHARmander z,BOOLbasaur b):   #This is a valid declaration
+	si b==squirTRUE:
+		vamo_a_escribi(z);
+	si_no
+		pInktachu h = 3;
+		w[4]=(butterFloat) h // 2;
+	vamo_a_calmano;
+
+	vamo_a_devolve w !! 4;
+vamo_a_calmano;
+~~~
+
+#### Function Invocation
+
+Function invocation involves passing argument values from the caller to the callee, executing the body of the
+callee, and returning to the caller, possibly with a result. When a function is invoked, the actual arguments
+are evaluated and bound to the formal parameters. All Pokelang functions parameters are passed by value (any 
+change made on the argument doens't affect the original variable where it comes from).
+
+Invocations use strict evaluation: all arguments are evaluated before sending them to the callee.  
+
+### Procedures
+
+In pokelang, a procedures is used to declare a non-pure subrutine where all its argumentes are passed by reference and
+will always return VOIDtorb. Because of this, it shall not have any type on its declaration or any non-empty `vamos_a_retorna`. Likewise function, the keyword
+`procball` indicates that a procedure it's been declared.
+
+i.e.
+~~~
+procball hola(butterFloat[] w,CHARmander z,BOOLbasaur b):       #All is passed by reference.
+	si *b==squirTRUE:
+		vamo_a_escribi(*z);
+	si_no
+		pInktachu h = 3;
+		*w[4]=(butterFloat) h // 2;
+	vamo_a_calmano;
+vamo_a_calmano;
+~~~
+
 
 ## Types Equivalence
 Pokelang uses name equivalence (two types are not equal if their types don't have the same name).
@@ -133,7 +233,19 @@ Two variables of the same type are compared by value.
 When two composite types (structures, arrays or unions) are compared, the result will be the comparison of their pointers.
 
 ## Assignment
-Nabil
+
+For the base types, pokelang uses value-copy semantics; the assignment LValue = Expr copies the value resulting from the evaluation of Expr into the location indicated by LValue. For arrays, pokelang uses reference-copy semantics: the assignment LValue = Expr causes LValue to contain
+a reference to the object resulting from the evaluation of Expr (i.e., the assignment copies a pointer to an
+object rather than the object). Said another way, assignment for arrays, objects, and strings makes a shallow,
+not deep, copy.
+
+* An LValue must be an assignable variable location.
+* The right side type of an assignment statement must be compatible with the left side type.
+* nullikarp can only be assigned to a variable of named type.
+* Tt is legal to assign to the formal parameters within a function, such assignments affect only the
+function scope.
+
+An especial case of assignments are the cases that uses the operatos `+=`, `*=` and `-=`. In order to work, these requires theirs LVALUES and RVALUES to be of the same type, and these may only be pINTachu or butterFLOAT. These operators will first apply the operations that they refer to and then they assing its new value. `A+=1` is equivalent to `A=A+1`. These doesn't work using pointers. 
 
 ## Control Structures
 
@@ -189,7 +301,63 @@ i.e
     vamo_a_calmano
 
 ## Expressions
-Nabil
+
+For simplicity, Pokelang does not allow co-mingling and explicit conversion of types within expressions (i.e. adding an integer to a double, using an integer as a boolean, etc.). In order to do such operation, convertion must be made explicty by casting the desired type (i.e. `(pINTachu) myFloat`).
+
+Operators have the following procedence, from highest to lowest:
+
+|    Operator            |                    Description                  | Associativity |
+|------------------------|-------------------------------------------------|---------------|
+| `*`                    | Pointer access                                  |      None     |
+| `(args)`               | Function/Procedure call                         | Left to right |
+| `[int]`                | Array access to position                        | Left to right |
+| `(expr)`               | Change of precedence                            | Left to right |
+| `.`                    | STRUCTabuzz and ArticUNION access               | Left to right |
+| `!!`                   | Array substraction                              | Left to right |
+| `-`, `!`               | Unary arithmetic and logical                    | Right to left |
+| `^`                    | Power Operator                                  | Left to right |
+| `*`, `/`, `//`, `%`    | Multiplicative, division, div and mod           | Left to right |
+| `-`, `+`               | Additive                                        | Left to right |
+| `<`,`<=`,`>`,`>=`      | Relational                                      |      None     |
+| `==`, `!=`             | Equality                                        | Left to right |
+| `&&`                   | Logical AND                                     | Left to right |
+| `||`                   | Logical OR                                      | Left to right |
+| `and`                  | Short-circuit AND                               | Left to right |
+| `or`,                  | Short-circuit OR                                | Left to right |
+| `=`, `*=`, `+=`, `-=`, | Assignment and aritmetic ops before assignment  | Right to left |
+| `;`                    | Secuentiation                                   | Right to left |
+
+------
+
+> The operators `<`, `<=`, `>`, and `>=` work on pINTachu, butterFLOAT and CHARmander, requiring two values of the same type and returning a BOOLbasaur: `A > B`, `A <= B`,`A > B`,`A >= B`
+
+> The operator `!!` recieves an array on its left and a integer on its right and returns the element on that position. `A !! 4` is equivalent to `A[4]`.
+
+> The operators `and` and `or` uses shor-circuit evaluation. That means that they will only evaluate the expresion if their first argument are `squirtrue` and `squirfalse`, respectively: `A and B`, `A or B`
+
+> The aritmetic  operators `+`, `*`, `-`, `^` works using two pINTachu or butterFLOAT and returning the same type: `A + B`,`A - B`,`A * B`,`A ^ B`
+
+> The aritmetic  operator `/` will only work using two butterFLOAT and returning a third: `A / B`
+
+> The aritmetic  operator `//` will only work using one butterFLOAT or pINTachu, one pINTachu and returning a pINTachu: `A // B`
+
+> The aritmetic  operator `%` will only work using one two pINTachu and returning a third: `A % B`
+
+> The operators `!`, `&&`, `||`, `and`, `or` will only work between BOOLbasaur and return BOOLbasaur.
+
+> The operators `==` and `!=` work on all types, taking two values of the same type and returning always a BOOLbasaur. `A == B`, `A != B`
+
+> The access to an STRUCTabuzz element is done by using the operator `.` and it return that element type: `A.e` and it's type is the type of e.
+
+> The access to an STRUCTabuzz element is done by using the operator `.` and it return that element type: `A.e` and it's type is the type of e. 
+
+> In order to access the element to wich a pointer is pointing to, it must be used the operator *A, where A is of type *type with type as any of the basic types.
+
+> To secuence instructions it must be used the operator `;`: Instruction1 ; Instruction2
+
+> The operator `=` requires its LVALUE and its RVALUE to be of the same type. 
+
+> The operators `+=`, `*=`, `-=` requires its LVALUE and its RVALUE to be of the same type, and these may only be pINTachu or butterFLOAT. These operators will first apply the operations that they refer to and the they assing its new value. `A+=1` is equivalent to `A=A+1`
 
 
 ### Final notes
