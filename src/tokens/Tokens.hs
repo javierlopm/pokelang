@@ -1,9 +1,12 @@
 type Pos = (Int,Int)
 
-data TokenType = TkInt    Pos
+data Token     = TkInt    Pos
                | TkBool   Pos
                | TkChar   Pos
                | TkVoid   Pos
-               | TkFLOAT  Pos
-               | TkSTRUCT Pos
+               | TkFloat  Pos
+               | TkStruct Pos
+               | TkUnion  Pos
+               | TkEnum   Pos
+               | TkNull   Pos
                | TkNum    Pos Int
