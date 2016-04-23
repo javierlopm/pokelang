@@ -27,7 +27,7 @@ structabuzz pokeball {
     price :: Pintachu
 }
 
-articunion poketrainer {
+articunion trainer {
     name                 :: CHARmander[],
     socialSecurityNumber :: pINTachem
 }
@@ -42,7 +42,7 @@ si_no:
 vamo_a_calmano
 
 
-vamo_a_itera x=1|10|1:
+vamo_a_itera x desde 1 hasta 10:
 	esto
 vamo_a_calmano
 
@@ -65,7 +65,7 @@ vamo_a_lee myInt;
 
 myInt += 3;
 
-vamo_a_escribi(myInt);
+vamo_a_escribi myInt;
 
 butterFloat myFloat;
 
@@ -80,39 +80,32 @@ Fin de comentario--
 
 
 #Operadores
-*(unario) + - ^ * / // % < <= > >= = == != && || ! ; . [ ] ( ) { } -> += *=
-acceso apuntdaor, suma, resta, ´potencia, multiplicacion, division, div, mod, lt, le, gt, ge, asignacion, comparacion, diferente, /\, \/, negacion, secuenciacion, acceso a campo, arreglos, cambio de precedencia, definición en datatype, acceso apuntadores struc (no se si se use, creo que no), sumar al valor, multiplicar el valor por 
+*(unario) + - ^ * / // % < <= > >= = == != && || ! ; . [ ] ( ) -> += *=
+acceso apuntdaor, suma, resta, ´potencia, multiplicacion, division, div, mod, lt, le, gt, ge, asignacion, comparacion, diferente, /\, \/, negacion, secuenciacion, acceso a campo, arreglos, cambio de precedencia, acceso apuntadores struc (no se si se use, creo que no), sumar al valor, multiplicar el valor por 
 
 #Tiene corto circuito
 #Izq a derecha
 #Definir precedencia
 
 
-procball hola(butterFloat[] w,CHARmander z,BOOLbasaur b):       #Todo por referencia
+procball hola(pInktachu[] w,CHARmander z,BOOLbasaur b):       #Todo por referencia
 	si *b==squirTRUE:
-		vamo_a_escribi(*z);
+		vamo_a_imprimi *z;
 	si_no
-		pInktachu h = 3;
+		butterFloat h = 3.5;
 		*w[4]=(butterFloat) h // 2;
 	vamo_a_calmano;
 vamo_a_calmano;
 
-butterFloat funcball hola2(butterFloat[] w,CHARmander z,BOOLbasaur b):      #Todo por valor
+pInktachu funcball hola2(pInktachu[] w,CHARmander z,BOOLbasaur b):      #Todo por valor
 	si b==squirTRUE:
-		vamo_a_escribi(z);
+		vamo_a_imprimi z;
 	si_no
-		pInktachu h = 3;
+		butterFloat h = 3.5;
 		w[4]=(butterFloat) h // 2;
 	vamo_a_calmano;
 
-	vamo_a_devolve w !! 4;
+	vamo_a_devolve w[4];
 vamo_a_calmano;
 
 nullikarp
-
-#Main
-
-VOIDtorb funcball hitMAINlee():      #main
-	pInktachu h = 3;
-	vamo_a_escribi('hola');
-vamo_a_calmano;

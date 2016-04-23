@@ -19,14 +19,14 @@ tokens :-
   $white+  ;
   @comment ;
   @badidentifier {\p s -> Error                    (getPos p) s           }
-  @number        {\p s -> IntTok      IntConst     (getPos p) (read s)    }
-  pINTachu       {\p _ -> TkINt      Loe          (getPos p) Empty Empty }
-  BOOLbasaur
-  CHARmander
-  VOIDtorb
-  butterFloat
-  STRUCTtabuzz
-  arcticUNION
+  @number        
+  pINTachu       {\p _ -> TkInt    (getPos p) }
+  BOOLbasaur     {\p _ -> TkBool   (getPos p) }
+  CHARmander     {\p _ -> TkChar   (getPos p) }
+  VOIDtorb       {\p _ -> TkVoid   (getPos p) }
+  butterFloat    {\p _ -> TkFLOAT  (getPos p) }
+  STRUCTtabuzz   {\p _ -> TkSTRUCT (getPos p) }
+  arcticUNION    {\p _ -> TkUNION  (getPos p) }
   ENUManyte
   nullikarp
   GLOBAt
