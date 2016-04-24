@@ -95,7 +95,7 @@ Arrays variables are pointers that might refer to any of the primitive or compos
 
 Pokelang requires explicit casting, no type conversion will be done implicitly.
 
-Dynamic structures as dynamic arrays and structs can be allocated in heap with the built-in procedure *atrapar* and can be freed with *liberar*
+Dynamic structures as dynamic arrays and structs can only be allocated in heap with the built-in procedure *atrapar* and can be freed with *liberar*
 
 ## Variables
 
@@ -108,11 +108,13 @@ Dynamic structures as dynamic arrays and structs can be allocated in heap with t
 ## Arrays
 Arrays are a reference that points to the first element of it. 
 
-Arrays can be be stored in the static area if it's declared as a global var and has a fixed size given explicitly, otherwise the content will be stored in the heap and it's memory must be allocated by the user.
+Static arrays (with fixed size) are stored in the static area if it's declared as GLOBAt, if they are local to a block or procedure will be stored on the stack at runtime.
+
+Dynamic arrays must be allocated by the programmer in the heap, pointers to this data type can be stored in a local context or may be GLOBAt
 
 This data type is indexed starting at 0, static array declarations must include the number of elements that can hold.
 
-Pokelang array's are homogenous,
+Pokelang array's are homogenous.
 
 ## Structs
 Structs is implemented as a reference to the first field of it.
