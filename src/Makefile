@@ -1,18 +1,17 @@
 target: Pokelang
 
 
-Tokens.o: FORCE
-	ghc tokens/Tokens.hs
-FORCE:
+Tokens.o: 
+	ghc  tokens/Tokens.hs
 
 # Lexer
-Lexer.hs:
+Lexer.hs: Tokens.o
 	alex lexer/Lexer.x -o lexer/Lexer.hs
 
-Lexer.o: Lexer.hs
+Lexer.o: Lexer.hs Tokens.o
 	ghc lexer/Lexer.hs -itokens
 
-Pokelang: Lexer.o
+Pokelang: Lexer.o Tokens.o
 	ghc pokelang.hs -ilexer -itokens
 
 	
