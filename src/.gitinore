@@ -1,0 +1,4 @@
+pokelang
+*.o
+*.hi
+lexer/Lexer.hs
