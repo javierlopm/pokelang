@@ -9,28 +9,28 @@ This document is designed to give the specification for the language syntax and 
 ## Lexical considerations
 The following are keywords. They are all reserved, which means they cannot be used as identifiers or redefined.
 
-> `pINTachu, BOOLbasaur, squirtrue, squirfalse, CHARmander, VOIDtorb, butterFloat, STRUCTtabuzz, arcticUNION, ENUManyte, GLOBAt, nullikarp, procball, funcball, vamo_a_para, vamo_a_segui, vamos_a_retorna, vamo_a_sali, vamo_a_lee, vamo_a_escribi, vamo_a_imprimi, vamo_a_itera, vamo_mientra, vamo_a_para, vamo_a_segui, vamos_a_retorna, vamo_a_sali, si, y_si, si_no, vamo_a_empeza, vamo_a_calmano, atrapar, liberar`
+> `pINTachu, BOOLbasaur, squirtrue, squirfalse, CHARmander, VOIDtorb, butterFloat, STRUCTtabuzz, arcticUNION, ENUManyte, GLOBAt, nullikarp, funcball, vamo_a_para, vamo_a_segui, vamos_a_retorna, vamo_a_sali, vamo_a_lee, vamo_a_escribi, vamo_a_imprimi, vamo_a_itera, vamo_mientra, vamo_a_para, vamo_a_segui, vamos_a_retorna, vamo_a_sali, si, y_si, si_no, vamo_a_empeza, vamo_a_calmano, atrapar, liberar, SIZEther`. 'pidget'
 
 ------
 
-An identifier is a sequence of letters, digits, underscores and the character '?', starting always with a letter. This language is case-sensitive and has no size limit for identifiers. 
+An *identifier* is a sequence of letters, digits and underscores, starting always with a letter and may end with the character '?' (only `'?'` may be used at the very end of the identifier). This language is case-sensitive and has no size limit for identifiers. 
 
 In the case of having an identifier that starts with 'poke', we're speaking of a data type identifier. 
 
 ------
 
-Whitespace (i.e. spaces, tabs, and newlines) serves to separate tokens, but is otherwise ignored. Keywords and identifiers must be separated by whitespace or a token that is neither a keyword nor an identifier.
+*Whitespace* (i.e. spaces, tabs, and newlines) serves to separate tokens, but is otherwise ignored. Keywords and identifiers must be separated by whitespace or a token that is neither a keyword nor an identifier.
 `vamo_a_sufri` is a single identifier, not three keywords. `vamo_a sufri` and `(pINTachu)vamo_a` scans both as two tokens.
 
 ------
 
-A boolean (BOOLbasaur) constant is either `squirtrue` or `squirfalse`. Like keywords, these words are reserved.
+A *boolean* (BOOLbasaur) constant is either `squirtrue` or `squirfalse`. Like keywords, these words are reserved.
 
-An integer constant can only be specified in decimal (base 10). A decimal integer is a sequence of decimal digits (0-9). Examples of valid integers: `8`, `12`, `-50`, `9999999`.
+An *integer* constant can only be specified in decimal (base 10). A decimal integer is a sequence of decimal digits (0-9). Examples of valid integers: `8`, `12`, `-50`, `9999999`.
 
-A float constant is a sequence of digits, a period, followed by any sequence of digits, maybe none. Thus, `.12` is not a valid double but both `0.12` and `12`. are valid. A double can also have an optional exponent, e.g., 12.2E+2 For a float in this sort of scientific notation, the decimal point is required, likewise the sign of the exponent, and the E can be lower or upper case. As above, `.12E+2` and `0.12E2` are invalid, but 12.E+2 is valid. Leading zeroes on the mantissa and exponent are allowed.
+A *float* constant is a sequence of digits, a period, followed by any sequence of digits, maybe none. Thus, `.12` is not a valid double but both `0.12` and `12`. are valid. A double can also have an optional exponent, e.g., 12.2E+2 For a float in this sort of scientific notation, the decimal point is required, likewise the sign of the exponent, and the E can be lower or upper case. As above, `.12E+2` and `0.12E2` are invalid, but 12.E+2 is valid. Leading zeroes on the mantissa and exponent are allowed.
 
-A string constant is a sequence of characters enclosed in double or simple quotes (`"`|`'`). Strings can contain any character except a newline (must be especified by `\n`) or quote. A string must start and end on a single line, it cannot be split over multiple lines:
+A *string* constant is a sequence of characters enclosed in double or simple quotes (`"`|`'`), using the same character to open and close it. Strings can contain any character except a newline (must be especified by `\n`) or quote. A string must start and end on a single line, it cannot be split over multiple lines:
 
 ~~~
 >"this string is missing its close quote
@@ -95,7 +95,9 @@ Arrays variables are pointers that might refer to any of the primitive or compos
 
 Pokelang requires explicit casting, no type conversion will be done implicitly.
 
-Dynamic structures as dynamic arrays and structs can only be allocated in heap with the built-in procedure *atrapar* and can be freed with *liberar*
+Dynamic structures as dynamic arrays and structs can only be allocated in heap with the built-in procedure `atrapar` and can be freed with `liberar`. The procedure `Atrapar` receives an `pINTachu` and returns a pointer. 
+
+In order to know the sife o a certain type (to allocate), the built-in procedure `SIZEther` recieves a datatype identifier (like pINTachu or CHARmander) and returns its size as a pINTachu. Arrays are expressed as `SIZEther(typeOfArray)*lengthOfArray`.
 
 ## Variables
 
@@ -117,49 +119,69 @@ This data type is indexed starting at 0, static array declarations must include 
 Pokelang array's are homogenous.
 
 ## Structs
-Structs is implemented as a reference to the first field of it.
-Every struct field has a name and type.
+Structs are implemented as a reference to the first field of it.
 
-Structs can only be allocated in the heap.
+*Every struct field has a name and type.
 
-Struct definitions must start with the prefix poke.
+*Structs will be allocated in the heap.
 
-i.e 
+*Struct identifiers must start with the prefix `poke`.
 
+I.E.: 
 
-    articunion pokeTrainer {
+~~~
+    STRUCTtabuzz pokeTrainer {
         name                 :: CHARmander[],
         socialSecurityNumber :: pINTachu
-    }
-    pokeTrainer ash;
+    };
 
+    pokeTrainer ash;
+    ash = atrapar(SIZEther(pokeTrainer));
+    ash.socialSecurityNumber = 4;
+~~~
+
+As it may be seen, to use an instance of certain declared `STRUCTtabuzz`, must be allocated some memory to do so by using the built-in procedure `atrapar`.
 
 ## Unions
-Like the already existent in C, a union in pokelang is a special data type that allows to store different data types in the same memory location. You can define a union with many members, but only one member can contain a value at any given time. Unions provide an efficient way of using the same memory location for multiple-purpose.
 
-The keyword `articUNION` is reserver to declare an Union. Also, the identifier of the data type that will referer to the declaration, must staring with the sub-string `'poke'`.
+Like the equivalent in C, a union in pokelang is a special data type that allows to store different data types in the same memory location. You can define a union with many members, but only one member can contain a value at any given time. Unions provide an efficient way of using the same memory location for multiple-purpose.
 
-For example:
+The keyword `articUNION` is reserved keyword used to declare an Union. Also, the identifier of the datatype that will referer to the declaration, must start with the sub-string `'poke'`.
+
+I.E.:
 
 ~~~
-articUNION poketrainer {
-    name                 :: CHARmander[],
-    socialSecurityNumber :: pINTachu
-}
+	articUNION poketrainer {
+	    name                 :: CHARmander[],
+	    socialSecurityNumber :: pINTachu
+	};
+
+	    pokeTrainer ash;
+	    ash = atrapar(SIZEther(pokeTrainer));
+	    ash.socialSecurityNumber = 4;
 ~~~
  
-As may be seen, to declare an articUNION, must first appear the keyword `articUNION` followed by an identifier starting with `poke` and then the elements definition, specifying  `name :: type` for each member, separated by commas (except for the last one) inside of braces. All identifiers on the definition of an `articUNION`, must be different.
+As it may be seen, to declare an articUNION, must first appear the keyword `articUNION` followed by an identifier starting with `poke` and then the elements definition, specifying  `name :: type` for each member, separated by commas (except for the last one) inside of braces. All identifiers on the definition of an `articUNION`, must be different. Likewise the STRUCTabuzz, an instance of STRUCTabuzz will need of some memory to be allocated.
 
 ## Enums
-Pokelang provides enums and the built-in functions *evolucion* and *preevolucion* to get the successor and predecessor of an element from an enum element. 
+*Pokelang provides enums and the built-in functions *evolucion* and *preevolucion* to get the successor and predecessor of an element from an enum element. 
 
-The elements that are part from an enum enum are unique (cannot be in another enum, or twice in the same declaration), and must start with a capital letter.
+*The elements that are part from an enum are unique (cannot be part of another enum, or twice in the same declaration), and must start with a capital letter.
 
-Every element from an enum has an integer asociated starting form 0, this number can be obtained using the function *obtener_numero*
+*Every element from an enum has an integer asociated starting form 0, this number can be obtained using the built-in function `pidget` that receives a ENUMynite and returns a pINTachu.
 
-## Functions and Procedures
+I.E.:
 
-### Functions
+~~~
+	ENUMynite pokeDays { Lunes, Martes, Miercoles};
+
+	pokeDays myDay;
+	myDay = Martes;
+	vamo_a_escribi(pidget(myDay));
+	#Prints 1
+~~~
+
+## Functions
 
 A function declaration includes the name of the function and its associated typesignature, which includes the return type as well as number and types of formal parameters. In pokelang, functions are pure, meaning that any change inside of the function will only affect that scope. 
 
@@ -174,14 +196,14 @@ A function declaration includes the name of the function and its associated type
 * Mutual recursion can be done with forward declations.
 * Function overloading is not allowed.
 
-####Function Declaration
+###Function Declaration
 
 The reserved keyword `funcball` indicates that we're dealing with a function. We must indicate its return type, followed by `funcball`,
 the name of the function and then the formal agurments with their respective types and the keychar `:`. Declaration finishes with the reserved keyword `vamo_a_calmano`.
 
 For example:
 ~~~
-butterFloat funcball hola2(butterFloat[] w,CHARmander z,BOOLbasaur b):   #This is a valid declaration
+funcball butterFloat hola2(butterFloat[] w,CHARmander z,BOOLbasaur b):   #This is a valid declaration
 	si b==squirTRUE:
 		vamo_a_escribi(z);
 	si_no
@@ -193,7 +215,7 @@ butterFloat funcball hola2(butterFloat[] w,CHARmander z,BOOLbasaur b):   #This i
 vamo_a_calmano;
 ~~~
 
-#### Function Invocation
+### Function Invocation
 
 Function invocation involves passing argument values from the caller to the callee, executing the body of the
 callee, and returning to the caller, possibly with a result. When a function is invoked, the actual arguments
@@ -204,20 +226,20 @@ Invocations use strict evaluation: all arguments are evaluated before sending th
 
 ### Procedures
 
-In pokelang, a procedures is used to declare a non-pure subrutine where all its argumentes are passed by reference and
-will always return VOIDtorb. Because of this, it shall not have any type on its declaration or any non-empty `vamos_a_retorna`. Likewise function, the keyword
-`procball` indicates that a procedure it's been declared.
+In pokelang, a procedures is used to declare a VOIDtorb-type function where all its argumentes are passed by reference. Because of this, it may only have `VOIDtorb` on its declaration and may not have any non-empty `vamos_a_retorna` statement. As it's a specific case of a function, the reserved keyword `funcball` of type `VOIDtorb` indicates that a procedure it's been declared.
 
 i.e.
 ~~~
-procball hola(butterFloat[] w,CHARmander z,BOOLbasaur b):       #All is passed by reference.
+funcball VOIDtorb hola(butterFloat[] w,CHARmander z,BOOLbasaur b):       #All is passed by reference.
 	si *b==squirTRUE:
 		vamo_a_escribi(*z);
 	si_no
 		pInktachu h = 3;
 		*w[4]=(butterFloat) h // 2;
 	vamo_a_calmano;
-vamo_a_calmano;
+
+	#As you can see, this definition lacks of a `vamos_a_retorna` statement.
+vamo_a_calmano; 
 ~~~
 
 
@@ -259,7 +281,7 @@ Pokelang supports case statements and provives some low level optimizations over
 ### Bounded iterations
 Bounded iterations work over integers ranges and enumerated types.
 
-The structure of a bounded iteration must include explicitly the begining,values as constants (Integers or enum types) or as variables that cannot be changed during the execution of the block.
+The structure of a bounded iteration must include explicitly the begining, values as constants (Integers or enum types) or as variables that cannot be changed during the execution of the block.
 
 i.e
 
@@ -269,7 +291,7 @@ i.e
 
 or 
 
-    vamo_a_itera dias desde Lunes hasta Viernes:
+    vamo_a_itera dias=Lunes||Viernes:
         instruction0;
     vamo_a_calmano
 
