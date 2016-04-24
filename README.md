@@ -9,7 +9,7 @@ This document is designed to give the specification for the language syntax and 
 ## Lexical considerations
 The following are keywords. They are all reserved, which means they cannot be used as identifiers or redefined.
 
-> `pINTachu, BOOLbasaur, squirtrue, squirfalse, CHARmander, VOIDtorb, butterFloat, STRUCTtabuzz, arcticUNION, ENUManyte, GLOBAt, nullikarp, funcball, vamo_a_para, vamo_a_segui, vamos_a_retorna, vamo_a_sali, vamo_a_lee, vamo_a_escribi, vamo_a_imprimi, vamo_a_itera, vamo_mientra, vamo_a_para, vamo_a_segui, vamos_a_retorna, vamo_a_sali, si, y_si, si_no, vamo_a_empeza, vamo_a_calmano, atrapar, liberar, SIZEther`. 'pidget'
+> `pINTachu, BOOLbasaur, squirtrue, squirfalse, CHARmander, VOIDtorb, butterFloat, STRUCTtabuzz, arcticUNION, ENUManyte, GLOBAt, nullikarp, funcball, vamo_a_para, vamo_a_segui, vamos_a_retorna, vamo_a_sali, vamo_a_lee, vamo_a_escribi, vamo_a_imprimi, vamo_a_itera, vamo_mientra, si, y_si, si_no, vamo_a_empeza, vamo_a_calmano, atrapar, liberar, SIZEther`. 'pidget'
 
 ------
 
@@ -20,7 +20,7 @@ In the case of having an identifier that starts with 'poke', we're speaking of a
 ------
 
 *Whitespace* (i.e. spaces, tabs, and newlines) serves to separate tokens, but is otherwise ignored. Keywords and identifiers must be separated by whitespace or a token that is neither a keyword nor an identifier.
-`vamo_a_sufri` is a single identifier, not three keywords. `vamo_a sufri` and `(pINTachu)vamo_a` scans both as two tokens.
+`vamos_a_retorna` is a single identifier, not three keywords. `vamos_a_retorna paAtra` and `(pINTachu)paAtra` scans both as two tokens.
 
 ------
 
