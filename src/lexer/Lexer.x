@@ -9,22 +9,24 @@ $lc     = [a-z]                      --LowerCase
 $uc     = [A-Z]                      --UpperCase
 $alpha  = [a-zA-Z]
 $digit  = [0-9]                     -- digits
+$print1 = $printable # [\"]
+
 
 @number    = [1-9][0-9]{0,9} | 0
-$boolean   = [squirtrue squirfalse]    --Boolean
+@boolean   = (squirtrue | squirfalse)    --Boolean
 @mlComment = \-\-(( [^\-\}] | [^\-]\-|\-[^\-] | $white)* | \-$white* | \-$white* )\-\-
 
 @identifier = $lc [ $lc $uc $digit \_ ]*  '?'?
 @dataId     = poke [ $lc $uc $digit \_ ]+ \??
 @enum       = $uc   [$alpha $digit \_]*
-@string     = (\'($printable # [\'])\'|\"($printable # [\"])\")
+@string     = \" $print1* \"
 @singlecomment    = \# .* [\n]?
 
 @badstring  = \".* \n
 @badnumber = 0 [$digit]+
 
--- Me faltan las declaraciones de tipos
-
+-- faltan puntos flotante
+-- faltan pipes
 tokens :-
   $white+                  ; 
   \#[^\n]*                 ; 
@@ -69,24 +71,26 @@ tokens :-
   and                      {\p s-> TkAnd       s    (getPos p)}
   or                       {\p s-> TkOr        s    (getPos p)}
 
-  $boolean                 {\p s-> TkTruFal    s    (getPos p)}
-  @badnumber               {\p s-> TkError     s    (getPos p)}
-  @number                  {\p s-> TkNum   (read s) (getPos p)}
+  squirtrue                {\p s-> TkTrue      s    (getPos p)}
+  squirfalse               {\p s-> TkFalse     s    (getPos p)}
+  @badnumber               {\p s-> TkError     s    (getPos p) "Bad formed number"}
+  @number                  {\p s-> createNum   s    (getPos p)}
   @enum                    {\p s-> TkEnumCons  s    (getPos p)}
   @dataId                  {\p s-> TkDId       s    (getPos p)}
-  poke                     {\p s-> TkError     s    (getPos p)}
+  poke                     {\p s-> TkError     s    (getPos p) "Invalid identifier"}
   @identifier              {\p s-> TkId        s    (getPos p)}
 
-  \[                       {\p s-> TkLB        s    (getPos p)}
-  \]                       {\p s-> TkRB        s    (getPos p)}
-  \{                       {\p s-> TkLCurly    s    (getPos p)}
-  \}                       {\p s-> TkRCurly    s    (getPos p)}
-  \(                       {\p s-> TkLP        s    (getPos p)}
-  \)                       {\p s-> TkRP        s    (getPos p)}
+  \[                       {\p s -> TkLBracket s    (getPos p)}
+  \]                       {\p s -> TkRBracket s    (getPos p)}
+  \{                       {\p s -> TkLCurly   s    (getPos p)}
+  \}                       {\p s -> TkRCurly   s    (getPos p)}
+  \(                       {\p s -> TkLRound   s    (getPos p)}
+  \)                       {\p s -> TkRRound   s    (getPos p)}
 
   \:\:                     {\p s-> TkDColon    s    (getPos p)}
   \:                       {\p s-> TkColon     s    (getPos p)}
   \;                       {\p s-> TkSColon    s    (getPos p)}
+  \,                       {\p s-> TkComma     s    (getPos p)}
   \*\=                     {\p s-> TkTEQ       s    (getPos p)}
   \+\=                     {\p s-> TkPEQ       s    (getPos p)}
   \.                       {\p s-> TkDot       s    (getPos p)}
@@ -108,7 +112,7 @@ tokens :-
   \%                       {\p s-> TkMod       s    (getPos p)}
   \=                       {\p s-> TkAssign    s    (getPos p)}
 
-  .                        {\p s-> TkError     s    (getPos p)}
+  .                        {\p s-> TkError     s    (getPos p) "Unkwown character"}
 
 
 {

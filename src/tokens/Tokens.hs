@@ -3,6 +3,7 @@
 module Tokens(
     Token     (..),
     checkErrors,
+    createNum,
     Pos
 ) where
 
@@ -11,15 +12,16 @@ import Data.Data(toConstr,Data,Typeable)
 type Pos = (Int,Int)
 
 data Token =  TkString    {content::String, position :: Pos }
-            | TkLB        {content::String, position :: Pos }
-            | TkRB        {content::String, position :: Pos }
+            | TkLBracket  {content::String, position :: Pos }
+            | TkRBracket  {content::String, position :: Pos }
             | TkLCurly    {content::String, position :: Pos }
             | TkRCurly    {content::String, position :: Pos }
-            | TkLP        {content::String, position :: Pos }
-            | TkRP        {content::String, position :: Pos }
+            | TkLRound    {content::String, position :: Pos }
+            | TkRRound    {content::String, position :: Pos }
             | TkDColon    {content::String, position :: Pos }
             | TkColon     {content::String, position :: Pos }
             | TkSColon    {content::String, position :: Pos }
+            | TkComma     {content::String, position :: Pos }
             | TkTEQ       {content::String, position :: Pos }
             | TkPEQ       {content::String, position :: Pos }
             | TkDot       {content::String, position :: Pos }
@@ -73,11 +75,12 @@ data Token =  TkString    {content::String, position :: Pos }
             | TkFree      {content::String, position :: Pos }
             | TkSizeOf    {content::String, position :: Pos }
             | TkGet       {content::String, position :: Pos }
-            | TkTruFal    {content::String, position :: Pos }
-            | TkNum       {value::Int     , position :: Pos }
+            | TkTrue      {content::String, position :: Pos }
+            | TkFalse     {content::String, position :: Pos }
+            | TkNum       {content::String, position :: Pos, value::Integer}
             | TkDId       {content::String, position :: Pos }
             | TkId        {content::String, position :: Pos }
-            | TkError     {content::String, position :: Pos }
+            | TkError     {content::String, position :: Pos, message::String }
             deriving(Data,Typeable)
 
 -- floating points missing
@@ -90,19 +93,33 @@ instance Show Token where
                            "    line:   " ++ show l  ++ "\n" ++
                            "    column: " ++ show c  ++ "\n"
 
-  show (TkNum con (l,c)) = "Integer\n" ++
+  show (TkNum con (l,c) v) = "Integer\n" ++
                            "    value:  " ++ show con ++ "\n" ++
                            "    line:   " ++ show l  ++ "\n" ++
                            "    column: " ++ show c  ++ "\n"
+
+  show (TkString con (l,c)) = "String\n" ++
+                           "    value:  " ++ show con ++ "\n" ++
+                           "    line:   " ++ show l  ++ "\n" ++
+                           "    column: " ++ show c  ++ "\n"
+
+  show (TkError con (l,c) m) = "Error " ++ m ++". " ++ "\" " ++ con ++ " \" " ++ "at " ++ show l ++ ":" ++ show c
 
   show generic = show (toConstr generic )++ "\n" ++
                  "    line:   " ++ show l ++ "\n" ++
                  "    column: " ++ show c ++ "\n"
                 where (l,c) = position generic
 
+createNum :: String -> Pos -> Token
+createNum s p = if number <= 2147483648 
+                    then (TkNum  s p number)
+                    else (TkError s p "Number overflow")
+    where number = read s :: Integer
+
 checkErrors :: [Token] -> (Bool,[Token])
 checkErrors tks = if null errors then (False,goodOnes)
                                  else (True,errors)
-    where (goodOnes,errors) = foldl divide ([],[]) tks 
-          divide (g,b) err@(TkError str pos) = (g,err:b)
-          divide (g,b) somethingElse         = (somethingElse:g,b)
+    where (goodOnes,errors) = foldl divide ([],[]) tks
+          divide (g,b) err@(TkError _ _ _) = (g,err:b)
+          divide (g,[]) somethingElse      = (somethingElse:g,[])
+          divide (g,b)  somethingElse      = (g,b) -- It has errors, don't bother doing cons

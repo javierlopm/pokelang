@@ -1,2 +1,39 @@
-GLOBAt int[]    pINTachu [83];
-GLOBAt bool[]   BOOLbasaur[42];
+procball hola(pInktachu[] w,CHARmander z,BOOLbasaur b):       #Todo por referencia
+    si *b==squirtrue:
+        vamo_a_imprimi *z;
+    si_no
+        butterFloat h = 3.5;
+        *w[4]=(butterFloat) h // 2;
+    vamo_a_calmano;
+vamo_a_calmano;
+
+
+pInktachu funcball hola2(pInktachu[] w,CHARmander z,BOOLbasaur b):      #Todo por valor
+    si b==squirtrue:
+        vamo_a_imprimi z;
+    si_no
+        butterFloat h = 3.5;
+        w[4]=(butterFloat) h // 2;
+    vamo_a_calmano;
+
+    vamo_a_devolve w[4];
+vamo_a_calmano;
+
+vamo_a_para     #break
+vamo_a_segui    #continue
+vamos_a_retorna # return
+vamo_a_sali     #exit
+
+pINTachu myInt;
+
+vamo_a_lee myInt;
+
+myInt += 3;
+
+vamo_a_escribi myInt;
+
+butterFloat myFloat;
+
+myFloat = (butterFloat) myInt + 3;  #Casteo
+
+vamo_a_imprimi("hola %s",[myInt]);

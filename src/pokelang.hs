@@ -7,7 +7,7 @@ main = do
   argumentList:_ <- getArgs
   let fileContent = readFile(argumentList)
   s <- readFile argumentList
-  let (hasErrors,tokens) = checkErrors $ lexer s
+  let (hasErrors,tokens) = (checkErrors . reverse . lexer) s
   if hasErrors then putStrLn "Lexing errors found: \n"
                else return ()
 
