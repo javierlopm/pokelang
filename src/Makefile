@@ -17,6 +17,6 @@ Pokelang: Lexer.o
 
 	
 clean:
-	rm pokelang
+	rm pokelang; rm *.o *.hi
 	cd tokens ; rm -f *.o *.hi
 	cd lexer  ; rm -f *.o *.hi Lexer.hs

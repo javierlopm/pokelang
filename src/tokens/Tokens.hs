@@ -1,6 +1,6 @@
 module Tokens(
     Token     (..),
-    String Pos
+    Pos
 ) where
 
 data Token =  TkString   String Pos
@@ -45,7 +45,7 @@ data Token =  TkString   String Pos
             | TkEnum     String Pos
             | TkNull     String Pos
             | TKGlobal   String Pos
-            | TkNull     String Pos
+            | TkFunc     String Pos
             | TkIf       String Pos
             | TkElif     String Pos
             | TkElse     String Pos
@@ -65,7 +65,7 @@ data Token =  TkString   String Pos
             | TkSizeOf   String Pos
             | TkGet      String Pos
             | TkTruFal   String Pos
-            | TkNum      String Pos Int
+            | TkNum      Int    Pos  
             | TkDId      String Pos
             | TkId       String Pos
             | TkError    String Pos

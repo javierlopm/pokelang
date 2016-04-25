@@ -10,18 +10,18 @@ $digit   = 0-9                       -- digits
 $lc  = [a-z]                         --LowerCase
 $uc  = [A-z]                         --UpperCase
 $boolean = [squirtrue squirfalse]    --Boolean
-$mlComment = \-\-(([^\-\}]|[^\-]\-|\-[^\-]|$white)*|\-$white*|\-$white*)\-\-
-$id = $lc($lc|$uc|$digit)*\??
-$dataId = poke($lc|$uc|$digit)+\??
-$string = (\'($printable # [\'])\'|\"($printable # [\"])\")
+@mlComment = \-\-(( [^\-\}] | [^\-]\-|\-[^\-] | $white)* | \-$white* | \-$white* )\-\-
+@id = $lc($lc|$uc|$digit)*\??
+@dataId = poke($lc|$uc|$digit)+\??
+@string = (\'($printable # [\'])\'|\"($printable # [\"])\")
 
 -- Me faltan las declaraciones de tipos
 
 tokens :-
   $white+                  ; 
-  #[^\n]*                  ; 
-  $mlComment               ;
-  $string                  {\p s-> TkString    s    (getPos p)}
+  \#[^\n]*                 ; 
+  @mlComment               ;
+  @string                  {\p s-> TkString    s    (getPos p)}
   \[                       {\p s-> TkLB        s    (getPos p)}
   \]                       {\p s-> TkRB        s    (getPos p)}
   \{                       {\p s-> TkLCurly    s    (getPos p)}
@@ -84,8 +84,8 @@ tokens :-
   pidget                   {\p s-> TkGet       s    (getPos p)}
   $boolean                 {\p s-> TkTruFal    s    (getPos p)}
   $digit+                  {\p s-> TkNum  (read s)  (getPos p)}
-  $dataId                  {\p s-> TkDId       s    (getPos p)}
-  $id                      {\p s-> TkId        s    (getPos p)}
+  @dataId                  {\p s-> TkDId       s    (getPos p)}
+  @id                      {\p s-> TkId        s    (getPos p)}
   .                        {\p s-> TkError     s    (getPos p)}
 
 
