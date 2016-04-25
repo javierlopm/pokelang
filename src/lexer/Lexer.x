@@ -11,7 +11,7 @@ $lc  = [a-z]                         --LowerCase
 $uc  = [A-z]                         --UpperCase
 $boolean = [squirtrue squirfalse]    --Boolean
 @mlComment = \-\-(( [^\-\}] | [^\-]\-|\-[^\-] | $white)* | \-$white* | \-$white* )\-\-
-@id = $lc($lc|$uc|$digit)*\??
+@id = $lc($lc|$uc|$digit)*\??    --Aca no debería haber pokeAlgo
 @dataId = poke($lc|$uc|$digit)+\??
 @string = (\'($printable # [\'])\'|\"($printable # [\"])\")
 
