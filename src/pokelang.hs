@@ -7,5 +7,8 @@ main = do
   argumentList:_ <- getArgs
   let fileContent = readFile(argumentList)
   s <- readFile argumentList
-  let tklist   = lexer s
-  print tklist
+  let (hasErrors,tokens) = checkErrors $ lexer s
+  if hasErrors then putStrLn "Lexing errors found: \n"
+               else return ()
+
+  ((mapM_ putStrLn) . (map show)) tokens

@@ -5,91 +5,110 @@ import Tokens
 
 %wrapper "posn"
 
-$lower   = [a-z]
-$upper   = [A-Z]
-$digit   = [0-9]        -- digits
-$alpha   = [a-zA-Z]     -- alphabetic characters
+$lc     = [a-z]                      --LowerCase
+$uc     = [A-Z]                      --UpperCase
+$alpha  = [a-zA-Z]
+$digit  = [0-9]                     -- digits
 
-@number           = [1-9][0-9]{0,9} | 0
-@identifier       = $lower   [$alpha $digit]*  '?'?
-@dataindentifier  = "poke"   [$alpha $digit]+
-@enum             = $upper   [$alpha $digit]*
-@multilinecomment = \-\- [. \n]* \-\-
+@number    = [1-9][0-9]{0,9} | 0
+$boolean   = [squirtrue squirfalse]    --Boolean
+@mlComment = \-\-(( [^\-\}] | [^\-]\-|\-[^\-] | $white)* | \-$white* | \-$white* )\-\-
+
+@identifier = $lc [ $lc $uc $digit \_ ]*  '?'?
+@dataId     = poke [ $lc $uc $digit \_ ]+ \??
+@enum       = $uc   [$alpha $digit \_]*
+@string     = (\'($printable # [\'])\'|\"($printable # [\"])\")
 @singlecomment    = \# .* [\n]?
--- strings
 
+@badstring  = \".* \n
 @badnumber = 0 [$digit]+
--- just poke debería ser un error
--- error de comentarios
--- error de strings
 
 -- Me faltan las declaraciones de tipos
 
 tokens :-
-  $white+  ;
+  $white+                  ; 
+  \#[^\n]*                 ; 
+  @mlComment               ;
+  @string                  {\p s-> TkString    s    (getPos p)}
 
-  pINTachu           {\p _ -> TkInt        (getPos p)}
-  BOOLbasaur         {\p _ -> TkBool       (getPos p)}
-  CHARmander         {\p _ -> TkChar       (getPos p)}
-  VOIDtorb           {\p _ -> TkVoid       (getPos p)}
-  butterFloat        {\p _ -> TkFloat      (getPos p)}
-  STRUCTtabuzz       {\p _ -> TkStruct     (getPos p)}
-  arcticUNION        {\p _ -> TkUnion      (getPos p)}
-  ENUManyte          {\p _ -> TkEnum       (getPos p)}
-  GLOBAt             {\p _ -> TkGlobal     (getPos p)}
-  procball           {\p _ -> TkProcedure  (getPos p)}
+  pINTachu                 {\p s-> TkInt       s    (getPos p)}
+  BOOLbasaur               {\p s-> TkBool      s    (getPos p)}
+  CHARmander               {\p s-> TkChar      s    (getPos p)}
+  VOIDtorb                 {\p s-> TkVoid      s    (getPos p)}
+  butterFloat              {\p s-> TkFloat     s    (getPos p)}
+  STRUCTtabuzz             {\p s-> TkStruct    s    (getPos p)}
+  arcticUNION              {\p s-> TkUnion     s    (getPos p)}
+  ENUManyte                {\p s-> TkEnum      s    (getPos p)}
+  GLOBAt                   {\p s-> TKGlobal    s    (getPos p)}
+  
+  nullikarp                {\p s-> TkNull      s    (getPos p)}
+  
+  vamo\_a\_calmano         {\p s-> TkEnd       s    (getPos p)}
+  vamo\_mientra            {\p s-> TkWhile     s    (getPos p)}
+  vamo\_a\_itera           {\p s-> TkFor       s    (getPos p)}
+  vamo\_a\_empeza          {\p s-> TkBegin     s    (getPos p)}
+  vamo\_a\_para            {\p s-> TkBreak     s    (getPos p)}
+  vamo\_a\_segui           {\p s-> TkContinue  s    (getPos p)}
+  vamos\_a\_retorna        {\p s-> TkReturn    s    (getPos p)}
+  vamo\_a\_sali            {\p s-> TkExit      s    (getPos p)}
+  vamo\_a\_lee             {\p s-> TkRead      s    (getPos p)}
+  vamo\_a\_escribi         {\p s-> TkWrite     s    (getPos p)}
+  vamo\_a\_imprimi         {\p s-> TkPrint     s    (getPos p)}
 
-  nullikarp          {\p _ -> TkNull       (getPos p)}
 
-  si                 {\p _ -> TkIf         (getPos p)}
-  y\_si              {\p _ -> TkElif       (getPos p)}
-  si\_no             {\p _ -> TkElse       (getPos p)}
+  funcball                 {\p s-> TkNull      s    (getPos p)}
 
-  vamo\_a\_empeza    {\p _ -> TkBegin      (getPos p)}
-  vamo\_a\_calmano   {\p _ -> TkEnd        (getPos p)}
-  vamo\_mientra      {\p _ -> TkWhile      (getPos p)}
-  vamo\_a\_para      {\p _ -> TkBreak      (getPos p)}
-  vamo\_a\_segui     {\p _ -> TkContinue   (getPos p)}
-  vamos\_a\_retorna  {\p _ -> TkReturn     (getPos p)}
-  vamo\_a\_sali      {\p _ -> TkExit       (getPos p)}
-  vamo\_a\_lee       {\p _ -> TkRead       (getPos p)}
-  vamo\_a\_escribi   {\p _ -> TkWrite      (getPos p)}
+  si                       {\p s-> TkIf        s    (getPos p)}
+  y\_si                    {\p s-> TkElif      s    (getPos p)}
+  si\_no                   {\p s-> TkElse      s    (getPos p)}
+  atrapar                  {\p s-> TkAlloc     s    (getPos p)}
+  liberar                  {\p s-> TkFree      s    (getPos p)}
+  SIZEther                 {\p s-> TkSizeOf    s    (getPos p)}
+  pidget                   {\p s-> TkGet       s    (getPos p)}
+  
+  and                      {\p s-> TkAnd       s    (getPos p)}
+  or                       {\p s-> TkOr        s    (getPos p)}
 
-  \[                 {\p _ -> TkLBracket   (getPos p)}
-  \]                 {\p _ -> TkRBracket   (getPos p)}
-  \{                 {\p _ -> TkLCurly     (getPos p)}
-  \}                 {\p _ -> TkRCurly     (getPos p)}
-  \(                 {\p _ -> TkLRound     (getPos p)}
-  \)                 {\p _ -> TkRRound     (getPos p)}
+  $boolean                 {\p s-> TkTruFal    s    (getPos p)}
+  @badnumber               {\p s-> TkError     s    (getPos p)}
+  @number                  {\p s-> TkNum   (read s) (getPos p)}
+  @enum                    {\p s-> TkEnumCons  s    (getPos p)}
+  @dataId                  {\p s-> TkDId       s    (getPos p)}
+  poke                     {\p s-> TkError     s    (getPos p)}
+  @identifier              {\p s-> TkId        s    (getPos p)}
 
-  \:\:               {\p _ -> TkDefine     (getPos p)}
-  \:                 {\p _ -> TkColon      (getPos p)}
-  \;                 {\p _ -> TkSemiColon  (getPos p)}
-  @multilinecomment  {\p _ -> TkMultiComment    (getPos p)}
-  @singlecomment     {\p _ -> TkSingleComment   (getPos p)}
-  \*\=               ;
-  \+\=               ;
-  \-\>               ;
-  \.                 ;
-  \!                 ;
-  \;                 ;
-  \!\=               ;
-  \&\&               ;
-  \|\|               ;
-  \=\=               ;
-  \>\=               ;
-  \<\=               ;
-  \=                 ;
-  \>                 ;
-  \<                 ;
-  \/\/               ;
-  \/                 ;
-  \+                 ;
-  \-                 ;
-  \^                 ;
-  \*\*               ;
-  \*                 ;
-  \%                 ;
+  \[                       {\p s-> TkLB        s    (getPos p)}
+  \]                       {\p s-> TkRB        s    (getPos p)}
+  \{                       {\p s-> TkLCurly    s    (getPos p)}
+  \}                       {\p s-> TkRCurly    s    (getPos p)}
+  \(                       {\p s-> TkLP        s    (getPos p)}
+  \)                       {\p s-> TkRP        s    (getPos p)}
+
+  \:\:                     {\p s-> TkDColon    s    (getPos p)}
+  \:                       {\p s-> TkColon     s    (getPos p)}
+  \;                       {\p s-> TkSColon    s    (getPos p)}
+  \*\=                     {\p s-> TkTEQ       s    (getPos p)}
+  \+\=                     {\p s-> TkPEQ       s    (getPos p)}
+  \.                       {\p s-> TkDot       s    (getPos p)}
+  \!                       {\p s-> TkExcMark   s    (getPos p)}
+  \!\=                     {\p s-> TkNEQ       s    (getPos p)}
+  \&\&                     {\p s-> TkDAmp      s    (getPos p)}
+  \|\|                     {\p s-> TkPOr       s    (getPos p)}
+  \=\=                     {\p s-> TkEq        s    (getPos p)}
+  \>\=                     {\p s-> TkGE        s    (getPos p)}
+  \<\=                     {\p s-> TkLE        s    (getPos p)}
+  \>                       {\p s-> TkGT        s    (getPos p)}
+  \<                       {\p s-> TkLT        s    (getPos p)}
+  \/\/                     {\p s-> TkIDiv      s    (getPos p)}
+  \/                       {\p s-> TkDiv       s    (getPos p)}
+  \+                       {\p s-> TkSum       s    (getPos p)}
+  \-                       {\p s-> TkMin       s    (getPos p)}
+  \^                       {\p s-> TkPower     s    (getPos p)}
+  \*                       {\p s-> TkTimes     s    (getPos p)}
+  \%                       {\p s-> TkMod       s    (getPos p)}
+  \=                       {\p s-> TkAssign    s    (getPos p)}
+
+  .                        {\p s-> TkError     s    (getPos p)}
 
 
 {
