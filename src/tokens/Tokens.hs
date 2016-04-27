@@ -116,6 +116,10 @@ createNum s p = if number <= 2147483648
                     else (TkError s p "Number overflow")
     where number = read s :: Integer
 
+-- hace falta
+createFloat = undefined
+
+-- No se necesitara
 checkErrors :: [Token] -> (Bool,[Token])
 checkErrors tks = if null errors then (False,goodOnes)
                                  else (True,errors)

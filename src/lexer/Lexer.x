@@ -27,6 +27,12 @@ $print1 = $printable # [\"]
 
 -- faltan puntos flotante
 -- faltan pipes
+-- faltan los char
+-- char mal cerrados
+-- comentarios mal cerrados
+-- mumeros seguidos de cosas
+
+
 tokens :-
   $white+                  ; 
   \#[^\n]*                 ; 
