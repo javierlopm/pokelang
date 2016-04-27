@@ -4,6 +4,7 @@ module Tokens(
     Token     (..),
     checkErrors2,
     createNum,
+    createFloat,
     Pos
 ) where
 
@@ -80,7 +81,8 @@ data Token =  TkString    {content::String, position :: Pos }
             | TkGet       {content::String, position :: Pos }
             | TkTrue      {content::String, position :: Pos }
             | TkFalse     {content::String, position :: Pos }
-            | TkNum       {content::String, position :: Pos, value::Integer}
+            | TkNum       {content::String, position :: Pos, value :: Integer }
+            | TkFloatVal  {content::String, position :: Pos, rep   :: Float   }
             | TkDId       {content::String, position :: Pos }
             | TkId        {content::String, position :: Pos }
             | TkError     {content::String, position :: Pos, message::String }
@@ -98,6 +100,10 @@ instance Show Token where
 
   show (TkNum con (l,c) v) = "Integer\n" ++
                            "    value:  " ++ show con ++ "\n" ++
+                           "    line:   " ++ show l  ++ "\n" ++
+                           "    column: " ++ show c  ++ "\n"
+  show (TkFloatVal con (l,c) v) = "Integer\n" ++
+                           "    value:  " ++ show v  ++ "\n" ++
                            "    line:   " ++ show l  ++ "\n" ++
                            "    column: " ++ show c  ++ "\n"
 
@@ -133,7 +139,20 @@ createNum s p = if number <= 2147483648
     where number = read s :: Integer
 
 -- hace falta
-createFloat = undefined
+createFloat :: String -> Pos -> Token
+createFloat num pos = if (double > largest) 
+                          then (TkError    num pos "Floating point overflow")
+                          else checkUnderflow
+  where largest  = 3.402823566e38
+        double   = (read num) :: Double
+        (number,ex) = break (=='e') num
+        checkUnderflow = if null ex 
+                            then (TkFloatVal num pos (read num) )
+                            else if (((read . tail) ex) < -45) || ((read . tail) ex) == -45 && (read number) <= 1.4013
+                                   then (TkError    num pos "Floating point underflow")
+                                   else (TkFloatVal num pos (read num) )
+
+                
 
 checkErrors2 :: Token -> IO()
 checkErrors2 myTok@(TkError con (l,c) v) =  (hPutStrLn stderr . show ) myTok
