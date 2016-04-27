@@ -1,6 +1,6 @@
 module Main where
 import System.Environment
-import System.IO(hPutStrln,stderr)  
+import System.IO(hPutStrLn,stderr)  
 import Tokens
 import Lexer
 
@@ -10,8 +10,10 @@ main = do
   argumentList:_ <- getArgs
   let fileContent = readFile(argumentList)
   s <- readFile argumentList
-  let (hasErrors,tokens) = (checkErrors . reverse . lexer) s
-  if hasErrors then putStrLn "Lexing errors found: \n"
-               else return ()
+  let tokens = lexer s
+--  let (hasErrors,tokens) = (checkErrors . reverse . lexer) s
+--  if hasErrors then putStrLn "Lexing errors found: \n"
+--               else return ()
+  putStrLn ""
 
-  ((mapM_ putStrLn) . (map show)) tokens
+  ((mapM_ checkErrors2) ) tokens

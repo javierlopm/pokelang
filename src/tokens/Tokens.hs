@@ -2,12 +2,13 @@
 
 module Tokens(
     Token     (..),
-    checkErrors,
+    checkErrors2,
     createNum,
     Pos
 ) where
 
 import Data.Data(toConstr,Data,Typeable)
+import System.IO(hPutStrLn,stderr)  
 
 type Pos = (Int,Int)
 
@@ -103,7 +104,7 @@ instance Show Token where
                            "    line:   " ++ show l  ++ "\n" ++
                            "    column: " ++ show c  ++ "\n"
 
-  show (TkError con (l,c) m) = "Error " ++ m ++". " ++ "\" " ++ con ++ " \" " ++ "at " ++ show l ++ ":" ++ show c
+  show (TkError con (l,c) m) = "Error: " ++ m ++". " ++ "\" " ++ con ++ " \" " ++ "at " ++ show l ++ ":" ++ show c ++ "\n"
 
   show generic = show (toConstr generic )++ "\n" ++
                  "    line:   " ++ show l ++ "\n" ++
@@ -118,6 +119,10 @@ createNum s p = if number <= 2147483648
 
 -- hace falta
 createFloat = undefined
+
+checkErrors2 :: Token -> IO()
+checkErrors2 myTok@(TkError con (l,c) v) =  (hPutStrLn stderr . show ) myTok
+checkErrors2 myTok =  (putStrLn . show ) myTok
 
 -- No se necesitara
 checkErrors :: [Token] -> (Bool,[Token])

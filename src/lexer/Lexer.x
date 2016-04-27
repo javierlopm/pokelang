@@ -14,9 +14,9 @@ $print1 = $printable # [\"]
 
 @number    = [1-9][0-9]{0,9} | 0
 @boolean   = (squirtrue | squirfalse)    --Boolean
-@mlComment = \-\-(( [^\-\}] | [^\-]\-|\-[^\-] | $white)* | \-$white* | \-$white* )\-\-
+@mlComment = \-\-(( [^\-\-] | [^\-]\-|\-[^\-] | $white)* | \-$white* | \-$white* )\-\-
 
-@identifier = $lc [ $lc $uc $digit \_ ]*  '?'?
+@identifier = $lc [ $lc $uc $digit \_ ]*  \??
 @dataId     = poke [ $lc $uc $digit \_ ]+ \??
 @enum       = $uc   [$alpha $digit \_]*
 @string     = \" $print1* \"
@@ -24,6 +24,7 @@ $print1 = $printable # [\"]
 
 @badstring  = \".* \n
 @badnumber = 0 [$digit]+
+@badComment = \-\-(( [^\-\-] | [^\-]\-|\-[^\-] | $white)* | \-$white* | \-$white* )(\- | [^\-])
 
 -- faltan puntos flotante
 -- faltan pipes
@@ -37,6 +38,7 @@ tokens :-
   $white+                  ; 
   \#[^\n]*                 ; 
   @mlComment               ;
+  @badComment              {\p s-> TkError     s    (getPos p) "Comment not closed properly?"}
   @string                  {\p s-> TkString    s    (getPos p)}
 
   pINTachu                 {\p s-> TkInt       s    (getPos p)}
