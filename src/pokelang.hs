@@ -16,4 +16,4 @@ main = do
 --               else return ()
   putStrLn ""
 
-  ((mapM_ checkErrors2) ) tokens
+  ((mapM_ checkErrors) ) tokens

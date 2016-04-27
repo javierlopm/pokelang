@@ -2,7 +2,7 @@
 
 module Tokens(
     Token     (..),
-    checkErrors2,
+    checkErrors,
     createNum,
     Pos
 ) where
@@ -135,15 +135,6 @@ createNum s p = if number <= 2147483648
 -- hace falta
 createFloat = undefined
 
-checkErrors2 :: Token -> IO()
-checkErrors2 myTok@(TkError con (l,c) v) =  (hPutStrLn stderr . show ) myTok
-checkErrors2 myTok =  (putStrLn . show ) myTok
-
--- No se necesitara
-checkErrors :: [Token] -> (Bool,[Token])
-checkErrors tks = if null errors then (False,goodOnes)
-                                 else (True,errors)
-    where (goodOnes,errors) = foldl divide ([],[]) tks
-          divide (g,b) err@(TkError _ _ _) = (g,err:b)
-          divide (g,[]) somethingElse      = (somethingElse:g,[])
-          divide (g,b)  somethingElse      = (g,b) -- It has errors, don't bother doing cons
+checkErrors :: Token -> IO()
+checkErrors myTok@(TkError con (l,c) v) =  (hPutStrLn stderr . show ) myTok
+checkErrors myTok =  (putStrLn . show ) myTok
