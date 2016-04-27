@@ -66,7 +66,7 @@ tokens :-
   vamo\_a\_empeza          {\p s-> TkBegin     s    (getPos p)}
   vamo\_a\_para            {\p s-> TkBreak     s    (getPos p)}
   vamo\_a\_segui           {\p s-> TkContinue  s    (getPos p)}
-  vamo\_a\_retorna        {\p s-> TkReturn    s    (getPos p)}
+  vamo\_a\_retorna         {\p s-> TkReturn    s    (getPos p)}
   vamo\_a\_sali            {\p s-> TkExit      s    (getPos p)}
   vamo\_a\_lee             {\p s-> TkRead      s    (getPos p)}
   vamo\_a\_escribi         {\p s-> TkWrite     s    (getPos p)}
@@ -89,7 +89,7 @@ tokens :-
   squirtrue                {\p s-> TkTrue      s    (getPos p)}
   squirfalse               {\p s-> TkFalse     s    (getPos p)}
 
-  @float                   {\p s-> TkFloat     s    (getPos p)}
+  @float                   {\p s-> createFloat s    (getPos p)}
   @badfloat                {\p s-> TkError     s    (getPos p)  "Bad formed float"}
   @badIdentifier           {\p s-> TkError     s    (getPos p) "Invalid identifier"}
   @badnumber               {\p s-> TkError     s    (getPos p)  "Bad formed number"}
