@@ -1,0 +1,7 @@
+54851hola 
+poke      # Not data, not identifier.
+--
+This comment closes
+--
+
+-- But not this one, error
