@@ -9,8 +9,8 @@ $lc     = [a-z]                      --LowerCase
 $uc     = [A-Z]                      --UpperCase
 $alpha  = [a-zA-Z]
 $digit  = [0-9]                     -- digits
-$dquotable = $printable # [\"]
-$quotable  = $printable # [\']
+$dquotable = [\x00-\x7F] # [\"]
+$quotable  = [\x00-\x7F] # [\']
 
 
 @number    = [1-9][0-9]{0,9} | 0

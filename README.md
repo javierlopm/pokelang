@@ -9,13 +9,13 @@ This document is designed to give the specification for the language syntax and 
 ## Lexical considerations
 The following are keywords. They are all reserved, which means they cannot be used as identifiers or redefined.
 
-> `pINTachu, BOOLbasaur, squirtrue, squirfalse, CHARmander, VOIDtorb, butterFloat, STRUCTtabuzz, arcticUNION, ENUManyte, GLOBAt, nullikarp, funcball, vamo_a_para, vamo_a_segui, vamos_a_retorna, vamo_a_sali, vamo_a_lee, vamo_a_escribi, vamo_a_imprimi, vamo_a_itera, vamo_mientra, si, y_si, si_no, vamo_a_empeza, vamo_a_calmano, atrapar, liberar, SIZEther`. 'pidget'
+> `pINTachu, BOOLbasaur, squirtrue, squirfalse, CHARmander, VOIDtorb, butterFloat, STRUCTtabuzz, arcticUNION, ENUManyte, GLOBAt, nullikarp, funcball, vamo_a_para, vamo_a_segui, vamos_a_retorna, vamo_a_sali, vamo_a_lee, vamo_a_escribi, vamo_a_imprimi, vamo_a_itera, vamo_mientra, si, y_si, si_no, vamo_a_empeza, vamo_a_calmano, atrapar, liberar, SIZEther, pidget.`
 
 ------
 
 An *identifier* is a sequence of letters, digits and underscores, starting always with a letter and may end with the character '?' (only `'?'` may be used at the very end of the identifier). This language is case-sensitive and has no size limit for identifiers. 
 
-In the case of having an identifier that starts with 'poke', we're speaking of a data type identifier. 
+In the case of having an identifier that starts with 'poke', we're speaking of a data type identifier. `poke` is not a valid data type identifier.
 
 ------
 
@@ -26,11 +26,23 @@ In the case of having an identifier that starts with 'poke', we're speaking of a
 
 A *boolean* (BOOLbasaur) constant is either `squirtrue` or `squirfalse`. Like keywords, these words are reserved.
 
-An *integer* constant can only be specified in decimal (base 10). A decimal integer is a sequence of decimal digits (0-9). Examples of valid integers: `8`, `12`, `-50`, `9999999`.
+An *integer* (pINTachu) constant can only be specified in decimal (base 10). A decimal integer is a sequence of decimal digits (0-9). Examples of valid integers: `8`, `12`, `-50`, `9999999`.
 
-A *float* constant is a sequence of digits, a period, followed by any sequence of digits, maybe none. Thus, `.12` is not a valid double but both `0.12` and `12`. are valid. A double can also have an optional exponent, e.g., 12.2E+2 For a float in this sort of scientific notation, the decimal point is required, likewise the sign of the exponent, and the E can be lower or upper case. As above, `.12E+2` and `0.12E2` are invalid, but 12.E+2 is valid. Leading zeroes on the mantissa and exponent are allowed.
+A *float* (butterFLOAT) constant is a sequence of digits, a period, followed by any sequence of digits, maybe none. Thus, `.12` is not a valid double but both `0.12` and `12`. are valid. A double can also have an optional exponent, e.g., 12.2E+2 For a float in this sort of scientific notation, the decimal point is required, likewise the sign of the exponent, and the E can be lower or upper case. As above, `.12E+2` and `0.12E2` are invalid, but 12.E+2 is valid. Leading zeroes on the mantissa and exponent are allowed.
 
-A *string* constant is a sequence of characters enclosed in double or simple quotes (`"`|`'`), using the same character to open and close it. Strings can contain any character except a newline (must be especified by `\n`) or quote. A string must start and end on a single line, it cannot be split over multiple lines:
+A *string* constant is a sequence of characters enclosed in double quotes (`"`), using the same character to open and close it. Strings can contain any character except a newline (must be especified by `\n`) or quote. A string must start and end on a single line, it cannot be split over multiple lines:
+
+A *character* (CHARMander) constant is only a character enclosed between simple quotes (`'`). These characters consist of every printable ascii character and some special ones like: 
+
+| Char  | Definition       |
+|-------|------------------|
+|  \a   | Audible alert    |
+|  \b   | Backspace        |
+|  \t   | Tabulator        |
+|  \f   | Form feed        |
+|  \n   | New line         |
+|  \r   | Carriage return  |
+|  \v   | Vertical tab     |
 
 ~~~
 >"this string is missing its close quote
@@ -55,10 +67,10 @@ Operators and punctuation characters used by the language includes:
 
 ------
 
-A single-line comment is started by `#` and extends to the end of the line. Multi-line comments start with `--` and end with the first subsequent `--` . Any symbol is allowed in a comment except the sequence `--` which ends the current comment. Multi-line comments do not nest.
+A single-line comment is started by `#` and extends to the end of the line. Multi-line comments start with `--` and end with the first subsequent `--` . Any symbol is allowed in a comment except the sequence `--` which ends the current comment. Multi-line comments do not nest. Multi-line comments not closed cover the whole file untill the EOF. Multi-line comments not closed properly are notified to the user. 
 
-## Grammar examples
-Nabil
+[//]: <> (## Grammar examples)
+[//]: <> (Nabil)
 
 ## Scopes
 This language supports nested program blocks and it's statically scoped.
@@ -81,13 +93,13 @@ Pokelang includes the primitives data types.
 |  enum | ENUManyte   | 4             |
 |  pointer | *        | 4             |
 
-* Integers are stored in 2's complement.
+* pINTachus are stored in 2's complement. They may be between -2,147,483,648 and 2,147,483,647.
 
-* Bools are represented with the words 0x1 and 0x0.
+* BOOLbasaurs are represented with the words squirtrue and squirfalse.
 
-* Floating porint numbers are 32 bits precision with the IEEE 754 standar.
+* butterFloats numbers are 32 bits precision with the IEEE 754 standar.
 
-* Void type variables cannot be stored.
+* VOIDtorb type variables cannot be stored.
 
 This lenguage has uses value model like c, pointers can be a reference to any primitive type they are 32 bits long and can refer to any data type. 
 
@@ -166,7 +178,7 @@ As it may be seen, to declare an articUNION, must first appear the keyword `arti
 ## Enums
 *Pokelang provides enums and the built-in functions *evolucion* and *preevolucion* to get the successor and predecessor of an element from an enum element. 
 
-*The elements that are part from an enum are unique (cannot be part of another enum, or twice in the same declaration), and must start with a capital letter.
+*The elements that are part from an enum are unique (cannot be part of another enum, or twice in the same declaration), may have letters, numbers, underscores, may end with the character '?' and must start with a capital letter.
 
 *Every element from an enum has an integer asociated starting form 0, this number can be obtained using the built-in function `pidget` that receives a ENUMynite and returns a pINTachu.
 
@@ -378,5 +390,5 @@ Operators have the following procedence, from highest to lowest:
 > The operators `+=`, `*=`, `-=` requires its LVALUE and its RVALUE to be of the same type, and these may only be pINTachu or butterFLOAT. These operators will first apply the operations that they refer to and the they assing its new value. `A+=1` is equivalent to `A=A+1`
 
 
-### Final notes
-Javier & Nabil
+[//]: <> (### Final notes)
+[//]: <> (Javier & Nabil)
