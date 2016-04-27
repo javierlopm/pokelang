@@ -6,7 +6,7 @@ Tokens.o:
 
 # Lexer
 Lexer.hs: Tokens.o
-	alex lexer/Lexer.x -o lexer/Lexer.hs
+	alex --latin1 lexer/Lexer.x -o lexer/Lexer.hs
 
 Lexer.o: Lexer.hs Tokens.o
 	ghc lexer/Lexer.hs -itokens
