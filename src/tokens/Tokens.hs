@@ -122,6 +122,7 @@ instance Show Token where
   show (TkError con (l,c) m) = "Error: " ++ m ++". " ++ "\" " ++ con ++ " \" " ++ "at " ++ show l ++ ":" ++ show c ++ "\n"
 
   show generic = show (toConstr generic )++ "\n" ++
+                 "    value:  " ++ (content generic ) ++ "\n" ++
                  "    line:   " ++ show l ++ "\n" ++
                  "    column: " ++ show c ++ "\n"
                 where (l,c) = position generic

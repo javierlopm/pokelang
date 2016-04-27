@@ -14,6 +14,7 @@ $quotable  = $printable # [\']
 
 
 @number    = [1-9][0-9]{0,9} | 0
+@float     = ($digit+\.$digit+ | $digit+\.$digit+(e | E)\-?$digit+ | $digit+(e | E)\-?$digit+ )
 @boolean   = (squirtrue | squirfalse)    --Boolean
 @mlComment = \-\-(( [^\-\-] | [^\-]\-|\-[^\-] | $white)* | \-$white* | \-$white* )\-\-
 
@@ -33,6 +34,7 @@ $quotable  = $printable # [\']
 @badComment = \-\-(( [^\-\-] | [^\-]\-|\-[^\-] | $white)* | \-$white* | \-$white* )[^\-]
 @badComment2 = \-\-(( [^\-\-] | [^\-]\-|\-[^\-] | $white)* | \-$white* | \-$white* )\-
 @badIdentifier = $digit+$uc*@identifier
+@badfloat      = @float$uc*@identifier
 -- faltan puntos flotante
 -- faltan pipes
 -- faltan los char
@@ -93,6 +95,9 @@ tokens :-
   squirtrue                {\p s-> TkTrue      s    (getPos p)}
   squirfalse               {\p s-> TkFalse     s    (getPos p)}
 
+  @float                   {\p s-> TkFloat     s    (getPos p)}
+  @badfloat                {\p s-> TkError     s    (getPos p)  "Bad formed float"}
+  @badIdentifier           {\p s-> TkError     s    (getPos p) "Invalid identifier"}
   @badnumber               {\p s-> TkError     s    (getPos p)  "Bad formed number"}
   @badchar                 {\p s-> TkError (init s)  (getPos p) "No single quote close found"}
   @longchar                {\p s-> TkError     s  (getPos p)    "Character sequence too long"}
@@ -101,7 +106,6 @@ tokens :-
   @enum                    {\p s-> TkEnumCons  s    (getPos p)}
   @dataId                  {\p s-> TkDId       s    (getPos p)}
   poke                     {\p s-> TkError     s    (getPos p) "Invalid identifier. Did you mean 'pokeSomething' ?"}
-  @badIdentifier           {\p s-> TkError     s    (getPos p) "Invalid identifier"}
   @identifier              {\p s-> TkId        s    (getPos p)}
 
   \[                       {\p s -> TkLBracket s    (getPos p)}
