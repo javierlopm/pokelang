@@ -9,7 +9,8 @@ $lc     = [a-z]                      --LowerCase
 $uc     = [A-Z]                      --UpperCase
 $alpha  = [a-zA-Z]
 $digit  = [0-9]                     -- digits
-$print1 = $printable # [\"]
+$dquotable = $printable # [\"]
+$quotable  = $printable # [\']
 
 
 @number    = [1-9][0-9]{0,9} | 0
@@ -19,10 +20,15 @@ $print1 = $printable # [\"]
 @identifier = $lc [ $lc $uc $digit \_ ]*  '?'?
 @dataId     = poke [ $lc $uc $digit \_ ]+ \??
 @enum       = $uc   [$alpha $digit \_]*
-@string     = \" $print1* \"
+@string     = \" ( $dquotable | \\\" | \' )* \" 
+@char       = \' ( $quotable  | \\a | \\b | \\t | \\f | \\n | \\r | \\v | \\\\ | \\\' | \\\" ) \'
 @singlecomment    = \# .* [\n]?
 
-@badstring  = \".* \n
+@emptychar    = \'\'
+@emptystring  = \"\"
+@badstring    = \" $dquotable* \n
+@badchar      = \' $quotable*  \n
+@longchar     = \' $quotable{2,} \'
 @badnumber = 0 [$digit]+
 
 -- faltan puntos flotante
@@ -37,7 +43,10 @@ tokens :-
   $white+                  ; 
   \#[^\n]*                 ; 
   @mlComment               ;
-  @string                  {\p s-> TkString    s    (getPos p)}
+  @emptystring             {\p s-> TkString        []         (getPos p)}
+  @emptychar               {\p s-> TkString        []         (getPos p)}
+  @string                  {\p s-> TkString    (extract s)    (getPos p)}
+  @char                    {\p s-> TkCharVal   (extract s)    (getPos p)}
 
   pINTachu                 {\p s-> TkInt       s    (getPos p)}
   BOOLbasaur               {\p s-> TkBool      s    (getPos p)}
@@ -79,7 +88,11 @@ tokens :-
 
   squirtrue                {\p s-> TkTrue      s    (getPos p)}
   squirfalse               {\p s-> TkFalse     s    (getPos p)}
-  @badnumber               {\p s-> TkError     s    (getPos p) "Bad formed number"}
+
+  @badnumber               {\p s-> TkError     s    (getPos p)  "Bad formed number"}
+  @badchar                 {\p s-> TkError (init s)  (getPos p) "No single quote close found"}
+  @longchar                {\p s-> TkError     s  (getPos p)    "Character sequence too long"}
+  @badstring               {\p s-> TkError (init s)  (getPos p) "No double quote close found"}
   @number                  {\p s-> createNum   s    (getPos p)}
   @enum                    {\p s-> TkEnumCons  s    (getPos p)}
   @dataId                  {\p s-> TkDId       s    (getPos p)}
@@ -118,7 +131,7 @@ tokens :-
   \%                       {\p s-> TkMod       s    (getPos p)}
   \=                       {\p s-> TkAssign    s    (getPos p)}
 
-  .                        {\p s-> TkError     s    (getPos p) "Unkwown character"}
+  .                        {\p s-> TkError     s    (getPos p) "Unexpected character"}
 
 
 {
@@ -129,5 +142,8 @@ getPos (AlexPn _ l c) = (l,c)
     
 lexer :: String -> [Token] 
 lexer s = alexScanTokens s
+
+extract :: String -> String
+extract = init . tail
 
 }
