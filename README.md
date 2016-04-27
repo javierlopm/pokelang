@@ -52,10 +52,10 @@ this is not a part of the string above
 
 >"this is," this is not"
 
->"some declarations:
+>some declarations:
  CHARmander  charma;
  pINTachu    pika  = 2;
- butterFLOAT bfree = 3.4e-10;"
+ butterFLOAT bfree = 3.4e-10;
 
 ~~~
 
@@ -297,7 +297,7 @@ The structure of a bounded iteration must include explicitly the begining, value
 
 i.e
 
-    vamo_a_itera x = 1 |10|1: /* var = first | last | step */
+    vamo_a_itera x = 1 |10|1: -- var = first | last | step --
         instruccion0;
     vamo_a_calmano
 

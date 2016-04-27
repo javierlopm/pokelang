@@ -99,7 +99,7 @@ instance Show Token where
                            "    column: " ++ show c  ++ "\n"
 
   show (TkNum con (l,c) v) = "Integer\n" ++
-                           "    value:  " ++ show con ++ "\n" ++
+                           "    value:  " ++ show v ++ "\n" ++
                            "    line:   " ++ show l  ++ "\n" ++
                            "    column: " ++ show c  ++ "\n"
   show (TkFloatVal con (l,c) v) = "Integer\n" ++

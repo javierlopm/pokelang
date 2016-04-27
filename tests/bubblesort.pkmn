@@ -1,0 +1,22 @@
+--
+    Implementacio'n de bubblesort en pokelang
+--
+funcball VOIDtorb bubble( pINTachu[] arr, 
+                          pINTachu size):      
+
+    pINTachu temp;
+    pINTachu ordenados;
+    pINTachu pos;
+
+    vamo_a_itera ordenados = 0 |size-2|1: 
+        vamo_a_itera pos = ordenados |size-2|1
+            si arr[pos] < arr[pos+1]:
+                temp       = arr[pos+1];
+                arr[pos+1] = arr[pos];
+                arr[pos]   = temp;
+            vamo_a_calmano
+        vamo_a_calmano
+    vamo_a_calmano
+
+    
+vamo_a_calmano;
