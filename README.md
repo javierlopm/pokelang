@@ -9,7 +9,7 @@ This document is designed to give the specification for the language syntax and 
 ## Lexical considerations
 The following are keywords. They are all reserved, which means they cannot be used as identifiers or redefined.
 
-> `pINTachu, BOOLbasaur, squirtrue, squirfalse, CHARmander, VOIDtorb, butterFloat, STRUCTtabuzz, arcticUNION, ENUManyte, GLOBAt, nullikarp, funcball, vamo_a_para, vamo_a_segui, vamos_a_retorna, vamo_a_sali, vamo_a_lee, vamo_a_escribi, vamo_a_imprimi, vamo_a_itera, vamo_mientra, si, y_si, si_no, vamo_a_empeza, vamo_a_calmano, atrapar, liberar, SIZEther, pidget.`
+> `pINTachu, BOOLbasaur, squirtrue, squirfalse, CHARmander, VOIDtorb, butterFloat, STRUCTtabuzz, articUNION, ENUManyte, GLOBAt, nullikarp, funcball, vamo_a_para, vamo_a_segui, vamo_a_retorna, vamo_a_sali, vamo_a_lee, vamo_a_escribi, vamo_a_imprimi, vamo_a_itera, vamo_mientra, si, y_si, si_no, vamo_a_empeza, vamo_a_calmano, atrapar, liberar, SIZEther, pidget.`
 
 ------
 
@@ -20,7 +20,7 @@ In the case of having an identifier that starts with 'poke', we're speaking of a
 ------
 
 *Whitespace* (i.e. spaces, tabs, and newlines) serves to separate tokens, but is otherwise ignored. Keywords and identifiers must be separated by whitespace or a token that is neither a keyword nor an identifier.
-`vamos_a_retorna` is a single identifier, not three keywords. `vamos_a_retorna paAtra` and `(pINTachu)paAtra` scans both as two tokens.
+`vamo_a_retorna` is a single identifier, not three keywords. `vamo_a_retorna paAtra` and `(pINTachu)paAtra` scans both as two tokens.
 
 ------
 
@@ -89,7 +89,6 @@ Pokelang includes the primitives data types.
 |  float| butterFloat | 4             |
 |  char | CHARmander  | 4             |
 |  void | VOIDtorb    | NO            |
-|  char | CHARmander  | 4             |
 |  enum | ENUManyte   | 4             |
 |  pointer | *        | 4             |
 
@@ -200,8 +199,8 @@ A function declaration includes the name of the function and its associated type
 * Formal parameters can be of any base type, array type, pointers or named types.
 * Parameters identifiers are unique within a function definition.
 * Function may have zero or more formal parameters.
-* If a function has a `VOIDtorb` return type, it may only use the empty `vamos_a_retorna` statement.
-* If a function has a non-VOIDtorb return type, any `vamos_a_retorna` statement must return a value compatible with that
+* If a function has a `VOIDtorb` return type, it may only use the empty `vamo_a_retorna` statement.
+* If a function has a non-VOIDtorb return type, any `vamo_a_retorna` statement must return a value compatible with that
 * The function return type can be any base, array, or named type. `VOIDtorb` type is used to indicate the function returns no value.
 * Functions do not nest. 
 * Functions identifiers have global scope.
@@ -238,7 +237,7 @@ Invocations use strict evaluation: all arguments are evaluated before sending th
 
 ### Procedures
 
-In pokelang, a procedures is used to declare a VOIDtorb-type function where all its argumentes are passed by reference. Because of this, it may only have `VOIDtorb` on its declaration and may not have any non-empty `vamos_a_retorna` statement. As it's a specific case of a function, the reserved keyword `funcball` of type `VOIDtorb` indicates that a procedure it's been declared.
+In pokelang, a procedures is used to declare a VOIDtorb-type function where all its argumentes are passed by reference. Because of this, it may only have `VOIDtorb` on its declaration and may not have any non-empty `vamo_a_retorna` statement. As it's a specific case of a function, the reserved keyword `funcball` of type `VOIDtorb` indicates that a procedure it's been declared.
 
 i.e.
 ~~~
@@ -249,9 +248,7 @@ funcball VOIDtorb hola(butterFloat[] w,CHARmander z,BOOLbasaur b):       #All is
 		pInktachu h = 3;
 		*w[4]=(butterFloat) h // 2;
 	vamo_a_calmano;
-
-	#As you can see, this definition lacks of a `vamos_a_retorna` statement.
-vamo_a_calmano; 
+vamo_a_calmano;  #This definition lacks of a `vamo_a_retorna` (return statement).
 ~~~
 
 

@@ -56,7 +56,7 @@ vamo_a_calmano
 #Saltos
 vamo_a_para     #break
 vamo_a_segui    #continue
-vamos_a_retorna # return
+vamo_a_retorna # return
 vamo_a_sali     #exit
 
 pINTachu myInt;

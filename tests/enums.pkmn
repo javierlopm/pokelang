@@ -1,0 +1,7 @@
+--
+    Muestra de un enum bien formado
+--
+ENUManyte pokeDiasLaborables {
+    Lunes,
+    Martes
+}

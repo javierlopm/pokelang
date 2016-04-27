@@ -1,0 +1,13 @@
+--
+    Prueba de struct y union
+--
+
+STRUCTabuzz pokeball {
+    type  :: CHARmander[],
+    price :: Pintachu
+}
+
+articUNION trainer {
+    name                 :: CHARmander[],
+    socialSecurityNumber :: pINTachem
+}

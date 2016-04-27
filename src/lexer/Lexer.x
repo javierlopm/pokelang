@@ -54,7 +54,7 @@ tokens :-
   VOIDtorb                 {\p s-> TkVoid      s    (getPos p)}
   butterFloat              {\p s-> TkFloat     s    (getPos p)}
   STRUCTtabuzz             {\p s-> TkStruct    s    (getPos p)}
-  arcticUNION              {\p s-> TkUnion     s    (getPos p)}
+  articUNION               {\p s-> TkUnion     s    (getPos p)}
   ENUManyte                {\p s-> TkEnum      s    (getPos p)}
   GLOBAt                   {\p s-> TKGlobal    s    (getPos p)}
   
@@ -66,7 +66,7 @@ tokens :-
   vamo\_a\_empeza          {\p s-> TkBegin     s    (getPos p)}
   vamo\_a\_para            {\p s-> TkBreak     s    (getPos p)}
   vamo\_a\_segui           {\p s-> TkContinue  s    (getPos p)}
-  vamos\_a\_retorna        {\p s-> TkReturn    s    (getPos p)}
+  vamo\_a\_retorna        {\p s-> TkReturn    s    (getPos p)}
   vamo\_a\_sali            {\p s-> TkExit      s    (getPos p)}
   vamo\_a\_lee             {\p s-> TkRead      s    (getPos p)}
   vamo\_a\_escribi         {\p s-> TkWrite     s    (getPos p)}
