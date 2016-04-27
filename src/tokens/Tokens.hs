@@ -154,6 +154,6 @@ createFloat num pos = if (double > largest)
 
                 
 
-checkErrors :: Token -> IO()
-checkErrors myTok@(TkError con (l,c) v) =  (hPutStrLn stderr . show ) myTok
-checkErrors myTok =  (putStrLn . show ) myTok
+checkErrors :: Token -> (IO(),Int)
+checkErrors myTok@(TkError con (l,c) v) =  ((hPutStrLn stderr . show ) myTok, 1)
+checkErrors myTok =  ((putStrLn . show ) myTok,0)
