@@ -16,7 +16,7 @@ $print1 = $printable # [\"]
 @boolean   = (squirtrue | squirfalse)    --Boolean
 @mlComment = \-\-(( [^\-\-] | [^\-]\-|\-[^\-] | $white)* | \-$white* | \-$white* )\-\-
 
-@identifier = $lc [ $lc $uc $digit \_ ]*  \??
+@identifier = $lc [ $alpha $digit \_ ]*  \??
 @dataId     = poke [ $lc $uc $digit \_ ]+ \??
 @enum       = $uc   [$alpha $digit \_]*
 @string     = \" $print1* \"
@@ -24,21 +24,23 @@ $print1 = $printable # [\"]
 
 @badstring  = \".* \n
 @badnumber = 0 [$digit]+
-@badComment = \-\-(( [^\-\-] | [^\-]\-|\-[^\-] | $white)* | \-$white* | \-$white* )(\- | [^\-])
-
+@badComment = \-\-(( [^\-\-] | [^\-]\-|\-[^\-] | $white)* | \-$white* | \-$white* )[^\-]
+@badComment2 = \-\-(( [^\-\-] | [^\-]\-|\-[^\-] | $white)* | \-$white* | \-$white* )\-
+@badIdentifier = $digit+$uc*@identifier
 -- faltan puntos flotante
 -- faltan pipes
 -- faltan los char
 -- char mal cerrados
--- comentarios mal cerrados
--- mumeros seguidos de cosas
+-- comentarios mal cerrados DONE
+-- mumeros seguidos de cosas  DONE
 
 
 tokens :-
   $white+                  ; 
   \#[^\n]*                 ; 
   @mlComment               ;
-  @badComment              {\p s-> TkError     s    (getPos p) "Comment not closed properly?"}
+  @badComment              {\p s-> TkError     s    (getPos p) "Comment not closed"}
+  @badComment2             {\p s-> TkError     s    (getPos p) "Comment not closed properly. Please use '--' to close comments"}
   @string                  {\p s-> TkString    s    (getPos p)}
 
   pINTachu                 {\p s-> TkInt       s    (getPos p)}
@@ -85,7 +87,8 @@ tokens :-
   @number                  {\p s-> createNum   s    (getPos p)}
   @enum                    {\p s-> TkEnumCons  s    (getPos p)}
   @dataId                  {\p s-> TkDId       s    (getPos p)}
-  poke                     {\p s-> TkError     s    (getPos p) "Invalid identifier"}
+  poke                     {\p s-> TkError     s    (getPos p) "Invalid identifier. Did you mean 'pokeSomething' ?"}
+  @badIdentifier           {\p s-> TkError     s    (getPos p) "Invalid identifier"}
   @identifier              {\p s-> TkId        s    (getPos p)}
 
   \[                       {\p s -> TkLBracket s    (getPos p)}
@@ -94,6 +97,7 @@ tokens :-
   \}                       {\p s -> TkRCurly   s    (getPos p)}
   \(                       {\p s -> TkLRound   s    (getPos p)}
   \)                       {\p s -> TkRRound   s    (getPos p)}
+  \|                       {\p s -> TkPipe     s    (getPos p)}
 
   \:\:                     {\p s-> TkDColon    s    (getPos p)}
   \:                       {\p s-> TkColon     s    (getPos p)}
@@ -120,7 +124,7 @@ tokens :-
   \%                       {\p s-> TkMod       s    (getPos p)}
   \=                       {\p s-> TkAssign    s    (getPos p)}
 
-  .                        {\p s-> TkError     s    (getPos p) "Unkwown character"}
+  .                        {\p s-> TkError     s    (getPos p) "Unexpected character"}
 
 
 {
