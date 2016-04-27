@@ -139,7 +139,6 @@ createNum s p = if number <= 2147483648
                     else (TkError s p "Number overflow")
     where number = read s :: Integer
 
--- hace falta
 createFloat :: String -> Pos -> Token
 createFloat num pos = if (double > largest) 
                           then (TkError    num pos "Floating point overflow")

@@ -35,12 +35,6 @@ $quotable  = [\x00-\x7F] # [\']
 @badComment2 = \-\-(( [^\-\-] | [^\-]\-|\-[^\-] | $white)* | \-$white* | \-$white* )\-
 @badIdentifier = $digit+$uc*@identifier
 @badfloat      = @float$uc*@identifier
--- faltan puntos flotante
--- faltan pipes
--- faltan los char
--- char mal cerrados
--- comentarios mal cerrados DONE
--- mumeros seguidos de cosas  DONE
 
 
 tokens :-
