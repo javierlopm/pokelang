@@ -49,6 +49,7 @@ data Token =  TkString    {content::String, position :: Pos }
             | TkInt       {content::String, position :: Pos }
             | TkBool      {content::String, position :: Pos }
             | TkChar      {content::String, position :: Pos }
+            | TkCharVal   {content::String, position :: Pos }
             | TkVoid      {content::String, position :: Pos }
             | TkFloat     {content::String, position :: Pos }
             | TkStruct    {content::String, position :: Pos }
@@ -99,8 +100,19 @@ instance Show Token where
                            "    line:   " ++ show l  ++ "\n" ++
                            "    column: " ++ show c  ++ "\n"
 
-  show (TkString con (l,c)) = "String\n" ++
-                           "    value:  " ++ show con ++ "\n" ++
+  show (TkCharVal con (l,c) ) = "Character\n" ++
+                           "    value:  " ++ con ++ "\n" ++
+                           "    line:   " ++ show l  ++ "\n" ++
+                           "    column: " ++ show c  ++ "\n"
+  show (TkCharVal [] (l,c)) = "Empty Character sequence\n" ++
+                           "    line:   " ++ show l  ++ "\n" ++
+                           "    column: " ++ show c  ++ "\n"
+
+  show (TkString con (l,c) ) = "String\n" ++
+                           "    value:  " ++ con ++ "\n" ++
+                           "    line:   " ++ show l  ++ "\n" ++
+                           "    column: " ++ show c  ++ "\n"
+  show (TkString [] (l,c) ) = "Empty String\n" ++
                            "    line:   " ++ show l  ++ "\n" ++
                            "    column: " ++ show c  ++ "\n"
 
