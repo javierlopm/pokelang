@@ -19,6 +19,7 @@ data Token =  TkString    {content::String, position :: Pos }
             | TkRCurly    {content::String, position :: Pos }
             | TkLRound    {content::String, position :: Pos }
             | TkRRound    {content::String, position :: Pos }
+            | TkPipe      {content::String, position :: Pos }
             | TkDColon    {content::String, position :: Pos }
             | TkColon     {content::String, position :: Pos }
             | TkSColon    {content::String, position :: Pos }
@@ -100,19 +101,21 @@ instance Show Token where
                            "    line:   " ++ show l  ++ "\n" ++
                            "    column: " ++ show c  ++ "\n"
 
+  show (TkCharVal [] (l,c)) = "Empty Character sequence\n" ++
+                           "    line:   " ++ show l  ++ "\n" ++
+                           "    column: " ++ show c  ++ "\n"
+
   show (TkCharVal con (l,c) ) = "Character\n" ++
                            "    value:  " ++ con ++ "\n" ++
                            "    line:   " ++ show l  ++ "\n" ++
                            "    column: " ++ show c  ++ "\n"
-  show (TkCharVal [] (l,c)) = "Empty Character sequence\n" ++
+
+  show (TkString [] (l,c) ) = "Empty String\n" ++
                            "    line:   " ++ show l  ++ "\n" ++
                            "    column: " ++ show c  ++ "\n"
 
   show (TkString con (l,c) ) = "String\n" ++
                            "    value:  " ++ con ++ "\n" ++
-                           "    line:   " ++ show l  ++ "\n" ++
-                           "    column: " ++ show c  ++ "\n"
-  show (TkString [] (l,c) ) = "Empty String\n" ++
                            "    line:   " ++ show l  ++ "\n" ++
                            "    column: " ++ show c  ++ "\n"
 
