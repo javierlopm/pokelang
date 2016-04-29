@@ -41,54 +41,55 @@ tokens :-
   $white+                  ; 
   \#[^\n]*                 ; 
   @mlComment               ;
-  @badComment              {\p s-> TkError     s    (getPos p) "Comment not closed"}
-  @badComment2             {\p s-> TkError     s    (getPos p) "Comment not closed properly. Please use '--' to close comments"}
-  @emptystring             {\p s-> TkString        []         (getPos p)}
-  @emptychar               {\p s-> TkString        []         (getPos p)}
-  @string                  {\p s-> TkString    (extract s)    (getPos p)}
-  @char                    {\p s-> TkCharVal   (extract s)    (getPos p)}
+  @badComment              {\p s-> TkError    (getPos p) s "Comment not closed"}
+  @badComment2             {\p s-> TkError    (getPos p) s "Comment not closed properly. Please use '--' to close comments"}
+  @emptystring             {\p s-> TkString   (getPos p) [] }
+  @emptychar               {\p s-> TkChar     (getPos p) '\0' }
+  @string                  {\p s-> TkString   (getPos p) (extract s) }
+  @char                    {\p s-> TkCharVal  (getPos p) (extract s) }
 
-  pINTachu                 {\p s-> TkInt       s    (getPos p)}
-  BOOLbasaur               {\p s-> TkBool      s    (getPos p)}
-  CHARmander               {\p s-> TkChar      s    (getPos p)}
-  VOIDtorb                 {\p s-> TkVoid      s    (getPos p)}
-  butterFloat              {\p s-> TkFloat     s    (getPos p)}
-  STRUCTtabuzz             {\p s-> TkStruct    s    (getPos p)}
-  articUNION               {\p s-> TkUnion     s    (getPos p)}
-  ENUManyte                {\p s-> TkEnum      s    (getPos p)}
-  GLOBAt                   {\p s-> TKGlobal    s    (getPos p)}
+  pINTachu                 { \p _ -> TkInt       (getPos p) }
+  BOOLbasaur               { \p _ -> TkBool      (getPos p) }
+  CHARmander               { \p _ -> TkChar      (getPos p) }
+  VOIDtorb                 { \p _ -> TkVoid      (getPos p) }
+  butterFloat              { \p _ -> TkFloat     (getPos p) }
+  STRUCTtabuzz             { \p _ -> TkStruct    (getPos p) }
+  articUNION               { \p _ -> TkUnion     (getPos p) }
+  ENUManyte                { \p _ -> TkEnum      (getPos p) }
+  GLOBAt                   { \p _ -> TKGlobal    (getPos p) }
   
-  nullikarp                {\p s-> TkNull      s    (getPos p)}
+  nullikarp                { \p _ -> TkNull      (getPos p) }
   
-  vamo\_a\_calmano         {\p s-> TkEnd       s    (getPos p)}
-  vamo\_mientra            {\p s-> TkWhile     s    (getPos p)}
-  vamo\_a\_itera           {\p s-> TkFor       s    (getPos p)}
-  vamo\_a\_empeza          {\p s-> TkBegin     s    (getPos p)}
-  vamo\_a\_para            {\p s-> TkBreak     s    (getPos p)}
-  vamo\_a\_segui           {\p s-> TkContinue  s    (getPos p)}
-  vamo\_a\_retorna         {\p s-> TkReturn    s    (getPos p)}
-  vamo\_a\_sali            {\p s-> TkExit      s    (getPos p)}
-  vamo\_a\_lee             {\p s-> TkRead      s    (getPos p)}
-  vamo\_a\_escribi         {\p s-> TkWrite     s    (getPos p)}
-  vamo\_a\_imprimi         {\p s-> TkPrint     s    (getPos p)}
+  vamo\_a\_calmano         { \p _ -> TkEnd       (getPos p) }
+  vamo\_mientra            { \p _ -> TkWhile     (getPos p) }
+  vamo\_a\_itera           { \p _ -> TkFor       (getPos p) }
+  vamo\_a\_empeza          { \p _ -> TkBegin     (getPos p) }
+  vamo\_a\_para            { \p _ -> TkBreak     (getPos p) }
+  vamo\_a\_segui           { \p _ -> TkContinue  (getPos p) }
+  vamo\_a\_retorna         { \p _ -> TkReturn    (getPos p) }
+  vamo\_a\_sali            { \p _ -> TkExit      (getPos p) }
+  vamo\_a\_lee             { \p _ -> TkRead      (getPos p) }
+  vamo\_a\_escribi         { \p _ -> TkWrite     (getPos p) }
+  vamo\_a\_imprimi         { \p _ -> TkPrint     (getPos p) }
 
 
-  funcball                 {\p s-> TkNull      s    (getPos p)}
+  funcball                 { \p _ -> TkNull      (getPos p) }
 
-  si                       {\p s-> TkIf        s    (getPos p)}
-  y\_si                    {\p s-> TkElif      s    (getPos p)}
-  si\_no                   {\p s-> TkElse      s    (getPos p)}
-  atrapar                  {\p s-> TkAlloc     s    (getPos p)}
-  liberar                  {\p s-> TkFree      s    (getPos p)}
-  SIZEther                 {\p s-> TkSizeOf    s    (getPos p)}
-  pidget                   {\p s-> TkGet       s    (getPos p)}
+  si                       { \p _ -> TkIf        (getPos p) }
+  y\_si                    { \p _ -> TkElif      (getPos p) }
+  si\_no                   { \p _ -> TkElse      (getPos p) }
+  atrapar                  { \p _ -> TkAlloc     (getPos p) }
+  liberar                  { \p _ -> TkFree      (getPos p) }
+  SIZEther                 { \p _ -> TkSizeOf    (getPos p) }
+  pidget                   { \p _ -> TkGet       (getPos p) }
   
-  and                      {\p s-> TkAnd       s    (getPos p)}
-  or                       {\p s-> TkOr        s    (getPos p)}
+  and                      { \p _ -> TkAnd       (getPos p) }
+  or                       { \p _ -> TkOr        (getPos p) }
 
-  squirtrue                {\p s-> TkTrue      s    (getPos p)}
-  squirfalse               {\p s-> TkFalse     s    (getPos p)}
+  squirtrue                { \p _ -> TkTrue      (getPos p) }
+  squirfalse               { \p _ -> TkFalse     (getPos p) }
 
+-- Falta todo esto
   @float                   {\p s-> createFloat s    (getPos p)}
   @badfloat                {\p s-> TkError     s    (getPos p)  "Bad formed float"}
   @badIdentifier           {\p s-> TkError     s    (getPos p) "Invalid identifier"}
@@ -102,40 +103,40 @@ tokens :-
   poke                     {\p s-> TkError     s    (getPos p) "Invalid identifier. Did you mean 'pokeSomething' ?"}
   @identifier              {\p s-> TkId        s    (getPos p)}
 
-  \[                       {\p s -> TkLBracket s    (getPos p)}
-  \]                       {\p s -> TkRBracket s    (getPos p)}
-  \{                       {\p s -> TkLCurly   s    (getPos p)}
-  \}                       {\p s -> TkRCurly   s    (getPos p)}
-  \(                       {\p s -> TkLRound   s    (getPos p)}
-  \)                       {\p s -> TkRRound   s    (getPos p)}
-  \|                       {\p s -> TkPipe     s    (getPos p)}
+  \[                       { \p _  -> TkLBracket (getPos p)}
+  \]                       { \p _  -> TkRBracket (getPos p)}
+  \{                       { \p _  -> TkLCurly   (getPos p)}
+  \}                       { \p _  -> TkRCurly   (getPos p)}
+  \(                       { \p _  -> TkLRound   (getPos p)}
+  \)                       { \p _  -> TkRRound   (getPos p)}
+  \|                       { \p _  -> TkPipe     (getPos p)}
 
-  \:\:                     {\p s-> TkDColon    s    (getPos p)}
-  \:                       {\p s-> TkColon     s    (getPos p)}
-  \;                       {\p s-> TkSColon    s    (getPos p)}
-  \,                       {\p s-> TkComma     s    (getPos p)}
-  \*\=                     {\p s-> TkTEQ       s    (getPos p)}
-  \+\=                     {\p s-> TkPEQ       s    (getPos p)}
-  \.                       {\p s-> TkDot       s    (getPos p)}
-  \!                       {\p s-> TkExcMark   s    (getPos p)}
-  \!\=                     {\p s-> TkNEQ       s    (getPos p)}
-  \&\&                     {\p s-> TkDAmp      s    (getPos p)}
-  \|\|                     {\p s-> TkPOr       s    (getPos p)}
-  \=\=                     {\p s-> TkEq        s    (getPos p)}
-  \>\=                     {\p s-> TkGE        s    (getPos p)}
-  \<\=                     {\p s-> TkLE        s    (getPos p)}
-  \>                       {\p s-> TkGT        s    (getPos p)}
-  \<                       {\p s-> TkLT        s    (getPos p)}
-  \/\/                     {\p s-> TkIDiv      s    (getPos p)}
-  \/                       {\p s-> TkDiv       s    (getPos p)}
-  \+                       {\p s-> TkSum       s    (getPos p)}
-  \-                       {\p s-> TkMin       s    (getPos p)}
-  \^                       {\p s-> TkPower     s    (getPos p)}
-  \*                       {\p s-> TkTimes     s    (getPos p)}
-  \%                       {\p s-> TkMod       s    (getPos p)}
-  \=                       {\p s-> TkAssign    s    (getPos p)}
+  \:\:                     { \p _ -> TkDColon    (getPos p)}
+  \:                       { \p _ -> TkColon     (getPos p)}
+  \;                       { \p _ -> TkSColon    (getPos p)}
+  \,                       { \p _ -> TkComma     (getPos p)}
+  \*\=                     { \p _ -> TkTEQ       (getPos p)}
+  \+\=                     { \p _ -> TkPEQ       (getPos p)}
+  \.                       { \p _ -> TkDot       (getPos p)}
+  \!                       { \p _ -> TkExcMark   (getPos p)}
+  \!\=                     { \p _ -> TkNEQ       (getPos p)}
+  \&\&                     { \p _ -> TkDAmp      (getPos p)}
+  \|\|                     { \p _ -> TkPOr       (getPos p)}
+  \=\=                     { \p _ -> TkEq        (getPos p)}
+  \>\=                     { \p _ -> TkGE        (getPos p)}
+  \<\=                     { \p _ -> TkLE        (getPos p)}
+  \>                       { \p _ -> TkGT        (getPos p)}
+  \<                       { \p _ -> TkLT        (getPos p)}
+  \/\/                     { \p _ -> TkIDiv      (getPos p)}
+  \/                       { \p _ -> TkDiv       (getPos p)}
+  \+                       { \p _ -> TkSum       (getPos p)}
+  \-                       { \p _ -> TkMin       (getPos p)}
+  \^                       { \p _ -> TkPower     (getPos p)}
+  \*                       { \p _ -> TkTimes     (getPos p)}
+  \%                       { \p _ -> TkMod       (getPos p)}
+  \=                       { \p _ -> TkAssign    (getPos p)}
 
-  .                        {\p s-> TkError     s    (getPos p) "Unexpected character"}
+  .                        { \p s -> TkError (getPos p)  s "Unexpected character"}
 
 
 {
@@ -149,5 +150,8 @@ lexer s = alexScanTokens s
 
 extract :: String -> String
 extract = init . tail
+
+extractChar :: String -> Char
+extractChar s = '\0'
 
 }
