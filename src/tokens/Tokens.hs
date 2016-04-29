@@ -9,83 +9,87 @@ module Tokens(
 ) where
 
 import Data.Data(toConstr,Data,Typeable)
-import System.IO(hPutStrLn,stderr)  
+import System.IO(hPrint,stderr)  
 
 type Pos = (Int,Int)
 
-data Token =  TkString    {content::String, position :: Pos }
-            | TkLBracket  {content::String, position :: Pos }
-            | TkRBracket  {content::String, position :: Pos }
-            | TkLCurly    {content::String, position :: Pos }
-            | TkRCurly    {content::String, position :: Pos }
-            | TkLRound    {content::String, position :: Pos }
-            | TkRRound    {content::String, position :: Pos }
-            | TkPipe      {content::String, position :: Pos }
-            | TkDColon    {content::String, position :: Pos }
-            | TkColon     {content::String, position :: Pos }
-            | TkSColon    {content::String, position :: Pos }
-            | TkComma     {content::String, position :: Pos }
-            | TkTEQ       {content::String, position :: Pos }
-            | TkPEQ       {content::String, position :: Pos }
-            | TkDot       {content::String, position :: Pos }
-            | TkExcMark   {content::String, position :: Pos }
-            | TkNEQ       {content::String, position :: Pos }
-            | TkDAmp      {content::String, position :: Pos }
-            | TkAnd       {content::String, position :: Pos }
-            | TkPOr       {content::String, position :: Pos }
-            | TkOr        {content::String, position :: Pos }
-            | TkDEQ       {content::String, position :: Pos }
-            | TkGE        {content::String, position :: Pos }
-            | TkLE        {content::String, position :: Pos }
-            | TkGT        {content::String, position :: Pos }
-            | TkLT        {content::String, position :: Pos }
-            | TkIDiv      {content::String, position :: Pos }
-            | TkDiv       {content::String, position :: Pos }
-            | TkSum       {content::String, position :: Pos }
-            | TkMin       {content::String, position :: Pos }
-            | TkPower     {content::String, position :: Pos }
-            | TkTimes     {content::String, position :: Pos }
-            | TkMod       {content::String, position :: Pos }
-            | TkEq        {content::String, position :: Pos }
-            | TkAssign    {content::String, position :: Pos }
-            | TkInt       {content::String, position :: Pos }
-            | TkBool      {content::String, position :: Pos }
-            | TkChar      {content::String, position :: Pos }
-            | TkCharVal   {content::String, position :: Pos }
-            | TkVoid      {content::String, position :: Pos }
-            | TkFloat     {content::String, position :: Pos }
-            | TkStruct    {content::String, position :: Pos }
-            | TkUnion     {content::String, position :: Pos }
-            | TkEnum      {content::String, position :: Pos }
-            | TkEnumCons  {content::String, position :: Pos }
-            | TkNull      {content::String, position :: Pos }
-            | TKGlobal    {content::String, position :: Pos }
-            | TkFunc      {content::String, position :: Pos }
-            | TkIf        {content::String, position :: Pos }
-            | TkElif      {content::String, position :: Pos }
-            | TkElse      {content::String, position :: Pos }
-            | TkEnd       {content::String, position :: Pos }
-            | TkWhile     {content::String, position :: Pos }
-            | TkFor       {content::String, position :: Pos }
-            | TkBegin     {content::String, position :: Pos }
-            | TkBreak     {content::String, position :: Pos }
-            | TkContinue  {content::String, position :: Pos }
-            | TkReturn    {content::String, position :: Pos }
-            | TkExit      {content::String, position :: Pos }
-            | TkRead      {content::String, position :: Pos }
-            | TkWrite     {content::String, position :: Pos }
-            | TkPrint     {content::String, position :: Pos }
-            | TkAlloc     {content::String, position :: Pos }
-            | TkFree      {content::String, position :: Pos }
-            | TkSizeOf    {content::String, position :: Pos }
-            | TkGet       {content::String, position :: Pos }
-            | TkTrue      {content::String, position :: Pos }
-            | TkFalse     {content::String, position :: Pos }
-            | TkNum       {content::String, position :: Pos, value :: Integer }
-            | TkFloatVal  {content::String, position :: Pos, rep   :: Float   }
-            | TkDId       {content::String, position :: Pos }
-            | TkId        {content::String, position :: Pos }
-            | TkError     {content::String, position :: Pos, message::String }
+showPos :: Pos -> String
+showPos (l,c) = "    line:   " ++ show l  ++ "\n" ++
+                "    column: " ++ show c  ++ "\n"
+
+data Token =  TkLBracket  { position :: Pos }
+            | TkRBracket  { position :: Pos }
+            | TkLCurly    { position :: Pos }
+            | TkRCurly    { position :: Pos }
+            | TkLRound    { position :: Pos }
+            | TkRRound    { position :: Pos }
+            | TkPipe      { position :: Pos }
+            | TkDColon    { position :: Pos }
+            | TkColon     { position :: Pos }
+            | TkSColon    { position :: Pos }
+            | TkComma     { position :: Pos }
+            | TkTEQ       { position :: Pos }
+            | TkPEQ       { position :: Pos }
+            | TkDot       { position :: Pos }
+            | TkExcMark   { position :: Pos }
+            | TkNEQ       { position :: Pos }
+            | TkDAmp      { position :: Pos }
+            | TkAnd       { position :: Pos }
+            | TkPOr       { position :: Pos }
+            | TkOr        { position :: Pos }
+            | TkDEQ       { position :: Pos }
+            | TkGE        { position :: Pos }
+            | TkLE        { position :: Pos }
+            | TkGT        { position :: Pos }
+            | TkLT        { position :: Pos }
+            | TkIDiv      { position :: Pos }
+            | TkDiv       { position :: Pos }
+            | TkSum       { position :: Pos }
+            | TkMin       { position :: Pos }
+            | TkPower     { position :: Pos }
+            | TkTimes     { position :: Pos }
+            | TkMod       { position :: Pos }
+            | TkEq        { position :: Pos }
+            | TkAssign    { position :: Pos }
+            | TkInt       { position :: Pos }
+            | TkBool      { position :: Pos }
+            | TkChar      { position :: Pos }
+            | TkVoid      { position :: Pos }
+            | TkFloat     { position :: Pos }
+            | TkStruct    { position :: Pos }
+            | TkUnion     { position :: Pos }
+            | TkEnum      { position :: Pos }
+            | TkNull      { position :: Pos }
+            | TKGlobal    { position :: Pos }
+            | TkFunc      { position :: Pos }
+            | TkIf        { position :: Pos }
+            | TkElif      { position :: Pos }
+            | TkElse      { position :: Pos }
+            | TkEnd       { position :: Pos }
+            | TkWhile     { position :: Pos }
+            | TkFor       { position :: Pos }
+            | TkBegin     { position :: Pos }
+            | TkBreak     { position :: Pos }
+            | TkContinue  { position :: Pos }
+            | TkReturn    { position :: Pos }
+            | TkExit      { position :: Pos }
+            | TkRead      { position :: Pos }
+            | TkWrite     { position :: Pos }
+            | TkPrint     { position :: Pos }
+            | TkAlloc     { position :: Pos }
+            | TkFree      { position :: Pos }
+            | TkSizeOf    { position :: Pos }
+            | TkGet       { position :: Pos }
+            | TkTrue      { position :: Pos }
+            | TkFalse     { position :: Pos }
+            | TkDId       { position :: Pos, lexeme :: String }
+            | TkId        { position :: Pos, lexeme :: String }
+            | TkCharVal   { position :: Pos, char   :: Char   }
+            | TkEnumCons  { position :: Pos, lexeme :: String }
+            | TkString    { position :: Pos, content:: String }
+            | TkNum       { position :: Pos, value  :: Integer}
+            | TkFloatVal  { position :: Pos, rep    :: Float  }
+            | TkError     { position :: Pos, content:: String, message::String }
             deriving(Data,Typeable)
 
 -- floating points missing
@@ -93,67 +97,59 @@ data Token =  TkString    {content::String, position :: Pos }
 -- function to check if there is any error missing
 
 instance Show Token where
-  show (TkId con (l,c)) = "Identifier\n" ++
-                           "    lexeme: " ++ con ++ "\n" ++
-                           "    line:   " ++ show l  ++ "\n" ++
-                           "    column: " ++ show c  ++ "\n"
+  show (TkId  pos con) = "Identifier\n" ++
+                         "    lexeme: " ++ con ++ "\n" ++ 
+                         showPos pos
 
-  show (TkNum con (l,c) v) = "Integer\n" ++
-                           "    value:  " ++ show v ++ "\n" ++
-                           "    line:   " ++ show l  ++ "\n" ++
-                           "    column: " ++ show c  ++ "\n"
-  show (TkFloatVal con (l,c) v) = "Integer\n" ++
-                           "    value:  " ++ show v  ++ "\n" ++
-                           "    line:   " ++ show l  ++ "\n" ++
-                           "    column: " ++ show c  ++ "\n"
+  show (TkNum pos v) = "Integer\n" ++
+                       "    value:  " ++ show v ++ "\n" ++ 
+                       showPos pos
+                           
+  show (TkFloatVal pos v) = "Integer\n" ++
+                            "    value:  " ++ show v  ++ "\n" ++
+                            showPos pos
 
-  show (TkCharVal [] (l,c)) = "Empty Character sequence\n" ++
-                           "    line:   " ++ show l  ++ "\n" ++
-                           "    column: " ++ show c  ++ "\n"
+  show (TkCharVal pos '\0' ) = "Empty Character sequence\n" ++
+                             showPos pos
 
-  show (TkCharVal con (l,c) ) = "Character\n" ++
-                           "    value:  " ++ con ++ "\n" ++
-                           "    line:   " ++ show l  ++ "\n" ++
-                           "    column: " ++ show c  ++ "\n"
+  show (TkCharVal pos c ) = "Character\n" ++
+                            "    value:  " ++ [c] ++ "\n" ++
+                            showPos pos
+                           
 
-  show (TkString [] (l,c) ) = "Empty String\n" ++
-                           "    line:   " ++ show l  ++ "\n" ++
-                           "    column: " ++ show c  ++ "\n"
+  show (TkString pos [] ) = "Empty String\n" ++
+                            showPos pos
 
-  show (TkString con (l,c) ) = "String\n" ++
-                           "    value:  " ++ con ++ "\n" ++
-                           "    line:   " ++ show l  ++ "\n" ++
-                           "    column: " ++ show c  ++ "\n"
+  show (TkString pos str) = "String\n" ++
+                            "    value:  " ++ str ++ "\n" ++
+                            showPos pos
+                           
 
-  show (TkError con (l,c) m) = "Error: " ++ m ++". " ++ "\" " ++ con ++ " \" " ++ "at " ++ show l ++ ":" ++ show c ++ "\n"
+  show (TkError (l,c) con  m) = "Error: " ++ m ++". " ++ "\" " ++ con ++ " \" " ++ "at " ++ show l ++ ":" ++ show c ++ "\n"
 
-  show generic = show (toConstr generic )++ "\n" ++
-                 "    value:  " ++ (content generic ) ++ "\n" ++
-                 "    line:   " ++ show l ++ "\n" ++
-                 "    column: " ++ show c ++ "\n"
-                where (l,c) = position generic
+  show generic = show (toConstr generic ) ++ "\n" ++ showPos (position generic)
 
 createNum :: String -> Pos -> Token
-createNum s p = if number <= 2147483648 
-                    then (TkNum  s p number)
-                    else (TkError s p "Number overflow")
+createNum s p = if number <= 2147483648 then TkNum    p number
+                                        else TkError  p s "Number overflow"
     where number = read s :: Integer
 
 createFloat :: String -> Pos -> Token
-createFloat num pos = if (double > largest) 
-                          then (TkError    num pos "Floating point overflow")
+createFloat num pos = if  double > largest 
+                          then TkError  pos num "Floating point overflow"
                           else checkUnderflow
   where largest  = 3.402823566e38
-        double   = (read num) :: Double
+        double   = read num :: Double
         (number,ex) = break (=='e') num
-        checkUnderflow = if null ex 
-                            then (TkFloatVal num pos (read num) )
-                            else if (((read . tail) ex) < -45) || ((read . tail) ex) == -45 && (read number) <= 1.4013
-                                   then (TkError    num pos "Floating point underflow")
-                                   else (TkFloatVal num pos (read num) )
+        exp'        = (read . tail) ex :: Int
+        signigicand = read number :: Float
+        checkUnderflow 
+          | null ex = TkFloatVal pos (read num)
+          | exp' < -45 ||  (exp' == (-45) && signigicand <= 1.4013) = TkError pos num "Floating point underflow"
+          | otherwise = TkFloatVal pos (read num)
 
                 
 
 checkErrors :: Token -> (IO(),Int)
-checkErrors myTok@(TkError con (l,c) v) =  ((hPutStrLn stderr . show ) myTok, 1)
-checkErrors myTok =  ((putStrLn . show ) myTok,0)
+checkErrors myTok@TkError{} =  (hPrint stderr myTok, 1)
+checkErrors myTok =  (print myTok,0)
