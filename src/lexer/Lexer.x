@@ -22,7 +22,7 @@ $quotable  = [\x00-\x7F] # [\']
 @dataId     = poke [ $lc $uc $digit \_ ]+ \??
 @enum       = $uc   [$alpha $digit \_]*
 @string     = \" ( $dquotable | \\\" | \' )* \" 
-@char       = \' ( $quotable  | \\a | \\b | \\t | \\f | \\n | \\r | \\v | \\\\ | \\\' | \\\" ) \'
+@char       = \' ( $quotable  | \\a | \\b | \\t | \\f | \\n | \\r | \\v | \\\\ | \\\' | \\\" | \\0 ) \'
 @singlecomment    = \# .* [\n]?
 
 @emptychar    = \'\'
@@ -44,9 +44,9 @@ tokens :-
   @badComment              {\p s-> TkError    (getPos p) s "Comment not closed"}
   @badComment2             {\p s-> TkError    (getPos p) s "Comment not closed properly. Please use '--' to close comments"}
   @emptystring             {\p s-> TkString   (getPos p) [] }
-  @emptychar               {\p s-> TkChar     (getPos p) '\0' }
+  @emptychar               {\p s-> TkCharVal  (getPos p) '\0' }
   @string                  {\p s-> TkString   (getPos p) (extract s) }
-  @char                    {\p s-> TkCharVal  (getPos p) (extract s) }
+  @char                    {\p s-> createChar (getPos p) (extract s) }
 
   pINTachu                 { \p _ -> TkInt       (getPos p) }
   BOOLbasaur               { \p _ -> TkBool      (getPos p) }
@@ -89,19 +89,18 @@ tokens :-
   squirtrue                { \p _ -> TkTrue      (getPos p) }
   squirfalse               { \p _ -> TkFalse     (getPos p) }
 
--- Falta todo esto
-  @float                   {\p s-> createFloat s    (getPos p)}
-  @badfloat                {\p s-> TkError     s    (getPos p)  "Bad formed float"}
-  @badIdentifier           {\p s-> TkError     s    (getPos p) "Invalid identifier"}
-  @badnumber               {\p s-> TkError     s    (getPos p)  "Bad formed number"}
-  @badchar                 {\p s-> TkError (init s)  (getPos p) "No single quote close found"}
-  @longchar                {\p s-> TkError     s  (getPos p)    "Character sequence too long"}
-  @badstring               {\p s-> TkError (init s)  (getPos p) "No double quote close found"}
-  @number                  {\p s-> createNum   s    (getPos p)}
-  @enum                    {\p s-> TkEnumCons  s    (getPos p)}
-  @dataId                  {\p s-> TkDId       s    (getPos p)}
-  poke                     {\p s-> TkError     s    (getPos p) "Invalid identifier. Did you mean 'pokeSomething' ?"}
-  @identifier              {\p s-> TkId        s    (getPos p)}
+  @float                   {\p s-> createFloat (getPos p) s }
+  @badfloat                {\p s-> TkError    (getPos p)  "Bad formed float"               s     }
+  @badIdentifier           {\p s-> TkError    (getPos p)  "Invalid identifier"             s     }
+  @badnumber               {\p s-> TkError    (getPos p)  "Bad formed number"              s     }
+  @badchar                 {\p s-> TkError    (getPos p)  "No single quote close found" (init s) }
+  @longchar                {\p s-> TkError    (getPos p)  "Character sequence too long"    s    }
+  @badstring               {\p s-> TkError    (getPos p)  "No double quote close found" (init s) }
+  @number                  {\p s-> createNum  (getPos p) s }
+  @enum                    {\p s-> TkEnumCons (getPos p) s }
+  @dataId                  {\p s-> TkDId      (getPos p) s }
+  poke                     {\p s-> TkError    (getPos p)  "Invalid identifier. Did you mean 'pokeSomething' ?"  s  }
+  @identifier              {\p s-> TkId       (getPos p) s }
 
   \[                       { \p _  -> TkLBracket (getPos p)}
   \]                       { \p _  -> TkRBracket (getPos p)}

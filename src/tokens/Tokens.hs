@@ -5,6 +5,7 @@ module Tokens(
     checkErrors,
     createNum,
     createFloat,
+    createChar,
     Pos
 ) where
 
@@ -129,26 +130,42 @@ instance Show Token where
 
   show generic = show (toConstr generic ) ++ "\n" ++ showPos (position generic)
 
-createNum :: String -> Pos -> Token
-createNum s p = if number <= 2147483648 then TkNum    p number
+createNum :: Pos -> String -> Token
+createNum p s = if number <= 2147483648 then TkNum    p number
                                         else TkError  p s "Number overflow"
     where number = read s :: Integer
 
-createFloat :: String -> Pos -> Token
-createFloat num pos = if  double > largest 
-                          then TkError  pos num "Floating point overflow"
-                          else checkUnderflow
+createFloat :: Pos -> String -> Token
+createFloat pos num = if  double > largest 
+                        then TkError  pos num "Floating point overflow"
+                        else checkUnderflow
   where largest  = 3.402823566e38
         double   = read num :: Double
         (number,ex) = break (=='e') num
         exp'        = (read . tail) ex :: Int
         signigicand = read number :: Float
         checkUnderflow 
-          | null ex = TkFloatVal pos (read num)
-          | exp' < -45 ||  (exp' == (-45) && signigicand <= 1.4013) = TkError pos num "Floating point underflow"
-          | otherwise = TkFloatVal pos (read num)
+            | null ex = TkFloatVal pos (read num)
+            | exp' < -45 ||  (exp' == (-45) && signigicand <= 1.4013) = TkError pos num "Floating point underflow"
+            | otherwise = TkFloatVal pos (read num)
 
-                
+-- Create a character from a string without 
+createChar ::  Pos -> String -> Token
+createChar p str
+    | is "\\a"  = TkCharVal p '\a'
+    | is "\\b"  = TkCharVal p '\b'
+    | is "\\t"  = TkCharVal p '\t'
+    | is "\\f"  = TkCharVal p '\f'
+    | is "\\n"  = TkCharVal p '\n'
+    | is "\\r " = TkCharVal p '\r'
+    | is "\\v"  = TkCharVal p '\v'
+    | is "\\\\" = TkCharVal p '\\'
+    | is "\\\'" = TkCharVal p '\''
+    | is "\\\"" = TkCharVal p '\"'
+    | is "\\0"  = TkCharVal p '\0'
+    | otherwise = TkCharVal p $ head str
+    where is str2 = str == str2
+
 
 checkErrors :: Token -> (IO(),Int)
 checkErrors myTok@TkError{} =  (hPrint stderr myTok, 1)
