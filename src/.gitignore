@@ -2,3 +2,4 @@ pokelang
 *.o
 *.hi
 lexer/Lexer.hs
+parser/Grammar.hs
