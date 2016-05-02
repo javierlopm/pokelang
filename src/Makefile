@@ -11,11 +11,20 @@ Lexer.hs: Tokens.o
 Lexer.o: Lexer.hs Tokens.o
 	ghc lexer/Lexer.hs -itokens
 
-Pokelang: Lexer.o Tokens.o
-	ghc pokelang.hs -ilexer -itokens
+# Parser
 
-	
+Grammar.hs: Tokens.o
+	happy parser/Grammar.y -o parser/Grammar.hs
+
+Grammar.o: Grammar.hs
+	ghc parser/Grammar.hs -itokens
+
+Pokelang: Lexer.o Tokens.o Grammar.o
+	ghc pokelang.hs -ilexer -itokens -iparser
+
+
 clean:
-	rm pokelang; rm *.o *.hi
-	cd tokens ; rm -f *.o *.hi
-	cd lexer  ; rm -f *.o *.hi Lexer.hs
+	rm pokelang ; rm *.o *.hi
+	cd tokens   ; rm -f *.o *.hi
+	cd lexer    ; rm -f *.o *.hi Lexer.hs
+	cd parser   ; rm -f *.o *.hi Grammar.hs

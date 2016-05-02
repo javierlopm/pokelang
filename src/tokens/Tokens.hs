@@ -3,6 +3,7 @@
 module Tokens(
     Token     (..),
     checkErrors,
+    checkErrors',
     createNum,
     createFloat,
     createChar,
@@ -126,7 +127,7 @@ instance Show Token where
                             showPos pos
                            
 
-  show (TkError (l,c) con  m) = "Error: " ++ m ++". " ++ "\" " ++ con ++ " \" " ++ "at " ++ show l ++ ":" ++ show c ++ "\n"
+  show (TkError (l,c) con  m) = "Error:" ++ show l ++ ":" ++ show c ++ " " ++ con ++". " ++ "(" ++ m ++ ")"
 
   show generic = show (toConstr generic ) ++ "\n" ++ showPos (position generic)
 
@@ -170,3 +171,8 @@ createChar p str
 checkErrors :: Token -> (IO(),Int)
 checkErrors myTok@TkError{} =  (hPrint stderr myTok, 1)
 checkErrors myTok =  (print myTok,0)
+
+checkErrors' :: [Token] -> ([Token],[Token],Int)
+checkErrors' = foldr pickGoods ([],[],0)
+    where pickGoods myTok@TkError{} (gs,bs,bcount) = (gs,myTok:bs,bcount+1)
+          pickGoods myTok           (gs,bs,bcount) = (myTok:gs,bs,bcount)

@@ -1,0 +1,1 @@
+for x in `ls ../tests/`; do  echo $x '\n========\n'; ./pokelang ../tests/* ../tests/$x ; done
