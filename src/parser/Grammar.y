@@ -72,7 +72,7 @@ import Tokens
     RETURN    { TkReturn _ }
     EXIT      { TkExit _ }
 
-    -- Built-in functions
+    -- Built-in functions/Instructions
     READ      { TkRead _ }
     WRITE     { TkWrite _ }
     PRINT     { TkPrint _ }
@@ -93,18 +93,37 @@ import Tokens
 
 Prog : Dcls  { $1 }
 
-Ins : PRINT "(" STRING ")"             { [] } -- Mucho mas complejo que esto
-    | ID "=" Exp                       { [] }
+Ins : {- λ -}                          { [] }
+    | Ins PRINT "(" STRING ")"   ";"          { [] } -- Mucho mas complejo que esto
+    | Ins ID "=" Exp             ";"         { [] }
+    | Ins BREAK       ";"                      { [] }
+    | Ins CONTINUE    ";"                      { [] }
+    | Ins RETURN      ";"                      { [] }
+    | Ins EXIT        ";"                      { [] }
+    | Ins FREE "("ID")"     ";"                { [] }
+    | Ins FREE "("DATAID")" ";"                { [] }
+    | Ins READ "("ID")"     ";"                { [] }
+    | Ins READ "("DATAID")" ";"                { [] }
+    | IF ":" Ins NextIf Else END                      { [] }
+    -- | Ins  ";"                      { [] }
+    -- | Ins  ";"                      { [] }
+    -- | Ins  ";"                      { [] }
 
-Dcls: {- empty -}                             { [] }        
+NextIf: {- λ -}             { [] }
+      | NextIf ELIF ":" Ins { [] }
+
+Else: {- λ -}      { [] }
+    | ELSE ":" Ins { [] }
+
+Dcls: {- λ -}                                 { [] }        
     | Dcls IsGlob PrimType "["INT"]" ID  ";"  { [] }
     | Dcls IsGlob PrimType "[""]"    ID  ";"  { [] }
     | Dcls IsGlob PrimType "*"       ID  ";"  { [] }
     | Dcls IsGlob PrimType           ID  ";"  { [] }
-    | Dcls IsGlob DataType  DATAID ";"        { [] }
+    | Dcls IsGlob DataType    DATAID     ";"  { [] }
     | Dcls FUNC PrimType ID "(" Parameter ")" ":" Ins END {[]}
 
-IsGlob : {- empty -} { True  }
+IsGlob : {- λ -}     { True  }
          | GLOBAL    { False }
 
 PrimType : INTDEC         { [] }
@@ -117,16 +136,16 @@ DataType : STRUCTDEC      { [] }
          | UNIONDEC       { [] }
          | ENUMDEC        { [] }
 
-Parameter: {- empty -}                    { [] }
+Parameter: {- λ -}                        { [] }
          | Parameters PrimType ID         { [] }
          | Parameters DataType DATAID     { [] }
 
-Parameters: {- empty -}                    { [] }
+Parameters: {- λ -}                        { [] }
           | Parameters PrimType ID     "," { [] }
           | Parameters DataType DATAID "," { [] }
 
 Exp : ID            { [] }
-    | Exp OR  Exp   { [] } -- Hay que agregar predecencias, let the shift/reduce conflicts begin
+    -- | Exp OR  Exp   { [] } -- Hay que agregar predecencias, let the shift/reduce conflicts begin
     -- | Exp AND Exp   { [] }
     -- | Exp "||" Exp  { [] }
     -- | Exp "&&" Exp  { [] }

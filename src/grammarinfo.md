@@ -28,20 +28,11 @@ terminal "-" is unused
 terminal "^" is unused
 terminal "%" is unused
 terminal "==" is unused
-terminal IF is unused
-terminal ELIF is unused
-terminal ELSE is unused
 terminal WHILE is unused
 terminal FOR is unused
 terminal BEGIN is unused
-terminal BREAK is unused
-terminal CONTINUE is unused
-terminal RETURN is unused
-terminal EXIT is unused
-terminal READ is unused
 terminal WRITE is unused
 terminal MALLOC is unused
-terminal FREE is unused
 terminal SIZEOF is unused
 terminal GET is unused
 terminal TRUE is unused
@@ -55,32 +46,46 @@ Grammar
 -----------------------------------------------------------------------------
 	%start_parser -> Prog                              (0)
 	Prog -> Dcls                                       (1)
-	Ins -> PRINT "(" STRING ")"                        (2)
-	Ins -> ID "=" Exp                                  (3)
-	Dcls ->                                            (4)
-	Dcls -> Dcls IsGlob PrimType "[" INT "]" ID ";"    (5)
-	Dcls -> Dcls IsGlob PrimType "[" "]" ID ";"        (6)
-	Dcls -> Dcls IsGlob PrimType "*" ID ";"            (7)
-	Dcls -> Dcls IsGlob PrimType ID ";"                (8)
-	Dcls -> Dcls IsGlob DataType DATAID ";"            (9)
-	Dcls -> Dcls FUNC PrimType ID "(" Parameter ")" ":" Ins END   (10)
-	IsGlob ->                                          (11)
-	IsGlob -> GLOBAL                                   (12)
-	PrimType -> INTDEC                                 (13)
-	PrimType -> BOOLDEC                                (14)
-	PrimType -> CHARDEC                                (15)
-	PrimType -> VOIDDEC                                (16)
-	PrimType -> FLOATDEC                               (17)
-	DataType -> STRUCTDEC                              (18)
-	DataType -> UNIONDEC                               (19)
-	DataType -> ENUMDEC                                (20)
-	Parameter ->                                       (21)
-	Parameter -> Parameters PrimType ID                (22)
-	Parameter -> Parameters DataType DATAID            (23)
-	Parameters ->                                      (24)
-	Parameters -> Parameters PrimType ID ","           (25)
-	Parameters -> Parameters DataType DATAID ","       (26)
-	Exp -> ID                                          (27)
+	Ins ->                                             (2)
+	Ins -> Ins PRINT "(" STRING ")" ";"                (3)
+	Ins -> Ins ID "=" Exp ";"                          (4)
+	Ins -> Ins BREAK ";"                               (5)
+	Ins -> Ins CONTINUE ";"                            (6)
+	Ins -> Ins RETURN ";"                              (7)
+	Ins -> Ins EXIT ";"                                (8)
+	Ins -> Ins FREE "(" ID ")" ";"                     (9)
+	Ins -> Ins FREE "(" DATAID ")" ";"                 (10)
+	Ins -> Ins READ "(" ID ")" ";"                     (11)
+	Ins -> Ins READ "(" DATAID ")" ";"                 (12)
+	Ins -> IF ":" Ins NextIf Else END                  (13)
+	NextIf ->                                          (14)
+	NextIf -> NextIf ELIF ":" Ins                      (15)
+	Else ->                                            (16)
+	Else -> ELSE ":" Ins                               (17)
+	Dcls ->                                            (18)
+	Dcls -> Dcls IsGlob PrimType "[" INT "]" ID ";"    (19)
+	Dcls -> Dcls IsGlob PrimType "[" "]" ID ";"        (20)
+	Dcls -> Dcls IsGlob PrimType "*" ID ";"            (21)
+	Dcls -> Dcls IsGlob PrimType ID ";"                (22)
+	Dcls -> Dcls IsGlob DataType DATAID ";"            (23)
+	Dcls -> Dcls FUNC PrimType ID "(" Parameter ")" ":" Ins END   (24)
+	IsGlob ->                                          (25)
+	IsGlob -> GLOBAL                                   (26)
+	PrimType -> INTDEC                                 (27)
+	PrimType -> BOOLDEC                                (28)
+	PrimType -> CHARDEC                                (29)
+	PrimType -> VOIDDEC                                (30)
+	PrimType -> FLOATDEC                               (31)
+	DataType -> STRUCTDEC                              (32)
+	DataType -> UNIONDEC                               (33)
+	DataType -> ENUMDEC                                (34)
+	Parameter ->                                       (35)
+	Parameter -> Parameters PrimType ID                (36)
+	Parameter -> Parameters DataType DATAID            (37)
+	Parameters ->                                      (38)
+	Parameters -> Parameters PrimType ID ","           (39)
+	Parameters -> Parameters DataType DATAID ","       (40)
+	Exp -> ID                                          (41)
 
 -----------------------------------------------------------------------------
 Terminals
@@ -162,14 +167,16 @@ Non-terminals
 -----------------------------------------------------------------------------
 	%start_parser   rule  0
 	Prog            rule  1
-	Ins             rules 2, 3
-	Dcls            rules 4, 5, 6, 7, 8, 9, 10
-	IsGlob          rules 11, 12
-	PrimType        rules 13, 14, 15, 16, 17
-	DataType        rules 18, 19, 20
-	Parameter       rules 21, 22, 23
-	Parameters      rules 24, 25, 26
-	Exp             rule  27
+	Ins             rules 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+	NextIf          rules 14, 15
+	Else            rules 16, 17
+	Dcls            rules 18, 19, 20, 21, 22, 23, 24
+	IsGlob          rules 25, 26
+	PrimType        rules 27, 28, 29, 30, 31
+	DataType        rules 32, 33, 34
+	Parameter       rules 35, 36, 37
+	Parameters      rules 38, 39, 40
+	Exp             rule  41
 
 -----------------------------------------------------------------------------
 States
@@ -177,17 +184,17 @@ States
 State 0
 
 
-	INTDEC         reduce using rule 4
-	BOOLDEC        reduce using rule 4
-	CHARDEC        reduce using rule 4
-	VOIDDEC        reduce using rule 4
-	FLOATDEC       reduce using rule 4
-	STRUCTDEC      reduce using rule 4
-	UNIONDEC       reduce using rule 4
-	ENUMDEC        reduce using rule 4
-	GLOBAL         reduce using rule 4
-	FUNC           reduce using rule 4
-	%eof           reduce using rule 4
+	INTDEC         reduce using rule 18
+	BOOLDEC        reduce using rule 18
+	CHARDEC        reduce using rule 18
+	VOIDDEC        reduce using rule 18
+	FLOATDEC       reduce using rule 18
+	STRUCTDEC      reduce using rule 18
+	UNIONDEC       reduce using rule 18
+	ENUMDEC        reduce using rule 18
+	GLOBAL         reduce using rule 18
+	FUNC           reduce using rule 18
+	%eof           reduce using rule 18
 
 	Prog           goto state 3
 	Dcls           goto state 2
@@ -201,21 +208,21 @@ State 1
 State 2
 
 	Prog -> Dcls .                                      (rule 1)
-	Dcls -> Dcls . IsGlob PrimType "[" INT "]" ID ";"    (rule 5)
-	Dcls -> Dcls . IsGlob PrimType "[" "]" ID ";"       (rule 6)
-	Dcls -> Dcls . IsGlob PrimType "*" ID ";"           (rule 7)
-	Dcls -> Dcls . IsGlob PrimType ID ";"               (rule 8)
-	Dcls -> Dcls . IsGlob DataType DATAID ";"           (rule 9)
-	Dcls -> Dcls . FUNC PrimType ID "(" Parameter ")" ":" Ins END    (rule 10)
+	Dcls -> Dcls . IsGlob PrimType "[" INT "]" ID ";"    (rule 19)
+	Dcls -> Dcls . IsGlob PrimType "[" "]" ID ";"       (rule 20)
+	Dcls -> Dcls . IsGlob PrimType "*" ID ";"           (rule 21)
+	Dcls -> Dcls . IsGlob PrimType ID ";"               (rule 22)
+	Dcls -> Dcls . IsGlob DataType DATAID ";"           (rule 23)
+	Dcls -> Dcls . FUNC PrimType ID "(" Parameter ")" ":" Ins END    (rule 24)
 
-	INTDEC         reduce using rule 11
-	BOOLDEC        reduce using rule 11
-	CHARDEC        reduce using rule 11
-	VOIDDEC        reduce using rule 11
-	FLOATDEC       reduce using rule 11
-	STRUCTDEC      reduce using rule 11
-	UNIONDEC       reduce using rule 11
-	ENUMDEC        reduce using rule 11
+	INTDEC         reduce using rule 25
+	BOOLDEC        reduce using rule 25
+	CHARDEC        reduce using rule 25
+	VOIDDEC        reduce using rule 25
+	FLOATDEC       reduce using rule 25
+	STRUCTDEC      reduce using rule 25
+	UNIONDEC       reduce using rule 25
+	ENUMDEC        reduce using rule 25
 	GLOBAL         shift, and enter state 5
 	FUNC           shift, and enter state 6
 	%eof           reduce using rule 1
@@ -231,11 +238,11 @@ State 3
 
 State 4
 
-	Dcls -> Dcls IsGlob . PrimType "[" INT "]" ID ";"    (rule 5)
-	Dcls -> Dcls IsGlob . PrimType "[" "]" ID ";"       (rule 6)
-	Dcls -> Dcls IsGlob . PrimType "*" ID ";"           (rule 7)
-	Dcls -> Dcls IsGlob . PrimType ID ";"               (rule 8)
-	Dcls -> Dcls IsGlob . DataType DATAID ";"           (rule 9)
+	Dcls -> Dcls IsGlob . PrimType "[" INT "]" ID ";"    (rule 19)
+	Dcls -> Dcls IsGlob . PrimType "[" "]" ID ";"       (rule 20)
+	Dcls -> Dcls IsGlob . PrimType "*" ID ";"           (rule 21)
+	Dcls -> Dcls IsGlob . PrimType ID ";"               (rule 22)
+	Dcls -> Dcls IsGlob . DataType DATAID ";"           (rule 23)
 
 	INTDEC         shift, and enter state 8
 	BOOLDEC        shift, and enter state 9
@@ -251,21 +258,21 @@ State 4
 
 State 5
 
-	IsGlob -> GLOBAL .                                  (rule 12)
+	IsGlob -> GLOBAL .                                  (rule 26)
 
-	INTDEC         reduce using rule 12
-	BOOLDEC        reduce using rule 12
-	CHARDEC        reduce using rule 12
-	VOIDDEC        reduce using rule 12
-	FLOATDEC       reduce using rule 12
-	STRUCTDEC      reduce using rule 12
-	UNIONDEC       reduce using rule 12
-	ENUMDEC        reduce using rule 12
+	INTDEC         reduce using rule 26
+	BOOLDEC        reduce using rule 26
+	CHARDEC        reduce using rule 26
+	VOIDDEC        reduce using rule 26
+	FLOATDEC       reduce using rule 26
+	STRUCTDEC      reduce using rule 26
+	UNIONDEC       reduce using rule 26
+	ENUMDEC        reduce using rule 26
 
 
 State 6
 
-	Dcls -> Dcls FUNC . PrimType ID "(" Parameter ")" ":" Ins END    (rule 10)
+	Dcls -> Dcls FUNC . PrimType ID "(" Parameter ")" ":" Ins END    (rule 24)
 
 	INTDEC         shift, and enter state 8
 	BOOLDEC        shift, and enter state 9
@@ -277,62 +284,62 @@ State 6
 
 State 7
 
-	Dcls -> Dcls FUNC PrimType . ID "(" Parameter ")" ":" Ins END    (rule 10)
+	Dcls -> Dcls FUNC PrimType . ID "(" Parameter ")" ":" Ins END    (rule 24)
 
 	ID             shift, and enter state 22
 
 
 State 8
 
-	PrimType -> INTDEC .                                (rule 13)
+	PrimType -> INTDEC .                                (rule 27)
 
-	ID             reduce using rule 13
-	"["            reduce using rule 13
-	"*"            reduce using rule 13
+	ID             reduce using rule 27
+	"["            reduce using rule 27
+	"*"            reduce using rule 27
 
 
 State 9
 
-	PrimType -> BOOLDEC .                               (rule 14)
+	PrimType -> BOOLDEC .                               (rule 28)
 
-	ID             reduce using rule 14
-	"["            reduce using rule 14
-	"*"            reduce using rule 14
+	ID             reduce using rule 28
+	"["            reduce using rule 28
+	"*"            reduce using rule 28
 
 
 State 10
 
-	PrimType -> CHARDEC .                               (rule 15)
+	PrimType -> CHARDEC .                               (rule 29)
 
-	ID             reduce using rule 15
-	"["            reduce using rule 15
-	"*"            reduce using rule 15
+	ID             reduce using rule 29
+	"["            reduce using rule 29
+	"*"            reduce using rule 29
 
 
 State 11
 
-	PrimType -> VOIDDEC .                               (rule 16)
+	PrimType -> VOIDDEC .                               (rule 30)
 
-	ID             reduce using rule 16
-	"["            reduce using rule 16
-	"*"            reduce using rule 16
+	ID             reduce using rule 30
+	"["            reduce using rule 30
+	"*"            reduce using rule 30
 
 
 State 12
 
-	PrimType -> FLOATDEC .                              (rule 17)
+	PrimType -> FLOATDEC .                              (rule 31)
 
-	ID             reduce using rule 17
-	"["            reduce using rule 17
-	"*"            reduce using rule 17
+	ID             reduce using rule 31
+	"["            reduce using rule 31
+	"*"            reduce using rule 31
 
 
 State 13
 
-	Dcls -> Dcls IsGlob PrimType . "[" INT "]" ID ";"    (rule 5)
-	Dcls -> Dcls IsGlob PrimType . "[" "]" ID ";"       (rule 6)
-	Dcls -> Dcls IsGlob PrimType . "*" ID ";"           (rule 7)
-	Dcls -> Dcls IsGlob PrimType . ID ";"               (rule 8)
+	Dcls -> Dcls IsGlob PrimType . "[" INT "]" ID ";"    (rule 19)
+	Dcls -> Dcls IsGlob PrimType . "[" "]" ID ";"       (rule 20)
+	Dcls -> Dcls IsGlob PrimType . "*" ID ";"           (rule 21)
+	Dcls -> Dcls IsGlob PrimType . ID ";"               (rule 22)
 
 	ID             shift, and enter state 19
 	"["            shift, and enter state 20
@@ -341,50 +348,50 @@ State 13
 
 State 14
 
-	Dcls -> Dcls IsGlob DataType . DATAID ";"           (rule 9)
+	Dcls -> Dcls IsGlob DataType . DATAID ";"           (rule 23)
 
 	DATAID         shift, and enter state 18
 
 
 State 15
 
-	DataType -> STRUCTDEC .                             (rule 18)
+	DataType -> STRUCTDEC .                             (rule 32)
 
-	DATAID         reduce using rule 18
+	DATAID         reduce using rule 32
 
 
 State 16
 
-	DataType -> UNIONDEC .                              (rule 19)
+	DataType -> UNIONDEC .                              (rule 33)
 
-	DATAID         reduce using rule 19
+	DATAID         reduce using rule 33
 
 
 State 17
 
-	DataType -> ENUMDEC .                               (rule 20)
+	DataType -> ENUMDEC .                               (rule 34)
 
-	DATAID         reduce using rule 20
+	DATAID         reduce using rule 34
 
 
 State 18
 
-	Dcls -> Dcls IsGlob DataType DATAID . ";"           (rule 9)
+	Dcls -> Dcls IsGlob DataType DATAID . ";"           (rule 23)
 
 	";"            shift, and enter state 28
 
 
 State 19
 
-	Dcls -> Dcls IsGlob PrimType ID . ";"               (rule 8)
+	Dcls -> Dcls IsGlob PrimType ID . ";"               (rule 22)
 
 	";"            shift, and enter state 27
 
 
 State 20
 
-	Dcls -> Dcls IsGlob PrimType "[" . INT "]" ID ";"    (rule 5)
-	Dcls -> Dcls IsGlob PrimType "[" . "]" ID ";"       (rule 6)
+	Dcls -> Dcls IsGlob PrimType "[" . INT "]" ID ";"    (rule 19)
+	Dcls -> Dcls IsGlob PrimType "[" . "]" ID ";"       (rule 20)
 
 	"]"            shift, and enter state 25
 	INT            shift, and enter state 26
@@ -392,134 +399,134 @@ State 20
 
 State 21
 
-	Dcls -> Dcls IsGlob PrimType "*" . ID ";"           (rule 7)
+	Dcls -> Dcls IsGlob PrimType "*" . ID ";"           (rule 21)
 
 	ID             shift, and enter state 24
 
 
 State 22
 
-	Dcls -> Dcls FUNC PrimType ID . "(" Parameter ")" ":" Ins END    (rule 10)
+	Dcls -> Dcls FUNC PrimType ID . "(" Parameter ")" ":" Ins END    (rule 24)
 
 	"("            shift, and enter state 23
 
 
 State 23
 
-	Dcls -> Dcls FUNC PrimType ID "(" . Parameter ")" ":" Ins END    (rule 10)
+	Dcls -> Dcls FUNC PrimType ID "(" . Parameter ")" ":" Ins END    (rule 24)
 
-	INTDEC         reduce using rule 24
-	BOOLDEC        reduce using rule 24
-	CHARDEC        reduce using rule 24
-	VOIDDEC        reduce using rule 24
-	FLOATDEC       reduce using rule 24
-	STRUCTDEC      reduce using rule 24
-	UNIONDEC       reduce using rule 24
-	ENUMDEC        reduce using rule 24
-	")"            reduce using rule 21
+	INTDEC         reduce using rule 38
+	BOOLDEC        reduce using rule 38
+	CHARDEC        reduce using rule 38
+	VOIDDEC        reduce using rule 38
+	FLOATDEC       reduce using rule 38
+	STRUCTDEC      reduce using rule 38
+	UNIONDEC       reduce using rule 38
+	ENUMDEC        reduce using rule 38
+	")"            reduce using rule 35
 
 	Parameter      goto state 32
 	Parameters     goto state 33
 
 State 24
 
-	Dcls -> Dcls IsGlob PrimType "*" ID . ";"           (rule 7)
+	Dcls -> Dcls IsGlob PrimType "*" ID . ";"           (rule 21)
 
 	";"            shift, and enter state 31
 
 
 State 25
 
-	Dcls -> Dcls IsGlob PrimType "[" "]" . ID ";"       (rule 6)
+	Dcls -> Dcls IsGlob PrimType "[" "]" . ID ";"       (rule 20)
 
 	ID             shift, and enter state 30
 
 
 State 26
 
-	Dcls -> Dcls IsGlob PrimType "[" INT . "]" ID ";"    (rule 5)
+	Dcls -> Dcls IsGlob PrimType "[" INT . "]" ID ";"    (rule 19)
 
 	"]"            shift, and enter state 29
 
 
 State 27
 
-	Dcls -> Dcls IsGlob PrimType ID ";" .               (rule 8)
+	Dcls -> Dcls IsGlob PrimType ID ";" .               (rule 22)
 
-	INTDEC         reduce using rule 8
-	BOOLDEC        reduce using rule 8
-	CHARDEC        reduce using rule 8
-	VOIDDEC        reduce using rule 8
-	FLOATDEC       reduce using rule 8
-	STRUCTDEC      reduce using rule 8
-	UNIONDEC       reduce using rule 8
-	ENUMDEC        reduce using rule 8
-	GLOBAL         reduce using rule 8
-	FUNC           reduce using rule 8
-	%eof           reduce using rule 8
+	INTDEC         reduce using rule 22
+	BOOLDEC        reduce using rule 22
+	CHARDEC        reduce using rule 22
+	VOIDDEC        reduce using rule 22
+	FLOATDEC       reduce using rule 22
+	STRUCTDEC      reduce using rule 22
+	UNIONDEC       reduce using rule 22
+	ENUMDEC        reduce using rule 22
+	GLOBAL         reduce using rule 22
+	FUNC           reduce using rule 22
+	%eof           reduce using rule 22
 
 
 State 28
 
-	Dcls -> Dcls IsGlob DataType DATAID ";" .           (rule 9)
+	Dcls -> Dcls IsGlob DataType DATAID ";" .           (rule 23)
 
-	INTDEC         reduce using rule 9
-	BOOLDEC        reduce using rule 9
-	CHARDEC        reduce using rule 9
-	VOIDDEC        reduce using rule 9
-	FLOATDEC       reduce using rule 9
-	STRUCTDEC      reduce using rule 9
-	UNIONDEC       reduce using rule 9
-	ENUMDEC        reduce using rule 9
-	GLOBAL         reduce using rule 9
-	FUNC           reduce using rule 9
-	%eof           reduce using rule 9
+	INTDEC         reduce using rule 23
+	BOOLDEC        reduce using rule 23
+	CHARDEC        reduce using rule 23
+	VOIDDEC        reduce using rule 23
+	FLOATDEC       reduce using rule 23
+	STRUCTDEC      reduce using rule 23
+	UNIONDEC       reduce using rule 23
+	ENUMDEC        reduce using rule 23
+	GLOBAL         reduce using rule 23
+	FUNC           reduce using rule 23
+	%eof           reduce using rule 23
 
 
 State 29
 
-	Dcls -> Dcls IsGlob PrimType "[" INT "]" . ID ";"    (rule 5)
+	Dcls -> Dcls IsGlob PrimType "[" INT "]" . ID ";"    (rule 19)
 
 	ID             shift, and enter state 38
 
 
 State 30
 
-	Dcls -> Dcls IsGlob PrimType "[" "]" ID . ";"       (rule 6)
+	Dcls -> Dcls IsGlob PrimType "[" "]" ID . ";"       (rule 20)
 
 	";"            shift, and enter state 37
 
 
 State 31
 
-	Dcls -> Dcls IsGlob PrimType "*" ID ";" .           (rule 7)
+	Dcls -> Dcls IsGlob PrimType "*" ID ";" .           (rule 21)
 
-	INTDEC         reduce using rule 7
-	BOOLDEC        reduce using rule 7
-	CHARDEC        reduce using rule 7
-	VOIDDEC        reduce using rule 7
-	FLOATDEC       reduce using rule 7
-	STRUCTDEC      reduce using rule 7
-	UNIONDEC       reduce using rule 7
-	ENUMDEC        reduce using rule 7
-	GLOBAL         reduce using rule 7
-	FUNC           reduce using rule 7
-	%eof           reduce using rule 7
+	INTDEC         reduce using rule 21
+	BOOLDEC        reduce using rule 21
+	CHARDEC        reduce using rule 21
+	VOIDDEC        reduce using rule 21
+	FLOATDEC       reduce using rule 21
+	STRUCTDEC      reduce using rule 21
+	UNIONDEC       reduce using rule 21
+	ENUMDEC        reduce using rule 21
+	GLOBAL         reduce using rule 21
+	FUNC           reduce using rule 21
+	%eof           reduce using rule 21
 
 
 State 32
 
-	Dcls -> Dcls FUNC PrimType ID "(" Parameter . ")" ":" Ins END    (rule 10)
+	Dcls -> Dcls FUNC PrimType ID "(" Parameter . ")" ":" Ins END    (rule 24)
 
 	")"            shift, and enter state 36
 
 
 State 33
 
-	Parameter -> Parameters . PrimType ID               (rule 22)
-	Parameter -> Parameters . DataType DATAID           (rule 23)
-	Parameters -> Parameters . PrimType ID ","          (rule 25)
-	Parameters -> Parameters . DataType DATAID ","      (rule 26)
+	Parameter -> Parameters . PrimType ID               (rule 36)
+	Parameter -> Parameters . DataType DATAID           (rule 37)
+	Parameters -> Parameters . PrimType ID ","          (rule 39)
+	Parameters -> Parameters . DataType DATAID ","      (rule 40)
 
 	INTDEC         shift, and enter state 8
 	BOOLDEC        shift, and enter state 9
@@ -535,208 +542,713 @@ State 33
 
 State 34
 
-	Parameter -> Parameters PrimType . ID               (rule 22)
-	Parameters -> Parameters PrimType . ID ","          (rule 25)
+	Parameter -> Parameters PrimType . ID               (rule 36)
+	Parameters -> Parameters PrimType . ID ","          (rule 39)
 
 	ID             shift, and enter state 42
 
 
 State 35
 
-	Parameter -> Parameters DataType . DATAID           (rule 23)
-	Parameters -> Parameters DataType . DATAID ","      (rule 26)
+	Parameter -> Parameters DataType . DATAID           (rule 37)
+	Parameters -> Parameters DataType . DATAID ","      (rule 40)
 
 	DATAID         shift, and enter state 41
 
 
 State 36
 
-	Dcls -> Dcls FUNC PrimType ID "(" Parameter ")" . ":" Ins END    (rule 10)
+	Dcls -> Dcls FUNC PrimType ID "(" Parameter ")" . ":" Ins END    (rule 24)
 
 	":"            shift, and enter state 40
 
 
 State 37
 
-	Dcls -> Dcls IsGlob PrimType "[" "]" ID ";" .       (rule 6)
+	Dcls -> Dcls IsGlob PrimType "[" "]" ID ";" .       (rule 20)
 
-	INTDEC         reduce using rule 6
-	BOOLDEC        reduce using rule 6
-	CHARDEC        reduce using rule 6
-	VOIDDEC        reduce using rule 6
-	FLOATDEC       reduce using rule 6
-	STRUCTDEC      reduce using rule 6
-	UNIONDEC       reduce using rule 6
-	ENUMDEC        reduce using rule 6
-	GLOBAL         reduce using rule 6
-	FUNC           reduce using rule 6
-	%eof           reduce using rule 6
+	INTDEC         reduce using rule 20
+	BOOLDEC        reduce using rule 20
+	CHARDEC        reduce using rule 20
+	VOIDDEC        reduce using rule 20
+	FLOATDEC       reduce using rule 20
+	STRUCTDEC      reduce using rule 20
+	UNIONDEC       reduce using rule 20
+	ENUMDEC        reduce using rule 20
+	GLOBAL         reduce using rule 20
+	FUNC           reduce using rule 20
+	%eof           reduce using rule 20
 
 
 State 38
 
-	Dcls -> Dcls IsGlob PrimType "[" INT "]" ID . ";"    (rule 5)
+	Dcls -> Dcls IsGlob PrimType "[" INT "]" ID . ";"    (rule 19)
 
 	";"            shift, and enter state 39
 
 
 State 39
 
-	Dcls -> Dcls IsGlob PrimType "[" INT "]" ID ";" .    (rule 5)
+	Dcls -> Dcls IsGlob PrimType "[" INT "]" ID ";" .    (rule 19)
 
-	INTDEC         reduce using rule 5
-	BOOLDEC        reduce using rule 5
-	CHARDEC        reduce using rule 5
-	VOIDDEC        reduce using rule 5
-	FLOATDEC       reduce using rule 5
-	STRUCTDEC      reduce using rule 5
-	UNIONDEC       reduce using rule 5
-	ENUMDEC        reduce using rule 5
-	GLOBAL         reduce using rule 5
-	FUNC           reduce using rule 5
-	%eof           reduce using rule 5
+	INTDEC         reduce using rule 19
+	BOOLDEC        reduce using rule 19
+	CHARDEC        reduce using rule 19
+	VOIDDEC        reduce using rule 19
+	FLOATDEC       reduce using rule 19
+	STRUCTDEC      reduce using rule 19
+	UNIONDEC       reduce using rule 19
+	ENUMDEC        reduce using rule 19
+	GLOBAL         reduce using rule 19
+	FUNC           reduce using rule 19
+	%eof           reduce using rule 19
 
 
 State 40
 
-	Dcls -> Dcls FUNC PrimType ID "(" Parameter ")" ":" . Ins END    (rule 10)
+	Dcls -> Dcls FUNC PrimType ID "(" Parameter ")" ":" . Ins END    (rule 24)
 
-	ID             shift, and enter state 46
-	PRINT          shift, and enter state 47
+	ID             reduce using rule 2
+	IF             shift, and enter state 46
+	END            reduce using rule 2
+	BREAK          reduce using rule 2
+	CONTINUE       reduce using rule 2
+	RETURN         reduce using rule 2
+	EXIT           reduce using rule 2
+	READ           reduce using rule 2
+	PRINT          reduce using rule 2
+	FREE           reduce using rule 2
 
 	Ins            goto state 45
 
 State 41
 
-	Parameter -> Parameters DataType DATAID .           (rule 23)
-	Parameters -> Parameters DataType DATAID . ","      (rule 26)
+	Parameter -> Parameters DataType DATAID .           (rule 37)
+	Parameters -> Parameters DataType DATAID . ","      (rule 40)
 
-	")"            reduce using rule 23
+	")"            reduce using rule 37
 	","            shift, and enter state 44
 
 
 State 42
 
-	Parameter -> Parameters PrimType ID .               (rule 22)
-	Parameters -> Parameters PrimType ID . ","          (rule 25)
+	Parameter -> Parameters PrimType ID .               (rule 36)
+	Parameters -> Parameters PrimType ID . ","          (rule 39)
 
-	")"            reduce using rule 22
+	")"            reduce using rule 36
 	","            shift, and enter state 43
 
 
 State 43
 
-	Parameters -> Parameters PrimType ID "," .          (rule 25)
+	Parameters -> Parameters PrimType ID "," .          (rule 39)
 
-	INTDEC         reduce using rule 25
-	BOOLDEC        reduce using rule 25
-	CHARDEC        reduce using rule 25
-	VOIDDEC        reduce using rule 25
-	FLOATDEC       reduce using rule 25
-	STRUCTDEC      reduce using rule 25
-	UNIONDEC       reduce using rule 25
-	ENUMDEC        reduce using rule 25
+	INTDEC         reduce using rule 39
+	BOOLDEC        reduce using rule 39
+	CHARDEC        reduce using rule 39
+	VOIDDEC        reduce using rule 39
+	FLOATDEC       reduce using rule 39
+	STRUCTDEC      reduce using rule 39
+	UNIONDEC       reduce using rule 39
+	ENUMDEC        reduce using rule 39
 
 
 State 44
 
-	Parameters -> Parameters DataType DATAID "," .      (rule 26)
+	Parameters -> Parameters DataType DATAID "," .      (rule 40)
 
-	INTDEC         reduce using rule 26
-	BOOLDEC        reduce using rule 26
-	CHARDEC        reduce using rule 26
-	VOIDDEC        reduce using rule 26
-	FLOATDEC       reduce using rule 26
-	STRUCTDEC      reduce using rule 26
-	UNIONDEC       reduce using rule 26
-	ENUMDEC        reduce using rule 26
+	INTDEC         reduce using rule 40
+	BOOLDEC        reduce using rule 40
+	CHARDEC        reduce using rule 40
+	VOIDDEC        reduce using rule 40
+	FLOATDEC       reduce using rule 40
+	STRUCTDEC      reduce using rule 40
+	UNIONDEC       reduce using rule 40
+	ENUMDEC        reduce using rule 40
 
 
 State 45
 
-	Dcls -> Dcls FUNC PrimType ID "(" Parameter ")" ":" Ins . END    (rule 10)
+	Ins -> Ins . PRINT "(" STRING ")" ";"               (rule 3)
+	Ins -> Ins . ID "=" Exp ";"                         (rule 4)
+	Ins -> Ins . BREAK ";"                              (rule 5)
+	Ins -> Ins . CONTINUE ";"                           (rule 6)
+	Ins -> Ins . RETURN ";"                             (rule 7)
+	Ins -> Ins . EXIT ";"                               (rule 8)
+	Ins -> Ins . FREE "(" ID ")" ";"                    (rule 9)
+	Ins -> Ins . FREE "(" DATAID ")" ";"                (rule 10)
+	Ins -> Ins . READ "(" ID ")" ";"                    (rule 11)
+	Ins -> Ins . READ "(" DATAID ")" ";"                (rule 12)
+	Dcls -> Dcls FUNC PrimType ID "(" Parameter ")" ":" Ins . END    (rule 24)
 
-	END            shift, and enter state 50
+	ID             shift, and enter state 48
+	END            shift, and enter state 49
+	BREAK          shift, and enter state 50
+	CONTINUE       shift, and enter state 51
+	RETURN         shift, and enter state 52
+	EXIT           shift, and enter state 53
+	READ           shift, and enter state 54
+	PRINT          shift, and enter state 55
+	FREE           shift, and enter state 56
 
 
 State 46
 
-	Ins -> ID . "=" Exp                                 (rule 3)
+	Ins -> IF . ":" Ins NextIf Else END                 (rule 13)
 
-	"="            shift, and enter state 49
+	":"            shift, and enter state 47
 
 
 State 47
 
-	Ins -> PRINT . "(" STRING ")"                       (rule 2)
+	Ins -> IF ":" . Ins NextIf Else END                 (rule 13)
 
-	"("            shift, and enter state 48
+	ID             reduce using rule 2
+	IF             shift, and enter state 46
+	ELIF           reduce using rule 2
+	ELSE           reduce using rule 2
+	END            reduce using rule 2
+	BREAK          reduce using rule 2
+	CONTINUE       reduce using rule 2
+	RETURN         reduce using rule 2
+	EXIT           reduce using rule 2
+	READ           reduce using rule 2
+	PRINT          reduce using rule 2
+	FREE           reduce using rule 2
 
+	Ins            goto state 65
 
 State 48
 
-	Ins -> PRINT "(" . STRING ")"                       (rule 2)
+	Ins -> Ins ID . "=" Exp ";"                         (rule 4)
 
-	STRING         shift, and enter state 53
+	"="            shift, and enter state 64
 
 
 State 49
 
-	Ins -> ID "=" . Exp                                 (rule 3)
+	Dcls -> Dcls FUNC PrimType ID "(" Parameter ")" ":" Ins END .    (rule 24)
 
-	ID             shift, and enter state 52
+	INTDEC         reduce using rule 24
+	BOOLDEC        reduce using rule 24
+	CHARDEC        reduce using rule 24
+	VOIDDEC        reduce using rule 24
+	FLOATDEC       reduce using rule 24
+	STRUCTDEC      reduce using rule 24
+	UNIONDEC       reduce using rule 24
+	ENUMDEC        reduce using rule 24
+	GLOBAL         reduce using rule 24
+	FUNC           reduce using rule 24
+	%eof           reduce using rule 24
 
-	Exp            goto state 51
 
 State 50
 
-	Dcls -> Dcls FUNC PrimType ID "(" Parameter ")" ":" Ins END .    (rule 10)
+	Ins -> Ins BREAK . ";"                              (rule 5)
 
-	INTDEC         reduce using rule 10
-	BOOLDEC        reduce using rule 10
-	CHARDEC        reduce using rule 10
-	VOIDDEC        reduce using rule 10
-	FLOATDEC       reduce using rule 10
-	STRUCTDEC      reduce using rule 10
-	UNIONDEC       reduce using rule 10
-	ENUMDEC        reduce using rule 10
-	GLOBAL         reduce using rule 10
-	FUNC           reduce using rule 10
-	%eof           reduce using rule 10
+	";"            shift, and enter state 63
 
 
 State 51
 
-	Ins -> ID "=" Exp .                                 (rule 3)
+	Ins -> Ins CONTINUE . ";"                           (rule 6)
 
-	END            reduce using rule 3
+	";"            shift, and enter state 62
 
 
 State 52
 
-	Exp -> ID .                                         (rule 27)
+	Ins -> Ins RETURN . ";"                             (rule 7)
 
-	END            reduce using rule 27
+	";"            shift, and enter state 61
 
 
 State 53
 
-	Ins -> PRINT "(" STRING . ")"                       (rule 2)
+	Ins -> Ins EXIT . ";"                               (rule 8)
 
-	")"            shift, and enter state 54
+	";"            shift, and enter state 60
 
 
 State 54
 
-	Ins -> PRINT "(" STRING ")" .                       (rule 2)
+	Ins -> Ins READ . "(" ID ")" ";"                    (rule 11)
+	Ins -> Ins READ . "(" DATAID ")" ";"                (rule 12)
 
+	"("            shift, and enter state 59
+
+
+State 55
+
+	Ins -> Ins PRINT . "(" STRING ")" ";"               (rule 3)
+
+	"("            shift, and enter state 58
+
+
+State 56
+
+	Ins -> Ins FREE . "(" ID ")" ";"                    (rule 9)
+	Ins -> Ins FREE . "(" DATAID ")" ";"                (rule 10)
+
+	"("            shift, and enter state 57
+
+
+State 57
+
+	Ins -> Ins FREE "(" . ID ")" ";"                    (rule 9)
+	Ins -> Ins FREE "(" . DATAID ")" ";"                (rule 10)
+
+	ID             shift, and enter state 72
+	DATAID         shift, and enter state 73
+
+
+State 58
+
+	Ins -> Ins PRINT "(" . STRING ")" ";"               (rule 3)
+
+	STRING         shift, and enter state 71
+
+
+State 59
+
+	Ins -> Ins READ "(" . ID ")" ";"                    (rule 11)
+	Ins -> Ins READ "(" . DATAID ")" ";"                (rule 12)
+
+	ID             shift, and enter state 69
+	DATAID         shift, and enter state 70
+
+
+State 60
+
+	Ins -> Ins EXIT ";" .                               (rule 8)
+
+	ID             reduce using rule 8
+	ELIF           reduce using rule 8
+	ELSE           reduce using rule 8
+	END            reduce using rule 8
+	BREAK          reduce using rule 8
+	CONTINUE       reduce using rule 8
+	RETURN         reduce using rule 8
+	EXIT           reduce using rule 8
+	READ           reduce using rule 8
+	PRINT          reduce using rule 8
+	FREE           reduce using rule 8
+
+
+State 61
+
+	Ins -> Ins RETURN ";" .                             (rule 7)
+
+	ID             reduce using rule 7
+	ELIF           reduce using rule 7
+	ELSE           reduce using rule 7
+	END            reduce using rule 7
+	BREAK          reduce using rule 7
+	CONTINUE       reduce using rule 7
+	RETURN         reduce using rule 7
+	EXIT           reduce using rule 7
+	READ           reduce using rule 7
+	PRINT          reduce using rule 7
+	FREE           reduce using rule 7
+
+
+State 62
+
+	Ins -> Ins CONTINUE ";" .                           (rule 6)
+
+	ID             reduce using rule 6
+	ELIF           reduce using rule 6
+	ELSE           reduce using rule 6
+	END            reduce using rule 6
+	BREAK          reduce using rule 6
+	CONTINUE       reduce using rule 6
+	RETURN         reduce using rule 6
+	EXIT           reduce using rule 6
+	READ           reduce using rule 6
+	PRINT          reduce using rule 6
+	FREE           reduce using rule 6
+
+
+State 63
+
+	Ins -> Ins BREAK ";" .                              (rule 5)
+
+	ID             reduce using rule 5
+	ELIF           reduce using rule 5
+	ELSE           reduce using rule 5
+	END            reduce using rule 5
+	BREAK          reduce using rule 5
+	CONTINUE       reduce using rule 5
+	RETURN         reduce using rule 5
+	EXIT           reduce using rule 5
+	READ           reduce using rule 5
+	PRINT          reduce using rule 5
+	FREE           reduce using rule 5
+
+
+State 64
+
+	Ins -> Ins ID "=" . Exp ";"                         (rule 4)
+
+	ID             shift, and enter state 68
+
+	Exp            goto state 67
+
+State 65
+
+	Ins -> Ins . PRINT "(" STRING ")" ";"               (rule 3)
+	Ins -> Ins . ID "=" Exp ";"                         (rule 4)
+	Ins -> Ins . BREAK ";"                              (rule 5)
+	Ins -> Ins . CONTINUE ";"                           (rule 6)
+	Ins -> Ins . RETURN ";"                             (rule 7)
+	Ins -> Ins . EXIT ";"                               (rule 8)
+	Ins -> Ins . FREE "(" ID ")" ";"                    (rule 9)
+	Ins -> Ins . FREE "(" DATAID ")" ";"                (rule 10)
+	Ins -> Ins . READ "(" ID ")" ";"                    (rule 11)
+	Ins -> Ins . READ "(" DATAID ")" ";"                (rule 12)
+	Ins -> IF ":" Ins . NextIf Else END                 (rule 13)
+
+	ID             shift, and enter state 48
+	ELIF           reduce using rule 14
+	ELSE           reduce using rule 14
+	END            reduce using rule 14
+	BREAK          shift, and enter state 50
+	CONTINUE       shift, and enter state 51
+	RETURN         shift, and enter state 52
+	EXIT           shift, and enter state 53
+	READ           shift, and enter state 54
+	PRINT          shift, and enter state 55
+	FREE           shift, and enter state 56
+
+	NextIf         goto state 66
+
+State 66
+
+	Ins -> IF ":" Ins NextIf . Else END                 (rule 13)
+	NextIf -> NextIf . ELIF ":" Ins                     (rule 15)
+
+	ELIF           shift, and enter state 81
+	ELSE           shift, and enter state 82
+	END            reduce using rule 16
+
+	Else           goto state 80
+
+State 67
+
+	Ins -> Ins ID "=" Exp . ";"                         (rule 4)
+
+	";"            shift, and enter state 79
+
+
+State 68
+
+	Exp -> ID .                                         (rule 41)
+
+	";"            reduce using rule 41
+
+
+State 69
+
+	Ins -> Ins READ "(" ID . ")" ";"                    (rule 11)
+
+	")"            shift, and enter state 78
+
+
+State 70
+
+	Ins -> Ins READ "(" DATAID . ")" ";"                (rule 12)
+
+	")"            shift, and enter state 77
+
+
+State 71
+
+	Ins -> Ins PRINT "(" STRING . ")" ";"               (rule 3)
+
+	")"            shift, and enter state 76
+
+
+State 72
+
+	Ins -> Ins FREE "(" ID . ")" ";"                    (rule 9)
+
+	")"            shift, and enter state 75
+
+
+State 73
+
+	Ins -> Ins FREE "(" DATAID . ")" ";"                (rule 10)
+
+	")"            shift, and enter state 74
+
+
+State 74
+
+	Ins -> Ins FREE "(" DATAID ")" . ";"                (rule 10)
+
+	";"            shift, and enter state 90
+
+
+State 75
+
+	Ins -> Ins FREE "(" ID ")" . ";"                    (rule 9)
+
+	";"            shift, and enter state 89
+
+
+State 76
+
+	Ins -> Ins PRINT "(" STRING ")" . ";"               (rule 3)
+
+	";"            shift, and enter state 88
+
+
+State 77
+
+	Ins -> Ins READ "(" DATAID ")" . ";"                (rule 12)
+
+	";"            shift, and enter state 87
+
+
+State 78
+
+	Ins -> Ins READ "(" ID ")" . ";"                    (rule 11)
+
+	";"            shift, and enter state 86
+
+
+State 79
+
+	Ins -> Ins ID "=" Exp ";" .                         (rule 4)
+
+	ID             reduce using rule 4
+	ELIF           reduce using rule 4
+	ELSE           reduce using rule 4
+	END            reduce using rule 4
+	BREAK          reduce using rule 4
+	CONTINUE       reduce using rule 4
+	RETURN         reduce using rule 4
+	EXIT           reduce using rule 4
+	READ           reduce using rule 4
+	PRINT          reduce using rule 4
+	FREE           reduce using rule 4
+
+
+State 80
+
+	Ins -> IF ":" Ins NextIf Else . END                 (rule 13)
+
+	END            shift, and enter state 85
+
+
+State 81
+
+	NextIf -> NextIf ELIF . ":" Ins                     (rule 15)
+
+	":"            shift, and enter state 84
+
+
+State 82
+
+	Else -> ELSE . ":" Ins                              (rule 17)
+
+	":"            shift, and enter state 83
+
+
+State 83
+
+	Else -> ELSE ":" . Ins                              (rule 17)
+
+	ID             reduce using rule 2
+	IF             shift, and enter state 46
 	END            reduce using rule 2
+	BREAK          reduce using rule 2
+	CONTINUE       reduce using rule 2
+	RETURN         reduce using rule 2
+	EXIT           reduce using rule 2
+	READ           reduce using rule 2
+	PRINT          reduce using rule 2
+	FREE           reduce using rule 2
+
+	Ins            goto state 92
+
+State 84
+
+	NextIf -> NextIf ELIF ":" . Ins                     (rule 15)
+
+	ID             reduce using rule 2
+	IF             shift, and enter state 46
+	ELIF           reduce using rule 2
+	ELSE           reduce using rule 2
+	END            reduce using rule 2
+	BREAK          reduce using rule 2
+	CONTINUE       reduce using rule 2
+	RETURN         reduce using rule 2
+	EXIT           reduce using rule 2
+	READ           reduce using rule 2
+	PRINT          reduce using rule 2
+	FREE           reduce using rule 2
+
+	Ins            goto state 91
+
+State 85
+
+	Ins -> IF ":" Ins NextIf Else END .                 (rule 13)
+
+	ID             reduce using rule 13
+	ELIF           reduce using rule 13
+	ELSE           reduce using rule 13
+	END            reduce using rule 13
+	BREAK          reduce using rule 13
+	CONTINUE       reduce using rule 13
+	RETURN         reduce using rule 13
+	EXIT           reduce using rule 13
+	READ           reduce using rule 13
+	PRINT          reduce using rule 13
+	FREE           reduce using rule 13
+
+
+State 86
+
+	Ins -> Ins READ "(" ID ")" ";" .                    (rule 11)
+
+	ID             reduce using rule 11
+	ELIF           reduce using rule 11
+	ELSE           reduce using rule 11
+	END            reduce using rule 11
+	BREAK          reduce using rule 11
+	CONTINUE       reduce using rule 11
+	RETURN         reduce using rule 11
+	EXIT           reduce using rule 11
+	READ           reduce using rule 11
+	PRINT          reduce using rule 11
+	FREE           reduce using rule 11
+
+
+State 87
+
+	Ins -> Ins READ "(" DATAID ")" ";" .                (rule 12)
+
+	ID             reduce using rule 12
+	ELIF           reduce using rule 12
+	ELSE           reduce using rule 12
+	END            reduce using rule 12
+	BREAK          reduce using rule 12
+	CONTINUE       reduce using rule 12
+	RETURN         reduce using rule 12
+	EXIT           reduce using rule 12
+	READ           reduce using rule 12
+	PRINT          reduce using rule 12
+	FREE           reduce using rule 12
+
+
+State 88
+
+	Ins -> Ins PRINT "(" STRING ")" ";" .               (rule 3)
+
+	ID             reduce using rule 3
+	ELIF           reduce using rule 3
+	ELSE           reduce using rule 3
+	END            reduce using rule 3
+	BREAK          reduce using rule 3
+	CONTINUE       reduce using rule 3
+	RETURN         reduce using rule 3
+	EXIT           reduce using rule 3
+	READ           reduce using rule 3
+	PRINT          reduce using rule 3
+	FREE           reduce using rule 3
+
+
+State 89
+
+	Ins -> Ins FREE "(" ID ")" ";" .                    (rule 9)
+
+	ID             reduce using rule 9
+	ELIF           reduce using rule 9
+	ELSE           reduce using rule 9
+	END            reduce using rule 9
+	BREAK          reduce using rule 9
+	CONTINUE       reduce using rule 9
+	RETURN         reduce using rule 9
+	EXIT           reduce using rule 9
+	READ           reduce using rule 9
+	PRINT          reduce using rule 9
+	FREE           reduce using rule 9
+
+
+State 90
+
+	Ins -> Ins FREE "(" DATAID ")" ";" .                (rule 10)
+
+	ID             reduce using rule 10
+	ELIF           reduce using rule 10
+	ELSE           reduce using rule 10
+	END            reduce using rule 10
+	BREAK          reduce using rule 10
+	CONTINUE       reduce using rule 10
+	RETURN         reduce using rule 10
+	EXIT           reduce using rule 10
+	READ           reduce using rule 10
+	PRINT          reduce using rule 10
+	FREE           reduce using rule 10
+
+
+State 91
+
+	Ins -> Ins . PRINT "(" STRING ")" ";"               (rule 3)
+	Ins -> Ins . ID "=" Exp ";"                         (rule 4)
+	Ins -> Ins . BREAK ";"                              (rule 5)
+	Ins -> Ins . CONTINUE ";"                           (rule 6)
+	Ins -> Ins . RETURN ";"                             (rule 7)
+	Ins -> Ins . EXIT ";"                               (rule 8)
+	Ins -> Ins . FREE "(" ID ")" ";"                    (rule 9)
+	Ins -> Ins . FREE "(" DATAID ")" ";"                (rule 10)
+	Ins -> Ins . READ "(" ID ")" ";"                    (rule 11)
+	Ins -> Ins . READ "(" DATAID ")" ";"                (rule 12)
+	NextIf -> NextIf ELIF ":" Ins .                     (rule 15)
+
+	ID             shift, and enter state 48
+	ELIF           reduce using rule 15
+	ELSE           reduce using rule 15
+	END            reduce using rule 15
+	BREAK          shift, and enter state 50
+	CONTINUE       shift, and enter state 51
+	RETURN         shift, and enter state 52
+	EXIT           shift, and enter state 53
+	READ           shift, and enter state 54
+	PRINT          shift, and enter state 55
+	FREE           shift, and enter state 56
+
+
+State 92
+
+	Ins -> Ins . PRINT "(" STRING ")" ";"               (rule 3)
+	Ins -> Ins . ID "=" Exp ";"                         (rule 4)
+	Ins -> Ins . BREAK ";"                              (rule 5)
+	Ins -> Ins . CONTINUE ";"                           (rule 6)
+	Ins -> Ins . RETURN ";"                             (rule 7)
+	Ins -> Ins . EXIT ";"                               (rule 8)
+	Ins -> Ins . FREE "(" ID ")" ";"                    (rule 9)
+	Ins -> Ins . FREE "(" DATAID ")" ";"                (rule 10)
+	Ins -> Ins . READ "(" ID ")" ";"                    (rule 11)
+	Ins -> Ins . READ "(" DATAID ")" ";"                (rule 12)
+	Else -> ELSE ":" Ins .                              (rule 17)
+
+	ID             shift, and enter state 48
+	END            reduce using rule 17
+	BREAK          shift, and enter state 50
+	CONTINUE       shift, and enter state 51
+	RETURN         shift, and enter state 52
+	EXIT           shift, and enter state 53
+	READ           shift, and enter state 54
+	PRINT          shift, and enter state 55
+	FREE           shift, and enter state 56
 
 
 -----------------------------------------------------------------------------
 Grammar Totals
 -----------------------------------------------------------------------------
-Number of rules: 28
+Number of rules: 42
 Number of terminals: 71
-Number of non-terminals: 10
-Number of states: 55
+Number of non-terminals: 12
+Number of states: 93
