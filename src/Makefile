@@ -14,7 +14,7 @@ Lexer.o: Lexer.hs Tokens.o
 # Parser
 
 Grammar.hs: Tokens.o
-	happy parser/Grammar.y -o parser/Grammar.hs
+	happy parser/Grammar.y -o parser/Grammar.hs --info=grammarinfo.md
 
 Grammar.o: Grammar.hs
 	ghc parser/Grammar.hs -itokens

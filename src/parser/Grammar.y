@@ -9,22 +9,22 @@ import Tokens
 %error     { parseError }
 
 %token
-    ID        { TkDId     _ $$ }     
-    DATAID    { TkId      _ $$ }         
-    INTDEC    { TkInt     $$ } 
-    BOOLDEC   { TkBool    $$ }     
-    CHARDEC   { TkChar    $$ }     
-    VOIDDEC   { TkVoid    $$ }     
-    FLOATDEC  { TkFloat   $$ }    
-    STRUCTDEC { TkStruct  $$ }   
-    UNIONDEC  { TkUnion   $$ }     
-    ENUMDEC   { TkEnum    $$ }     
-    GLOBAL    { TKGlobal  $$ }     
-    ';'       { TkColon   $$ }     
+    ID        { TkId       _ _ }     
+    DATAID    { TkDId      _ _ }         
+    INTDEC    { TkInt      _ } 
+    BOOLDEC   { TkBool     _ }     
+    CHARDEC   { TkChar     _ }     
+    VOIDDEC   { TkVoid     _ }     
+    FLOATDEC  { TkFloat    _ }    
+    STRUCTDEC { TkStruct   _ }   
+    UNIONDEC  { TkUnion    _ }     
+    ENUMDEC   { TkEnum     _ }     
+    GLOBAL    { TKGlobal   _ }     
+    ';'       { TkSColon   _ }     
 
 %%
 
-Prog : Declarations  { [] }
+Prog : Declarations  { $1 }
      
 
 Declarations: {- empty -}                                     { [] }        
