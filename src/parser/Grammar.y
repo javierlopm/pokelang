@@ -91,25 +91,45 @@ import Tokens
 
 %%
 
-Prog : Declarations  { $1 }
-     
+Prog : Dcls  { $1 }
 
-Declarations: {- empty -}                                     { [] }        
-            | Declarations IsGlobal PrimitiveType ID     ";"  { [] }
-            | Declarations IsGlobal DataType      DATAID ";"  { [] }
+Ins : PRINT "(" STRING ")"             { [] } -- Mucho mas complejo que esto
+    | ID "=" Exp                       { [] }
 
-IsGlobal : {- empty -} { True  }
-         | GLOBAL      { False }
+Dcls: {- empty -}                             { [] }        
+    | Dcls IsGlob PrimType "["INT"]" ID  ";"  { [] }
+    | Dcls IsGlob PrimType "[""]"    ID  ";"  { [] }
+    | Dcls IsGlob PrimType "*"       ID  ";"  { [] }
+    | Dcls IsGlob PrimType           ID  ";"  { [] }
+    | Dcls IsGlob DataType  DATAID ";"        { [] }
+    | Dcls FUNC PrimType ID "(" Parameter ")" ":" Ins END {[]}
 
-PrimitiveType : INTDEC         { [] }
-              | BOOLDEC        { [] }
-              | CHARDEC        { [] }
-              | VOIDDEC        { [] }
-              | FLOATDEC       { [] }
+IsGlob : {- empty -} { True  }
+         | GLOBAL    { False }
+
+PrimType : INTDEC         { [] }
+         | BOOLDEC        { [] }
+         | CHARDEC        { [] }
+         | VOIDDEC        { [] }
+         | FLOATDEC       { [] }
 
 DataType : STRUCTDEC      { [] }
          | UNIONDEC       { [] }
          | ENUMDEC        { [] }
+
+Parameter: {- empty -}                    { [] }
+         | Parameters PrimType ID         { [] }
+         | Parameters DataType DATAID     { [] }
+
+Parameters: {- empty -}                    { [] }
+          | Parameters PrimType ID     "," { [] }
+          | Parameters DataType DATAID "," { [] }
+
+Exp : ID            { [] }
+    | Exp OR  Exp   { [] } -- Hay que agregar predecencias, let the shift/reduce conflicts begin
+    -- | Exp AND Exp   { [] }
+    -- | Exp "||" Exp  { [] }
+    -- | Exp "&&" Exp  { [] }
 
 
 {
