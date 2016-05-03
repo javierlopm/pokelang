@@ -1,4 +1,5 @@
 pokelang
+grammarinfo.md
 *.o
 *.hi
 lexer/Lexer.hs
