@@ -27,7 +27,7 @@ import Tokens
 Prog : Declarations  { [] }
      
 
-Declarations: {- empty -}                             { [] }        
+Declarations: {- empty -}                                     { [] }        
             | Declarations IsGlobal PrimitiveType ID     ';'  { [] }
             | Declarations IsGlobal DataType      DATAID ';'  { [] }
 
@@ -48,6 +48,6 @@ DataType : STRUCTDEC      { [] }
 {
 
 parseError [] = error $ "EOF Inesperado"
-parseError l  = error $ "Error de parseo en " ++ show (head l) ++ "|" ++ show (tail l)
+parseError l  = error $ "Error de parseo en " ++ show (head l)
 
 }
