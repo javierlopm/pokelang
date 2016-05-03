@@ -81,7 +81,7 @@ tokens :-
   atrapar                  { \p _ -> TkAlloc     (getPos p) }
   liberar                  { \p _ -> TkFree      (getPos p) }
   SIZEther                 { \p _ -> TkSizeOf    (getPos p) }
-  pidget                   { \p _ -> TkGet       (getPos p) }
+  pidGET                   { \p _ -> TkGet       (getPos p) }
   
   and                      { \p _ -> TkAnd       (getPos p) }
   or                       { \p _ -> TkOr        (getPos p) }
