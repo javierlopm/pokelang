@@ -43,7 +43,7 @@ import Tokens
     "||"      { TkPOr      _ }    
     AND       { TkAnd      _ }    
     OR        { TkOr       _ }    
-    "?"       { TkDEQ      _ }    
+    --"?"       { TkDEQ      _ }    
     ">="      { TkGE   _ }    
     "<="      { TkLE   _ }    
     ">"       { TkGT   _ }    
@@ -245,6 +245,11 @@ Exp :
     | "(" Exp ")"    { [] }
     -- Constantes.
     | Term           { [] }
+    -- Llamadas
+    | MALLOC "(" Exp ")"       { [] }
+    | SIZEOF "(" Exp ")"       { [] }
+    | SIZEOF "(" PrimType ")"  { [] }
+    | GET    "(" ENUM ")"      { [] }
 
 Term: TRUE         { [] }
     | FALSE        { [] }
@@ -252,6 +257,7 @@ Term: TRUE         { [] }
     | DATAID       { [] }
     | FLOAT        { [] }
     | INT          { [] }
+    | CHAR         { [] }
 
 {
 
