@@ -168,11 +168,11 @@ Dcls:  {- λ -}                                { [] }
     | Dcls IsGlob PrimType Ptrs       ID  ";"  { [] }
     | Dcls IsGlob PrimType EmptyArrs  ID  ";"  { [] }
     | Dcls IsGlob PrimType StaticArrs ID  ";"  { [] }
-    | Dcls IsGlob PrimType           ID  ";"   { [] }
-    | Dcls DataType    DATAID     ";"          { [] }    -- Forward declarations
+    | Dcls IsGlob PrimType            ID  ";"   { [] }
+  --| Dcls DataType    DATAID     ";"          { [] }    -- Forward declarations
     | Dcls ENUMDEC DATAID   "{" EnumConsList "}"   { [] }
-    | Dcls STRUCTDEC DATAID "{" FieldsList   "}"   { [] }
-    | Dcls UNIONDEC DATAID  "{" FieldsList   "}"   { [] }
+    | Dcls STRUCTDEC  DATAID  "{" FieldsList   "}"   { [] }
+    | Dcls UNIONDEC  DATAID  "{" FieldsList   "}"   { [] }
 
 
 IsGlob : {- λ -}     { True  }
