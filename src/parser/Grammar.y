@@ -270,6 +270,9 @@ Term: TRUE         { [] }
 {
 
 parseError [] = error $ "EOF Inesperado"
-parseError l  = error $ "Parsing error at \n" ++ show (head l)
-ParseOK    l  = print $ "Succeed"
+parseError l  = error $ "Parsing error at: \n" ++ show (head l)
+
+parse [] = print "Hola"
+parse l = print "Hola"
+
 }

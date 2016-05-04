@@ -22,7 +22,7 @@ main = do
                 "-l"      -> mapM_ print goods
                 "-p"      -> do 
                               let myParse =  (parser goods :: [Token])
-                              print myParse
+                              putStrLn $  (drop 2  (show myParse)) ++ "Succeed."
                 "-a"      -> do mapM_ print goods
                                 putStrLn "\n"
                                 mapM_ print (parser goods :: [Token])
