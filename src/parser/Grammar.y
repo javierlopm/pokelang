@@ -93,21 +93,26 @@ import Tokens
 
 Prog : Dcls  { $1 }
 
-Ins : {- λ -}                          { [] }
-    | Ins PRINT "(" STRING ")"   ";"          { [] } -- Mucho mas complejo que esto
-    | Ins ID "=" Exp             ";"         { [] }
-    | Ins BREAK       ";"                      { [] }
-    | Ins CONTINUE    ";"                      { [] }
-    | Ins RETURN      ";"                      { [] }
-    | Ins EXIT        ";"                      { [] }
-    | Ins FREE "("ID")"     ";"                { [] }
-    | Ins FREE "("DATAID")" ";"                { [] }
-    | Ins READ "("ID")"     ";"                { [] }
-    | Ins READ "("DATAID")" ";"                { [] }
-    | IF ":" Ins NextIf Else END                      { [] }
-    -- | Ins  ";"                      { [] }
-    -- | Ins  ";"                      { [] }
-    -- | Ins  ";"                      { [] }
+Ins : {- λ -}                                 { [] }
+    | Ins PRINT "(" STRING PrntArgs ")"   ";" { [] } -- Mucho mas complejo que esto
+    | Ins READ  "("       ID        ")"   ";" { [] }
+    | Ins ID "=" Exp        ";"         { [] }
+    | Ins BREAK             ";"         { [] }
+    | Ins CONTINUE          ";"         { [] }
+    | Ins RETURN            ";"         { [] }
+    | Ins EXIT              ";"         { [] }
+    | Ins FREE "("ID")"     ";"         { [] }
+    | Ins FREE "("DATAID")" ";"         { [] }
+    | Ins READ "("DATAID")" ";"         { [] }
+    | Ins IF ":" SmplDcls Ins NextIf Else END    { [] }
+    | Ins WHILE Exp ":" SmplDcls Ins END         { [] }
+    | Ins FOR ID "=" INT  "|" INT "|" INT ":" SmplDcls Ins  END { [] }
+    | Ins FOR ID "=" INT  "|" INT         ":" SmplDcls Ins  END { [] }
+    | Ins FOR ID "=" ENUM "|" ENUM        ":" SmplDcls Ins  END { [] }
+    | Ins BEGIN SmplDcls Ins END    { [] } -- No deberia aceptar funciones
+
+PrntArgs: {- λ -}             { [] }
+        | PrntArgs "," Exp    { [] }
 
 NextIf: {- λ -}             { [] }
       | NextIf ELIF ":" Ins { [] }
@@ -115,13 +120,21 @@ NextIf: {- λ -}             { [] }
 Else: {- λ -}      { [] }
     | ELSE ":" Ins { [] }
 
-Dcls: {- λ -}                                 { [] }        
+SmplDcls: {- λ -}                                 { [] }        
+    | SmplDcls IsGlob PrimType "["INT"]" ID  ";"  { [] }
+    | SmplDcls IsGlob PrimType "[""]"    ID  ";"  { [] }
+    | SmplDcls IsGlob PrimType "*"       ID  ";"  { [] }
+    | SmplDcls IsGlob PrimType           ID  ";"  { [] }
+    | SmplDcls IsGlob DataType    DATAID     ";"  { [] }
+
+Dcls:  {- λ -}                                { [] }
+    | Dcls FUNC PrimType ID "(" Parameter ")" ":" SmplDcls Ins END { [] }
     | Dcls IsGlob PrimType "["INT"]" ID  ";"  { [] }
     | Dcls IsGlob PrimType "[""]"    ID  ";"  { [] }
     | Dcls IsGlob PrimType "*"       ID  ";"  { [] }
     | Dcls IsGlob PrimType           ID  ";"  { [] }
     | Dcls IsGlob DataType    DATAID     ";"  { [] }
-    | Dcls FUNC PrimType ID "(" Parameter ")" ":" Ins END {[]}
+
 
 IsGlob : {- λ -}     { True  }
          | GLOBAL    { False }

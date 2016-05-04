@@ -294,13 +294,17 @@ The structure of a bounded iteration must include explicitly the begining, value
 
 i.e
 
-    vamo_a_itera x = 1 |10|1: -- var = first | last | step --
+    vamo_a_itera x = 1 |10|2: -- var = first | last | step --
+        instruccion0;
+    vamo_a_calmano
+
+    vamo_a_itera x = 1 |10: -- var = first | last step will be 1 by default --
         instruccion0;
     vamo_a_calmano
 
 or 
 
-    vamo_a_itera dias=Lunes||Viernes:
+    vamo_a_itera dias=Lunes|Viernes:
         instruction0;
     vamo_a_calmano
 
