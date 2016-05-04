@@ -34,7 +34,7 @@ data Token =  TkLBracket  { position :: Pos }
             | TkPEQ       { position :: Pos }
             | TkDot       { position :: Pos }
             | TkExcMark   { position :: Pos }
-            | TkExcAcc    { position :: Pos }
+            | TkExcArr    { position :: Pos }
             | TkNEQ       { position :: Pos }
             | TkDAmp      { position :: Pos }
             | TkAnd       { position :: Pos }
