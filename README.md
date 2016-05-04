@@ -143,8 +143,9 @@ I.E.:
 ~~~
     STRUCTtabuzz pokeTrainer {
         name                 :: CHARmander[],
-        socialSecurityNumber :: pINTachu
-    };
+        socialSecurityNumber :: pINTachu,
+        Friend               :: pokeTrainer
+    }
 
     pokeTrainer ash;
     ash = atrapar(SIZEther(pokeTrainer));
@@ -165,7 +166,7 @@ I.E.:
 	articUNION poketrainer {
 	    name                 :: CHARmander[],
 	    socialSecurityNumber :: pINTachu
-	};
+	}
 
 	    pokeTrainer ash;
 	    ash = atrapar(SIZEther(pokeTrainer));
