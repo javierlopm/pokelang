@@ -73,7 +73,7 @@ tokens :-
   vamo\_a\_imprimi         { \p _ -> TkPrint     (getPos p) }
 
 
-  funcball                 { \p _ -> TkNull      (getPos p) }
+  funcball                 { \p _ -> TkFunc      (getPos p) }
 
   si                       { \p _ -> TkIf        (getPos p) }
   y\_si                    { \p _ -> TkElif      (getPos p) }

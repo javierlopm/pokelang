@@ -131,9 +131,9 @@ Ins : {- λ -}                                 { [] }
     | Ins PRINT "(" STRING PrntArgs ")"   ";" { [] } 
     | Ins READ  "("       ID        ")"   ";" { [] }
     | Ins WRITE "("       ID        ")"   ";" { [] }
-    | Ins ID "=" Exp        ";"         { [] }
-    | Ins ID "*=" Exp        ";"         { [] }
-    | Ins ID "+=" Exp        ";"         { [] }
+    | Ins Exp "=" Exp         ";"         { [] }
+    | Ins Exp "*=" Exp        ";"         { [] }
+    | Ins Exp "+=" Exp        ";"         { [] }
     | Ins BREAK             ";"         { [] }
     | Ins CONTINUE          ";"         { [] }
     | Ins RETURN            ";"         { [] }
@@ -141,10 +141,10 @@ Ins : {- λ -}                                 { [] }
     | Ins FREE "("ID")"     ";"         { [] }
     | Ins FREE "("DATAID")" ";"         { [] }
     | Ins READ "("DATAID")" ";"         { [] }
-    | Ins IF ":" SmplDcls Ins NextIf Else END    { [] }
+    | Ins IF Exp ":" SmplDcls Ins NextIf Else END    { [] }
     | Ins WHILE Exp ":" SmplDcls Ins END         { [] }
-    | Ins FOR ID "=" INT  "|" INT "|" INT ":" SmplDcls Ins  END { [] }
-    | Ins FOR ID "=" INT  "|" INT         ":" SmplDcls Ins  END { [] }
+    | Ins FOR ID "=" Exp  "|" Exp "|" Exp ":" SmplDcls Ins  END { [] }
+    | Ins FOR ID "=" Exp  "|" Exp         ":" SmplDcls Ins  END { [] }
     | Ins FOR ID "=" ENUM "|" ENUM        ":" SmplDcls Ins  END { [] }
     | Ins BEGIN SmplDcls Ins END    { [] } -- No debe aceptar funciones
 
@@ -152,7 +152,7 @@ PrntArgs: {- λ -}             { [] }
         | PrntArgs "," Exp    { [] } -- Siempre es necesaria una coma a la izq
 
 NextIf: {- λ -}             { [] }
-      | NextIf ELIF ":" Ins { [] }
+      | NextIf ELIF  Exp ":" Ins { [] }
 
 Else: {- λ -}      { [] }
     | ELSE ":" Ins { [] }
@@ -190,11 +190,16 @@ DataType : ENUMDEC        { [] }
 
 Parameter: {- λ -}                        { [] }
          | Parameters PrimType ID         { [] }
+         | Parameters PrimType Ptrs ID    { [] }
+         | Parameters PrimType EmptyArrs ID   { [] }
          | Parameters DataType DATAID     { [] }
 
 Parameters: {- λ -}                        { [] }
           | Parameters PrimType ID     "," { [] }
           | Parameters DataType DATAID "," { [] }
+          | Parameters PrimType Ptrs ID ","   { [] }
+          | Parameters PrimType EmptyArrs ID ","  { [] }
+
 
 EnumConsList: ENUM                      { [] }
             | EnumConsList "," ENUM     { [] }
