@@ -210,9 +210,9 @@ EmptyArrs: "[" "]"             { [] }
 StaticArrs: "[" INT "]"             { [] }
           | StaticArrs "[" INT "]"  { [] }
 
-Exp : ID            { [] }
+Exp : 
     -- Expresiones Aritméticas.
-    | Exp "+" Exp       { [] }
+      Exp "+" Exp       { [] }
     | Exp "-" Exp       { [] }
     | Exp "^" Exp       { [] }
     | Exp "*" Exp       { [] }
@@ -236,7 +236,7 @@ Exp : ID            { [] }
     -- Expresiones sobre lienzo.
     | Exp "!!" Exp           { [] }
     | Exp "."  Exp           { [] }
-    | Exp "[" Exp "]" %prec ARR { [] }
+    | ID "[" Exp "]" %prec ARR { [] }
     --Llamadas a funciones
     | ID "(" Exp ")"         { [] }
     --Acceso a apuntadores
