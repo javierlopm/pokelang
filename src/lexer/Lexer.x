@@ -109,7 +109,7 @@ tokens :-
   \(                       { \p _  -> TkLRound   (getPos p)}
   \)                       { \p _  -> TkRRound   (getPos p)}
   \|                       { \p _  -> TkPipe     (getPos p)}
-
+  \!\!                     { \p _  -> TkExcAcc   (getPos p)}
   \:\:                     { \p _ -> TkDColon    (getPos p)}
   \:                       { \p _ -> TkColon     (getPos p)}
   \;                       { \p _ -> TkSColon    (getPos p)}

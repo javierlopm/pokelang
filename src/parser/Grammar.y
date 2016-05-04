@@ -89,6 +89,26 @@ import Tokens
     INT       { TkNum _ _ }
     FLOAT     { TkFloatVal _ _ }
 
+-- Para las expresiones relacionales.
+--%nonassoc '<' <\=' '>' '>\=' '=' '\/=' '..'
+%nonassoc "==" "!="
+%nonassoc "<" "<=" ">" ">="
+
+-- Para los booleanos.
+%left  OR
+%left  AND
+%left  "||"
+%left  "&&"
+%right "!"
+
+-- Para los enteros.
+%left "+" "-"
+%left "*" "/" "//" "%"
+%left "^"
+%right NEG      -- Para el - unario.
+
+
+
 %%
 
 Prog : Dcls  { $1 }
@@ -156,13 +176,50 @@ Parameter: {- λ -}                        { [] }
 Parameters: {- λ -}                        { [] }
           | Parameters PrimType ID     "," { [] }
           | Parameters DataType DATAID "," { [] }
-
 Exp : ID            { [] }
-    -- | Exp OR  Exp   { [] } -- Hay que agregar predecencias, let the shift/reduce conflicts begin
-    -- | Exp AND Exp   { [] }
-    -- | Exp "||" Exp  { [] }
-    -- | Exp "&&" Exp  { [] }
+  -- Expresiones Aritméticas.
+    Exp "+" Exp       { [] }
+  | Exp "-" Exp       { [] }
+  | Exp "^" Exp       { [] }
+  | Exp "*" Exp       { [] }
+  | Exp "/" Exp       { [] }
+  | Exp "//" Exp      { [] }
+  | Exp "%" Exp       { [] }
+  | "-" Exp %prec NEG { [] }
 
+  -- Expresiones Booleanas.
+  | Exp or Exp        { [] }
+  | Exp and Exp       { [] }
+    | not Exp         { [] }
+
+  -- Expresiones relacionales.
+  | Exp lt Exp      { [] }
+  | Exp le Exp      { [] }
+  | Exp gt Exp      { [] }
+  | Exp ge Exp      { [] }
+  | Exp eq Exp      { [] }
+  | Exp neq Exp     { [] }
+
+  -- Expresiones sobre lienzo.
+  | Exp '&' Exp     { [] }
+  | Exp '~' Exp     { [] }
+    | '$' Exp       { [] }
+    | Exp ap        { [] }
+
+  -- Asociatividad.
+  | '(' Exp ')'    { [] }
+
+
+  -- Constantes.
+  --| value         { Int $1 }
+  | Term           { [] }
+
+Term:  --Simbolos terminales
+    true         { [] }
+  | false        { [] }
+  | var          { [] }
+  | canvas       { [] }
+  | int          { [] }
 
 {
 
