@@ -130,7 +130,10 @@ Prog : Dcls  { $1 }
 Ins : {- λ -}                                 { [] }
     | Ins PRINT "(" STRING PrntArgs ")"   ";" { [] } 
     | Ins READ  "("       ID        ")"   ";" { [] }
+    | Ins WRITE "("       ID        ")"   ";" { [] }
     | Ins ID "=" Exp        ";"         { [] }
+    | Ins ID "*=" Exp        ";"         { [] }
+    | Ins ID "+=" Exp        ";"         { [] }
     | Ins BREAK             ";"         { [] }
     | Ins CONTINUE          ";"         { [] }
     | Ins RETURN            ";"         { [] }
