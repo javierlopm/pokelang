@@ -89,6 +89,9 @@ import Tokens
     INT       { TkNum _ _ }
     FLOAT     { TkFloatVal _ _ }
 
+    -- Composed types
+    ENUM { TkEnumCons _ _ }
+
 -- Para las expresiones relacionales.
 --%nonassoc '<' <\=' '>' '>\=' '=' '\/=' '..'
 %nonassoc "==" "!="
@@ -114,7 +117,7 @@ import Tokens
 Prog : Dcls  { $1 }
 
 Ins : {- λ -}                                 { [] }
-    | Ins PRINT "(" STRING PrntArgs ")"   ";" { [] } -- Mucho mas complejo que esto
+    | Ins PRINT "(" STRING PrntArgs ")"   ";" { [] } 
     | Ins READ  "("       ID        ")"   ";" { [] }
     | Ins ID "=" Exp        ";"         { [] }
     | Ins BREAK             ";"         { [] }
@@ -129,10 +132,10 @@ Ins : {- λ -}                                 { [] }
     | Ins FOR ID "=" INT  "|" INT "|" INT ":" SmplDcls Ins  END { [] }
     | Ins FOR ID "=" INT  "|" INT         ":" SmplDcls Ins  END { [] }
     | Ins FOR ID "=" ENUM "|" ENUM        ":" SmplDcls Ins  END { [] }
-    | Ins BEGIN SmplDcls Ins END    { [] } -- No deberia aceptar funciones
+    | Ins BEGIN SmplDcls Ins END    { [] } -- No debe aceptar funciones
 
 PrntArgs: {- λ -}             { [] }
-        | PrntArgs "," Exp    { [] }
+        | PrntArgs "," Exp    { [] } -- Siempre es necesaria una coma a la izq
 
 NextIf: {- λ -}             { [] }
       | NextIf ELIF ":" Ins { [] }
@@ -140,20 +143,22 @@ NextIf: {- λ -}             { [] }
 Else: {- λ -}      { [] }
     | ELSE ":" Ins { [] }
 
-SmplDcls: {- λ -}                                 { [] }        
-    | SmplDcls IsGlob PrimType "["INT"]" ID  ";"  { [] }
-    | SmplDcls IsGlob PrimType "[""]"    ID  ";"  { [] }
-    | SmplDcls IsGlob PrimType "*"       ID  ";"  { [] }
-    | SmplDcls IsGlob PrimType           ID  ";"  { [] }
-    | SmplDcls IsGlob DataType    DATAID     ";"  { [] }
+SmplDcls: {- λ -}                                  { [] }        
+    | SmplDcls IsGlob PrimType Ptrs       ID  ";"  { [] }
+    | SmplDcls IsGlob PrimType EmptyArrs  ID  ";"  { [] }
+    | SmplDcls IsGlob PrimType StaticArrs ID  ";"  { [] }
+    | SmplDcls IsGlob PrimType            ID  ";"  { [] }
 
 Dcls:  {- λ -}                                { [] }
     | Dcls FUNC PrimType ID "(" Parameter ")" ":" SmplDcls Ins END { [] }
-    | Dcls IsGlob PrimType "["INT"]" ID  ";"  { [] }
-    | Dcls IsGlob PrimType "[""]"    ID  ";"  { [] }
-    | Dcls IsGlob PrimType "*"       ID  ";"  { [] }
-    | Dcls IsGlob PrimType           ID  ";"  { [] }
-    | Dcls IsGlob DataType    DATAID     ";"  { [] }
+    | Dcls IsGlob PrimType Ptrs       ID  ";"  { [] }
+    | Dcls IsGlob PrimType EmptyArrs  ID  ";"  { [] }
+    | Dcls IsGlob PrimType StaticArrs ID  ";"  { [] }
+    | Dcls IsGlob PrimType           ID  ";"   { [] }
+    | Dcls DataType    DATAID     ";"          { [] }    -- Forward declarations
+    | Dcls ENUMDEC DATAID   "{" EnumConsList "}"   { [] }
+    | Dcls STRUCTDEC DATAID "{" FieldsList   "}"   { [] }
+    | Dcls UNIONDEC DATAID  "{" FieldsList   "}"   { [] }
 
 
 IsGlob : {- λ -}     { True  }
@@ -165,10 +170,6 @@ PrimType : INTDEC         { [] }
          | VOIDDEC        { [] }
          | FLOATDEC       { [] }
 
-DataType : STRUCTDEC      { [] }
-         | UNIONDEC       { [] }
-         | ENUMDEC        { [] }
-
 Parameter: {- λ -}                        { [] }
          | Parameters PrimType ID         { [] }
          | Parameters DataType DATAID     { [] }
@@ -176,6 +177,24 @@ Parameter: {- λ -}                        { [] }
 Parameters: {- λ -}                        { [] }
           | Parameters PrimType ID     "," { [] }
           | Parameters DataType DATAID "," { [] }
+
+EnumConsList: ENUM                      { [] }
+            | EnumConsList "," ENUM     { [] }
+
+FieldsList  : ID     "::" PrimType                   { [] }
+            | DATAID "::" DATAID                     { [] }
+            | FieldsList  "," ID     "::" PrimType   { [] }
+            | FieldsList  "," DATAID "::" DATAID     { [] }
+
+Ptrs: "*"        { [] }
+    | Ptrs "*"   { [] }
+
+EmptyArrs: "[" "]"             { [] }
+         |  EmptyArrs "[" "]"  { [] }
+
+StaticArrs: "[" INT "]"             { [] }
+          | StaticArrs "[" INT "]"  { [] }
+
 Exp : ID            { [] }
   -- Expresiones Aritméticas.
     Exp "+" Exp       { [] }
