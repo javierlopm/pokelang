@@ -214,7 +214,7 @@ Exp :
   | Exp "==" Exp      { [] }
   | Exp "!=" Exp      { [] }
 
-  -- Expresiones sobre lienzo.
+  -- Expresiones de arreglos.
   | Exp "!!" Exp           { [] }
   | Exp "."  Exp           { [] }
     | Exp "[" Exp "]" %prec ARR { [] }
