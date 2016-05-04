@@ -85,7 +85,6 @@ import Tokens
     TRUE      { TkTrue _ }
     FALSE     { TkFalse   _ }
     CHAR      { TkCharVal _ _ }
-    ENUM      { TkEnumCons _ _ }
     STRING    { TkString _ _ }
     INT       { TkNum _ _ }
     FLOAT     { TkFloatVal _ _ }
@@ -181,6 +180,10 @@ PrimType : INTDEC         { [] }
          | CHARDEC        { [] }
          | VOIDDEC        { [] }
          | FLOATDEC       { [] }
+
+DataType : ENUMDEC        { [] }
+         | STRUCTDEC      { [] }
+         | UNIONDEC       { [] }
 
 Parameter: {- λ -}                        { [] }
          | Parameters PrimType ID         { [] }
