@@ -37,6 +37,7 @@ import Tokens
     "+="      { TkPEQ      _ }    
     "."       { TkDot      _ }    
     "!"       { TkExcMark  _ }    
+    "!!"      { TkExcArr   _ }    
     "!="      { TkNEQ      _ }    
     "&&"      { TkDAmp     _ }    
     "||"      { TkPOr      _ }    
@@ -107,6 +108,17 @@ import Tokens
 %left "^"
 %right NEG      -- Para el - unario.
 
+--Strucs Union y Arreglos
+%left "!!"   
+%left "."  
+%left ARR
+
+--Llamadas a funciones
+%left CALL
+
+--Acceso a apuntadores
+%right POINT
+
 
 
 %%
@@ -176,7 +188,7 @@ Parameter: {- λ -}                        { [] }
 Parameters: {- λ -}                        { [] }
           | Parameters PrimType ID     "," { [] }
           | Parameters DataType DATAID "," { [] }
-Exp : ID            { [] }
+Exp :
   -- Expresiones Aritméticas.
     Exp "+" Exp       { [] }
   | Exp "-" Exp       { [] }
@@ -188,38 +200,44 @@ Exp : ID            { [] }
   | "-" Exp %prec NEG { [] }
 
   -- Expresiones Booleanas.
-  | Exp or Exp        { [] }
-  | Exp and Exp       { [] }
-    | not Exp         { [] }
+  | Exp OR Exp        { [] }
+  | Exp "||" Exp      { [] }
+  | Exp AND Exp       { [] }
+  | Exp "&&" Exp      { [] }
+    | "!" Exp         { [] }
 
   -- Expresiones relacionales.
-  | Exp lt Exp      { [] }
-  | Exp le Exp      { [] }
-  | Exp gt Exp      { [] }
-  | Exp ge Exp      { [] }
-  | Exp eq Exp      { [] }
-  | Exp neq Exp     { [] }
+  | Exp "<"  Exp      { [] }
+  | Exp "<=" Exp      { [] }
+  | Exp ">"  Exp      { [] }
+  | Exp ">=" Exp      { [] }
+  | Exp "==" Exp      { [] }
+  | Exp "!=" Exp      { [] }
 
   -- Expresiones sobre lienzo.
-  | Exp '&' Exp     { [] }
-  | Exp '~' Exp     { [] }
-    | '$' Exp       { [] }
-    | Exp ap        { [] }
+  | Exp "!!" Exp           { [] }
+  | Exp "."  Exp           { [] }
+    | Exp "[" Exp "]" %prec ARR { [] }
+
+  --Llamadas a funciones
+  | ID "(" Exp ")"         { [] }
+
+  --Acceso a apuntadores
+    | "*" Exp %prec POINT  { [] }
 
   -- Asociatividad.
-  | '(' Exp ')'    { [] }
-
+  | "(" Exp ")"    { [] }
 
   -- Constantes.
-  --| value         { Int $1 }
   | Term           { [] }
 
 Term:  --Simbolos terminales
-    true         { [] }
-  | false        { [] }
-  | var          { [] }
-  | canvas       { [] }
-  | int          { [] }
+    TRUE         { [] }
+  | FALSE        { [] }
+  | ID           { [] }
+  | DATAID       { [] }
+  | FLOAT        { [] }
+  | INT          { [] }
 
 {
 
