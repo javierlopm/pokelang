@@ -188,18 +188,20 @@ DataType : ENUMDEC        { [] }
          | STRUCTDEC      { [] }
          | UNIONDEC       { [] }
 
-Parameter: {- λ -}                        { [] }
-         | Parameters PrimType ID         { [] }
+Parameter: Parameters PrimType ID         { [] }
          | Parameters PrimType Ptrs ID    { [] }
          | Parameters PrimType EmptyArrs ID   { [] }
          | Parameters DataType DATAID     { [] }
 
-Parameters: {- λ -}                        { [] }
-          | Parameters PrimType ID     "," { [] }
-          | Parameters DataType DATAID "," { [] }
-          | Parameters PrimType Ptrs ID ","   { [] }
-          | Parameters PrimType EmptyArrs ID ","  { [] }
+ListParam: Parameter                      { [] }
+         | Parameters PrimType ID     "," { [] }
+         | Parameters DataType DATAID "," { [] }
+         | Parameters PrimType Ptrs ID ","   { [] }
+         | Parameters PrimType EmptyArrs ID ","  { [] }
 
+
+Parameters: {- λ -}       { [] }
+          | ListParam     { [] }
 
 EnumConsList: ENUM                      { [] }
             | EnumConsList "," ENUM     { [] }
@@ -270,6 +272,9 @@ Term: TRUE         { [] }
 {
 
 parseError [] = error $ "EOF Inesperado"
-parseError l  = error $ "Error de parseo en " ++ show (head l)
+parseError l  = error $ "Parsing error at: \n" ++ show (head l)
+
+parse [] = print "Hola"
+parse l = print "Hola"
 
 }
