@@ -5,10 +5,11 @@ module TableTree(
 
 import qualified Data.Map.Strict as Map
 -- import import qualified Data.Sequence as S
+import Data.Maybe
 
 type SymbolTable a = Map.Map String a
 
-data Scope a = Scope (SymbolTable a) [Scope a] Int -- Y si... usamos sequence aqui para tenerlos ordenados?
+data Scope a = Scope (SymbolTable a) [Scope a] -- Y si... usamos sequence aqui para tenerlos ordenados?
     deriving (Show) -- Sustituir por el show mostrado en clases
 
 
@@ -27,14 +28,14 @@ addEntry = Map.insert
 
 -- Scope
 emptyScope :: Scope a
-emptyScope = Scope newtable [] 0
+emptyScope = Scope newtable []
 
 enterScope :: Scope a -> Scope a
-enterScope (Scope symtable [] ind) = Scope symtable (emptyScope:[]) (succ ind)
-enterScope (Scope symtable (lst@(Scope stc chld indc):childL) ind) = Scope symtable (emptyScope:lst:childL) (succ indc)
+enterScope (Scope symtable []) = Scope symtable (emptyScope:[])
+enterScope (Scope symtable (lst@(Scope stc chld):childL)) = Scope symtable (emptyScope:lst:childL)
 
 insert :: String -> a -> Scope a -> Scope a
-insert key val (Scope symtable chl ind) = Scope (addEntry key val symtable) chl ind
+insert key val (Scope symtable chl) = Scope (addEntry key val symtable) chl
 
 
 
@@ -42,10 +43,11 @@ insert key val (Scope symtable chl ind) = Scope (addEntry key val symtable) chl 
 fromSymTable :: Scope a -> Zipper a
 fromSymTable = flip (,) $ Breadcrumbs []
 
--- No funciona
--- down :: Zipper a -> Zipper a
--- down (Scope symt (ch:chdrn) , breadcrumbs) = (ch,(oldstep:breadcrumbs))
-    -- where oldstep = (symt,[],chdrn)
+-- No funciona -- Revisar si conviene trabajar con ST o con Scopes
+down :: Zipper a -> Maybe (Zipper a)
+down (Scope symt [] , breadcrumbs) = Nothing
+down (Scope symt (ch:chdrn) , breadcrumbs) = Just (ch,(oldstep:breadcrumbs))
+    where oldstep = (symt,[],chdrn)
 
 apply :: (Scope a -> Scope a) -> Zipper a -> Zipper a
 apply f (scope,breadcrumbs) = (f scope,breadcrumbs)
@@ -63,3 +65,4 @@ s1 = emptyScope
 s2 = insert "elem1" 1 s1
 s3 = insert "elem2" 2 s2
 s4 = enterScope s3
+z1 = fromSymTable s3
