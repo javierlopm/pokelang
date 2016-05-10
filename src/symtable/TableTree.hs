@@ -9,15 +9,23 @@ import Data.Maybe
 
 type SymbolTable a = Map.Map String a
 
+data Action = Up | Down | Left | Right | None
+				  deriving(Show)	
+
 data Scope a = Scope (SymbolTable a) [Scope a] -- Y si... usamos sequence aqui para tenerlos ordenados?
-    deriving (Show) -- Sustituir por el show mostrado en clases
+             deriving (Show) -- Sustituir por el show mostrado en clases
 
+data Breadcrumb a = Breadcrumb { left  :: [Scope a]
+					    	   , right :: [Scope a]
+					    	   , action:: Action
+						       }
+				  deriving(Show)	
 
-data Breadcrumbs a = Breadcrumbs [(SymbolTable a,[Scope a],[Scope a])]
-    deriving(Show)
+--data Breadcrumbs a = Breadcrumbs [Breadcrumb a]
+--                   deriving(Show)
 
 -- Zipper como nodo actual y tupla (Tabla de padre, hermanos a la izq y a la der
-type Zipper a = (Scope a, Breadcrumbs a )
+type Zipper a = (Scope a, Breadcrumb a)
 
 -- Symbol table
 newtable :: SymbolTable a
@@ -37,17 +45,15 @@ enterScope (Scope symtable (lst@(Scope stc chld):childL)) = Scope symtable (empt
 insert :: String -> a -> Scope a -> Scope a
 insert key val (Scope symtable chl) = Scope (addEntry key val symtable) chl
 
-
-
 -- Zipper
 fromSymTable :: Scope a -> Zipper a
-fromSymTable = flip (,) $ Breadcrumbs []
+fromSymTable = flip (,) $ Breadcrumb [] [] None
 
 -- No funciona -- Revisar si conviene trabajar con ST o con Scopes
 down :: Zipper a -> Maybe (Zipper a)
 down (Scope symt [] , breadcrumbs) = Nothing
-down (Scope symt (ch:chdrn) , breadcrumbs) = Just (ch,(oldstep:breadcrumbs))
-    where oldstep = (symt,[],chdrn)
+down (Scope symt (ch:chdrn) , breadcrumbs) = Just (ch,(oldstep:breadcrumb))
+    where oldstep = (Scope symt (ch:chdrn) chdrn Down) --COnvertir a nuevo breadcrum y manejarlo asi.
 
 apply :: (Scope a -> Scope a) -> Zipper a -> Zipper a
 apply f (scope,breadcrumbs) = (f scope,breadcrumbs)
@@ -55,8 +61,6 @@ apply f (scope,breadcrumbs) = (f scope,breadcrumbs)
 -- Corrida so far
 -- Crear un nodo vacio, convertirlo en zipper, insertar hola con 42, crearle un hijo, ir al hijo
 -- apply enterScope  $ apply (insert "hola" 42) $ fromSymTable  emptyScope
-
-
 
 test = newtable
 test2 = addEntry "elem1" 1 test
