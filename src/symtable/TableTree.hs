@@ -8,7 +8,7 @@ import qualified Data.Map.Strict as Map
 
 type SymbolTable a = Map.Map String a
 
-data Scope a = Scope (SymbolTable a) [Scope a] -- Y si... usamos sequence aqui para tenerlos ordenados?
+data Scope a = Scope (SymbolTable a) [Scope a] Int -- Y si... usamos sequence aqui para tenerlos ordenados?
     deriving (Show) -- Sustituir por el show mostrado en clases
 
 
@@ -27,13 +27,14 @@ addEntry = Map.insert
 
 -- Scope
 emptyScope :: Scope a
-emptyScope = Scope newtable []
+emptyScope = Scope newtable [] 0
 
 enterScope :: Scope a -> Scope a
-enterScope (Scope symtable children) = Scope symtable (emptyScope:children) 
+enterScope (Scope symtable [] ind) = Scope symtable (emptyScope:[]) (succ ind)
+enterScope (Scope symtable (lst@(Scope stc chld indc):childL) ind) = Scope symtable (emptyScope:lst:childL) (succ indc)
 
 insert :: String -> a -> Scope a -> Scope a
-insert key val (Scope symtable chl) = Scope (addEntry key val symtable) chl
+insert key val (Scope symtable chl ind) = Scope (addEntry key val symtable) chl ind
 
 
 
@@ -52,3 +53,13 @@ apply f (scope,breadcrumbs) = (f scope,breadcrumbs)
 -- Corrida so far
 -- Crear un nodo vacio, convertirlo en zipper, insertar hola con 42, crearle un hijo, ir al hijo
 -- apply enterScope  $ apply (insert "hola" 42) $ fromSymTable  emptyScope
+
+
+
+test = newtable
+test2 = addEntry "elem1" 1 test
+test3 = addEntry "elem2" 2 test2
+s1 = emptyScope
+s2 = insert "elem1" 1 s1
+s3 = insert "elem2" 2 s2
+s4 = enterScope s3
