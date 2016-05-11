@@ -118,9 +118,24 @@ goUp inp@(scp, (Breadcrumb lft rgt (StChild:lact))) = Just (wentUp inp [])
 goUp inp@(scp, (Breadcrumb lft rgt (RightA:lact)))  = Just (wentUp (wentLeft inp) [])
 goUp (scp, (Breadcrumb lft rgt brc))     = Nothing
 
-goRoot :: Zipper a ->  Zipper a
-goRoot inp@(scp, (Breadcrumb lft rgt act)) = if (act==[RootA] || act==[]) then inp
-										     else  goRoot $ fromJust $ goUp inp
+goTop :: Zipper a ->  Zipper a
+goTop inp@(scp, (Breadcrumb lft rgt act)) = if (act==[RootA] || act==[]) then inp
+										     else  goTop $ fromJust $ goUp inp
+
+isMember :: Zipper a -> String -> Bool
+isMember ((Scope st chld),brc) key = Map.member key st
+
+getVal :: Zipper a -> String -> Maybe a
+getVal ((Scope st chld),brc) key = Map.lookup key st
+
+lookUp  :: Zipper a -> String -> Maybe a
+lookUp zip key = if isNothing mySearch
+				 then (if isNothing mayUp
+				 	   then Nothing
+				 	   else lookUp (fromJust mayUp) key)
+				 else mySearch
+			 	where mySearch = getVal zip key
+			 	      mayUp    = (goUp zip)
 {-Funciones restantes:
 
 --ToRoot   --Regresar a la raiz Zipper(up hasta que action == [RootA])
@@ -152,12 +167,12 @@ s4 = insert "elem3" 3 s3
 s5 = enterScope s4
 z1 = fromScope s5
 aux1 = newtable
-aux12 = addEntry "I'm Hijo" 1 aux1
-aux2 = addEntry "I'm 2 Hijo" 2 aux1
-aux3 = addEntry "I'm 3 Hijo" 3 aux1
-aux4 = addEntry "I'm 4 Hijo" 4 aux1
-aux5 = addEntry "I'm 5 Hijo" 5 aux1
-aux6 = addEntry "I'm 6 Hijo" 6 aux1
+aux12 = addEntry "ImHijo" 1 aux1
+aux2 = addEntry "Im2 Hijo" 2 aux1
+aux3 = addEntry "Im3 Hijo" 3 aux1
+aux4 = addEntry "Im4 Hijo" 4 aux1
+aux5 = addEntry "Im5 Hijo" 5 aux1
+aux6 = addEntry "Im6 Hijo" 6 aux1
 z1_2 = ((Scope test4 [(Scope aux12 []),(Scope aux2 []),(Scope aux3 []),(Scope aux4 []),(Scope aux5 []),(Scope aux6 [])])     ,    (Breadcrumb {left = [], right = [], action = [RootA]})     )   --Nodo con dos hijos
 z1d = goDown z1_2
 z1c = fromJust z1d
