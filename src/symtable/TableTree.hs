@@ -35,7 +35,7 @@ data Breadcrumb a = Breadcrumb { left  :: [Scope a]
 --                   deriving(Show)
 
 -- Zipper como nodo actual y tupla (Tabla de padre, hermanos a la izq y a la der
-type Zipper a = (Scope a, Breadcrumb a)
+type Zipper a = (Scope a, [Breadcrumb a])
 
 -- Symbol table
 newtable :: SymbolTable a
@@ -49,8 +49,9 @@ emptyScope :: Scope a
 emptyScope = Scope newtable []
 
 enterScope :: Scope a -> Scope a
-enterScope (Scope symtable []) = Scope symtable (emptyScope:[])
-enterScope (Scope symtable (lst@(Scope stc chld):childL)) = Scope symtable (emptyScope:lst:childL)
+enterScope (Scope symtable l)  = Scope symtable (emptyScope:l) -- Isn't it shorter?
+-- enterScope (Scope symtable []) = Scope symtable (emptyScope:[])
+-- enterScope (Scope symtable (lst@(Scope stc chld):childL)) = Scope symtable (emptyScope:lst:childL)
 
 insert :: String -> a -> Scope a -> Scope a
 insert key val (Scope symtable chl) = Scope (addEntry key val symtable) chl
@@ -157,7 +158,7 @@ lookUp zip key = if isNothing mySearch
 
 -- Corrida so far
 -- Crear un nodo vacio, convertirlo en zipper, insertar hola con 42, crearle un hijo, ir al hijo
--- apply enterScope  $ apply (insert "hola" 42) $ fromSymTable  emptyScope
+-- apply enterScope  $ apply (insert "hola" 42) $ fromScope  emptyScope
 
 test = newtable
 test2 = addEntry "elem1" 1 test
@@ -185,3 +186,4 @@ v1 = (Scope test4 [(Scope aux12 []),(Scope aux2 []),(Scope aux3 []),(Scope aux4 
 x1 = fromScope v1 
 x1c = fromJust $ goDown x1 
 xlrl = fromJust $ goLeft $ fromJust $ goLeft $ fromJust $ goLeft $ fromJust $ goLeft $ fromJust $ goRight $ fromJust $ goRight $ fromJust $ goRight $ fromJust $ goRight x1c
+
