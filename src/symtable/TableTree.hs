@@ -17,12 +17,12 @@ import Data.Maybe
 type SymbolTable a = Map.Map String a
 
 data Action = UpA | DownA | LeftA | RightA | RootA | StChild
-				  deriving(Show)	
+				  deriving(Eq,Show)	
 
 data Scope a = Scope (SymbolTable a) [Scope a] -- Y si... usamos sequence aqui para tenerlos ordenados?
              deriving (Show) -- Sustituir por el show mostrado en clases
 
-data Breadcrumb a = Breadcrumb { left  :: [SymbolTable a]
+data Breadcrumb a = Breadcrumb { left  :: [Scope a]
 					    	   , right :: [Scope a]
 					    	   , action:: [Action]
 						       }
@@ -68,14 +68,52 @@ down :: Zipper a -> Maybe (Zipper a)
 down (Scope symt [] , breadcrumbs) = Nothing
 down (Scope symt (ch:chdrn) , breadcrumbs) = Just (ch,newBread)
     where 
-          newBread = Breadcrumb (symt:(left breadcrumbs)) (chdrn++(right breadcrumbs)) (StChild:((map (\x -> StChild) chdrn)++(DownA:(action breadcrumbs))) )
+          newBread = Breadcrumb ((Scope symt []):(left breadcrumbs)) (chdrn++(right breadcrumbs)) (((map (\x -> StChild) chdrn)++(DownA:(action breadcrumbs))) )  --Guarda ST sin hijos para luego ponerselos al subir
+          --newBread = Breadcrumb (symt:(left breadcrumbs)) (chdrn++(right breadcrumbs)) (StChild:((map (\x -> StChild) chdrn)++(DownA:(action breadcrumbs))) )
     	  --newBread = Breadcrumb (symt:(left breadcrumbs)) (chdrn++(right breadcrumbs)) (DownA:(action breadcrumbs)) 
 
 apply :: (Scope a -> Scope a) -> Zipper a -> Zipper a
 apply f (scope,breadcrumbs) = (f scope,breadcrumbs)
 
---next :: Zipper a -> Maybe (Zipper a)
---next = 
+--getC :: [breadcrumb] -> 
+
+goRight :: Zipper a -> Maybe (Zipper a)
+goRight (scp, breadcrumbs) = case (snd brk2) of
+                             []      -> Nothing       --Basicamente, si no quedan hermanos que revisar.
+                             StChild:_ -> wentR
+                             otherwise -> Nothing
+                where acts  = (action breadcrumbs)
+                      wentR = Just $ ((head (right breadcrumbs)), newBread)
+                      brk1  = break (\x -> (x== DownA) ||(x==RootA)) acts                      
+                      brk2  = break (/= RightA) $ fst brk1
+                      newBread = Breadcrumb (scp:(left breadcrumbs)) (tail (right breadcrumbs)) $ (RightA : fst brk2) ++ (tail (snd brk2)) ++ snd brk1
+
+goLeft :: Zipper a -> Maybe (Zipper a)
+goLeft (scp, (Breadcrumb lft rgt [])) = Nothing
+goLeft (scp, (Breadcrumb lft rgt (RightA:lact))) = Just ((head lft),(Breadcrumb (tail lft) (scp:rgt) nAct))
+                where acts  = (RightA:lact)
+                      brk1  = break (\x -> (x== DownA) ||(x==RootA)) acts
+                      brk2  = break (/= RightA) $ fst brk1
+                      nAct  = (tail (fst brk2) ++ ((snd brk2)) ++ StChild:snd brk1)            --RightA,RightA,StChild,Down,...
+goLeft (scp, (Breadcrumb lft rgt brc)) = Nothing
+
+
+
+--###################Funciones restantes:
+
+--Up (Revisar cada caso anterior, usualmente debería devolverse hasta el primer hijo para poder subir)
+--ToRoot   --Regresar a la raiz Zipper(up hasta que action == [RootA])
+--isMember (member a st) --Esta en la tabla
+--LookUp   --Busca en el zipper hacia arriba y devuelve true o false
+--LookUpZ  --Análogo pero devuelve el zipper donde lo consiguió
+--InsertSZ  --Inserta Socpe al Zipper
+--Print con el formato adecuado de niveles (print raiz -> print hijo -> print nieto <- hijo -> print 2dohijo -> print 2do nieto -> ... ) (creo que es asi, dfs, ¿no?)
+--adaptar el Repl a esto
+
+
+
+
+
 
 
 -- Corrida so far
@@ -107,3 +145,4 @@ z1c = fromJust z1d
 v1 = (Scope test4 [(Scope aux12 []),(Scope aux2 []),(Scope aux3 []),(Scope aux4 []),(Scope aux5 []),(Scope aux6 [])])
 x1 = fromScope v1 
 x1c = fromJust $ down x1 
+xlrl = fromJust $ goLeft $ fromJust $ goLeft $ fromJust $ goLeft $ fromJust $ goLeft $ fromJust $ goRight $ fromJust $ goRight $ fromJust $ goRight $ fromJust $ goRight x1c
