@@ -9,15 +9,15 @@ import Data.Maybe
 
 type SymbolTable a = Map.Map String a
 
-data Action = Up | Down | Left | Right | None
+data Action = UpA | DownA | LeftA | RightA | RootA
 				  deriving(Show)	
 
 data Scope a = Scope (SymbolTable a) [Scope a] -- Y si... usamos sequence aqui para tenerlos ordenados?
              deriving (Show) -- Sustituir por el show mostrado en clases
 
-data Breadcrumb a = Breadcrumb { left  :: [Scope a]
+data Breadcrumb a = Breadcrumb { left  :: [SymbolTable a]
 					    	   , right :: [Scope a]
-					    	   , action:: Action
+					    	   , action:: [Action]
 						       }
 				  deriving(Show)	
 
@@ -47,16 +47,17 @@ insert key val (Scope symtable chl) = Scope (addEntry key val symtable) chl
 
 -- Zipper
 fromSymTable :: Scope a -> Zipper a
-fromSymTable = flip (,) $ Breadcrumb [] [] None
+fromSymTable orig@(Scope symt chdrn)= (orig,Breadcrumb [] chdrn [RootA]) 
 
 -- No funciona -- Revisar si conviene trabajar con ST o con Scopes
 down :: Zipper a -> Maybe (Zipper a)
 down (Scope symt [] , breadcrumbs) = Nothing
-down (Scope symt (ch:chdrn) , breadcrumbs) = Just (ch,(oldstep:breadcrumb))
-    where oldstep = (Scope symt (ch:chdrn) chdrn Down) --COnvertir a nuevo breadcrum y manejarlo asi.
+down (Scope symt (ch:chdrn) , breadcrumbs) = Just (ch,newBread)
+    where 
+    	  newBread = Breadcrumb (symt:(left breadcrumbs)) (chdrn++(right breadcrumbs)) (DownA:(action breadcrumbs)) 
 
-apply :: (Scope a -> Scope a) -> Zipper a -> Zipper a
-apply f (scope,breadcrumbs) = (f scope,breadcrumbs)
+--apply :: (Scope a -> Scope a) -> Zipper a -> Zipper a
+--apply f (scope,breadcrumbs) = (f scope,breadcrumbs)
 
 -- Corrida so far
 -- Crear un nodo vacio, convertirlo en zipper, insertar hola con 42, crearle un hijo, ir al hijo
@@ -68,5 +69,8 @@ test3 = addEntry "elem2" 2 test2
 s1 = emptyScope
 s2 = insert "elem1" 1 s1
 s3 = insert "elem2" 2 s2
-s4 = enterScope s3
-z1 = fromSymTable s3
+s4 = insert "elem3" 3 s3
+s5 = enterScope s4
+z1 = fromSymTable s5
+z12 = down z1
+rz12 = fromJust z12
