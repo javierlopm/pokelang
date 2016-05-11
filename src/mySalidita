@@ -1,0 +1,28 @@
+Error: Comment not closed properly. Please use '--' to close comments. " -- holav vlae - 
+
+ke ase?
+
+- " at 1:1
+
+Error: Invalid identifier. " 0800chiabe " at 8:1
+
+Error: Invalid identifier. " 0500Chiabe00 " at 9:1
+
+Error: Bad formed number. " 0800 " at 10:1
+
+Error: Bad formed float. " 2.0hola " at 16:1
+
+Error: Bad formed float. " 2e13chiabe " at 17:1
+
+Error: Unexpected character. " ' " at 24:1
+
+Error: Unexpected character. " ó " at 24:2
+
+Error: Unexpected character. "  " at 24:3
+
+Error: No single quote close found. " ' " at 24:3
+
+Error: Unexpected character. " ó " at 25:1
+
+Error: Unexpected character. "  " at 25:2
+

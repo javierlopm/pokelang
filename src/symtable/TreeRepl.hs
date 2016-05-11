@@ -1,5 +1,11 @@
+import System.Exit(exitSuccess)
+import System.IO
 import TableTree
 
+move moveFuc zipper = do
+  do case moveFunc zipper of 
+      Nothing   -> putStrLn "No node to visit"
+      Just zipp -> repl zipp
 
 repl zipper = do
     putStr ">"
@@ -8,16 +14,14 @@ repl zipper = do
         "help"  -> do putStrLn "Use one of the following commands:"
                       putStrLn "    show  insert  enter  quit"
                       putStrLn "    up  down left right  top"
-        "down"  -> do case down zipper of 
-                        Nothing   -> putStrLn "No child to visit"
-                        Just zipp -> repl zipp
         "show"  -> print zipper
         "enter" -> repl $ apply enterScope zipper 
-        "up"    -> putStrLn "chao"
-        "left"  -> putStrLn "chao"
-        "right" -> putStrLn "chao"
-        "top"   -> putStrLn "chao"
-        "quit"  -> putStrLn "chao"
+        "down"  -> move goDown zipper
+        "up"    -> move goUp   zipper
+        "left"  -> move goLeft zipper
+        "right" -> move goRight zipper
+        "top"   -> repl $ goTop zipper
+        "quit"  -> putStrLn "chao" >> exitSuccess
         blah    -> case head (words blah) of 
                     "insert" -> do let key = head $ tail $        words blah
                                    let val = head $ tail $ tail $ words blah
@@ -31,4 +35,4 @@ repl zipper = do
 
 
 
-main = repl $ fromScope (emptyScope::Scope Int)
+main = hSetBuffering stdout NoBuffering >> repl $ fromScope (emptyScope::Scope Int)
