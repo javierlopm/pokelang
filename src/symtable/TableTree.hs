@@ -20,7 +20,10 @@ data Action = UpA | DownA | LeftA | RightA | RootA | StChild  -- Creo que Left U
 				  deriving(Eq,Show)	
 
 data Scope a = Scope (SymbolTable a) [Scope a] -- Y si... usamos sequence aqui para tenerlos ordenados?
-             deriving (Show) -- Sustituir por el show mostrado en clases
+--             deriving (Show) -- Sustituir por el show mostrado en clases
+
+instance Show (Scope a) where
+	show (Scope  st chld) = "hola"
 
 data Breadcrumb a = Breadcrumb { left  :: [Scope a]
 					    	   , right :: [Scope a]
