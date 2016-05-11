@@ -35,4 +35,6 @@ repl zipper = do
 
 
 -- hSetBuffering stdout NoBuffering
-main =  repl $ fromScope (emptyScope::Scope Int)
+main = do
+  hSetBuffering stdout NoBuffering  
+  repl $ fromScope (emptyScope::Scope Int)

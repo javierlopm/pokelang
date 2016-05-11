@@ -136,6 +136,7 @@ wentLeft inp@(scp, (Breadcrumb lft rgt (oact))) = inp
 goUp :: Zipper a -> Maybe (Zipper a)
 goUp (scp, (Breadcrumb lft rgt []))      = Nothing
 goUp (scp, (Breadcrumb lft rgt [RootA])) = Nothing
+goUp inp@(scp, (Breadcrumb lft rgt (DownA:lact))) = Just (wentUp inp [])
 goUp inp@(scp, (Breadcrumb lft rgt (StChild:lact))) = Just (wentUp inp [])
 goUp inp@(scp, (Breadcrumb lft rgt (RightA:lact)))  = Just (wentUp (wentLeft inp) [])
 goUp (scp, (Breadcrumb lft rgt brc))     = Nothing
