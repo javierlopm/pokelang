@@ -1,6 +1,13 @@
 module TableTree(
     Scope  (..),
-    Zipper (..)
+    Zipper (..),
+    down,
+    apply,
+    emptyScope,
+    enterScope,
+    insert,
+    --fromSymTable,
+    fromScope
     ) where
 
 import qualified Data.Map.Strict as Map
@@ -45,21 +52,31 @@ enterScope (Scope symtable (lst@(Scope stc chld):childL)) = Scope symtable (empt
 insert :: String -> a -> Scope a -> Scope a
 insert key val (Scope symtable chl) = Scope (addEntry key val symtable) chl
 
+--fromScope :: Scope a -> Zipper a
+--fromScope orig@(Scope symt chdrn)= (orig,Breadcrumb [] chdrn [RootA] )
+
 -- Zipper
-fromSymTable :: Scope a -> Zipper a
-fromSymTable orig@(Scope symt chdrn)= (orig,Breadcrumb [] chdrn [RootA] )
+fromScope :: Scope a -> Zipper a
+fromScope orig@(Scope symt chdrn)= (orig,Breadcrumb [] [] [RootA] )
 --fromSymTable orig@(Scope symt chdrn)= (orig,Breadcrumb [] chdrn ((map (\x -> StChild) chdrn)++[RootA])) 
+
+fromZipper :: Zipper a -> Scope a --Only Root
+fromZipper = fst
 
 -- No funciona -- Revisar si conviene trabajar con ST o con Scopes
 down :: Zipper a -> Maybe (Zipper a)
 down (Scope symt [] , breadcrumbs) = Nothing
 down (Scope symt (ch:chdrn) , breadcrumbs) = Just (ch,newBread)
     where 
-          newBread = Breadcrumb (symt:(left breadcrumbs)) (chdrn++(right breadcrumbs)) (DownA:((map (\x -> StChild) chdrn)++(action breadcrumbs)) )
+          newBread = Breadcrumb (symt:(left breadcrumbs)) (chdrn++(right breadcrumbs)) (StChild:((map (\x -> StChild) chdrn)++(DownA:(action breadcrumbs))) )
     	  --newBread = Breadcrumb (symt:(left breadcrumbs)) (chdrn++(right breadcrumbs)) (DownA:(action breadcrumbs)) 
 
---apply :: (Scope a -> Scope a) -> Zipper a -> Zipper a
---apply f (scope,breadcrumbs) = (f scope,breadcrumbs)
+apply :: (Scope a -> Scope a) -> Zipper a -> Zipper a
+apply f (scope,breadcrumbs) = (f scope,breadcrumbs)
+
+--next :: Zipper a -> Maybe (Zipper a)
+--next = 
+
 
 -- Corrida so far
 -- Crear un nodo vacio, convertirlo en zipper, insertar hola con 42, crearle un hijo, ir al hijo
@@ -74,10 +91,19 @@ s2 = insert "elem1" 1 s1
 s3 = insert "elem2" 2 s2
 s4 = insert "elem3" 3 s3
 s5 = enterScope s4
-z1 = fromSymTable s5
+z1 = fromScope s5
 aux1 = newtable
 aux12 = addEntry "I'm Hijo" 1 aux1
 aux2 = addEntry "I'm 2 Hijo" 2 aux1
-z1_2 = ((Scope test4 [(Scope aux1 []),(Scope aux2 [])])     ,    (Breadcrumb {left = [], right = [(Scope aux1 [])], action = [RootA]})     )   --Nodo con dos hijos
+aux3 = addEntry "I'm 3 Hijo" 3 aux1
+aux4 = addEntry "I'm 4 Hijo" 4 aux1
+aux5 = addEntry "I'm 5 Hijo" 5 aux1
+aux6 = addEntry "I'm 6 Hijo" 6 aux1
+z1_2 = ((Scope test4 [(Scope aux12 []),(Scope aux2 []),(Scope aux3 []),(Scope aux4 []),(Scope aux5 []),(Scope aux6 [])])     ,    (Breadcrumb {left = [], right = [], action = [RootA]})     )   --Nodo con dos hijos
 z1d = down z1_2
 z1c = fromJust z1d
+
+
+v1 = (Scope test4 [(Scope aux12 []),(Scope aux2 []),(Scope aux3 []),(Scope aux4 []),(Scope aux5 []),(Scope aux6 [])])
+x1 = fromScope v1 
+x1c = fromJust $ down x1 
