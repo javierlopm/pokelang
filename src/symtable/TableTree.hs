@@ -2,6 +2,10 @@
     Scope  (..),
     Zipper (..),
     goDown,
+    goUp,
+    goLeft,
+    goRight,
+    goTop,
     apply,
     emptyScope,
     enterScope,
@@ -13,17 +17,31 @@
 import qualified Data.Map.Strict as Map
 -- import import qualified Data.Sequence as S
 import Data.Maybe
+import Data.List(intersperse)
 
 type SymbolTable a = Map.Map String a
+
+showSTL :: Show a => [(String,a)] -> Int -> String
+showSTL myL i =  (replicate (i*2) ' ') ++ (concat $ intersperse (replicate (i*2) ' ') $ map (\(a,b) -> a ++ " " ++ show b ++ "\n") myL)
+
 
 data Action = UpA | DownA | LeftA | RightA | RootA | StChild  -- Creo que Left Up no es usada.
 				  deriving(Eq,Show)	
 
 data Scope a = Scope (SymbolTable a) [Scope a] -- Y si... usamos sequence aqui para tenerlos ordenados?
---             deriving (Show) -- Sustituir por el show mostrado en clases
 
-instance Show (Scope a) where
-	show (Scope  st chld) = "hola"
+instance  Show a => Show (Scope a) where
+	show = showScope 0
+
+showScope :: Show a => Int -> Scope a -> String
+showScope i (Scope st chld) = (replicate (i*2) ' ') ++ 
+								"Level " ++ show i ++ ":\n" ++ 
+							  (replicate (i*2) ' ') ++	"=========" ++ "\n" ++
+								showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) chld 
+
+--instance Show (Scope a) where
+--	show (Scope  st chld) = intersparse "    " map (\(a,b) -> show a ++ " " ++ show b + "\n") myL
+
 
 data Breadcrumb a = Breadcrumb { left  :: [Scope a]
 					    	   , right :: [Scope a]
@@ -35,7 +53,7 @@ data Breadcrumb a = Breadcrumb { left  :: [Scope a]
 --                   deriving(Show)
 
 -- Zipper como nodo actual y tupla (Tabla de padre, hermanos a la izq y a la der
-type Zipper a = (Scope a, [Breadcrumb a])
+type Zipper a = (Scope a, Breadcrumb a)
 
 -- Symbol table
 newtable :: SymbolTable a
