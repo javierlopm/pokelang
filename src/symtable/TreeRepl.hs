@@ -21,7 +21,7 @@ repl zipper = do
         "left"  -> move goLeft zipper
         "right" -> move goRight zipper
         "top"   -> repl $ goTop zipper
-        "quit"  -> putStrLn "chao" >> exitSuccess
+        "quit"  -> putStrLn "vamo a salí." >> exitSuccess
         blah    -> case head (words blah) of 
                     "insert" -> do let key = head $ tail $        words blah
                                    let val = head $ tail $ tail $ words blah

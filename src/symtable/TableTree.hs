@@ -35,9 +35,9 @@ instance  Show a => Show (Scope a) where
 	show = showScope 0
 
 showScope :: Show a => Int -> Scope a -> String
-showScope i (Scope st chld) = (replicate (i*2) ' ') ++ 
+showScope i (Scope st chld) = "\n" ++ (replicate (i*2) ' ') ++ 
 								"Level " ++ show i ++ ":\n" ++ 
-							  (replicate (i*2) ' ') ++	"=========" ++ "\n" ++
+							  (replicate (i*2) ' ') ++	"—————————" ++ "\n" ++
 								showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) chld 
 
 --instance Show (Scope a) where
