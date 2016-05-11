@@ -13,7 +13,7 @@ repl zipper = do
     case command of 
         "help"  -> do putStrLn "Use one of the following commands:"
                       putStrLn "    show  insert  enter  quit"
-                      putStrLn "    up  down left right  top"
+                      putStrLn "    up  down left right  top lookup"
         "show"  -> print $ fst zipper
         "enter" -> repl $ apply enterScope zipper 
         "down"  -> move goDown zipper
@@ -27,6 +27,10 @@ repl zipper = do
                                    let val = head $ tail $ tail $ words blah
                                    let intVal = read val :: Int
                                    repl $ apply (insert key intVal) zipper
+                    "lookup" -> do let key = head $ tail $        words blah
+                                   case (lookUp zipper key) of
+                                      Nothing  -> putStrLn "Key not found"
+                                      Just val -> putStrLn (show val)
                     _        -> putStrLn "Use 'help'"
                                 
     repl zipper

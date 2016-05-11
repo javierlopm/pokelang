@@ -10,7 +10,7 @@
     emptyScope,
     enterScope,
     insert,
-    lookUp
+    lookUp,
     --fromSymTable,
     fromScope
     ) where
