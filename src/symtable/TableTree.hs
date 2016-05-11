@@ -1,7 +1,7 @@
-module TableTree(
+	module TableTree(
     Scope  (..),
     Zipper (..),
-    down,
+    goDown,
     apply,
     emptyScope,
     enterScope,
@@ -16,7 +16,7 @@ import Data.Maybe
 
 type SymbolTable a = Map.Map String a
 
-data Action = UpA | DownA | LeftA | RightA | RootA | StChild
+data Action = UpA | DownA | LeftA | RightA | RootA | StChild  -- Creo que Left Up no es usada.
 				  deriving(Eq,Show)	
 
 data Scope a = Scope (SymbolTable a) [Scope a] -- Y si... usamos sequence aqui para tenerlos ordenados?
@@ -64,9 +64,9 @@ fromZipper :: Zipper a -> Scope a --Only Root
 fromZipper = fst
 
 -- No funciona -- Revisar si conviene trabajar con ST o con Scopes
-down :: Zipper a -> Maybe (Zipper a)
-down (Scope symt [] , breadcrumbs) = Nothing
-down (Scope symt (ch:chdrn) , breadcrumbs) = Just (ch,newBread)
+goDown :: Zipper a -> Maybe (Zipper a)
+goDown (Scope symt [] , breadcrumbs) = Nothing
+goDown (Scope symt (ch:chdrn) , breadcrumbs) = Just (ch,newBread)
     where 
           newBread = Breadcrumb ((Scope symt []):(left breadcrumbs)) (chdrn++(right breadcrumbs)) (((map (\x -> StChild) chdrn)++(DownA:(action breadcrumbs))) )  --Guarda ST sin hijos para luego ponerselos al subir
           --newBread = Breadcrumb (symt:(left breadcrumbs)) (chdrn++(right breadcrumbs)) (StChild:((map (\x -> StChild) chdrn)++(DownA:(action breadcrumbs))) )
@@ -94,14 +94,35 @@ goLeft (scp, (Breadcrumb lft rgt (RightA:lact))) = Just ((head lft),(Breadcrumb 
                 where acts  = (RightA:lact)
                       brk1  = break (\x -> (x== DownA) ||(x==RootA)) acts
                       brk2  = break (/= RightA) $ fst brk1
-                      nAct  = (tail (fst brk2) ++ ((snd brk2)) ++ StChild:snd brk1)            --RightA,RightA,StChild,Down,...
+                      nAct  = (tail (fst brk2) ++ ((snd brk2)) ++ StChild:snd brk1)            --RightA,RightA,StChild,goDown,...
 goLeft (scp, (Breadcrumb lft rgt brc)) = Nothing
 
+getST :: Scope a -> SymbolTable a
+getST (Scope st chld) = st
 
+getChld :: Scope a -> [Scope a]
+getChld (Scope st chld) = chld
 
+wentUp :: Zipper a -> [Scope a] -> Zipper a
+wentUp (scp, (Breadcrumb lft rgt (DownA:lact)))   acc = ((Scope (getST (head lft)) (scp:reverse acc)),(Breadcrumb (tail lft) rgt lact ))
+wentUp (scp, (Breadcrumb lft rgt (StChild:lact))) acc = wentUp (scp, (Breadcrumb lft (tail rgt) (lact))) ((head rgt):acc)
+
+wentLeft :: Zipper a -> Zipper a
+wentLeft inp@(scp, (Breadcrumb lft rgt (RightA:lact))) = wentLeft $ fromJust $ goLeft inp
+wentLeft inp@(scp, (Breadcrumb lft rgt (oact))) = inp
+
+goUp :: Zipper a -> Maybe (Zipper a)
+goUp (scp, (Breadcrumb lft rgt []))      = Nothing
+goUp (scp, (Breadcrumb lft rgt [RootA])) = Nothing
+goUp inp@(scp, (Breadcrumb lft rgt (StChild:lact))) = Just (wentUp inp [])
+goUp inp@(scp, (Breadcrumb lft rgt (RightA:lact)))  = Just (wentUp (wentLeft inp) [])
+goUp (scp, (Breadcrumb lft rgt brc))     = Nothing
+
+goRoot :: Zipper a ->  Zipper a
+goRoot inp@(scp, (Breadcrumb lft rgt act)) = if (act==[RootA] || act==[]) then inp
+										     else  goRoot $ fromJust $ goUp inp
 {-Funciones restantes:
 
---Up (Revisar cada caso anterior, usualmente debería devolverse hasta el primer hijo para poder subir)
 --ToRoot   --Regresar a la raiz Zipper(up hasta que action == [RootA])
 --isMember (member a st) --Esta en la tabla
 --LookUp   --Busca en el zipper hacia arriba y devuelve true o false
@@ -138,11 +159,11 @@ aux4 = addEntry "I'm 4 Hijo" 4 aux1
 aux5 = addEntry "I'm 5 Hijo" 5 aux1
 aux6 = addEntry "I'm 6 Hijo" 6 aux1
 z1_2 = ((Scope test4 [(Scope aux12 []),(Scope aux2 []),(Scope aux3 []),(Scope aux4 []),(Scope aux5 []),(Scope aux6 [])])     ,    (Breadcrumb {left = [], right = [], action = [RootA]})     )   --Nodo con dos hijos
-z1d = down z1_2
+z1d = goDown z1_2
 z1c = fromJust z1d
 
 
 v1 = (Scope test4 [(Scope aux12 []),(Scope aux2 []),(Scope aux3 []),(Scope aux4 []),(Scope aux5 []),(Scope aux6 [])])
 x1 = fromScope v1 
-x1c = fromJust $ down x1 
+x1c = fromJust $ goDown x1 
 xlrl = fromJust $ goLeft $ fromJust $ goLeft $ fromJust $ goLeft $ fromJust $ goLeft $ fromJust $ goRight $ fromJust $ goRight $ fromJust $ goRight $ fromJust $ goRight x1c
