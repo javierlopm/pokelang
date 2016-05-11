@@ -99,7 +99,7 @@ goLeft (scp, (Breadcrumb lft rgt brc)) = Nothing
 
 
 
---###################Funciones restantes:
+{-Funciones restantes:
 
 --Up (Revisar cada caso anterior, usualmente debería devolverse hasta el primer hijo para poder subir)
 --ToRoot   --Regresar a la raiz Zipper(up hasta que action == [RootA])
@@ -111,7 +111,7 @@ goLeft (scp, (Breadcrumb lft rgt brc)) = Nothing
 --adaptar el Repl a esto
 
 
-
+-}
 
 
 
