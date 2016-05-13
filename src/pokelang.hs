@@ -8,8 +8,9 @@ import Lexer
 
 
 myF :: String -> String -> (String,String)
-myF arg1 arg2 = if arg1 /= "-l" && arg1/="-p" && arg1/="-a" then (arg1,arg2)
-                else (arg2,arg1)
+myF arg1 arg2 = if arg1 /= "-l" && arg1/="-p" && arg1/="-a" 
+                    then (arg1,arg2)
+                    else (arg2,arg1)
 main = do
   arg1:arg2:_ <- getArgs
   let (fileToRead,runargs)=myF arg1 arg2

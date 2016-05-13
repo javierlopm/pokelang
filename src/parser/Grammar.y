@@ -1,13 +1,18 @@
 {
 module Grammar(parser) where
 import Tokens
+import TableTree
+import Control.Monad.RWS.Strict
+import import qualified Data.Sequence as S
 }
 
 
 %name parser
 %tokentype { Token      }
-%error     { parseError }
 
+%monad { RWS String (S.Seq(String)) (Zipper Pos) } [ { <then> } { <return> } ]
+
+%error     { parseError }
 %token
     ID        { TkId       _ _ }     
     DATAID    { TkDId      _ _ }
