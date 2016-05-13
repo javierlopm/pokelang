@@ -166,7 +166,10 @@ SmplDcls: {- λ -}                                  {% return ()}
     | SmplDcls IsGlob PrimType Ptrs       ID  ";"  {% return ()}
     | SmplDcls IsGlob PrimType EmptyArrs  ID  ";"  {% return ()}
     | SmplDcls IsGlob PrimType StaticArrs ID  ";"  {% return ()}
-    | SmplDcls IsGlob PrimType            ID  ";"  {% return ()}
+    | SmplDcls IsGlob PrimType            ID  ";"  {% do 
+                                                         tabla <- get
+                                                         put $ apply (insert (lexeme $4) (position $4)) tabla
+                                                   }
 
 Dcls:  {- λ -}                                {% return ()}
     | Dcls FUNC PrimType ID "(" Parameter ")" ":" SmplDcls Ins END {% return ()}
@@ -183,11 +186,11 @@ Dcls:  {- λ -}                                {% return ()}
 IsGlob : {- λ -}     {% return ()}
          | GLOBAL    {% return ()}
 
-PrimType : INTDEC         {% return ()}
-         | BOOLDEC        {% return ()}
-         | CHARDEC        {% return ()}
-         | VOIDDEC        {% return ()}
-         | FLOATDEC       {% return ()}
+PrimType : INTDEC         { $1 }
+         | BOOLDEC        { $1 }
+         | CHARDEC        { $1 }
+         | VOIDDEC        { $1 }
+         | FLOATDEC       { $1 }
 
 DataType : ENUMDEC        {% return ()}
          | STRUCTDEC      {% return ()}
