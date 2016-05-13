@@ -130,149 +130,149 @@ import qualified Data.Sequence as S
 
 %%
 
-Prog : Dcls  { [] }
+Prog : Dcls  {% return ()}
 
-Ins : {- λ -}                                 { [] }
-    | Ins PRINT "(" STRING PrntArgs ")"   ";" { [] } 
-    | Ins READ  "("       ID        ")"   ";" { [] }
-    | Ins WRITE "("       ID        ")"   ";" { [] }
-    | Ins Exp "=" Exp         ";"         { [] }
-    | Ins Exp "*=" Exp        ";"         { [] }
-    | Ins Exp "+=" Exp        ";"         { [] }
-    | Ins BREAK             ";"         { [] }
-    | Ins CONTINUE          ";"         { [] }
-    | Ins RETURN            ";"         { [] }
-    | Ins EXIT              ";"         { [] }
-    | Ins FREE "("ID")"     ";"         { [] }
-    | Ins FREE "("DATAID")" ";"         { [] }
-    | Ins READ "("DATAID")" ";"         { [] }
-    | Ins IF Exp ":" SmplDcls Ins NextIf Else END    { [] }
-    | Ins WHILE Exp ":" SmplDcls Ins END         { [] }
-    | Ins FOR ID "=" Exp  "|" Exp "|" Exp ":" SmplDcls Ins  END { [] }
-    | Ins FOR ID "=" Exp  "|" Exp         ":" SmplDcls Ins  END { [] }
-    | Ins FOR ID "=" ENUM "|" ENUM        ":" SmplDcls Ins  END { [] }
-    | Ins BEGIN SmplDcls Ins END    { [] } -- No debe aceptar funciones
+Ins : {- λ -}                                 {% return ()}
+    | Ins PRINT "(" STRING PrntArgs ")"   ";" {% return ()} 
+    | Ins READ  "("       ID        ")"   ";" {% return ()}
+    | Ins WRITE "("       ID        ")"   ";" {% return ()}
+    | Ins Exp "=" Exp         ";"         {% return ()}
+    | Ins Exp "*=" Exp        ";"         {% return ()}
+    | Ins Exp "+=" Exp        ";"         {% return ()}
+    | Ins BREAK             ";"         {% return ()}
+    | Ins CONTINUE          ";"         {% return ()}
+    | Ins RETURN            ";"         {% return ()}
+    | Ins EXIT              ";"         {% return ()}
+    | Ins FREE "("ID")"     ";"         {% return ()}
+    | Ins FREE "("DATAID")" ";"         {% return ()}
+    | Ins READ "("DATAID")" ";"         {% return ()}
+    | Ins IF Exp ":" SmplDcls Ins NextIf Else END    {% return ()}
+    | Ins WHILE Exp ":" SmplDcls Ins END         {% return ()}
+    | Ins FOR ID "=" Exp  "|" Exp "|" Exp ":" SmplDcls Ins  END {% return ()}
+    | Ins FOR ID "=" Exp  "|" Exp         ":" SmplDcls Ins  END {% return ()}
+    | Ins FOR ID "=" ENUM "|" ENUM        ":" SmplDcls Ins  END {% return ()}
+    | Ins BEGIN SmplDcls Ins END    {% return ()} -- No debe aceptar funciones
 
-PrntArgs: {- λ -}             { [] }
-        | PrntArgs "," Exp    { [] } -- Siempre es necesaria una coma a la izq
+PrntArgs: {- λ -}             {% return ()}
+        | PrntArgs "," Exp    {% return ()} -- Siempre es necesaria una coma a la izq
 
-NextIf: {- λ -}             { [] }
-      | NextIf ELIF  Exp ":" Ins { [] }
+NextIf: {- λ -}             {% return ()}
+      | NextIf ELIF  Exp ":" Ins {% return ()}
 
-Else: {- λ -}      { [] }
-    | ELSE ":" Ins { [] }
+Else: {- λ -}      {% return ()}
+    | ELSE ":" Ins {% return ()}
 
-SmplDcls: {- λ -}                                  { [] }        
-    | SmplDcls IsGlob PrimType Ptrs       ID  ";"  { [] }
-    | SmplDcls IsGlob PrimType EmptyArrs  ID  ";"  { [] }
-    | SmplDcls IsGlob PrimType StaticArrs ID  ";"  { [] }
-    | SmplDcls IsGlob PrimType            ID  ";"  { [] }
+SmplDcls: {- λ -}                                  {% return ()}        
+    | SmplDcls IsGlob PrimType Ptrs       ID  ";"  {% return ()}
+    | SmplDcls IsGlob PrimType EmptyArrs  ID  ";"  {% return ()}
+    | SmplDcls IsGlob PrimType StaticArrs ID  ";"  {% return ()}
+    | SmplDcls IsGlob PrimType            ID  ";"  {% return ()}
 
-Dcls:  {- λ -}                                { [] }
-    | Dcls FUNC PrimType ID "(" Parameter ")" ":" SmplDcls Ins END { [] }
-    | Dcls IsGlob PrimType Ptrs       ID  ";"  { [] }
-    | Dcls IsGlob PrimType EmptyArrs  ID  ";"  { [] }
-    | Dcls IsGlob PrimType StaticArrs ID  ";"  { [] }
-    | Dcls IsGlob PrimType            ID  ";"   { [] }
-  --| Dcls DataType    DATAID     ";"          { [] }    -- Forward declarations
-    | Dcls ENUMDEC DATAID   "{" EnumConsList "}"   { [] }
-    | Dcls STRUCTDEC  DATAID  "{" FieldsList   "}"   { [] }
-    | Dcls UNIONDEC  DATAID  "{" FieldsList   "}"   { [] }
-
-
-IsGlob : {- λ -}     { True  }
-         | GLOBAL    { False }
-
-PrimType : INTDEC         { [] }
-         | BOOLDEC        { [] }
-         | CHARDEC        { [] }
-         | VOIDDEC        { [] }
-         | FLOATDEC       { [] }
-
-DataType : ENUMDEC        { [] }
-         | STRUCTDEC      { [] }
-         | UNIONDEC       { [] }
-
-Parameter: Parameters PrimType ID         { [] }
-         | Parameters PrimType Ptrs ID    { [] }
-         | Parameters PrimType EmptyArrs ID   { [] }
-         | Parameters DataType DATAID     { [] }
-
-ListParam: Parameter                      { [] }
-         | Parameters PrimType ID     "," { [] }
-         | Parameters DataType DATAID "," { [] }
-         | Parameters PrimType Ptrs ID ","   { [] }
-         | Parameters PrimType EmptyArrs ID ","  { [] }
+Dcls:  {- λ -}                                {% return ()}
+    | Dcls FUNC PrimType ID "(" Parameter ")" ":" SmplDcls Ins END {% return ()}
+    | Dcls IsGlob PrimType Ptrs       ID  ";"  {% return ()}
+    | Dcls IsGlob PrimType EmptyArrs  ID  ";"  {% return ()}
+    | Dcls IsGlob PrimType StaticArrs ID  ";"  {% return ()}
+    | Dcls IsGlob PrimType            ID  ";"   {% return ()}
+  --| Dcls DataType    DATAID     ";"          {% return ()}    -- Forward declarations
+    | Dcls ENUMDEC DATAID   "{" EnumConsList "}"   {% return ()}
+    | Dcls STRUCTDEC  DATAID  "{" FieldsList   "}"   {% return ()}
+    | Dcls UNIONDEC  DATAID  "{" FieldsList   "}"   {% return ()}
 
 
-Parameters: {- λ -}       { [] }
-          | ListParam     { [] }
+IsGlob : {- λ -}     {% return ()}
+         | GLOBAL    {% return ()}
 
-EnumConsList: ENUM                      { [] }
-            | EnumConsList "," ENUM     { [] }
+PrimType : INTDEC         {% return ()}
+         | BOOLDEC        {% return ()}
+         | CHARDEC        {% return ()}
+         | VOIDDEC        {% return ()}
+         | FLOATDEC       {% return ()}
 
-FieldsList  : ID     "::" PrimType                   { [] }
-            | DATAID "::" DATAID                     { [] }
-            | FieldsList  "," ID     "::" PrimType   { [] }
-            | FieldsList  "," DATAID "::" DATAID     { [] }
+DataType : ENUMDEC        {% return ()}
+         | STRUCTDEC      {% return ()}
+         | UNIONDEC       {% return ()}
 
-Ptrs: "*"        { [] }
-    | Ptrs "*"   { [] }
+Parameter: Parameters PrimType ID         {% return ()}
+         | Parameters PrimType Ptrs ID    {% return ()}
+         | Parameters PrimType EmptyArrs ID   {% return ()}
+         | Parameters DataType DATAID     {% return ()}
 
-EmptyArrs: "[" "]"             { [] }
-         |  EmptyArrs "[" "]"  { [] }
+ListParam: Parameter                      {% return ()}
+         | Parameters PrimType ID     "," {% return ()}
+         | Parameters DataType DATAID "," {% return ()}
+         | Parameters PrimType Ptrs ID ","   {% return ()}
+         | Parameters PrimType EmptyArrs ID ","  {% return ()}
 
-StaticArrs: "[" INT "]"             { [] }
-          | StaticArrs "[" INT "]"  { [] }
+
+Parameters: {- λ -}       {% return ()}
+          | ListParam     {% return ()}
+
+EnumConsList: ENUM                      {% return ()}
+            | EnumConsList "," ENUM     {% return ()}
+
+FieldsList  : ID     "::" PrimType                   {% return ()}
+            | DATAID "::" DATAID                     {% return ()}
+            | FieldsList  "," ID     "::" PrimType   {% return ()}
+            | FieldsList  "," DATAID "::" DATAID     {% return ()}
+
+Ptrs: "*"        {% return ()}
+    | Ptrs "*"   {% return ()}
+
+EmptyArrs: "[" "]"             {% return ()}
+         |  EmptyArrs "[" "]"  {% return ()}
+
+StaticArrs: "[" INT "]"             {% return ()}
+          | StaticArrs "[" INT "]"  {% return ()}
 
 Exp : 
     -- Expresiones Aritméticas.
-      Exp "+" Exp       { [] }
-    | Exp "-" Exp       { [] }
-    | Exp "^" Exp       { [] }
-    | Exp "*" Exp       { [] }
-    | Exp "/" Exp       { [] }
-    | Exp "//" Exp      { [] }
-    | Exp "%" Exp       { [] }
-    | "-" Exp %prec NEG { [] }
+      Exp "+" Exp       {% return ()}
+    | Exp "-" Exp       {% return ()}
+    | Exp "^" Exp       {% return ()}
+    | Exp "*" Exp       {% return ()}
+    | Exp "/" Exp       {% return ()}
+    | Exp "//" Exp      {% return ()}
+    | Exp "%" Exp       {% return ()}
+    | "-" Exp %prec NEG {% return ()}
     -- Expresiones Booleanas.
-    | Exp OR Exp        { [] }
-    | Exp "||" Exp      { [] }
-    | Exp AND Exp       { [] }
-    | Exp "&&" Exp      { [] }
-    | "!" Exp         { [] }
+    | Exp OR Exp        {% return ()}
+    | Exp "||" Exp      {% return ()}
+    | Exp AND Exp       {% return ()}
+    | Exp "&&" Exp      {% return ()}
+    | "!" Exp         {% return ()}
     -- Expresiones relacionales.
-    | Exp "<"  Exp      { [] }
-    | Exp "<=" Exp      { [] }
-    | Exp ">"  Exp      { [] }
-    | Exp ">=" Exp      { [] }
-    | Exp "==" Exp      { [] }
-    | Exp "!=" Exp      { [] }
+    | Exp "<"  Exp      {% return ()}
+    | Exp "<=" Exp      {% return ()}
+    | Exp ">"  Exp      {% return ()}
+    | Exp ">=" Exp      {% return ()}
+    | Exp "==" Exp      {% return ()}
+    | Exp "!=" Exp      {% return ()}
     -- Expresiones sobre lienzo.
-    | Exp "!!" Exp           { [] }
-    | Exp "."  Exp           { [] }
-    | ID "[" Exp "]" %prec ARR { [] }
+    | Exp "!!" Exp           {% return ()}
+    | Exp "."  Exp           {% return ()}
+    | ID "[" Exp "]" %prec ARR {% return ()}
     --Llamadas a funciones
-    | ID "(" Exp ")"         { [] }
+    | ID "(" Exp ")"         {% return ()}
     --Acceso a apuntadores
-    | "*" Exp %prec POINT  { [] }
+    | "*" Exp %prec POINT  {% return ()}
     -- Asociatividad.
-    | "(" Exp ")"    { [] }
+    | "(" Exp ")"    {% return ()}
     -- Constantes.
-    | Term           { [] }
+    | Term           {% return ()}
     -- Llamadas
-    | MALLOC "(" Exp ")"       { [] }
-    | SIZEOF "(" Exp ")"       { [] }
-    | SIZEOF "(" PrimType ")"  { [] }
-    | GET    "(" ENUM ")"      { [] }
+    | MALLOC "(" Exp ")"       {% return ()}
+    | SIZEOF "(" Exp ")"       {% return ()}
+    | SIZEOF "(" PrimType ")"  {% return ()}
+    | GET    "(" ENUM ")"      {% return ()}
 
-Term: TRUE         { [] }
-    | FALSE        { [] }
-    | ID           { [] }
-    | DATAID       { [] }
-    | FLOAT        { [] }
-    | INT          { [] }
-    | CHAR         { [] }
+Term: TRUE         {% return ()}
+    | FALSE        {% return ()}
+    | ID           {% return ()}
+    | DATAID       {% return ()}
+    | FLOAT        {% return ()}
+    | INT          {% return ()}
+    | CHAR         {% return ()}
 
 {
 
