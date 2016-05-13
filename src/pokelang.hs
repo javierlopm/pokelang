@@ -4,12 +4,15 @@ import System.IO(hPutStrLn,stderr)
 import Tokens
 import Grammar
 import Lexer
+import TableTree
+import Control.Monad.RWS.Strict
 
 
 
 myF :: String -> String -> (String,String)
-myF arg1 arg2 = if arg1 /= "-l" && arg1/="-p" && arg1/="-a" then (arg1,arg2)
-                else (arg2,arg1)
+myF arg1 arg2 = if arg1 /= "-l" && arg1/="-p" && arg1/="-a" 
+                    then (arg1,arg2)
+                    else (arg2,arg1)
 main = do
   arg1:arg2:_ <- getArgs
   let (fileToRead,runargs)=myF arg1 arg2
@@ -20,12 +23,12 @@ main = do
   if null errors 
       then do case runargs of 
                 "-l"      -> mapM_ print goods
-                "-p"      -> do 
-                              let myParse =  (parser goods :: [Token])
-                              putStrLn $  (drop 2  (show myParse)) ++ "Succeed."
+                "-p"      -> print $ execRWS (parser goods) "" (fromScope (emptyScope::Scope Pos)) 
+                              -- putStrLn $  (drop 2  (show myParse)) ++ "Succeed."
+
                 "-a"      -> do mapM_ print goods
                                 putStrLn "\n"
-                                mapM_ print (parser goods :: [Token])
+                                print $ execRWS (parser goods) "" (fromScope (emptyScope::Scope Pos))
                 otherwise -> print $ "Unrecognized argument" ++ runargs
 
       else do mapM_ print errors
