@@ -8,8 +8,8 @@ Tokens.o:
 #Lexer.hs: Tokens.o
 #	alex --latin1 lexer/Lexer.x -o lexer/Lexer.hs
 
-Lexer.o: Tokens.o # Lexer.hs
-	ghc lexer/Lexer.hs -itokens
+# Lexer.o: Tokens.o  Lexer.hs
+#	ghc lexer/Lexer.hs -itokens
 
 # Parser
 
@@ -17,14 +17,14 @@ Grammar.hs: Tokens.o
 	happy parser/Grammar.y -o parser/Grammar.hs --info=grammarinfo.md
 
 Grammar.o: Grammar.hs
-	ghc parser/Grammar.hs -itokens
+	ghc parser/Grammar.hs -itokens -isymtable
 
 # Symbol Tables
-SymTable.o: TableTree.hs
-	ghc symtable/TableTree.hs -o SymTable.o
+SymTable.o: 
+	ghc symtable/TableTree.hs 
 
-Pokelang: Lexer.o Tokens.o Grammar.o SymTable.o
-	ghc pokelang.hs -ilexer -itokens -iparser
+Pokelang:  Tokens.o Grammar.o SymTable.o # Lexer.o
+	ghc pokelang.hs -ilexer -itokens -iparser -isymtable
 
 
 clean:

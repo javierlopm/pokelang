@@ -3,14 +3,14 @@ module Grammar(parser) where
 import Tokens
 import TableTree
 import Control.Monad.RWS.Strict
-import import qualified Data.Sequence as S
+import qualified Data.Sequence as S
 }
 
 
 %name parser
 %tokentype { Token      }
 
-%monad { RWS String (S.Seq(String)) (Zipper Pos) } [ { <then> } { <return> } ]
+%monad { RWS String (S.Seq(String)) (Zipper Pos) }
 
 %error     { parseError }
 %token

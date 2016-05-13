@@ -4,6 +4,8 @@ import System.IO(hPutStrLn,stderr)
 import Tokens
 import Grammar
 import Lexer
+import TableTree
+import Control.Monad.RWS.Strict
 
 
 
@@ -21,12 +23,12 @@ main = do
   if null errors 
       then do case runargs of 
                 "-l"      -> mapM_ print goods
-                "-p"      -> do 
-                              let myParse =  (parser goods :: [Token])
-                              putStrLn $  (drop 2  (show myParse)) ++ "Succeed."
+                "-p"      -> print $ execRWS (parser goods) "" (fromScope (emptyScope::Scope Pos)) 
+                              -- putStrLn $  (drop 2  (show myParse)) ++ "Succeed."
+
                 "-a"      -> do mapM_ print goods
                                 putStrLn "\n"
-                                mapM_ print (parser goods :: [Token])
+                                print $ execRWS (parser goods) "" (fromScope (emptyScope::Scope Pos))
                 otherwise -> print $ "Unrecognized argument" ++ runargs
 
       else do mapM_ print errors
