@@ -2,10 +2,9 @@ import System.Exit(exitSuccess)
 import System.IO
 import TableTree
 
-move moveFunc zipper = do
-  do case moveFunc zipper of 
-      Nothing   -> putStrLn "No node to visit"
-      Just zipp -> repl zipp
+move moveFunc zipper =  case moveFunc zipper of 
+                          Nothing   -> putStrLn "No node to visit"
+                          Just zipp -> repl zipp
 
 repl zipper = do
     putStr ">"
@@ -15,7 +14,7 @@ repl zipper = do
                       putStrLn "    show  insert  enter  quit"
                       putStrLn "    up  down left right  top lookup"
         "show"  -> print $ fst zipper
-        "enter" -> repl $ apply enterScope zipper 
+        "enter" -> repl $ enterScope zipper 
         "down"  -> move goDown zipper
         "up"    -> move goUp   zipper
         "left"  -> move goLeft zipper
