@@ -15,23 +15,29 @@
     fromZipper
     ) where
 
--- import import qualified Data.Sequence as S
 import qualified Data.Map.Strict as Map
+import Data.Foldable(toList)
+import Data.Sequence(Seq,empty,(|>),(<|),ViewL((:<)),ViewR((:>)),(><),viewl)
+
 import Data.Maybe(fromJust,isNothing)
 import Data.List (intercalate)
 
+
+-- Tabla de símbolos
 type SymbolTable a = Map.Map String a
 
-data Action = DownA | RightA | RootA | StChild
-          deriving(Eq,Show) 
-
+-- Auxiliar para mostrar tablas
 showSTL :: Show a => [(String,a)] -> Int -> String
 showSTL myL i =  replicate (i*2) ' ' ++ 
                   intercalate (replicate (i*2) ' ')  
                       (map (\(a,b) -> a ++ " " ++ show b ++ "\n") myL)
 
+-- Acciones de movimiento
+data Action = DownA | RightA | RootA | StChild
+          deriving(Eq,Show) 
 
-data Scope a = Scope (SymbolTable a) [Scope a] -- Y si... usamos sequence aqui para tenerlos ordenados?
+-- Scope
+data Scope a = Scope (SymbolTable a) (Seq(Scope a)) 
 
 instance  Show a => Show (Scope a) where
   show = showScope 0
@@ -40,12 +46,12 @@ showScope :: Show a => Int -> Scope a -> String
 showScope i (Scope st chld) = "\n" ++ replicate (i*2) ' ' ++ 
                 "Level " ++ show i ++ ":\n" ++ 
                 replicate (i*2) ' ' ++  "—————————" ++ "\n" ++
-                showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) chld 
+                showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) (toList chld) 
 
 data Breadcrumb a = Breadcrumb { left  :: [Scope a]
-                   , right :: [Scope a]
-                   , action:: [Action]
-                   }
+                               , right :: Seq(Scope a)
+                               , action:: [Action]
+                               }
           deriving(Show)  
 
 type Zipper a = (Scope a, Breadcrumb a)
@@ -59,10 +65,10 @@ addEntry = Map.insert
 
 -- Scope
 emptyScope :: Scope a
-emptyScope = Scope newtable []
+emptyScope = Scope newtable empty
 
 enterScope' :: Scope a -> Scope a
-enterScope' (Scope symtable l)  = Scope symtable (emptyScope:l)
+enterScope' (Scope symtable l)  = Scope symtable (emptyScope <| l)
 
 insert :: String -> a -> Scope a -> Scope a
 insert key val (Scope symtable chl) = Scope (addEntry key val symtable) chl
@@ -70,7 +76,7 @@ insert key val (Scope symtable chl) = Scope (addEntry key val symtable) chl
 
 -- Zipper
 fromScope :: Scope a -> Zipper a
-fromScope orig = (orig,Breadcrumb [] [] [RootA] )
+fromScope orig = (orig,Breadcrumb [] empty [RootA] )
 
 enterScope :: Zipper a -> Zipper a
 enterScope = fromJust . goDown . apply enterScope'
@@ -80,11 +86,12 @@ fromZipper = fst . goTop
 
 -- No funciona -- Revisar si conviene trabajar con ST o con Scopes
 goDown :: Zipper a -> Maybe (Zipper a)
-goDown (Scope symt [] , breadcrumbs) = Nothing
-goDown (Scope symt (ch:chdrn) , breadcrumbs) = Just (ch,newBread)
-    where 
-          newBread = Breadcrumb ((Scope symt []):(left breadcrumbs)) (chdrn++(right breadcrumbs)) (((map (\x -> StChild) chdrn)++(DownA:(action breadcrumbs))) )  --Guarda ST sin hijos para luego ponerselos al subir
-          --newBread = Breadcrumb (symt:(left breadcrumbs)) (chdrn++(right breadcrumbs)) (StChild:((map (\x -> StChild) chdrn)++(DownA:(action breadcrumbs))) )
+goDown (Scope symt chls , breadcrumbs) = Just (ch,newBread)
+    where (ch :< chdrn) = viewl chls
+          newBread = Breadcrumb ( Scope symt empty : left breadcrumbs )
+                                (chdrn >< right breadcrumbs) 
+                                ( replicate (length chdrn) (StChild)  ++ (DownA:(action breadcrumbs)))  --Guarda ST sin hijos para luego ponerselos al subir
+goDown (Scope symt children , breadcrumbs) =  Nothing
         --newBread = Breadcrumb (symt:(left breadcrumbs)) (chdrn++(right breadcrumbs)) (DownA:(action breadcrumbs)) 
 
 apply :: (Scope a -> Scope a) -> Zipper a -> Zipper a
