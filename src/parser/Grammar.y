@@ -130,7 +130,7 @@ import qualified Data.Sequence as S
 
 %%
 
-Prog : Dcls  { $1 }
+Prog : Dcls  { [] }
 
 Ins : {- λ -}                                 { [] }
     | Ins PRINT "(" STRING PrntArgs ")"   ";" { [] } 

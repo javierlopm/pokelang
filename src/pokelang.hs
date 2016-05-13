@@ -21,14 +21,20 @@ main = do
 
   let (goods,errors,errorcount) = checkErrors' $ lexer s
   if null errors 
-      then do case runargs of 
+      then case runargs of 
                 "-l"      -> mapM_ print goods
-                "-p"      -> print $ execRWS (parser goods) "" (fromScope (emptyScope::Scope Pos)) 
-                              -- putStrLn $  (drop 2  (show myParse)) ++ "Succeed."
-
+                "-p"      -> do let (state,strlog) = execRWS (parser goods) "" (fromScope (emptyScope::Scope Pos))
+                                putStrLn "Log:"
+                                print strlog
+                                putStrLn "Table:"
+                                print $ fromZipper state
                 "-a"      -> do mapM_ print goods
-                                putStrLn "\n"
-                                print $ execRWS (parser goods) "" (fromScope (emptyScope::Scope Pos))
+                                putStrLn "\n" 
+                                let (state,strlog) = execRWS (parser goods) "" (fromScope (emptyScope::Scope Pos))
+                                putStrLn "Log:"
+                                print strlog
+                                putStrLn "Table:"
+                                print $ fromZipper state
                 otherwise -> print $ "Unrecognized argument" ++ runargs
 
       else do mapM_ print errors
