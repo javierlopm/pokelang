@@ -7,6 +7,8 @@ funcball VOIDtorb bubble( pINTachu arr,
     pINTachu temp;
     pINTachu ordenados;
     pINTachu pos;
+    --pINTachu ordenados;--
+    VOIDtorb *voidtype;
 
     vamo_a_itera ordenados = 0 |size-2|1: 
         vamo_a_itera pos = ordenados |size-2|1:

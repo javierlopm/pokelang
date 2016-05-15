@@ -7,6 +7,7 @@ import Lexer
 import TableTree
 import Types
 import Control.Monad.RWS.Strict
+import Data.Foldable(toList)
 
 
 
@@ -26,7 +27,7 @@ main = do
                 "-l"      -> mapM_ print goods
                 "-p"      -> do let (state,strlog) = execRWS (parser goods) "" (fromScope emptyScope)
                                 putStrLn "Log:"
-                                print strlog
+                                mapM_ print $ toList $ strlog
                                 putStrLn "Table:"
                                 print $ fromZipper state
                 "-a"      -> do mapM_ print goods

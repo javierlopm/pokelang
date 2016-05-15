@@ -6,6 +6,8 @@ import Types
 import Control.Monad.RWS.Strict
 import qualified Data.Sequence as S
 
+
+
 }
 
 
@@ -29,15 +31,15 @@ import qualified Data.Sequence as S
     ENUMDEC   { TkEnum     _ }     
     GLOBAL    { TKGlobal   _ }
 
-    "["       { TkLBracket   _ }     
-    "]"       { TkRBracket   _ }     
+    "["       { TkLBracket _ }     
+    "]"       { TkRBracket _ }     
     "{"       { TkLCurly   _ }     
     "}"       { TkRCurly   _ }     
     "("       { TkLRound   _ }     
     ")"       { TkRRound   _ }     
-    "|"       { TkPipe   _ }     
+    "|"       { TkPipe     _ }     
     "::"      { TkDColon   _ }     
-    ":"       { TkColon   _ }     
+    ":"       { TkColon    _ }     
     ";"       { TkSColon   _ }    
     ","       { TkComma    _ }    
     "*="      { TkTEQ      _ }    
@@ -51,50 +53,50 @@ import qualified Data.Sequence as S
     AND       { TkAnd      _ }    
     OR        { TkOr       _ }    
     --"?"       { TkDEQ      _ }    
-    ">="      { TkGE   _ }    
-    "<="      { TkLE   _ }    
-    ">"       { TkGT   _ }    
-    "<"       { TkLT   _ }    
+    ">="      { TkGE     _ }    
+    "<="      { TkLE     _ }    
+    ">"       { TkGT     _ }    
+    "<"       { TkLT     _ }    
     "/"       { TkIDiv   _ }    
-    "//"      { TkDiv   _ }    
-    "+"       { TkSum   _ }    
-    "-"       { TkMin   _ }    
-    "^"       { TkPower   _ }    
-    "*"       { TkTimes   _ }    
-    "%"       { TkMod   _ }    
-    "=="      { TkEq   _ }    
-    "="       { TkAssign   _ }
+    "//"      { TkDiv    _ }    
+    "+"       { TkSum    _ }    
+    "-"       { TkMin    _ }    
+    "^"       { TkPower  _ }    
+    "*"       { TkTimes  _ }    
+    "%"       { TkMod    _ }    
+    "=="      { TkEq     _ }    
+    "="       { TkAssign _ }
 
-    FUNC      { TkFunc _ }
+    FUNC      { TkFunc   _ }
 
     -- Control structures
-    IF        { TkIf _ }
-    ELIF      { TkElif _ }
-    ELSE      { TkElse _ }
-    END       { TkEnd _ }
-    WHILE     { TkWhile _ }
-    FOR       { TkFor _ }
-    BEGIN     { TkBegin _ }
-    BREAK     { TkBreak _ }
+    IF        { TkIf       _ }
+    ELIF      { TkElif     _ }
+    ELSE      { TkElse     _ }
+    END       { TkEnd      _ }
+    WHILE     { TkWhile    _ }
+    FOR       { TkFor      _ }
+    BEGIN     { TkBegin    _ }
+    BREAK     { TkBreak    _ }
     CONTINUE  { TkContinue _ }
-    RETURN    { TkReturn _ }
-    EXIT      { TkExit _ }
+    RETURN    { TkReturn   _ }
+    EXIT      { TkExit     _ }
 
     -- Built-in functions/Instructions
-    READ      { TkRead _ }
-    WRITE     { TkWrite _ }
-    PRINT     { TkPrint _ }
-    MALLOC    { TkAlloc _ }
-    FREE      { TkFree _ }
+    READ      { TkRead   _ }
+    WRITE     { TkWrite  _ }
+    PRINT     { TkPrint  _ }
+    MALLOC    { TkAlloc  _ }
+    FREE      { TkFree   _ }
     SIZEOF    { TkSizeOf _ }
-    GET       { TkGet _ }
+    GET       { TkGet    _ }
     -- Primitive types
-    TRUE      { TkTrue _ }
-    FALSE     { TkFalse   _ }
-    CHAR      { TkCharVal _ _ }
-    STRING    { TkString _ _ }
-    INT       { TkNum _ _ }
-    FLOAT     { TkFloatVal _ _ }
+    TRUE      { TkTrue      _   }
+    FALSE     { TkFalse     _   }
+    CHAR      { TkCharVal   _ _ }
+    STRING    { TkString    _ _ }
+    INT       { TkNum       _ _ }
+    FLOAT     { TkFloatVal  _ _ }
 
     -- Composed types
     ENUM { TkEnumCons _ _ }
@@ -164,11 +166,11 @@ NextIf: {- λ -}             {% return ()}
 Else: {- λ -}      {% return ()}
     | ELSE ":" Ins {% return ()}
 
-SmplDcls: {- λ -}                                  {% return ()}        
-    | SmplDcls IsGlob PrimType Ptrs       ID  ";"  {% return ()}
-    | SmplDcls IsGlob PrimType EmptyArrs  ID  ";"  {% return ()} -- Se deberian agregar a globales no?
+SmplDcls: {- λ -}                                  {% return () }        
+    | SmplDcls IsGlob PrimType Ptrs       ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 ) $5 }
+    | SmplDcls IsGlob PrimType EmptyArrs  ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 ) $5 } -- Azucar sintactico? jeje
     | SmplDcls IsGlob PrimType StaticArrs ID  ";"  {% return ()}
-    | SmplDcls IsGlob PrimType            ID  ";"  {% insertDeclareInScope $4 $3 }
+    | SmplDcls IsGlob PrimType            ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $4) ) $4 }
 
 Dcls:  {- λ -}                                {% return ()}
     | Dcls FUNC PrimType ID "(" Parameter ")" ":" SmplDcls Ins END {% return ()}
@@ -185,11 +187,11 @@ Dcls:  {- λ -}                                {% return ()}
 IsGlob : {- λ -}     {% return ()}
          | GLOBAL    {% return ()}
 
-PrimType : INTDEC         { makeDec $1 }
-         | BOOLDEC        { makeDec $1 }
-         | CHARDEC        { makeDec $1 }
-         | VOIDDEC        { makeDec $1 }
-         | FLOATDEC       { makeDec $1 }
+PrimType : INTDEC         { $1 }
+         | BOOLDEC        { $1 }
+         | CHARDEC        { $1 }
+         | VOIDDEC        { $1 }
+         | FLOATDEC       { $1 }
 
 DataType : ENUMDEC        {% return ()}
          | STRUCTDEC      {% return ()}
@@ -218,12 +220,15 @@ FieldsList  : ID     "::" PrimType                   {% return ()}
             | FieldsList  "," ID     "::" PrimType   {% return ()}
             | FieldsList  "," DATAID "::" DATAID     {% return ()}
 
-Ptrs: "*"        {% return ()}
-    | Ptrs "*"   {% return ()}
+-- Counts nesting levels
+Ptrs: "*"        {    1    }
+    | Ptrs "*"   { succ $1 } 
 
-EmptyArrs: "[" "]"             {% return ()}
-         |  EmptyArrs "[" "]"  {% return ()}
+-- Counts nesting levels
+EmptyArrs: "[" "]"             {    1    }
+         |  EmptyArrs "[" "]"  { succ $1 }
 
+-- Counts dimensions
 StaticArrs: "[" INT "]"             {% return ()}
           | StaticArrs "[" INT "]"  {% return ()}
 
@@ -278,18 +283,22 @@ Term: TRUE         {% return ()}
 
 {
 
--- Insert simple token in actual scope
-insertDeclareInScope (TkId (l,c) lexeme ) dcltype = do 
+-- Monadic action: Insert tkId into actual scope and do some checks
+insertDeclareInScope dcltype (TkId (l,c) lexeme ) = do 
     table <- get 
     if isMember table lexeme
-        then tell error
-        else do let newtable = apply (insert lexeme dcltype) table
-                put newtable
-                tell whathappened
+        then tell error1
+        else if (storedType dcltype == TypeVoid) && not (isPointer dcltype)
+                then tell error2
+                else do 
+                    let newtable = apply (insert lexeme dcltype) table
+                    put newtable
+                    tell whathappened
     return ()
-    where error        = S.singleton $ Left $ "Error:" ++show l++":"++show c ++
-                                      " redeclaraci'o de " ++ lexeme
-          whathappened = S.singleton $ Right $"Agregado" ++ lexeme ++ "en"++show l++":"++show c
+    where error1       = S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" redeclaraci'o de " ++ lexeme
+          error2       = S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" " ++ lexeme ++ " es del tipo VOIDtorb, el cual solo puede ser instanciado como referencia."
+          whathappened = S.singleton $ Right $ "Agregado " ++ lexeme ++ " en "++show l++":"++show c
+          
 
 
 parseError [] = error $ "EOF Inesperado"
