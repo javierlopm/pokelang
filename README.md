@@ -89,7 +89,6 @@ Pokelang includes the primitives data types.
 |  float| butterFloat | 4             |
 |  char | CHARmander  | 4             |
 |  void | VOIDtorb    | NO            |
-|  enum | ENUManyte   | 4             |
 |  pointer | *        | 4             |
 
 * pINTachus are stored in 2's complement. They may be between -2,147,483,648 and 2,147,483,647.

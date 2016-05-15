@@ -2,15 +2,17 @@
 module Grammar(parser) where
 import Tokens
 import TableTree
+import Types
 import Control.Monad.RWS.Strict
 import qualified Data.Sequence as S
+
 }
 
 
 %name parser
-%tokentype { Token      }
+%tokentype { Token }
 
-%monad { RWS String (S.Seq(String)) (Zipper Pos) }
+%monad { RWS String (S.Seq(Message)) (Zipper Declare) }
 
 %error     { parseError }
 %token
@@ -146,8 +148,8 @@ Ins : {- λ -}                                 {% return ()}
     | Ins FREE "("ID")"     ";"         {% return ()}
     | Ins FREE "("DATAID")" ";"         {% return ()}
     | Ins READ "("DATAID")" ";"         {% return ()}
-    | Ins IF Exp ":" SmplDcls Ins NextIf Else END    {% return ()}
-    | Ins WHILE Exp ":" SmplDcls Ins END         {% return ()}
+    | Ins IF Exp    ":" SmplDcls Ins NextIf Else END    {% return ()}
+    | Ins WHILE Exp ":" SmplDcls Ins END                {% return ()}
     | Ins FOR ID "=" Exp  "|" Exp "|" Exp ":" SmplDcls Ins  END {% return ()}
     | Ins FOR ID "=" Exp  "|" Exp         ":" SmplDcls Ins  END {% return ()}
     | Ins FOR ID "=" ENUM "|" ENUM        ":" SmplDcls Ins  END {% return ()}
@@ -164,12 +166,9 @@ Else: {- λ -}      {% return ()}
 
 SmplDcls: {- λ -}                                  {% return ()}        
     | SmplDcls IsGlob PrimType Ptrs       ID  ";"  {% return ()}
-    | SmplDcls IsGlob PrimType EmptyArrs  ID  ";"  {% return ()}
+    | SmplDcls IsGlob PrimType EmptyArrs  ID  ";"  {% return ()} -- Se deberian agregar a globales no?
     | SmplDcls IsGlob PrimType StaticArrs ID  ";"  {% return ()}
-    | SmplDcls IsGlob PrimType            ID  ";"  {% do 
-                                                         tabla <- get
-                                                         put $ apply (insert (lexeme $4) (position $4)) tabla
-                                                   }
+    | SmplDcls IsGlob PrimType            ID  ";"  {% insertDeclareInScope $4 $3 }
 
 Dcls:  {- λ -}                                {% return ()}
     | Dcls FUNC PrimType ID "(" Parameter ")" ":" SmplDcls Ins END {% return ()}
@@ -186,11 +185,11 @@ Dcls:  {- λ -}                                {% return ()}
 IsGlob : {- λ -}     {% return ()}
          | GLOBAL    {% return ()}
 
-PrimType : INTDEC         { $1 }
-         | BOOLDEC        { $1 }
-         | CHARDEC        { $1 }
-         | VOIDDEC        { $1 }
-         | FLOATDEC       { $1 }
+PrimType : INTDEC         { makeDec $1 }
+         | BOOLDEC        { makeDec $1 }
+         | CHARDEC        { makeDec $1 }
+         | VOIDDEC        { makeDec $1 }
+         | FLOATDEC       { makeDec $1 }
 
 DataType : ENUMDEC        {% return ()}
          | STRUCTDEC      {% return ()}
@@ -278,6 +277,20 @@ Term: TRUE         {% return ()}
     | CHAR         {% return ()}
 
 {
+
+-- Insert simple token in actual scope
+insertDeclareInScope (TkId (l,c) lexeme ) dcltype = do 
+    table <- get 
+    if isMember table lexeme
+        then tell error
+        else do let newtable = apply (insert lexeme dcltype) table
+                put newtable
+                tell whathappened
+    return ()
+    where error        = S.singleton $ Left $ "Error:" ++show l++":"++show c ++
+                                      " redeclaraci'o de " ++ lexeme
+          whathappened = S.singleton $ Right $"Agregado" ++ lexeme ++ "en"++show l++":"++show c
+
 
 parseError [] = error $ "EOF Inesperado"
 parseError l  = error $ "Parsing error at: \n" ++ show (head l)

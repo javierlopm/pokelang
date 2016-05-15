@@ -10,18 +10,19 @@
     emptyScope,
     enterScope,
     insert,
+    isMember,
     lookUp,
     fromScope,
     fromZipper
     ) where
 
 import qualified Data.Map.Strict as Map
-import Data.Foldable(toList)
 import qualified Data.Sequence as DS
-import Data.Sequence(Seq,empty,(|>),(<|),ViewL((:<)),ViewR((:>)),(><),viewl,length)
-
+import Data.Foldable(toList)
+import Data.Sequence(empty,viewl,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
 import Data.Maybe(fromJust,isNothing)
 import Data.List (intercalate)
+
 
 
 -- Tabla de símbolos
