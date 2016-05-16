@@ -22,8 +22,8 @@ funcball pINTachu fibo_iterativo(pINTachu n):
     si n == 0:
         vamo_a_retorna 0;
     si_no:
-        n2 = 0
-        n1 = 1
+        n2 = 0;
+        n1 = 1;
         vamo_a_itera iter = 0|n|1: 
             aux = n1 + n2;
             n2  = n1;

@@ -103,8 +103,7 @@ import qualified Data.Sequence as S
 
 -- Para las expresiones relacionales.
 --%nonassoc '<' <\=' '>' '>\=' '=' '\/=' '..'
-%nonassoc "==" "!="
-%nonassoc "<" "<=" ">" ">="
+
 
 -- Para los booleanos.
 %left  OR
@@ -130,7 +129,8 @@ import qualified Data.Sequence as S
 --Acceso a apuntadores
 %right POINT
 
-
+%nonassoc "==" "!="
+%nonassoc "<" "<=" ">" ">="
 
 %%
 
@@ -145,7 +145,7 @@ Ins : {- λ -}                                 {% return ()}
     | Ins Exp "+=" Exp        ";"         {% return ()}
     | Ins BREAK             ";"         {% return ()}
     | Ins CONTINUE          ";"         {% return ()}
-    | Ins RETURN            ";"         {% return ()}
+    | Ins RETURN   Exp      ";"         {% return ()}
     | Ins EXIT              ";"         {% return ()}
     | Ins FREE "("ID")"     ";"         {% return ()}
     | Ins FREE "("DATAID")" ";"         {% return ()}
@@ -161,10 +161,10 @@ PrntArgs: {- λ -}             {% return ()}
         | PrntArgs "," Exp    {% return ()} -- Siempre es necesaria una coma a la izq
 
 NextIf: {- λ -}             {% return ()}
-      | NextIf ELIF  Exp ":" Ins {% return ()}
+      | NextIf ELIF  Exp ":" SmplDcls Ins {% return ()}
 
 Else: {- λ -}      {% return ()}
-    | ELSE ":" Ins {% return ()}
+    | ELSE ":" SmplDcls Ins {% return ()}
 
 SmplDcls: {- λ -}                                  {% return () }        
     | SmplDcls IsGlob PrimType Ptrs       ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 ) $5 }
