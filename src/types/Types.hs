@@ -24,8 +24,8 @@ type Pos = (Int,Int)
 -- Las constantes enumeradas no deberian estar en un scope grande y universal?
 
 -- Declarations might be functions,variables or structure types
-data Declare = Function     { pos::Pos , storedType::Type,fields::(Scope Type)}
-             | Variable     { pos::Pos , storedType::Type }
+data Declare = Function     { pos::Pos , storedType::Type, fields::(Scope Type)}
+             | Variable     { pos::Pos , storedTypeV::PrimType }
              | Pointer      { pos::Pos , storedType::Type, levels    :: Int } -- No tiene mucho sentido que vengan con contenido...
              | StaticArray  { pos::Pos , storedType::Type, dimensions::[Int]}
              | Enum     Pos -- Listas de constantes enumeradas No?
@@ -34,12 +34,20 @@ data Declare = Function     { pos::Pos , storedType::Type,fields::(Scope Type)}
              | Empty
              -- | DynamicArray { pos::Pos , storedType::Type, } -- Azucar sintactica para aps
              deriving(Show)
+data PrimType = PrimInt Int
+              | PrimBool Bool
+              | PrimChar  Char
+              | PrimFloat  Float
+              | PrimEnum    String
+              | PrimUnion   String
+              | PrimStruct  String
+              deriving(Show,Eq)
 
 -- Types of Variable
-data Type = TypeInt    Int   -- Marcar con Maybe?
-          | TypeFloat  Float
-          | TypeChar   Char
-          | TypeBool   Bool
+data Type = TypeInt       -- Marcar con Maybe?
+          | TypeFloat  
+          | TypeChar   
+          | TypeBool   
           | TypeVoid   
           | TypeEnum  
           | TypeStruct  
@@ -52,25 +60,27 @@ isPointer (Pointer _ _ _ ) = True
 isPointer _                = False
 
 -- Create declare with a Token an a position
-makeDec :: Token -> Pos -> Declare
-makeDec t p = 
+makeDec :: Token -> Pos -> Maybe String -> Maybe Declare
+makeDec (TkVoid _) _ _ = Nothing
+makeDec t p (Just s) = Just $
     case t of 
-        TkInt    _ -> Variable p (TypeInt 0) 
-        TkBool   _ -> Variable p (TypeBool False)
-        TkChar   _ -> Variable p (TypeChar '\0')
-        TkFloat  _ -> Variable p (TypeFloat 0.0)
-        TkVoid   _ -> Variable p TypeVoid
-        -- TkStruct _ -> Variable 
-        -- TkUnion  _ -> Variable 
-        -- TkEnum   _ -> Variable 
+        TkStruct _ -> Variable p (PrimStruct s)
+        TkUnion  _ -> Variable p (PrimUnion s)
+        TkEnum   _ -> Variable p (PrimEnum s)
+makeDec t p Nothing = Just $
+    case t of 
+        TkInt    _ -> Variable p (PrimInt 0) 
+        TkBool   _ -> Variable p (PrimBool False)
+        TkChar   _ -> Variable p (PrimChar '\0')
+        TkFloat  _ -> Variable p (PrimFloat 0.0)
 
 -- Create a pointer declaration
-makePtrs :: Token -> Pos -> Int -> Declare
-makePtrs t p i = 
+makePtrs :: Token -> Pos -> Int -> Maybe Declare
+makePtrs t p i = Just $
     case t of 
-        TkInt    _ -> Pointer p (TypeInt 0)      i
-        TkBool   _ -> Pointer p (TypeBool False) i
-        TkChar   _ -> Pointer p (TypeChar '\0')  i 
-        TkFloat  _ -> Pointer p (TypeFloat 0.0)  i 
-        TkVoid   _ -> Pointer p  TypeVoid        i
+        TkInt    _ -> Pointer p (TypeInt)   i
+        TkBool   _ -> Pointer p (TypeBool)  i
+        TkChar   _ -> Pointer p (TypeChar)  i 
+        TkFloat  _ -> Pointer p (TypeFloat) i 
+        TkVoid   _ -> Pointer p  TypeVoid   i
   

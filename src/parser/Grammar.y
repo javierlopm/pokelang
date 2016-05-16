@@ -170,7 +170,8 @@ SmplDcls: {- λ -}                                  {% return () }
     | SmplDcls IsGlob PrimType Ptrs       ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 ) $5 }
     | SmplDcls IsGlob PrimType EmptyArrs  ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 ) $5 } -- Azucar sintactico? jeje
     | SmplDcls IsGlob PrimType StaticArrs ID  ";"  {% return ()}
-    | SmplDcls IsGlob PrimType            ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $4) ) $4 }
+    | SmplDcls IsGlob PrimType            ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $4) Nothing) $4 }
+    | SmplDcls IsGlob DATAID              ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $4) (Just (lexeme $3))) $4 }
 
 Dcls:  {- λ -}                                {% return ()}
     | Dcls FUNC PrimType ID "(" Parameter ")" ":" SmplDcls Ins END {% return ()}
@@ -182,7 +183,6 @@ Dcls:  {- λ -}                                {% return ()}
     | Dcls ENUMDEC DATAID   "{" EnumConsList "}"   {% return ()}
     | Dcls STRUCTDEC  DATAID  "{" FieldsList   "}"   {% return ()}
     | Dcls UNIONDEC  DATAID  "{" FieldsList   "}"   {% return ()}
-
 
 IsGlob : {- λ -}     {% return ()}
          | GLOBAL    {% return ()}
@@ -284,19 +284,20 @@ Term: TRUE         {% return ()}
 {
 
 -- Monadic action: Insert tkId into actual scope and do some checks
-insertDeclareInScope dcltype (TkId (l,c) lexeme ) = do 
+insertDeclareInScope Nothing (TkId (l,c) lexeme ) =
+    tell $ S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" " 
+                                 ++ lexeme ++ 
+    " es del tipo VOIDtorb, el cual solo puede ser instanciado como referencia."
+
+insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) = do 
     table <- get 
     if isMember table lexeme
         then tell error1
-        else if (storedType dcltype == TypeVoid) && not (isPointer dcltype)
-                then tell error2
-                else do 
-                    let newtable = apply (insert lexeme dcltype) table
-                    put newtable
-                    tell whathappened
+        else do let newtable = apply (insert lexeme dcltype) table
+                put newtable
+                tell whathappened
     return ()
     where error1       = S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" redeclaraci'o de " ++ lexeme
-          error2       = S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" " ++ lexeme ++ " es del tipo VOIDtorb, el cual solo puede ser instanciado como referencia."
           whathappened = S.singleton $ Right $ "Agregado " ++ lexeme ++ " en "++show l++":"++show c
           
 
