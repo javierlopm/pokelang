@@ -168,4 +168,4 @@ lookUp zip key = if isNothing mySearch
               mayUp    = (goUp zip)
 
 fuse :: Scope a -> Zipper a -> Scope a
-fuse (Scope smtbl _ ) z =  Scope smtbl  (( chs . fromZipper . goTop) z)
+fuse (Scope smtbl _ ) z =  Scope smtbl  (( chs . fromZipper) z)

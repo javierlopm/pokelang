@@ -4,7 +4,8 @@ module Types(
     Message,
     isPointer,
     makeDec,
-    makePtrs
+    makePtrs,
+    makeType
 ) where
 
 import TableTree(Scope(..))
@@ -24,7 +25,7 @@ type Pos = (Int,Int)
 -- Las constantes enumeradas no deberian estar en un scope grande y universal?
 
 -- Declarations might be functions,variables or structure types
-data Declare = Function     { pos::Pos , storedType::Type, fields::(Scope Type)}
+data Declare = Function     { pos::Pos , storedType::Type, fields::(Scope Declare)}
              | Variable     { pos::Pos , storedTypeV::PrimType }
              | Pointer      { pos::Pos , storedType::Type, levels    :: Int } -- No tiene mucho sentido que vengan con contenido...
              | StaticArray  { pos::Pos , storedType::Type, dimensions::[Int]}
@@ -83,4 +84,10 @@ makePtrs t p i = Just $
         TkChar   _ -> Pointer p (TypeChar)  i 
         TkFloat  _ -> Pointer p (TypeFloat) i 
         TkVoid   _ -> Pointer p  TypeVoid   i
-  
+
+makeType :: Token -> Type
+makeType (TkInt   _) = TypeInt
+makeType (TkBool  _) = TypeBool
+makeType (TkChar  _) = TypeChar
+makeType (TkVoid  _) = TypeVoid
+makeType (TkFloat _) = TypeFloat

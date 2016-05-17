@@ -173,7 +173,7 @@ SmplDcls: {- λ -}                                  {% return () }
     | SmplDcls IsGlob DataType DATAID     ID  ";"  {% return () } -- {% insertDeclareInScope (makeDec  $4 (position $5) (Just (lexeme $4))) $5 }
 
 Dcls:  {- λ -}                                 {% return ()}
-    | Dcls FUNC PrimType ID "(" Parameter ")" ":" Ent SmplDcls Ins END {% exitScope } -- Deberia agregar a las globales
+    | Dcls FUNC PrimType ID "(" Parameters ")" ":" SmplDcls Ins END {% insertFunction $3 $4 }
     | Dcls IsGlob PrimType Ptrs       ID  ";"  {% return ()}
     | Dcls IsGlob PrimType EmptyArrs  ID  ";"  {% return ()}
     | Dcls IsGlob PrimType StaticArrs ID  ";"  {% return ()}
@@ -196,20 +196,19 @@ DataType : ENUMDEC        {% return ()}
          | STRUCTDEC      {% return ()}
          | UNIONDEC       {% return ()}
 
-Parameter: Parameters PrimType ID         {% return ()}
-         | Parameters PrimType Ptrs ID    {% return ()}
-         | Parameters PrimType EmptyArrs ID   {% return ()}
-         | Parameters DataType DATAID     {% return ()}
+Parameter: ListParam PrimType ID             {% return ()}
+         | ListParam PrimType Ptrs ID        {% return ()}
+         | ListParam PrimType EmptyArrs ID   {% return ()}
+         | ListParam DataType DATAID         {% return ()}
 
-ListParam: Parameter                      {% return ()}
-         | Parameters PrimType ID     "," {% return ()}
-         | Parameters DataType DATAID "," {% return ()}
-         | Parameters PrimType Ptrs ID ","   {% return ()}
-         | Parameters PrimType EmptyArrs ID ","  {% return ()}
+ListParam: {- λ -}                              {% return ()}
+         | ListParam PrimType ID     ","        {% return ()}
+         | ListParam DataType DATAID ","        {% return ()}
+         | ListParam PrimType Ptrs ID ","       {% return ()}
+         | ListParam PrimType EmptyArrs ID ","  {% return ()}
 
-
-Parameters: {- λ -}       {% return ()}
-          | ListParam     {% return ()}
+Parameters: {- λ -}       {% onZip enterScope } -- Tiene sentido?
+          | Parameter     {% onZip enterScope } 
 
 EnumConsList: ENUM                      {% return ()}
             | EnumConsList "," ENUM     {% return ()}
@@ -294,6 +293,35 @@ data ScopeNZip = ScopeNZip { scp  ::(Scope Declare)
 makeTable :: ScopeNZip -> Scope Declare
 makeTable (ScopeNZip s z) = fuse s z
 
+
+-- Apply function to zipper on state
+onZip fun = do zipper <- gets zipp
+               state  <- get
+               put state { zipp = fun zipper }
+
+-- Apply function to scope on state
+onScope fun = do scope <- gets scp
+                 state  <- get
+                 put state { scp = fun scope }
+
+-- Monadic action to exit scope on zipper
+exitScope = onZip (fromJust.goUp)
+
+insertFunction typ ident  = do 
+    state <- get
+    if isMember ((fromScope.scp) state) (lexeme ident)
+        then tell error1
+        else do tell whathappened
+                onScope $ insert (lexeme ident) 
+                                 (Function (position ident) 
+                                           (makeType typ) 
+                                           (fromZipper (zipp state)))
+                onZip (const (fromScope emptyScope)) -- Clean zipper
+
+  where error1       = S.singleton $ Left  $ "Error:" ++ linecol ++" redeclaraci'o de " ++ lexeme ident
+        whathappened = S.singleton $ Right $ "Agregada la funcion " ++ lexeme ident ++ " en "++ linecol
+        linecol    = (show.fst.position) ident ++":"++(show.snd.position) ident 
+
 -- Monadic action: Insert tkId into actual scope and do some checks
 insertDeclareInScope Nothing (TkId (l,c) lexeme ) =
     tell $ S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" " 
@@ -311,19 +339,6 @@ insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) = do
     where error1       = S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" redeclaraci'o de " ++ lexeme
           whathappened = S.singleton $ Right $ "Agregado " ++ lexeme ++ " en "++show l++":"++show c
           
--- Monadic action to exit scope on zipper
-
-exitScope = onZip (fromJust.goUp)
-
--- Apply function to zipper on state
-onZip fun = do zipper <- gets zipp
-               state  <- get
-               put state { zipp = fun zipper }
-
--- Apply function to scope on state
-onScope fun = do scope <- gets scp
-                 state  <- get
-                 put state { scp = fun scope }
 
 parseError [] = error $ "EOF Inesperado"
 parseError l  = error $ "Parsing error at: \n" ++ show (head l)
