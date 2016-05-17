@@ -85,6 +85,7 @@ data Token =  TkLBracket  { position :: Pos }
             | TkGet       { position :: Pos }
             | TkTrue      { position :: Pos }
             | TkFalse     { position :: Pos }
+            | TkFwd       { position :: Pos }
             | TkDId       { position :: Pos, lexeme :: String }
             | TkId        { position :: Pos, lexeme :: String }
             | TkCharVal   { position :: Pos, char   :: Char   }

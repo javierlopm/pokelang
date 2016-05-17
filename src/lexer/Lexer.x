@@ -53,7 +53,7 @@ tokens :-
   CHARmander               { \p _ -> TkChar      (getPos p) }
   VOIDtorb                 { \p _ -> TkVoid      (getPos p) }
   butterFloat              { \p _ -> TkFloat     (getPos p) }
-  STRUCTtabuzz             { \p _ -> TkStruct    (getPos p) }
+  STRUCTabuzz              { \p _ -> TkStruct    (getPos p) }
   articUNION               { \p _ -> TkUnion     (getPos p) }
   ENUManyte                { \p _ -> TkEnum      (getPos p) }
   GLOBAt                   { \p _ -> TKGlobal    (getPos p) }
@@ -82,7 +82,7 @@ tokens :-
   liberar                  { \p _ -> TkFree      (getPos p) }
   SIZEther                 { \p _ -> TkSizeOf    (getPos p) }
   pidGET                   { \p _ -> TkGet       (getPos p) }
-  
+  FOWARDtortle             { \p _ -> TkFwd       (getPos p) }
   and                      { \p _ -> TkAnd       (getPos p) }
   or                       { \p _ -> TkOr        (getPos p) }
 

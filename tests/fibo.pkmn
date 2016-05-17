@@ -1,6 +1,10 @@
 --
     Fibonacci inocente
 --
+
+FOWARDtortle STRUCTabuzz pokeAux;
+
+
 funcball pINTachu fibo(pINTachu n):
     si n == 0 || n == 1:
         vamo_a_retorna 1;
@@ -16,7 +20,6 @@ funcball pINTachu fibo_iterativo(pINTachu n):
     pINTachu n1;
     pINTachu n2;
     pINTachu iter;
-    pINTachu aux;
 
 
     si n == 0:
