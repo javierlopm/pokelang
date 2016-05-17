@@ -5,7 +5,8 @@ module Types(
     isPointer,
     makeDec,
     makePtrs,
-    makeType
+    makeType,
+    makeArr
 ) where
 
 import TableTree(Scope(..))
@@ -80,11 +81,14 @@ makeDec t p Nothing = Just $
 makePtrs :: Token -> Pos -> Int -> Maybe String -> Maybe Declare
 makePtrs t p i s = Just $
     case t of 
-        TkInt    _ -> Pointer p (TypeInt)   i
-        TkBool   _ -> Pointer p (TypeBool)  i
-        TkChar   _ -> Pointer p (TypeChar)  i 
-        TkFloat  _ -> Pointer p (TypeFloat) i 
-        TkVoid   _ -> Pointer p  TypeVoid   i
+        TkInt    _ -> Pointer p TypeInt    i Nothing
+        TkBool   _ -> Pointer p TypeBool   i Nothing
+        TkChar   _ -> Pointer p TypeChar   i Nothing
+        TkFloat  _ -> Pointer p TypeFloat  i Nothing
+        TkVoid   _ -> Pointer p TypeVoid   i Nothing
+        TkStruct _ -> Pointer p TypeStruct i $ s
+        TkUnion  _ -> Pointer p TypeUnion  i $ s
+        TkEnum   _ -> Pointer p TypeEnum   i $ s
 
 makeType :: Token -> Type
 makeType (TkInt   _) = TypeInt
@@ -92,3 +96,16 @@ makeType (TkBool  _) = TypeBool
 makeType (TkChar  _) = TypeChar
 makeType (TkVoid  _) = TypeVoid
 makeType (TkFloat _) = TypeFloat
+
+-- Create a static array declaration
+makeArr :: Token -> Pos -> [Integer] -> Maybe Declare
+makeArr t p li = Just $
+    case t of 
+        TkInt    _ -> StaticArray p TypeInt    li
+        TkBool   _ -> StaticArray p TypeBool   li
+        TkChar   _ -> StaticArray p TypeChar   li
+        TkFloat  _ -> StaticArray p TypeFloat  li
+        TkVoid   _ -> StaticArray p TypeVoid   li
+        --TkStruct _ -> StaticArray p TypeStruct i $ s
+        --TkUnion  _ -> StaticArray p TypeUnion  i $ s
+        --TkEnum   _ -> StaticArray p TypeEnum   i $ s
