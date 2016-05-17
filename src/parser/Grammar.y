@@ -1,5 +1,5 @@
 {
-module Grammar(parser,ScopeNZip(..),makeTable) where
+module Grammar(parser,ScopeNZip(..),makeTable,insertDeclareInScope) where
 import Tokens
 import TableTree
 import Types
@@ -165,19 +165,21 @@ NextIf: {- λ -}             {% return ()}
 Else: {- λ -}      {% return ()}
     | ELSE ":" Ent SmplDcls Ins {% exitScope  }
 
-SmplDcls: {- λ -}                                  {% return () }        
-    | SmplDcls IsGlob PrimType Ptrs       ID  ";"  {% return () } -- {% insertDeclareInScope (makePtrs $3 (position $5) $4 ) $5 }
-    | SmplDcls IsGlob PrimType EmptyArrs  ID  ";"  {% return () } -- {% insertDeclareInScope (makePtrs $3 (position $5) $4 ) $5 } -- Azucar sintactico? jeje
-    | SmplDcls IsGlob PrimType StaticArrs ID  ";"  {% return () } -- {% return ()}
-    | SmplDcls IsGlob PrimType            ID  ";"  {% return () } -- {% insertDeclareInScope (makeDec  $3 (position $4) Nothing) $4 }
-    | SmplDcls IsGlob DataType DATAID     ID  ";"  {% return () } -- {% insertDeclareInScope (makeDec  $4 (position $5) (Just (lexeme $4))) $5 }
 
-Dcls:  {- λ -}                                 {% return ()}
+SmplDcls: {- λ -}                                     {% return () }        
+    | SmplDcls IsGlob PrimType Ptrs          ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 Nothing) $5 }
+    | SmplDcls IsGlob DataType DATAID  Ptrs  ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $6) $5 (Just (lexeme $4))) $6 }
+    | SmplDcls IsGlob PrimType EmptyArrs     ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 Nothing) $5 } -- Azucar sintactico? jeje
+    | SmplDcls IsGlob PrimType StaticArrs    ID  ";"  {% insertDeclareInScope (makeArr  $3 (position $5) $4) $5 }
+    | SmplDcls IsGlob PrimType               ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $4) Nothing) $4 }
+    | SmplDcls IsGlob DataType DATAID        ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $5) (Just (lexeme $4))) $5 }
+
+Dcls:  {- λ -}                                {% return ()}
     | Dcls FUNC PrimType ID "(" Parameters ")" ":" SmplDcls Ins END {% insertFunction $3 $4 }
     | Dcls PrimType Ptrs       ID  ";"  {% return ()}
     | Dcls PrimType EmptyArrs  ID  ";"  {% return ()}
     | Dcls PrimType StaticArrs ID  ";"  {% return ()}
-    | Dcls PrimType            ID  ";"  {% return ()}
+    | Dcls PrimType            ID  ";"   {% return ()}
   --| Dcls DataType    DATAID     ";"          {% return ()}    -- Forward declarations
     | Dcls ENUMDEC DATAID   "{" EnumConsList "}"   {% return ()}
     | Dcls STRUCTDEC  DATAID  "{" FieldsList   "}"   {% return ()}
@@ -192,9 +194,9 @@ PrimType : INTDEC         { $1 }
          | VOIDDEC        { $1 }
          | FLOATDEC       { $1 }
 
-DataType : ENUMDEC        {% return ()}
-         | STRUCTDEC      {% return ()}
-         | UNIONDEC       {% return ()}
+DataType : ENUMDEC        { $1 }
+         | STRUCTDEC      { $1 }
+         | UNIONDEC       { $1 }
 
 Parameter: ListParam PrimType ID             {% return ()}
          | ListParam PrimType Ptrs ID        {% return ()}
@@ -227,8 +229,8 @@ EmptyArrs: "[" "]"             {    1    }
          |  EmptyArrs "[" "]"  { succ $1 }
 
 -- Counts dimensions
-StaticArrs: "[" INT "]"             {% return ()}
-          | StaticArrs "[" INT "]"  {% return ()}
+StaticArrs: "[" INT "]"             { [value $2] }
+          | StaticArrs "[" INT "]"  { (value $3):$1}
 
 Exp : 
     -- Expresiones Aritméticas.
@@ -271,13 +273,13 @@ Exp :
     | SIZEOF "(" PrimType ")"  {% return ()}
     | GET    "(" ENUM ")"      {% return ()}
 
-Term: TRUE         {% return ()}
-    | FALSE        {% return ()}
-    | ID           {% return ()}
-    | DATAID       {% return ()}
-    | FLOAT        {% return ()}
-    | INT          {% return ()}
-    | CHAR         {% return ()}
+Term: TRUE         {   $1   }
+    | FALSE        {   $1   }
+    | ID           {   $1   }
+    | DATAID       {   $1   }
+    | FLOAT        {   $1   }
+    | INT          {   $1   }
+    | CHAR         {   $1   }
 
 Ent : {- λ -}     {% onZip enterScope }
 
@@ -320,7 +322,9 @@ insertFunction typ ident  = do
 
   where error1       = S.singleton $ Left  $ "Error:" ++ linecol ++" redeclaraci'o de " ++ lexeme ident
         whathappened = S.singleton $ Right $ "Agregada la funcion " ++ lexeme ident ++ " en "++ linecol
-        linecol    = (show.fst.position) ident ++":"++(show.snd.position) ident 
+        linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident 
+
+
 
 -- Monadic action: Insert tkId into actual scope and do some checks
 insertDeclareInScope Nothing (TkId (l,c) lexeme ) =
@@ -330,10 +334,9 @@ insertDeclareInScope Nothing (TkId (l,c) lexeme ) =
 
 insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) = do 
     table <- get 
-    if isMember table lexeme
+    if isMember (zipp table) lexeme
         then tell error1
-        else do let newtable = apply (insert lexeme dcltype) table
-                put newtable
+        else do onZip (apply  (insert lexeme dcltype))
                 tell whathappened
     return ()
     where error1       = S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" redeclaraci'o de " ++ lexeme
