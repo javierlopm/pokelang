@@ -199,16 +199,16 @@ DataType : ENUMDEC        { $1 }
          | STRUCTDEC      { $1 }
          | UNIONDEC       { $1 }
 
-Parameter: ListParam PrimType ID             {% return ()}
-         | ListParam PrimType Ptrs ID        {% return ()}
-         | ListParam PrimType EmptyArrs ID   {% return ()}
-         | ListParam DataType DATAID         {% return ()}
+Parameter: ListParam PrimType           ID   {% insertDeclareInScope   (makeDec  $2 (position $3) Nothing) $3 False }
+         | ListParam DataType DATAID    ID   {% insertDeclareInScope   (makeDec  $2 (position $3) (Just (lexeme $3))) $4 False }
+         | ListParam PrimType Ptrs      ID   {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
+         | ListParam PrimType EmptyArrs ID   {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
 
-ListParam: {- λ -}                              {% return ()}
-         | ListParam PrimType ID     ","        {% return ()}
-         | ListParam DataType DATAID ","        {% return ()}
-         | ListParam PrimType Ptrs ID ","       {% return ()}
-         | ListParam PrimType EmptyArrs ID ","  {% return ()}
+ListParam: {- λ -}                           {% return () }
+         | ListParam PrimType        ID ","     {% insertDeclareInScope   (makeDec  $2 (position $3) Nothing) $3 False }
+         | ListParam DataType DATAID ID ","     {% insertDeclareInScope   (makeDec  $2 (position $3) (Just (lexeme $3))) $4 False }
+         | ListParam PrimType Ptrs   ID ","     {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
+         | ListParam PrimType EmptyArrs ID ","  {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
 
 Parameters: {- λ -}       {% onZip enterScope } -- Tiene sentido?
           | Parameter     {% onZip enterScope } 
