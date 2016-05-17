@@ -1,5 +1,5 @@
 {
-module Grammar(parser) where
+module Grammar(parser,ScopeNZip(..),makeTable) where
 import Tokens
 import TableTree
 import Types
@@ -7,15 +7,13 @@ import Data.Maybe(fromJust)
 import Control.Monad.RWS.Strict
 import qualified Data.Sequence as S
 
-
-
 }
 
 
 %name parser
 %tokentype { Token }
 
-%monad { RWS String (S.Seq(Message)) (Zipper Declare) }
+%monad { RWS String (S.Seq(Message)) ScopeNZip }
 
 %error     { parseError }
 %token
@@ -168,11 +166,11 @@ Else: {- λ -}      {% return ()}
     | ELSE ":" Ent SmplDcls Ins {% exitScope  }
 
 SmplDcls: {- λ -}                                  {% return () }        
-    | SmplDcls IsGlob PrimType Ptrs       ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 ) $5 }
-    | SmplDcls IsGlob PrimType EmptyArrs  ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 ) $5 } -- Azucar sintactico? jeje
-    | SmplDcls IsGlob PrimType StaticArrs ID  ";"  {% return ()}
-    | SmplDcls IsGlob PrimType            ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $4) Nothing) $4 }
-    | SmplDcls IsGlob DataType DATAID     ID  ";"  {% insertDeclareInScope (makeDec  $4 (position $5) (Just (lexeme $4))) $5 }
+    | SmplDcls IsGlob PrimType Ptrs       ID  ";"  {% return () } -- {% insertDeclareInScope (makePtrs $3 (position $5) $4 ) $5 }
+    | SmplDcls IsGlob PrimType EmptyArrs  ID  ";"  {% return () } -- {% insertDeclareInScope (makePtrs $3 (position $5) $4 ) $5 } -- Azucar sintactico? jeje
+    | SmplDcls IsGlob PrimType StaticArrs ID  ";"  {% return () } -- {% return ()}
+    | SmplDcls IsGlob PrimType            ID  ";"  {% return () } -- {% insertDeclareInScope (makeDec  $3 (position $4) Nothing) $4 }
+    | SmplDcls IsGlob DataType DATAID     ID  ";"  {% return () } -- {% insertDeclareInScope (makeDec  $4 (position $5) (Just (lexeme $4))) $5 }
 
 Dcls:  {- λ -}                                 {% return ()}
     | Dcls FUNC PrimType ID "(" Parameter ")" ":" Ent SmplDcls Ins END {% exitScope } -- Deberia agregar a las globales
@@ -282,14 +280,19 @@ Term: TRUE         {% return ()}
     | INT          {% return ()}
     | CHAR         {% return ()}
 
-Ent : {- λ -}     {% modify enterScope}
+Ent : {- λ -}     {% onZip enterScope }
 
 {
 
+type OurMonad = RWS String (S.Seq(Message)) ScopeNZip
+
 -- state from monad State
-data ZipNScope = ZipNScope { scp  :: (Scope Declare)
-                            ,zipp :: (Zipper Declare)} 
-                            deriving (Show)
+data ScopeNZip = ScopeNZip { scp  ::(Scope Declare)
+                           , zipp ::(Zipper Declare)} 
+                           deriving (Show)
+
+makeTable :: ScopeNZip -> Scope Declare
+makeTable (ScopeNZip s z) = fuse s z
 
 -- Monadic action: Insert tkId into actual scope and do some checks
 insertDeclareInScope Nothing (TkId (l,c) lexeme ) =
@@ -309,7 +312,18 @@ insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) = do
           whathappened = S.singleton $ Right $ "Agregado " ++ lexeme ++ " en "++show l++":"++show c
           
 -- Monadic action to exit scope on zipper
-exitScope = modify (fromJust . goUp)
+
+exitScope = onZip (fromJust.goUp)
+
+-- Apply function to zipper on state
+onZip fun = do zipper <- gets zipp
+               state  <- get
+               put state { zipp = fun zipper }
+
+-- Apply function to scope on state
+onScope fun = do scope <- gets scp
+                 state  <- get
+                 put state { scp = fun scope }
 
 parseError [] = error $ "EOF Inesperado"
 parseError l  = error $ "Parsing error at: \n" ++ show (head l)

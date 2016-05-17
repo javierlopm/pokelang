@@ -13,7 +13,8 @@
     isMember,
     lookUp,
     fromScope,
-    fromZipper
+    fromZipper,
+    fuse
     ) where
 
 import qualified Data.Map.Strict as Map
@@ -39,7 +40,7 @@ data Action = DownA | RightA | RootA | StChild
           deriving(Eq,Show) 
 
 -- Scope
-data Scope a = Scope (SymbolTable a) (Seq(Scope a)) 
+data Scope a = Scope { tb:: (SymbolTable a), chs :: (Seq(Scope a))}
 
 instance  Show a => Show (Scope a) where
   show = showScope 0
@@ -165,3 +166,6 @@ lookUp zip key = if isNothing mySearch
          else mySearch
         where mySearch = getVal zip key
               mayUp    = (goUp zip)
+
+fuse :: Scope a -> Zipper a -> Scope a
+fuse (Scope smtbl _ ) z =  Scope smtbl  (( chs . fromZipper . goTop) z)
