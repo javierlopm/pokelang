@@ -174,10 +174,10 @@ SmplDcls: {- λ -}                                  {% return () }
 
 Dcls:  {- λ -}                                 {% return ()}
     | Dcls FUNC PrimType ID "(" Parameters ")" ":" SmplDcls Ins END {% insertFunction $3 $4 }
-    | Dcls IsGlob PrimType Ptrs       ID  ";"  {% return ()}
-    | Dcls IsGlob PrimType EmptyArrs  ID  ";"  {% return ()}
-    | Dcls IsGlob PrimType StaticArrs ID  ";"  {% return ()}
-    | Dcls IsGlob PrimType            ID  ";"  {% return ()}
+    | Dcls PrimType Ptrs       ID  ";"  {% return ()}
+    | Dcls PrimType EmptyArrs  ID  ";"  {% return ()}
+    | Dcls PrimType StaticArrs ID  ";"  {% return ()}
+    | Dcls PrimType            ID  ";"  {% return ()}
   --| Dcls DataType    DATAID     ";"          {% return ()}    -- Forward declarations
     | Dcls ENUMDEC DATAID   "{" EnumConsList "}"   {% return ()}
     | Dcls STRUCTDEC  DATAID  "{" FieldsList   "}"   {% return ()}
