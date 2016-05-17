@@ -25,18 +25,18 @@ main = do
   if null errors 
       then case runargs of 
                 "-l"      -> mapM_ print goods
-                "-p"      -> do let (state,strlog) = execRWS (parser goods) "" (fromScope emptyScope)
+                "-p"      -> do let (state,strlog) = execRWS (parser goods) "" (ScopeNZip emptyScope (fromScope emptyScope))
                                 putStrLn "Log:"
                                 mapM_ print $ toList $ strlog
                                 putStrLn "Table:"
-                                print $ fromZipper state
+                                print $ makeTable state -- $ fromZipper state
                 "-a"      -> do mapM_ print goods
                                 putStrLn "\n" 
-                                let (state,strlog) = execRWS (parser goods) "" (fromScope emptyScope)
+                                let (state,strlog) = execRWS (parser goods) "" (ScopeNZip emptyScope (fromScope emptyScope))
                                 putStrLn "Log:"
                                 print strlog
                                 putStrLn "Table:"
-                                print $ fromZipper state
+                                print $ makeTable state -- $ fromZipper state
                 otherwise -> print $ "Unrecognized argument" ++ runargs
 
       else do mapM_ print errors

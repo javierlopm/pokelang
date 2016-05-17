@@ -2,7 +2,7 @@
     Implementacio'n de bubblesort en pokelang
 --
 funcball VOIDtorb bubble( pINTachu arr, 
-                          pINTachu size):      
+                          pINTachu size ):      
 
     pINTachu temp;
     pINTachu ordenados;
@@ -20,5 +20,8 @@ funcball VOIDtorb bubble( pINTachu arr,
         vamo_a_calmano
     vamo_a_calmano
 
-    
+vamo_a_calmano
+
+funcball VOIDtorb nothing( pINTachu arr,pINTachu size):
+    pINTachu ordenados;
 vamo_a_calmano

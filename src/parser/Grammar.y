@@ -1,12 +1,11 @@
 {
-module Grammar(parser,insertDeclareInScope) where
+module Grammar(parser,ScopeNZip(..),makeTable) where
 import Tokens
 import TableTree
 import Types
+import Data.Maybe(fromJust)
 import Control.Monad.RWS.Strict
 import qualified Data.Sequence as S
-
-
 
 }
 
@@ -14,7 +13,7 @@ import qualified Data.Sequence as S
 %name parser
 %tokentype { Token }
 
-%monad { RWS String (S.Seq(Message)) (Zipper Declare) }
+%monad { RWS String (S.Seq(Message)) ScopeNZip }
 
 %error     { parseError }
 %token
@@ -137,7 +136,7 @@ import qualified Data.Sequence as S
 Prog : Dcls  {% return ()}
 
 Ins : {- λ -}                                 {% return ()}
-    | Ins PRINT "(" STRING PrntArgs ")"   ";" {% return ()} 
+    | Ins PRINT "(" STRING PrntArgs ")"   ";" {% return ()} -- Agregar en constantes globales 
     | Ins READ  "("       ID        ")"   ";" {% return ()}
     | Ins WRITE "("       ID        ")"   ";" {% return ()}
     | Ins Exp "=" Exp         ";"         {% return ()}
@@ -150,36 +149,35 @@ Ins : {- λ -}                                 {% return ()}
     | Ins FREE "("ID")"     ";"         {% return ()}
     | Ins FREE "("DATAID")" ";"         {% return ()}
     | Ins READ "("DATAID")" ";"         {% return ()}
-    | Ins IF Exp    ":" SmplDcls Ins NextIf Else END    {% return ()}
-    | Ins WHILE Exp ":" SmplDcls Ins END                {% return ()}
-    | Ins FOR ID "=" Exp  "|" Exp "|" Exp ":" SmplDcls Ins  END {% return ()}
-    | Ins FOR ID "=" Exp  "|" Exp         ":" SmplDcls Ins  END {% return ()}
-    | Ins FOR ID "=" ENUM "|" ENUM        ":" SmplDcls Ins  END {% return ()}
-    | Ins BEGIN SmplDcls Ins END    {% return ()} -- No debe aceptar funciones
+    | Ins IF Exp    ":" Ent SmplDcls Ins NextIf Else END            {% exitScope  }
+    | Ins WHILE Exp ":" Ent SmplDcls Ins END                        {% exitScope  }
+    | Ins FOR ID "=" Exp  "|" Exp "|" Exp ":" Ent SmplDcls Ins  END {% exitScope  }
+    | Ins FOR ID "=" Exp  "|" Exp         ":" Ent SmplDcls Ins  END {% exitScope  }
+    | Ins FOR ID "=" ENUM "|" ENUM        ":" Ent SmplDcls Ins  END {% exitScope  }
+    | Ins BEGIN Ent SmplDcls Ins END                                {% exitScope  } -- No debe aceptar funciones
 
 PrntArgs: {- λ -}             {% return ()}
         | PrntArgs "," Exp    {% return ()} -- Siempre es necesaria una coma a la izq
 
 NextIf: {- λ -}             {% return ()}
-      | NextIf ELIF  Exp ":" SmplDcls Ins {% return ()}
+      | NextIf ELIF  Exp ":" Ent SmplDcls Ins {% exitScope  }
 
 Else: {- λ -}      {% return ()}
-    | ELSE ":" SmplDcls Ins {% return ()}
+    | ELSE ":" Ent SmplDcls Ins {% exitScope  }
 
-SmplDcls: {- λ -}                                     {% return () }        
-    | SmplDcls IsGlob PrimType Ptrs          ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 Nothing) $5 }
-    | SmplDcls IsGlob DataType DATAID  Ptrs  ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $6) $5 (Just (lexeme $4))) $6 }
-    | SmplDcls IsGlob PrimType EmptyArrs     ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 Nothing) $5 } -- Azucar sintactico? jeje
-    | SmplDcls IsGlob PrimType StaticArrs    ID  ";"  {% insertDeclareInScope (makeArr  $3 (position $5) $4) $5 }
-    | SmplDcls IsGlob PrimType               ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $4) Nothing) $4 }
-    | SmplDcls IsGlob DataType DATAID        ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $5) (Just (lexeme $4))) $5 }
+SmplDcls: {- λ -}                                  {% return () }        
+    | SmplDcls IsGlob PrimType Ptrs       ID  ";"  {% return () } -- {% insertDeclareInScope (makePtrs $3 (position $5) $4 ) $5 }
+    | SmplDcls IsGlob PrimType EmptyArrs  ID  ";"  {% return () } -- {% insertDeclareInScope (makePtrs $3 (position $5) $4 ) $5 } -- Azucar sintactico? jeje
+    | SmplDcls IsGlob PrimType StaticArrs ID  ";"  {% return () } -- {% return ()}
+    | SmplDcls IsGlob PrimType            ID  ";"  {% return () } -- {% insertDeclareInScope (makeDec  $3 (position $4) Nothing) $4 }
+    | SmplDcls IsGlob DataType DATAID     ID  ";"  {% return () } -- {% insertDeclareInScope (makeDec  $4 (position $5) (Just (lexeme $4))) $5 }
 
-Dcls:  {- λ -}                                {% return ()}
-    | Dcls FUNC PrimType ID "(" Parameter ")" ":" SmplDcls Ins END {% return ()}
-    | Dcls IsGlob PrimType Ptrs       ID  ";"  {% return ()}
-    | Dcls IsGlob PrimType EmptyArrs  ID  ";"  {% return ()}
-    | Dcls IsGlob PrimType StaticArrs ID  ";"  {% return ()}
-    | Dcls IsGlob PrimType            ID  ";"   {% return ()}
+Dcls:  {- λ -}                                 {% return ()}
+    | Dcls FUNC PrimType ID "(" Parameters ")" ":" SmplDcls Ins END {% insertFunction $3 $4 }
+    | Dcls PrimType Ptrs       ID  ";"  {% return ()}
+    | Dcls PrimType EmptyArrs  ID  ";"  {% return ()}
+    | Dcls PrimType StaticArrs ID  ";"  {% return ()}
+    | Dcls PrimType            ID  ";"  {% return ()}
   --| Dcls DataType    DATAID     ";"          {% return ()}    -- Forward declarations
     | Dcls ENUMDEC DATAID   "{" EnumConsList "}"   {% return ()}
     | Dcls STRUCTDEC  DATAID  "{" FieldsList   "}"   {% return ()}
@@ -198,20 +196,19 @@ DataType : ENUMDEC        { $1 }
          | STRUCTDEC      { $1 }
          | UNIONDEC       { $1 }
 
-Parameter: Parameters PrimType ID         {% return ()}
-         | Parameters PrimType Ptrs ID    {% return ()}
-         | Parameters PrimType EmptyArrs ID   {% return ()}
-         | Parameters DataType DATAID     {% return ()}
+Parameter: ListParam PrimType ID             {% return ()}
+         | ListParam PrimType Ptrs ID        {% return ()}
+         | ListParam PrimType EmptyArrs ID   {% return ()}
+         | ListParam DataType DATAID         {% return ()}
 
-ListParam: Parameter                      {% return ()}
-         | Parameters PrimType ID     "," {% return ()}
-         | Parameters DataType DATAID "," {% return ()}
-         | Parameters PrimType Ptrs ID ","   {% return ()}
-         | Parameters PrimType EmptyArrs ID ","  {% return ()}
+ListParam: {- λ -}                              {% return ()}
+         | ListParam PrimType ID     ","        {% return ()}
+         | ListParam DataType DATAID ","        {% return ()}
+         | ListParam PrimType Ptrs ID ","       {% return ()}
+         | ListParam PrimType EmptyArrs ID ","  {% return ()}
 
-
-Parameters: {- λ -}       {% return ()}
-          | ListParam     {% return ()}
+Parameters: {- λ -}       {% onZip enterScope } -- Tiene sentido?
+          | Parameter     {% onZip enterScope } 
 
 EnumConsList: ENUM                      {% return ()}
             | EnumConsList "," ENUM     {% return ()}
@@ -282,9 +279,48 @@ Term: TRUE         {   $1   }
     | INT          {   $1   }
     | CHAR         {   $1   }
 
+Ent : {- λ -}     {% onZip enterScope }
+
 {
 
-getVal (TkNum a b ) = b
+type OurMonad = RWS String (S.Seq(Message)) ScopeNZip
+
+-- state from monad State
+data ScopeNZip = ScopeNZip { scp  ::(Scope Declare)
+                           , zipp ::(Zipper Declare)} 
+                           deriving (Show)
+
+makeTable :: ScopeNZip -> Scope Declare
+makeTable (ScopeNZip s z) = fuse s z
+
+
+-- Apply function to zipper on state
+onZip fun = do zipper <- gets zipp
+               state  <- get
+               put state { zipp = fun zipper }
+
+-- Apply function to scope on state
+onScope fun = do scope <- gets scp
+                 state  <- get
+                 put state { scp = fun scope }
+
+-- Monadic action to exit scope on zipper
+exitScope = onZip (fromJust.goUp)
+
+insertFunction typ ident  = do 
+    state <- get
+    if isMember ((fromScope.scp) state) (lexeme ident)
+        then tell error1
+        else do tell whathappened
+                onScope $ insert (lexeme ident) 
+                                 (Function (position ident) 
+                                           (makeType typ) 
+                                           (fromZipper (zipp state)))
+                onZip (const (fromScope emptyScope)) -- Clean zipper
+
+  where error1       = S.singleton $ Left  $ "Error:" ++ linecol ++" redeclaraci'o de " ++ lexeme ident
+        whathappened = S.singleton $ Right $ "Agregada la funcion " ++ lexeme ident ++ " en "++ linecol
+        linecol    = (show.fst.position) ident ++":"++(show.snd.position) ident 
 
 -- Monadic action: Insert tkId into actual scope and do some checks
 insertDeclareInScope Nothing (TkId (l,c) lexeme ) =
@@ -303,7 +339,6 @@ insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) = do
     where error1       = S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" redeclaraci'o de " ++ lexeme
           whathappened = S.singleton $ Right $ "Agregado " ++ lexeme ++ " en "++show l++":"++show c
           
-
 
 parseError [] = error $ "EOF Inesperado"
 parseError l  = error $ "Parsing error at: \n" ++ show (head l)
