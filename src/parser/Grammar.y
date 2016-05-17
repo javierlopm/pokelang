@@ -1,5 +1,5 @@
 {
-module Grammar(parser) where
+module Grammar(parser,insertDeclareInScope) where
 import Tokens
 import TableTree
 import Types
@@ -166,12 +166,13 @@ NextIf: {- λ -}             {% return ()}
 Else: {- λ -}      {% return ()}
     | ELSE ":" SmplDcls Ins {% return ()}
 
-SmplDcls: {- λ -}                                  {% return () }        
-    | SmplDcls IsGlob PrimType Ptrs       ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 ) $5 }
-    | SmplDcls IsGlob PrimType EmptyArrs  ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 ) $5 } -- Azucar sintactico? jeje
-    | SmplDcls IsGlob PrimType StaticArrs ID  ";"  {% return ()}
-    | SmplDcls IsGlob PrimType            ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $4) Nothing) $4 }
-    | SmplDcls IsGlob DataType DATAID     ID  ";"  {% insertDeclareInScope (makeDec  $4 (position $5) (Just (lexeme $4))) $5 }
+SmplDcls: {- λ -}                                     {% return () }        
+    | SmplDcls IsGlob PrimType Ptrs          ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 Nothing) $5 }
+    | SmplDcls IsGlob DataType DATAID  Ptrs  ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $6) $5 (Just (lexeme $4))) $6 }
+    | SmplDcls IsGlob PrimType EmptyArrs     ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 Nothing) $5 } -- Azucar sintactico? jeje
+   -- | SmplDcls IsGlob PrimType StaticArrs    ID  ";"  {% insertDeclareInScope (makeArr  $3 (position $5) $4) $5 }
+    | SmplDcls IsGlob PrimType               ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $4) Nothing) $4 }
+    | SmplDcls IsGlob DataType DATAID        ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $5) (Just (lexeme $4))) $5 }
 
 Dcls:  {- λ -}                                {% return ()}
     | Dcls FUNC PrimType ID "(" Parameter ")" ":" SmplDcls Ins END {% return ()}
@@ -193,9 +194,9 @@ PrimType : INTDEC         { $1 }
          | VOIDDEC        { $1 }
          | FLOATDEC       { $1 }
 
-DataType : ENUMDEC        {% return ()}
-         | STRUCTDEC      {% return ()}
-         | UNIONDEC       {% return ()}
+DataType : ENUMDEC        { $1 }
+         | STRUCTDEC      { $1 }
+         | UNIONDEC       { $1 }
 
 Parameter: Parameters PrimType ID         {% return ()}
          | Parameters PrimType Ptrs ID    {% return ()}
@@ -229,8 +230,8 @@ EmptyArrs: "[" "]"             {    1    }
          |  EmptyArrs "[" "]"  { succ $1 }
 
 -- Counts dimensions
-StaticArrs: "[" INT "]"             {% return ()}
-          | StaticArrs "[" INT "]"  {% return ()}
+StaticArrs: "[" INT "]"             { [$2] }
+          | StaticArrs "[" INT "]"  { $3:$1}
 
 Exp : 
     -- Expresiones Aritméticas.
@@ -278,7 +279,8 @@ Term: TRUE         {% return ()}
     | ID           {% return ()}
     | DATAID       {% return ()}
     | FLOAT        {% return ()}
-    | INT          {% return ()}
+  --| INT          { value $1 } 
+    | INT          {% return () } --MALDITASEANAWEONA
     | CHAR         {% return ()}
 
 {
