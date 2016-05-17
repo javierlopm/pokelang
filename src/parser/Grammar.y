@@ -172,7 +172,7 @@ SmplDcls: {- λ -}                                  {% return () }
     | SmplDcls IsGlob PrimType EmptyArrs  ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 ) $5 } -- Azucar sintactico? jeje
     | SmplDcls IsGlob PrimType StaticArrs ID  ";"  {% return ()}
     | SmplDcls IsGlob PrimType            ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $4) Nothing) $4 }
-    | SmplDcls IsGlob DATAID              ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $4) (Just (lexeme $3))) $4 }
+    | SmplDcls IsGlob DataType DATAID     ID  ";"  {% insertDeclareInScope (makeDec  $4 (position $5) (Just (lexeme $4))) $5 }
 
 Dcls:  {- λ -}                                 {% return ()}
     | Dcls FUNC PrimType ID "(" Parameter ")" ":" Ent SmplDcls Ins END {% exitScope } -- Deberia agregar a las globales
