@@ -27,20 +27,29 @@ type Pos = (Int,Int)
 -- Las constantes enumeradas no deberian estar en un scope grande y universal?
 
 -- Declarations might be functions,variables or structure types
-data Declare = Function     { pos::Pos , storedType::Type, fields::(Scope Declare)}
+data Declare = Function     { pos::Pos, 
+                              storedType::Type, 
+                              fields::(Scope Declare)}
              | Variable     { pos::Pos , storedTypeV::PrimType }
-             | Pointer      { pos::Pos , storedType::Type, levels    :: Int, dataID :: Maybe String } -- No tiene mucho sentido que vengan con contenido...
-             | StaticArray  { pos::Pos , storedType::Type, dimensions::[Integer]}
+             | Cons         { pos::Pos , storedTypeV::PrimType }
+             | Pointer      { pos::Pos ,
+                              storedType:: Type,
+                              levels    :: Int ,
+                              dataID :: Maybe String }
+             | StaticArray  { pos::Pos , 
+                              storedType::Type, 
+                              dimensions::[Integer]}
              | Enum     Pos -- Listas de constantes enumeradas No?
              | Struct   Pos (Scope Type)  
              | Union    Pos (Scope Type)  
              | Empty
              -- | DynamicArray { pos::Pos , storedType::Type, } -- Azucar sintactica para aps
              deriving(Show)
-data PrimType = PrimInt Int
-              | PrimBool Bool
-              | PrimChar  Char
-              | PrimFloat  Float
+data PrimType = PrimInt     Int
+              | PrimBool    Bool
+              | PrimChar    Char
+              | PrimString  String
+              | PrimFloat   Float
               | PrimEnum    String
               | PrimUnion   String
               | PrimStruct  String

@@ -25,14 +25,14 @@ main = do
   if null errors 
       then case runargs of 
                 "-l"      -> mapM_ print goods
-                "-p"      -> do let (state,strlog) = execRWS (parser goods) "" (ScopeNZip emptyScope (fromScope emptyScope))
+                "-p"      -> do let (state,strlog) = execRWS (parser goods) "" initialState
                                 putStrLn "Log:"
                                 mapM_ print $ toList $ strlog
                                 putStrLn "Table:"
                                 print $ makeTable state -- $ fromZipper state
                 "-a"      -> do mapM_ print goods
                                 putStrLn "\n" 
-                                let (state,strlog) = execRWS (parser goods) "" (ScopeNZip emptyScope (fromScope emptyScope))
+                                let (state,strlog) = execRWS (parser goods) "" initialState
                                 putStrLn "Log:"
                                 print strlog
                                 putStrLn "Table:"
@@ -41,3 +41,4 @@ main = do
 
       else do mapM_ print errors
               print $ "--pkcc: "++ show errorcount ++ " errors found."
+  where initialState = (ScopeNZip emptyScope (fromScope emptyScope) 0)

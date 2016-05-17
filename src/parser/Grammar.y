@@ -1,5 +1,5 @@
 {
-module Grammar(parser,ScopeNZip(..),makeTable,insertDeclareInScope) where
+module Grammar(parser,ScopeNZip(..),makeTable) where
 import Tokens
 import TableTree
 import Types
@@ -285,30 +285,39 @@ Ent : {- λ -}     {% onZip enterScope }
 
 {
 
-type OurMonad = RWS String (S.Seq(Message)) ScopeNZip
+type OurMonad    = RWS String (S.Seq(Message)) ScopeNZip
+type SymTable    = Scope Declare  
+type TableZipper = Zipper Declare 
 
 -- state from monad State
-data ScopeNZip = ScopeNZip { scp  ::(Scope Declare)
-                           , zipp ::(Zipper Declare)} 
+data ScopeNZip = ScopeNZip { scp      :: SymTable
+                           , zipp     :: TableZipper
+                           , constGen :: Int } 
                            deriving (Show)
 
 makeTable :: ScopeNZip -> Scope Declare
-makeTable (ScopeNZip s z) = fuse s z
+makeTable (ScopeNZip s z _) = fuse s z
 
-
--- Apply function to zipper on state
+onZip :: (TableZipper -> TableZipper ) -> OurMonad()
 onZip fun = do zipper <- gets zipp
                state  <- get
                put state { zipp = fun zipper }
 
--- Apply function to scope on state
+
+onScope :: (SymTable -> SymTable) -> OurMonad ()
 onScope fun = do scope <- gets scp
-                 state  <- get
+                 state <- get
                  put state { scp = fun scope }
 
--- Monadic action to exit scope on zipper
+succCons ::  OurMonad ()
+succCons = do conG  <- gets constGen
+              state <- get
+              put state { constGen = succ conG }
+
+exitScope :: OurMonad ()
 exitScope = onZip (fromJust.goUp)
 
+insertFunction :: Token -> Token -> OurMonad ()
 insertFunction typ ident  = do 
     state <- get
     if isMember ((fromScope.scp) state) (lexeme ident)
@@ -319,30 +328,24 @@ insertFunction typ ident  = do
                                            (makeType typ) 
                                            (fromZipper (zipp state)))
                 onZip (const (fromScope emptyScope)) -- Clean zipper
-
   where error1       = S.singleton $ Left  $ "Error:" ++ linecol ++" redeclaraci'o de " ++ lexeme ident
         whathappened = S.singleton $ Right $ "Agregada la funcion " ++ lexeme ident ++ " en "++ linecol
         linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident 
 
 
-
--- Monadic action: Insert tkId into actual scope and do some checks
+insertDeclareInScope :: Maybe Declare -> Token -> Bool -> OurMonad ()
 insertDeclareInScope Nothing (TkId (l,c) lexeme ) _ =
-    tell $ S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" " 
-                                 ++ lexeme ++ 
+    tell $ S.singleton $ Left  $ 
+    "Error:" ++show l++":"++show c ++" "  ++ lexeme ++ 
     " es del tipo VOIDtorb, el cual solo puede ser instanciado como referencia."
-
 insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) isGlob = do 
     table <- get 
     if isMember (zipp table) lexeme
         then tell error1
         else if isGlob 
                 then onScope $ insert lexeme dcltype 
-                else onZip $ apply  $ insert lexeme dcltype
-                                   
-                           
+                else onZip $ apply  $ insert lexeme dcltype       
     tell whathappened
-    return ()
     where error1       = S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" redeclaraci'o de " ++ lexeme
           whathappened = S.singleton $ Right $ "Agregado " ++ lexeme ++ " en "++show l++":"++show c
           
