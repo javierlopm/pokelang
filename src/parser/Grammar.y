@@ -138,7 +138,7 @@ import qualified Data.Sequence as S
 Prog : Dcls  {% return ()}
 
 Ins : {- λ -}                                 {% return ()}
-    | Ins PRINT "(" STRING PrntArgs ")"   ";" {% return ()} 
+    | Ins PRINT "(" STRING PrntArgs ")"   ";" {% return ()} -- Agregar en constantes globales 
     | Ins READ  "("       ID        ")"   ";" {% return ()}
     | Ins WRITE "("       ID        ")"   ";" {% return ()}
     | Ins Exp "=" Exp         ";"         {% return ()}
@@ -285,6 +285,11 @@ Term: TRUE         {% return ()}
 Ent : {- λ -}     {% modify enterScope}
 
 {
+
+-- state from monad State
+data ZipNScope = ZipNScope { scp  :: (Scope Declare)
+                            ,zipp :: (Zipper Declare)} 
+                            deriving (Show)
 
 -- Monadic action: Insert tkId into actual scope and do some checks
 insertDeclareInScope Nothing (TkId (l,c) lexeme ) =
