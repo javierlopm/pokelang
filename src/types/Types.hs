@@ -31,7 +31,7 @@ data Declare = Function     { pos::Pos,
                               storedType::Type, 
                               fields::(Scope Declare)}
              | Variable     { pos::Pos , storedTypeV::PrimType }
-             | Cons         { pos::Pos , storedTypeV::PrimType }
+             | Cons         { pos::Pos }
              | Pointer      { pos::Pos ,
                               storedType:: Type,
                               levels    :: Int ,
@@ -44,7 +44,8 @@ data Declare = Function     { pos::Pos,
              | Union    Pos (Scope Type)  
              | Empty
              -- | DynamicArray { pos::Pos , storedType::Type, } -- Azucar sintactica para aps
-             deriving(Show)
+             deriving(Show) -- Instance de Eq que ignore por para ver si ya algo esta en las glob
+
 data PrimType = PrimInt     Int
               | PrimBool    Bool
               | PrimChar    Char

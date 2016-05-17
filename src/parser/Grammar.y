@@ -1,5 +1,5 @@
 {
-module Grammar(parser,ScopeNZip(..),makeTable) where
+module Grammar(parser,ScopeNZip(..),makeTable,initialState) where
 import Tokens
 import TableTree
 import Types
@@ -135,8 +135,8 @@ import qualified Data.Sequence as S
 
 Prog : Dcls  {% return ()}
 
-Ins : {- λ -}                                 {% return ()}
-    | Ins PRINT "(" STRING PrntArgs ")"   ";" {% return ()} -- Agregar en constantes globales 
+Ins : {- λ -}                                 {% return () }
+    | Ins PRINT "(" STRING PrntArgs ")"   ";" {% onScope $ insert ("_"++(content $4)) (Cons (position $4)) }
     | Ins READ  "("       ID        ")"   ";" {% return ()}
     | Ins WRITE "("       ID        ")"   ";" {% return ()}
     | Ins Exp "=" Exp         ";"         {% return ()}
@@ -295,6 +295,9 @@ data ScopeNZip = ScopeNZip { scp      :: SymTable
                            , constGen :: Int } 
                            deriving (Show)
 
+initialState :: ScopeNZip
+initialState = ScopeNZip emptyScope (fromScope emptyScope) 0
+
 makeTable :: ScopeNZip -> Scope Declare
 makeTable (ScopeNZip s z _) = fuse s z
 
@@ -332,6 +335,10 @@ insertFunction typ ident  = do
         whathappened = S.singleton $ Right $ "Agregada la funcion " ++ lexeme ident ++ " en "++ linecol
         linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident 
 
+--se deberia verificar que el valor no esta ya en alguna constante
+addStr declare = do id  <- gets constGen
+                    succCons
+                    onScope $ insert (show id) declare 
 
 insertDeclareInScope :: Maybe Declare -> Token -> Bool -> OurMonad ()
 insertDeclareInScope Nothing (TkId (l,c) lexeme ) _ =
@@ -348,7 +355,8 @@ insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) isGlob = do
     tell whathappened
     where error1       = S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" redeclaraci'o de " ++ lexeme
           whathappened = S.singleton $ Right $ "Agregado " ++ lexeme ++ " en "++show l++":"++show c
-          
+
+  
 
 parseError [] = error $ "EOF Inesperado"
 parseError l  = error $ "Parsing error at: \n" ++ show (head l)

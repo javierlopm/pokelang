@@ -38,7 +38,5 @@ main = do
                                 putStrLn "Table:"
                                 print $ makeTable state -- $ fromZipper state
                 otherwise -> print $ "Unrecognized argument" ++ runargs
-
       else do mapM_ print errors
               print $ "--pkcc: "++ show errorcount ++ " errors found."
-  where initialState = (ScopeNZip emptyScope (fromScope emptyScope) 0)

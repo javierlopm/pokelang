@@ -10,6 +10,8 @@ funcball VOIDtorb bubble( pINTachu arr,
     --pINTachu ordenados;--
     VOIDtorb *voidtype;
 
+    vamo_a_imprimir("hola mundo");
+
     vamo_a_itera ordenados = 0 |size-2|1: 
         vamo_a_itera pos = ordenados |size-2|1:
             si arr[pos] < arr[pos+1]:
