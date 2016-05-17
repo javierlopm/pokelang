@@ -3,6 +3,7 @@ module Grammar(parser) where
 import Tokens
 import TableTree
 import Types
+import Data.Maybe(fromJust)
 import Control.Monad.RWS.Strict
 import qualified Data.Sequence as S
 
@@ -150,21 +151,21 @@ Ins : {- λ -}                                 {% return ()}
     | Ins FREE "("ID")"     ";"         {% return ()}
     | Ins FREE "("DATAID")" ";"         {% return ()}
     | Ins READ "("DATAID")" ";"         {% return ()}
-    | Ins IF Exp    ":" SmplDcls Ins NextIf Else END    {% return ()}
-    | Ins WHILE Exp ":" SmplDcls Ins END                {% return ()}
-    | Ins FOR ID "=" Exp  "|" Exp "|" Exp ":" SmplDcls Ins  END {% return ()}
-    | Ins FOR ID "=" Exp  "|" Exp         ":" SmplDcls Ins  END {% return ()}
-    | Ins FOR ID "=" ENUM "|" ENUM        ":" SmplDcls Ins  END {% return ()}
-    | Ins BEGIN SmplDcls Ins END    {% return ()} -- No debe aceptar funciones
+    | Ins IF Exp    ":" Ent SmplDcls Ins NextIf Else END            {% exitScope  }
+    | Ins WHILE Exp ":" Ent SmplDcls Ins END                        {% exitScope  }
+    | Ins FOR ID "=" Exp  "|" Exp "|" Exp ":" Ent SmplDcls Ins  END {% exitScope  }
+    | Ins FOR ID "=" Exp  "|" Exp         ":" Ent SmplDcls Ins  END {% exitScope  }
+    | Ins FOR ID "=" ENUM "|" ENUM        ":" Ent SmplDcls Ins  END {% exitScope  }
+    | Ins BEGIN Ent SmplDcls Ins END                                {% exitScope  } -- No debe aceptar funciones
 
 PrntArgs: {- λ -}             {% return ()}
         | PrntArgs "," Exp    {% return ()} -- Siempre es necesaria una coma a la izq
 
 NextIf: {- λ -}             {% return ()}
-      | NextIf ELIF  Exp ":" SmplDcls Ins {% return ()}
+      | NextIf ELIF  Exp ":" Ent SmplDcls Ins {% exitScope  }
 
 Else: {- λ -}      {% return ()}
-    | ELSE ":" SmplDcls Ins {% return ()}
+    | ELSE ":" Ent SmplDcls Ins {% exitScope  }
 
 SmplDcls: {- λ -}                                  {% return () }        
     | SmplDcls IsGlob PrimType Ptrs       ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 ) $5 }
@@ -173,12 +174,12 @@ SmplDcls: {- λ -}                                  {% return () }
     | SmplDcls IsGlob PrimType            ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $4) Nothing) $4 }
     | SmplDcls IsGlob DATAID              ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $4) (Just (lexeme $3))) $4 }
 
-Dcls:  {- λ -}                                {% return ()}
-    | Dcls FUNC PrimType ID "(" Parameter ")" ":" SmplDcls Ins END {% return ()}
+Dcls:  {- λ -}                                 {% return ()}
+    | Dcls FUNC PrimType ID "(" Parameter ")" ":" Ent SmplDcls Ins END {% exitScope } -- Deberia agregar a las globales
     | Dcls IsGlob PrimType Ptrs       ID  ";"  {% return ()}
     | Dcls IsGlob PrimType EmptyArrs  ID  ";"  {% return ()}
     | Dcls IsGlob PrimType StaticArrs ID  ";"  {% return ()}
-    | Dcls IsGlob PrimType            ID  ";"   {% return ()}
+    | Dcls IsGlob PrimType            ID  ";"  {% return ()}
   --| Dcls DataType    DATAID     ";"          {% return ()}    -- Forward declarations
     | Dcls ENUMDEC DATAID   "{" EnumConsList "}"   {% return ()}
     | Dcls STRUCTDEC  DATAID  "{" FieldsList   "}"   {% return ()}
@@ -281,6 +282,8 @@ Term: TRUE         {% return ()}
     | INT          {% return ()}
     | CHAR         {% return ()}
 
+Ent : {- λ -}     {% modify enterScope}
+
 {
 
 -- Monadic action: Insert tkId into actual scope and do some checks
@@ -300,7 +303,8 @@ insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) = do
     where error1       = S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" redeclaraci'o de " ++ lexeme
           whathappened = S.singleton $ Right $ "Agregado " ++ lexeme ++ " en "++show l++":"++show c
           
-
+-- Monadic action to exit scope on zipper
+exitScope = modify (fromJust . goUp)
 
 parseError [] = error $ "EOF Inesperado"
 parseError l  = error $ "Parsing error at: \n" ++ show (head l)
