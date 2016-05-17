@@ -170,7 +170,7 @@ SmplDcls: {- λ -}                                     {% return () }
     | SmplDcls IsGlob PrimType Ptrs          ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 Nothing) $5 }
     | SmplDcls IsGlob DataType DATAID  Ptrs  ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $6) $5 (Just (lexeme $4))) $6 }
     | SmplDcls IsGlob PrimType EmptyArrs     ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 Nothing) $5 } -- Azucar sintactico? jeje
-   -- | SmplDcls IsGlob PrimType StaticArrs    ID  ";"  {% insertDeclareInScope (makeArr  $3 (position $5) $4) $5 }
+    | SmplDcls IsGlob PrimType StaticArrs    ID  ";"  {% insertDeclareInScope (makeArr  $3 (position $5) $4) $5 }
     | SmplDcls IsGlob PrimType               ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $4) Nothing) $4 }
     | SmplDcls IsGlob DataType DATAID        ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $5) (Just (lexeme $4))) $5 }
 
@@ -230,8 +230,8 @@ EmptyArrs: "[" "]"             {    1    }
          |  EmptyArrs "[" "]"  { succ $1 }
 
 -- Counts dimensions
-StaticArrs: "[" INT "]"             { [$2] }
-          | StaticArrs "[" INT "]"  { $3:$1}
+StaticArrs: "[" INT "]"             { [value $2] }
+          | StaticArrs "[" INT "]"  { (value $3):$1}
 
 Exp : 
     -- Expresiones Aritméticas.
@@ -274,16 +274,17 @@ Exp :
     | SIZEOF "(" PrimType ")"  {% return ()}
     | GET    "(" ENUM ")"      {% return ()}
 
-Term: TRUE         {% return ()}
-    | FALSE        {% return ()}
-    | ID           {% return ()}
-    | DATAID       {% return ()}
-    | FLOAT        {% return ()}
-  --| INT          { value $1 } 
-    | INT          {% return () } --MALDITASEANAWEONA
-    | CHAR         {% return ()}
+Term: TRUE         {   $1   }
+    | FALSE        {   $1   }
+    | ID           {   $1   }
+    | DATAID       {   $1   }
+    | FLOAT        {   $1   }
+    | INT          {   $1   }
+    | CHAR         {   $1   }
 
 {
+
+getVal (TkNum a b ) = b
 
 -- Monadic action: Insert tkId into actual scope and do some checks
 insertDeclareInScope Nothing (TkId (l,c) lexeme ) =

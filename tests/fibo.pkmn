@@ -17,7 +17,7 @@ funcball pINTachu fibo_iterativo(pINTachu n):
     pINTachu n2;
     pINTachu iter;
     pINTachu aux;
-    STRUCTtabuzz pokeTrainer** nolero;
+
 
     si n == 0:
         vamo_a_retorna 0;

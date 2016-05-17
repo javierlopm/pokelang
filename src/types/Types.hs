@@ -29,7 +29,7 @@ type Pos = (Int,Int)
 data Declare = Function     { pos::Pos , storedType::Type, fields::(Scope Type)}
              | Variable     { pos::Pos , storedTypeV::PrimType }
              | Pointer      { pos::Pos , storedType::Type, levels    :: Int, dataID :: Maybe String } -- No tiene mucho sentido que vengan con contenido...
-             | StaticArray  { pos::Pos , storedType::Type, dimensions::[Int]}
+             | StaticArray  { pos::Pos , storedType::Type, dimensions::[Integer]}
              | Enum     Pos -- Listas de constantes enumeradas No?
              | Struct   Pos (Scope Type)  
              | Union    Pos (Scope Type)  
@@ -90,7 +90,7 @@ makePtrs t p i s = Just $
         TkEnum   _ -> Pointer p TypeEnum   i $ s
 
 -- Create a static array declaration
-makeArr :: Token -> Pos -> [Int] -> Maybe Declare
+makeArr :: Token -> Pos -> [Integer] -> Maybe Declare
 makeArr t p li = Just $
     case t of 
         TkInt    _ -> StaticArray p TypeInt    li
