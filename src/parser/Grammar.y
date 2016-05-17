@@ -20,6 +20,7 @@ import qualified Data.Sequence as S
     ID        { TkId       _ _ }     
     DATAID    { TkDId      _ _ }
     -- Declarations       
+    FWD       { TkFwd      _ } 
     INTDEC    { TkInt      _ } 
     BOOLDEC   { TkBool     _ }     
     CHARDEC   { TkChar     _ }     
@@ -180,7 +181,7 @@ Dcls:  {- λ -}                                {% return ()}
     | Dcls PrimType EmptyArrs  ID  ";"  {% return ()}
     | Dcls PrimType StaticArrs ID  ";"  {% return ()}
     | Dcls PrimType            ID  ";"   {% return ()}
-  --| Dcls DataType    DATAID     ";"          {% return ()}    -- Forward declarations
+    | Dcls FWD DataType    DATAID     ";"          {% return ()}    -- Forward declarations solo
     | Dcls ENUMDEC DATAID   "{" EnumConsList "}"   {% return ()}
     | Dcls STRUCTDEC  DATAID  "{" FieldsList   "}"   {% return ()}
     | Dcls UNIONDEC  DATAID  "{" FieldsList   "}"   {% return ()}
