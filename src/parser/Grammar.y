@@ -292,15 +292,14 @@ type TableZipper = Zipper Declare
 
 -- state from monad State
 data ScopeNZip = ScopeNZip { scp      :: SymTable
-                           , zipp     :: TableZipper
-                           , constGen :: Int } 
+                           , zipp     :: TableZipper} 
                            deriving (Show)
 
 initialState :: ScopeNZip
-initialState = ScopeNZip emptyScope (fromScope emptyScope) 0
+initialState = ScopeNZip emptyScope (fromScope emptyScope)
 
 makeTable :: ScopeNZip -> Scope Declare
-makeTable (ScopeNZip s z _) = fuse s z
+makeTable (ScopeNZip s z) = fuse s z
 
 onZip :: (TableZipper -> TableZipper ) -> OurMonad()
 onZip fun = do zipper <- gets zipp
@@ -313,10 +312,10 @@ onScope fun = do scope <- gets scp
                  state <- get
                  put state { scp = fun scope }
 
-succCons ::  OurMonad ()
+{-succCons ::  OurMonad ()
 succCons = do conG  <- gets constGen
               state <- get
-              put state { constGen = succ conG }
+              put state { constGen = succ conG }-}
 
 exitScope :: OurMonad ()
 exitScope = onZip (fromJust.goUp)
@@ -337,9 +336,9 @@ insertFunction typ ident  = do
         linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident 
 
 --se deberia verificar que el valor no esta ya en alguna constante
-addStr declare = do id  <- gets constGen
+{-addStr declare = do id  <- gets constGen
                     succCons
-                    onScope $ insert (show id) declare 
+                    onScope $ insert (show id) declare -}
 
 insertDeclareInScope :: Maybe Declare -> Token -> Bool -> OurMonad ()
 insertDeclareInScope Nothing (TkId (l,c) lexeme ) _ =
