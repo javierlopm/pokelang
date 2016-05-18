@@ -1,4 +1,18 @@
 --
+    Ejemplo de struct y union
+--
+articUNION poketrainer {
+    socialSecurityNumber :: pINTachu,
+    best_friend          :: *articUNION poketrainer,
+    name                 :: *CHARmander
+}
+
+ENUManyte pokeDaysLaborables { 
+    Lunes, 
+    Martes}
+
+
+--
     Implementacio'n de bubblesort en pokelang
 --
 
@@ -7,7 +21,8 @@ funcball VOIDtorb nothing( pINTachu arr,pINTachu size):
 vamo_a_calmano
 
 funcball VOIDtorb bubble( pINTachu arr, 
-                          pINTachu size ):      
+                          pINTachu size,
+                          ENUManyte pokeDaysLaborables ** azuuuuuuucar):      
     pINTachu temp;
     pINTachu ordenados;
     pINTachu pos;
@@ -26,6 +41,7 @@ funcball VOIDtorb bubble( pINTachu arr,
         vamo_a_itera pos = ordenados |size-2|1:
             si arr[pos] < arr[pos+1]:
                 temp       = arr[pos+1];
+                temp       = nothing(1);
                 arr[pos+1] = arr[pos];
                 arr[pos]   = temp;
             vamo_a_calmano
@@ -34,15 +50,3 @@ funcball VOIDtorb bubble( pINTachu arr,
 vamo_a_calmano
 
 
---
-    Ejemplo de struct y union
---
-articUNION poketrainer {
-    socialSecurityNumber :: pINTachu,
-    best_friend          :: *articUNION poketrainer,
-    name                 :: *CHARmander
-}
-
-ENUManyte pokeDaysLaborables { 
-    Lunes, 
-    Martes}

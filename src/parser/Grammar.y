@@ -200,16 +200,19 @@ DataType : ENUMDEC        { $1 }
          | STRUCTDEC      { $1 }
          | UNIONDEC       { $1 }
 
-Parameter: ListParam PrimType           ID   {% insertDeclareInScope   (makeDec  $2 (position $3) Nothing) $3 False }
-         | ListParam DataType DATAID    ID   {% insertDeclareInScope   (makeDec  $2 (position $3) (Just (lexeme $3))) $4 False }
-         | ListParam PrimType Ptrs      ID   {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
-         | ListParam PrimType EmptyArrs ID   {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
+Parameter: ListParam PrimType             ID   {% insertDeclareInScope   (makeDec  $2 (position $3) Nothing) $3 False }
+         | ListParam DataType DATAID      ID   {% insertDeclareInScope   (makeDec  $2 (position $3) (Just (lexeme $3))) $4 False }
+         | ListParam DataType DATAID Ptrs ID   {% insertDeclareInScope (makePtrs $2 (position $5) $4 (Just (lexeme $3))) $5 False}
+         | ListParam PrimType Ptrs        ID   {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
+         | ListParam PrimType EmptyArrs   ID   {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
 
-ListParam: {- λ -}                              {% return () }
-         | ListParam PrimType        ID ","     {% insertDeclareInScope   (makeDec  $2 (position $3) Nothing) $3 False }
-         | ListParam DataType DATAID ID ","     {% insertDeclareInScope   (makeDec  $2 (position $3) (Just (lexeme $3))) $4 False }
-         | ListParam PrimType Ptrs   ID ","     {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
-         | ListParam PrimType EmptyArrs ID ","  {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
+
+ListParam: {- λ -}                                {% return () }
+         | ListParam PrimType               ID ","  {% insertDeclareInScope   (makeDec  $2 (position $3) Nothing) $3 False }
+         | ListParam DataType DATAID  Ptrs  ID ","  {% insertDeclareInScope (makePtrs $2 (position $5) $4 (Just (lexeme $3))) $5 False}
+         | ListParam DataType DATAID        ID ","  {% insertDeclareInScope   (makeDec  $2 (position $3) (Just (lexeme $3))) $4 False }
+         | ListParam PrimType Ptrs          ID ","  {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
+         | ListParam PrimType EmptyArrs     ID ","  {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
 
 Parameters: {- λ -}       {% onZip enterScope } -- Tiene sentido?
           | Parameter     {% onZip enterScope } 
@@ -266,7 +269,7 @@ Exp :
     | Exp "."  Exp           { $1 }
     | ID "[" Exp "]" %prec ARR { $1 }
     --Llamadas a funciones
-    | ID "(" Exp ")"         { $3 }
+    | ID "(" Exp ")"         {% do checkIsFunc $1 >> return $3 }  --Arreglar llamadas gramatica todo
     --Acceso a apuntadores
     | "*" Exp %prec POINT  { $2 }
     -- Asociatividad.
@@ -302,6 +305,14 @@ type TableZipper = Zipper Declare
 data ScopeNZip = ScopeNZip { scp      :: SymTable
                            , zipp     :: TableZipper} 
                            deriving (Show)
+checkIsFunc :: Token -> OurMonad()
+checkIsFunc (TkId (r,c) lex) = do
+                    state <- get
+                    let treeSearch = (lookUp (zipp state) lex)
+                    let scopeSearch = (getValS lex (scp state))
+                    if isFunc treeSearch || isFunc scopeSearch
+                        then tell $ S.singleton $ Left  $ lex ++ "\' at " ++ show r++":"++show c ++ " it's a callable function or procedure."
+                        else tell $ S.singleton $ Right $ "Error: "++lex ++ "\' at " ++ show r++":"++show c ++ " it's not a function or procedure."
 
 checkLIter :: Token -> OurMonad()
 checkLIter (TkId (r,c) lex) = do
