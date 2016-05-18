@@ -4,6 +4,7 @@ module Types(
     Message,
     isPointer,
     isReadable,
+    isLIter,
     makeDec,
     makePtrs,
     makeType,
@@ -71,8 +72,16 @@ data Type = TypeInt       -- Marcar con Maybe?
           | TypeUnion  
           deriving(Show,Eq)
 
+isLIter :: Maybe Declare -> Bool
+isLIter Nothing = False
+isLIter (Just (Variable _ stType)) = case (stType) of
+                                          PrimIter   _  -> True
+                                          otherwise     -> False
+isLIter a = False
+
 --Checks if a declaration is readable
 isReadable :: Maybe Declare -> Bool
+isReadable Nothing = False
 isReadable (Just (Variable _ stType)) = case (stType) of
                                           PrimInt    _  -> True
                                           PrimIter   _  -> True

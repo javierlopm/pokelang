@@ -140,9 +140,9 @@ Ins : {- λ -}                                 {% return () }
     | Ins PRINT "(" STRING PrntArgs ")"   ";" {% onScope $ insert ('_':(content $4)) (Cons (position $4)) }
     | Ins READ  "("       ID        ")"   ";" {% checkReadable $4 True}
     | Ins WRITE "("       ID        ")"   ";" {% checkReadable $4 False}
-    | Ins Exp "=" Exp         ";"         {% return ()}
+    | Ins Exp "=" Exp         ";"         {% checkLIter $2}
     | Ins Exp "*=" Exp        ";"         {% checkLIter $2 }
-    | Ins Exp "+=" Exp        ";"         {% return ()}
+    | Ins Exp "+=" Exp        ";"         {% checkLIter $2}
     | Ins BREAK             ";"         {% return ()} --√
     | Ins CONTINUE          ";"         {% return ()} --√
     | Ins RETURN   Exp      ";"         {% return ()} --√
@@ -153,9 +153,9 @@ Ins : {- λ -}                                 {% return () }
     --| Ins READ "("DATAID")" ";"         {% return ()}
     | Ins IF Exp    ":" Ent SmplDcls Ins NextIf Else END            {% exitScope  }
     | Ins WHILE Exp ":" Ent SmplDcls Ins END                        {% exitScope  }
-    | Ins FOR ID "=" Exp  "|" Exp "|" Exp ":" Ent SmplDcls Ins  END {% onZip enterScope >> insertDeclareInScope (makeIter $3 (position $3)) $3 False  >> exitScope }
-    | Ins FOR ID "=" Exp  "|" Exp         ":" Ent SmplDcls Ins  END {% exitScope  }
-    | Ins FOR ID "=" ENUM "|" ENUM        ":" Ent SmplDcls Ins  END {% exitScope  }
+    | Ins FOR Ent Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope  }
+    | Ins FOR Ent Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope  }
+    | Ins FOR Ent Ent3 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope  }
     | Ins BEGIN Ent SmplDcls Ins END                                {% exitScope  } -- No debe aceptar funciones
 
 PrntArgs: {- λ -}             {% return ()}
@@ -214,8 +214,8 @@ ListParam: {- λ -}                              {% return () }
 Parameters: {- λ -}       {% onZip enterScope } -- Tiene sentido?
           | Parameter     {% onZip enterScope } 
 
-EnumConsList: ENUM                      {% return ()}
-            | EnumConsList "," ENUM     {% return ()}
+EnumConsList: ENUM                      { [$1]  }
+            | EnumConsList "," ENUM     { $3:$1 }
 
 FieldsList  : ID     "::" PrimType                   {% return ()}
             | DATAID "::" DATAID                     {% return ()}
@@ -243,13 +243,13 @@ Exp :
     | Exp "/" Exp       { $1 }
     | Exp "//" Exp      { $1 }
     | Exp "%" Exp       { $1 }
-    | "-" Exp %prec NEG { $1 }
+    | "-" Exp %prec NEG { $2 }
     -- Expresiones Booleanas.
     | Exp OR Exp        { $1 }
     | Exp "||" Exp      { $1 }
     | Exp AND Exp       { $1 }
     | Exp "&&" Exp      { $1 }
-    | "!" Exp           { $1 }
+    | "!" Exp           { $2 }
     -- Expresiones relacionales.
     | Exp "<"  Exp      { $1 }
     | Exp "<=" Exp      { $1 }
@@ -262,18 +262,18 @@ Exp :
     | Exp "."  Exp           { $1 }
     | ID "[" Exp "]" %prec ARR { $1 }
     --Llamadas a funciones
-    | ID "(" Exp ")"         { $1 }
+    | ID "(" Exp ")"         { $3 }
     --Acceso a apuntadores
-    | "*" Exp %prec POINT  { $1 }
+    | "*" Exp %prec POINT  { $2 }
     -- Asociatividad.
-    | "(" Exp ")"    { $1 }
+    | "(" Exp ")"    { $2 }
     -- Constantes.
     | Term           { $1  }
     -- Llamadas
-    | MALLOC "(" Exp ")"       { $1 }
-    | SIZEOF "(" Exp ")"       { $1 }
-    | SIZEOF "(" PrimType ")"  { $1 }
-    | GET    "(" ENUM ")"      { $1 }
+    | MALLOC "(" Exp ")"       { $3 }
+    | SIZEOF "(" Exp ")"       { $3 }
+    | SIZEOF "(" PrimType ")"  { $3 }
+    | GET    "(" ENUM ")"      { $3 }
 
 Term: TRUE         {% return($1) }
     | FALSE        {% return($1) }
@@ -284,6 +284,7 @@ Term: TRUE         {% return($1) }
     | CHAR         {% return($1) }
 
 Ent : {- λ -}     {% onZip enterScope }
+Ent3 :  ID          {% insertDeclareInScope (makeIter $1 (position $1)) $1 False } 
 
 {
 
@@ -296,15 +297,25 @@ data ScopeNZip = ScopeNZip { scp      :: SymTable
                            , zipp     :: TableZipper} 
                            deriving (Show)
 
+checkLIter :: Token -> OurMonad()
+checkLIter (TkId (r,c) lex) = do
+                    state <- get
+                    let treeSearch = (lookUp (zipp state) lex)
+                    let scopeSearch = (getValS lex (scp state))
+                    if  (\x -> isLIter x && (not.isNothing) x)  treeSearch || (\x -> isLIter x && (not.isNothing) x) scopeSearch
+                                then tell $ S.singleton $ Left  $ "Cannot assing to \'" ++ lex ++ "\' at " ++ show r++":"++show c ++ " because it's an iteration Variable."
+                                else if isNothing treeSearch && isNothing scopeSearch  
+                                    then tell $ S.singleton $ Left  $ "Cannot assing to \'" ++ lex ++ "\' at " ++ show r++":"++show c ++ " because it's not declared."
+                                    else tell $ S.singleton $ Right  $ "Variable " ++ lex ++ " at " ++ show r++":"++show c ++ " can be assing."
+
 checkReadable :: Token -> Bool -> OurMonad ()
 checkReadable (TkId (l,c) lex) bit = do
     state <- get
     let word = if bit then "readable."
                       else "writeable."
     if isReadable (lookUp (zipp state) lex) || isReadable (getValS lex (scp state) )
-        then tell $ S.singleton $ Right  $ "Variable " ++ lex ++ ":" ++ show l++":"++show c ++ " is "++word
+        then tell $ S.singleton $ Right  $ "Variable " ++ lex ++ " at " ++ show l++":"++show c ++ " is "++word
         else tell $ S.singleton $ Left   $ concat $ ["Error:",show l,":",show c," variable ",lex," is not "++word++"ESTOY EN:\n","================",(show . fst) (zipp state),"==================","\n"]
-    return ()
   
 initialState :: ScopeNZip
 initialState = ScopeNZip emptyScope (fromScope emptyScope)
@@ -350,6 +361,12 @@ insertFunction typ ident  = do
 {-addStr declare = do id  <- gets constGen
                     succCons
                     onScope $ insert (show id) declare -}
+
+--insertIter :: Maybe Declare -> Token -> OurMonad(Token)
+--insertIter Nothing (TkId (l,c) lexeme ) = do tell $ S.singleton $ Left  $ "Token " ++ lex ++ " at " ++ show l++":"++show c ++ " is not var." 
+--                                             return $ TkId (l,c) lex
+--insertIter Nothing (TkId (l,c) lexeme ) = do tell $ S.singleton $ Left  $ "Token " ++ lex ++ " at " ++ show l++":"++show c ++ " is not var." 
+--                                             return $ TkId (l,c) lex
 
 insertDeclareInScope :: Maybe Declare -> Token -> Bool -> OurMonad ()
 insertDeclareInScope Nothing (TkId (l,c) lexeme ) _ =
