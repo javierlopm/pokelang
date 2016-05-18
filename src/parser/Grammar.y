@@ -216,14 +216,14 @@ Parameters: {- λ -}       {% onZip enterScope } -- Tiene sentido?
 EnumConsList: ENUM                      {% return ()}
             | EnumConsList "," ENUM     {% return ()}
 
-FieldsList  : ID      "::" PrimType            {% insertDeclareInScope   (makeDec  $3 (position $1) Nothing) $1 False}
-            | Ptrs ID "::" PrimType            {% return ()}
-            | ID      "::" DataType DATAID     {% return ()} --verificar que realmente existe
-            | Ptrs ID "::" DataType DATAID     {% return ()} --verificar que realmente existe
-            | FieldsList  "," ID      "::" PrimType         {% return ()}
-            | FieldsList  "," Ptrs ID "::" PrimType         {% return ()}
-            | FieldsList  "," ID      "::" DataType DATAID  {% return ()} --verificar que realmente existe
-            | FieldsList  "," Ptrs ID "::" DataType DATAID  {% return ()} --verificar que realmente existe
+FieldsList  : ID "::" PrimType            {% insertDeclareInScope   (makeDec  $3 (position $1)   Nothing) $1 False}
+            | ID "::" Ptrs PrimType       {% insertDeclareInScope   (makePtrs $4 (position $1) $3 Nothing) $1  False }
+            | ID "::" DataType DATAID     {% insertDeclareInScope   (makeDec  $3 (position $1) (Just (lexeme $4))) $1 False} --verificar que realmente existe
+            | ID "::" Ptrs DataType DATAID             {% insertDeclareInScope   (makePtrs $4 (position $1) $3 (Just (lexeme $5))) $1  False } --verificar que realmente existe
+            | FieldsList  "," ID "::" PrimType         {% insertDeclareInScope   (makeDec  $5 (position $3) Nothing) $3 False    }
+            | FieldsList  "," ID "::" Ptrs PrimType    {% insertDeclareInScope   (makePtrs $6 (position $2) $5 Nothing) $3  False}
+            | FieldsList  "," ID "::" DataType DATAID  {% insertDeclareInScope   (makeDec  $5 (position $3) (Just (lexeme $6))) $3 False} --verificar que realmente existe
+            | FieldsList  "," ID "::" Ptrs DataType DATAID  {% insertDeclareInScope (makePtrs $6 (position $3) $5 (Just (lexeme $7))) $3  False } --verificar que realmente existe
 
 -- Counts nesting levels
 Ptrs: "*"        {    1    }

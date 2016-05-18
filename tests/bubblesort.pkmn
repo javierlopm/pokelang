@@ -34,6 +34,7 @@ vamo_a_calmano
     Ejemplo de struct y union
 --
 articUNION poketrainer {
-    name                 :: CHARmander,
-    socialSecurityNumber :: pINTachu
+    socialSecurityNumber :: pINTachu,
+    best_friend          :: *articUNION poketrainer,
+    name                 :: *CHARmander
 }

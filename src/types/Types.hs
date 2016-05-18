@@ -44,7 +44,8 @@ data Declare = Function     { pos       ::Pos,
                               fields    ::(Scope Declare)}
              | Union        { pos       ::Pos, 
                               typeName  ::String, 
-                              fields    ::(Scope Declare)}  
+                              fields    ::(Scope Declare)} 
+              -- Agregar aqui un descriptor para usar a futuro con unions y struct y que tenga Type?
              | Enum     Pos -- Listas de constantes enumeradas No?
              | Empty
              -- | DynamicArray { pos::Pos , storedType::Type, } -- Azucar sintactica para aps
@@ -56,8 +57,8 @@ data PrimType = PrimInt     Int
               | PrimString  String
               | PrimFloat   Float
               | PrimEnum    String
-         --   | PrimUnion   String
-         --   | PrimStruct  String
+              | PrimUnion   String
+              | PrimStruct  String
               deriving(Show,Eq)
 
 -- Types of Variable
@@ -81,8 +82,8 @@ makeDec :: Token -> Pos -> Maybe String -> Maybe Declare
 makeDec (TkVoid _) _ _ = Nothing
 makeDec t p (Just s) = Just $
     case t of 
-        --TkStruct _ -> Variable p (PrimStruct s)
-        --TkUnion  _ -> Variable p (PrimUnion s)
+        TkStruct _ -> Variable p (PrimStruct s)
+        TkUnion  _ -> Variable p (PrimUnion s)
         TkEnum   _ -> Variable p (PrimEnum s)
 makeDec t p Nothing = Just $
     case t of 
