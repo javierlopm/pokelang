@@ -24,3 +24,12 @@ To-Do:
 INSERTAR NOMBRE AS SOON AS POSSIBLE MISSING --javier working on it
 
 **Ampersand
+
+==================
+mover errores a la salida estandar
+Unificar lenguaje spanglish de errores
+mejorar prints de declaraciones
+mover strings a una tabla aparte
+arreglar parametros de llamadas a funciones
+forward declarations
+Maybe ~ arreglar los flags para mostrar o no los logs

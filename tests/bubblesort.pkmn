@@ -33,6 +33,7 @@ funcball VOIDtorb bubble( pINTachu arr,
     --vamo_a_escribi(bubbles);--
 
     vamo_a_imprimi("hola mundo");
+    vamo_a_imprimi("hola mundo");
 
     temp = temp * temp;
 
