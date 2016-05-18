@@ -116,6 +116,7 @@ tokens :-
   \,                       { \p _ -> TkComma     (getPos p)}
   \*\=                     { \p _ -> TkTEQ       (getPos p)}
   \+\=                     { \p _ -> TkPEQ       (getPos p)}
+  \-\=                     { \p _ -> TkMEQ       (getPos p)}
   \.                       { \p _ -> TkDot       (getPos p)}
   \!                       { \p _ -> TkExcMark   (getPos p)}
   \!\=                     { \p _ -> TkNEQ       (getPos p)}

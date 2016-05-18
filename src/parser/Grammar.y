@@ -44,6 +44,7 @@ import qualified Data.Sequence as S
     ","       { TkComma    _ }    
     "*="      { TkTEQ      _ }    
     "+="      { TkPEQ      _ }    
+    "-="      { TkMEQ      _ }    
     "."       { TkDot      _ }    
     "!"       { TkExcMark  _ }    
     "!!"      { TkExcArr   _ }    
@@ -143,6 +144,7 @@ Ins : {- λ -}                                 {% return () }
     | Ins Exp "=" Exp         ";"         {% checkLIter $2}
     | Ins Exp "*=" Exp        ";"         {% checkLIter $2 }
     | Ins Exp "+=" Exp        ";"         {% checkLIter $2}
+    | Ins Exp "-=" Exp        ";"         {% checkLIter $2}
     | Ins BREAK             ";"         {% return ()} --√
     | Ins CONTINUE          ";"         {% return ()} --√
     | Ins RETURN   Exp      ";"         {% return ()} --√
