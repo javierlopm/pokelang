@@ -29,3 +29,11 @@ vamo_a_calmano
 funcball VOIDtorb nothing( pINTachu arr,pINTachu size):
     pINTachu ordenados;
 vamo_a_calmano
+
+--
+    Ejemplo de struct y union
+--
+articUNION poketrainer {
+    name                 :: CHARmander,
+    socialSecurityNumber :: pINTachu
+}

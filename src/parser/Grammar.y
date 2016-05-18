@@ -180,11 +180,11 @@ Dcls:  {- λ -}                                {% return ()}
     | Dcls PrimType Ptrs       ID  ";"  {% return ()}
     | Dcls PrimType EmptyArrs  ID  ";"  {% return ()}
     | Dcls PrimType StaticArrs ID  ";"  {% return ()}
-    | Dcls PrimType            ID  ";"   {% return ()}
-    | Dcls FWD DataType    DATAID     ";"          {% return ()}    -- Forward declarations solo
-    | Dcls ENUMDEC DATAID   "{" EnumConsList "}"   {% return ()}
-    | Dcls STRUCTDEC  DATAID  "{" FieldsList   "}"   {% return ()}
-    | Dcls UNIONDEC  DATAID  "{" FieldsList   "}"   {% return ()}
+    | Dcls PrimType            ID  ";"     {% return ()}
+    | Dcls FWD DataType    DATAID     ";"  {% return ()}    -- Forward declarations solo, agregar con Dec Empty
+    | Dcls ENUMDEC    Ent DataType Ent1 "{" EnumConsList "}"   {% exitScope }
+    | Dcls STRUCTDEC  Ent1 "{" FieldsList   "}"   {% insertData $3  True }
+    | Dcls UNIONDEC   Ent1 "{" FieldsList   "}"   {% insertData $3  False }
 
 IsGlob : {- λ -}     { False }
          | GLOBAL    { True  }
@@ -216,10 +216,14 @@ Parameters: {- λ -}       {% onZip enterScope } -- Tiene sentido?
 EnumConsList: ENUM                      {% return ()}
             | EnumConsList "," ENUM     {% return ()}
 
-FieldsList  : ID     "::" PrimType                   {% return ()}
-            | DATAID "::" DATAID                     {% return ()}
-            | FieldsList  "," ID     "::" PrimType   {% return ()}
-            | FieldsList  "," DATAID "::" DATAID     {% return ()}
+FieldsList  : ID      "::" PrimType            {% insertDeclareInScope   (makeDec  $3 (position $1) Nothing) $1 False}
+            | Ptrs ID "::" PrimType            {% return ()}
+            | ID      "::" DataType DATAID     {% return ()} --verificar que realmente existe
+            | Ptrs ID "::" DataType DATAID     {% return ()} --verificar que realmente existe
+            | FieldsList  "," ID      "::" PrimType         {% return ()}
+            | FieldsList  "," Ptrs ID "::" PrimType         {% return ()}
+            | FieldsList  "," ID      "::" DataType DATAID  {% return ()} --verificar que realmente existe
+            | FieldsList  "," Ptrs ID "::" DataType DATAID  {% return ()} --verificar que realmente existe
 
 -- Counts nesting levels
 Ptrs: "*"        {    1    }
@@ -282,7 +286,8 @@ Term: TRUE         {% return($1) }
     | INT          {% return($1) }
     | CHAR         {% return($1) }
 
-Ent : {- λ -}     {% onZip enterScope }
+Ent  : {- λ -}     {% onZip enterScope }
+Ent1 : DATAID      { $1 } -- Agregar inmediatamente al scope global la declaracion y verificar si ya no estaba
 
 {
 
@@ -335,6 +340,24 @@ insertFunction typ ident  = do
         whathappened = S.singleton $ Right $ "Agregada la funcion " ++ lexeme ident ++ " en "++ linecol
         linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident 
 
+
+insertData :: Token -> Bool -> OurMonad ()
+insertData typ isStruct = do 
+    state <- get
+    if isMember ((fromScope.scp) state) (lexeme typ) -- Chequear que es vaina forward
+        then tell error1
+        else do tell whathappened
+                onScope $ insert (lexeme typ)
+                                  (if isStruct 
+                                     then Struct p name (fromZipper (zipp state))
+                                     else Union  p name (fromZipper (zipp state)))
+                onZip (const (fromScope emptyScope)) -- Clean zipper
+  where error1       = S.singleton $ Left  $ "Error:" ++ linecol ++" redeclaraci'o del tipo " ++ lexeme typ
+        whathappened = S.singleton $ Right $ "Agregada la estructura/union "  ++ lexeme typ ++ " en "++ linecol
+        linecol      = (show.fst.position) typ ++":"++(show.snd.position) typ
+        p     = position typ
+        name  = lexeme typ
+
 --se deberia verificar que el valor no esta ya en alguna constante
 {-addStr declare = do id  <- gets constGen
                     succCons
@@ -355,6 +378,7 @@ insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) isGlob = do
     tell whathappened
     where error1       = S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" redeclaración de " ++ lexeme
           whathappened = S.singleton $ Right $ "Agregado " ++ lexeme ++ " en "++show l++":"++show c
+
 
 checkItsDeclared :: Token -> OurMonad (Token)
 checkItsDeclared (TkId (l,c) lex) = do
