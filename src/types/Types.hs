@@ -46,7 +46,11 @@ data Declare = Function     { pos       ::Pos,
                               typeName  ::String, 
                               fields    ::(Scope Declare)} 
               -- Agregar aqui un descriptor para usar a futuro con unions y struct y que tenga Type?
-             | Enum     Pos -- Listas de constantes enumeradas No?
+             | Enum     { pos       ::Pos, 
+                          fields    ::(Scope Declare)}
+             | EnumCons { pos  :: Pos,
+                          name :: String,
+                          ord  :: Int}
              | Empty
              -- | DynamicArray { pos::Pos , storedType::Type, } -- Azucar sintactica para aps
              deriving(Show) -- Instance de Eq que ignore por para ver si ya algo esta en las glob
@@ -56,7 +60,7 @@ data PrimType = PrimInt     Int
               | PrimChar    Char
               | PrimString  String
               | PrimFloat   Float
-              | PrimEnum    String
+              | PrimEnum     String
               | PrimUnion   String
               | PrimStruct  String
               deriving(Show,Eq)

@@ -182,7 +182,7 @@ Dcls:  {- λ -}                                {% return ()}
     | Dcls PrimType StaticArrs ID  ";"  {% return ()}
     | Dcls PrimType            ID  ";"     {% return ()}
     | Dcls FWD DataType    DATAID     ";"  {% return ()}    -- Forward declarations solo, agregar con Dec Empty
-    | Dcls ENUMDEC    Ent DataType Ent1 "{" EnumConsList "}"   {% exitScope }
+    | Dcls ENUMDEC    Ent1 "{" EnumConsList "}"   {% insertEnum $3 }
     | Dcls STRUCTDEC  Ent1 "{" FieldsList   "}"   {% insertData $3  True }
     | Dcls UNIONDEC   Ent1 "{" FieldsList   "}"   {% insertData $3  False }
 
@@ -213,8 +213,8 @@ ListParam: {- λ -}                              {% return () }
 Parameters: {- λ -}       {% onZip enterScope } -- Tiene sentido?
           | Parameter     {% onZip enterScope } 
 
-EnumConsList: ENUM                      {% return ()}
-            | EnumConsList "," ENUM     {% return ()}
+EnumConsList: ENUM                      {% insertEnumCons 1  $1 }
+            | EnumConsList "," ENUM     {% insertEnumCons $1 $3 }
 
 FieldsList  : ID "::" PrimType            {% insertDeclareInScope   (makeDec  $3 (position $1)   Nothing) $1 False}
             | ID "::" Ptrs PrimType       {% insertDeclareInScope   (makePtrs $4 (position $1) $3 Nothing) $1  False }
@@ -357,6 +357,32 @@ insertData typ isStruct = do
         linecol      = (show.fst.position) typ ++":"++(show.snd.position) typ
         p     = position typ
         name  = lexeme typ
+
+insertEnum :: Token -> OurMonad ()
+insertEnum id = do
+    state <- get 
+    if isMember ((fromScope.scp) state) (lexeme id) 
+        then tell error1
+        else do tell whathappened
+                onScope $ insert (lexeme id)
+                                 (Enum (position id) (fromZipper (zipp state)))
+    onZip (const (fromScope emptyScope)) -- Clean zipper
+  where error1       = S.singleton $ Left $ "Error:" ++ linecol ++" redeclaraci'o del enum" ++ lexeme id
+        whathappened = S.singleton $ Right $ "Agregado el enum "  ++ lexeme id ++ " en "    ++ linecol
+        linecol      = (show.fst.position) id ++":"++(show.snd.position) id
+
+insertEnumCons :: Int -> Token -> OurMonad(Int)
+insertEnumCons ord (TkEnumCons (l,c) str) = do
+    state <- get
+    if isMember (zipp state) str
+        then tell error1
+        else do tell whathappened
+                onZip $ apply $ insert str (EnumCons (l,c) str ord)
+    return (succ (ord))
+  where error1       = S.singleton $ Left $ "Error:" ++ linecol ++" constante de enum " ++ str ++ " ya declarada."
+        whathappened = S.singleton $ Right $ "Agregada constante de enum "  ++ str ++ " en "    ++ linecol
+        linecol      = show l ++":"++ show c
+
 
 --se deberia verificar que el valor no esta ya en alguna constante
 {-addStr declare = do id  <- gets constGen

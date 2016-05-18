@@ -38,3 +38,7 @@ articUNION poketrainer {
     best_friend          :: *articUNION poketrainer,
     name                 :: *CHARmander
 }
+
+ENUManyte pokeDaysLaborables { 
+    Lunes, 
+    Martes}
