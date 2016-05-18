@@ -5,6 +5,7 @@ module Types(
     isPointer,
     isReadable,
     isLIter,
+    isFunc,
     makeDec,
     makePtrs,
     makeType,
@@ -80,6 +81,12 @@ data Type = TypeInt       -- Marcar con Maybe?
           | TypeStruct  
           | TypeUnion  
           deriving(Show,Eq)
+
+isFunc :: Maybe Declare -> Bool
+isFunc Nothing = False
+isFunc (Just (Function _ _ _)) = True
+isFunc (Just Empty) = True
+isFunc a = False
 
 isLIter :: Maybe Declare -> Bool
 isLIter Nothing = False

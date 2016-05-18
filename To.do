@@ -10,16 +10,17 @@ To-Do:
 **Simbol Table de las instancias de structs     √ 
 **Simbol Table de las instancias de Union       √ 
 **Simbol Table de las instancias de enum
-**Apuntadores a datatypes en parametros de funcion
+**Apuntadores a datatypes en parametros de funcion   √
 
 #Enums
-**Declaracion de los enum
-**Añadir constantes al scope del Enum
+**Declaracion de los enum             √
+**Añadir constantes al scope del Enum √
 
 #Struc
 **Declaracion de los struct (tabla) √ 
 
 #Union
 **Declaracion de los union (tabla)  √ 
-INSERTAR NOMBRE AS SOON AS POSSIBLE MISSING
-EN PARAMETERS FALTAN APUNTADORES A STRUCTS
+INSERTAR NOMBRE AS SOON AS POSSIBLE MISSING --javier working on it
+
+**Ampersand
