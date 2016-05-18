@@ -31,21 +31,30 @@ type Pos = (Int,Int)
 -- Las constantes enumeradas no deberian estar en un scope grande y universal?
 
 -- Declarations might be functions,variables or structure types
-data Declare = Function     { pos::Pos, 
+data Declare = Function     { pos       ::Pos, 
                               storedType::Type, 
-                              fields::(Scope Declare)}
+                              fields    ::(Scope Declare)}
              | Variable     { pos::Pos , storedTypeV::PrimType }
              | Cons         { pos::Pos }
              | Pointer      { pos::Pos ,
                               storedType:: Type,
                               levels    :: Int ,
-                              dataID :: Maybe String }
+                              dataID    :: Maybe String }
              | StaticArray  { pos::Pos , 
                               storedType::Type, 
                               dimensions::[Integer]}
-             | Enum     Pos -- Listas de constantes enumeradas No?
-             | Struct   Pos (Scope Type)  
-             | Union    Pos (Scope Type)  
+             | Struct       { pos       ::Pos, 
+                              typeName  ::String, 
+                              fields    ::(Scope Declare)}
+             | Union        { pos       ::Pos, 
+                              typeName  ::String, 
+                              fields    ::(Scope Declare)} 
+              -- Agregar aqui un descriptor para usar a futuro con unions y struct y que tenga Type?
+             | Enum     { pos       ::Pos, 
+                          fields    ::(Scope Declare)}
+             | EnumCons { pos  :: Pos,
+                          name :: String,
+                          ord  :: Int}
              | Empty
              -- | DynamicArray { pos::Pos , storedType::Type, } -- Azucar sintactica para aps
              deriving(Show) -- Instance de Eq que ignore por para ver si ya algo esta en las glob
@@ -56,7 +65,7 @@ data PrimType = PrimInt     Int
               | PrimChar    Char
               | PrimFloat   Float
               | PrimString  String
-              | PrimEnum    String
+              | PrimEnum     String
               | PrimUnion   String
               | PrimStruct  String
               deriving(Show,Eq)

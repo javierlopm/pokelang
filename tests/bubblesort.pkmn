@@ -34,4 +34,15 @@ funcball VOIDtorb bubble( pINTachu arr,
 vamo_a_calmano
 
 
+--
+    Ejemplo de struct y union
+--
+articUNION poketrainer {
+    socialSecurityNumber :: pINTachu,
+    best_friend          :: *articUNION poketrainer,
+    name                 :: *CHARmander
+}
 
+ENUManyte pokeDaysLaborables { 
+    Lunes, 
+    Martes}

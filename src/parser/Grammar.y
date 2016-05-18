@@ -178,14 +178,14 @@ SmplDcls: {- λ -}                                     {% return () }
 
 Dcls:  {- λ -}                                       {% return ()}
     | Dcls FUNC PrimType ID "(" Parameters ")" ":" SmplDcls Ins END {% insertFunction $3 $4 }
-    | Dcls PrimType Ptrs       ID  ";"               {% return ()}
-    | Dcls PrimType EmptyArrs  ID  ";"               {% return ()}
-    | Dcls PrimType StaticArrs ID  ";"               {% return ()}
-    | Dcls PrimType            ID  ";"               {% return ()}
-    | Dcls FWD DataType    DATAID     ";"            {% return ()}    -- Forward declarations solo
-    | Dcls ENUMDEC DATAID   "{" EnumConsList "}"     {% return ()}
-    | Dcls STRUCTDEC  DATAID  "{" FieldsList   "}"   {% return ()}
-    | Dcls UNIONDEC  DATAID  "{" FieldsList   "}"    {% return ()}
+    | Dcls PrimType Ptrs       ID  ";"            {% return ()}
+    | Dcls PrimType EmptyArrs  ID  ";"            {% return ()}
+    | Dcls PrimType StaticArrs ID  ";"            {% return ()}
+    | Dcls PrimType            ID  ";"            {% return ()}
+    | Dcls FWD DataType    DATAID     ";"         {% return ()}    -- Forward declarations solo, agregar con Dec Empty
+    | Dcls ENUMDEC    Ent1 "{" EnumConsList "}"   {% insertEnum $3 }
+    | Dcls STRUCTDEC  Ent1 "{" FieldsList   "}"   {% insertData $3  True }
+    | Dcls UNIONDEC   Ent1 "{" FieldsList   "}"   {% insertData $3  False }
 
 IsGlob : {- λ -}     { False }
          | GLOBAL    { True  }
@@ -214,13 +214,17 @@ ListParam: {- λ -}                              {% return () }
 Parameters: {- λ -}       {% onZip enterScope } -- Tiene sentido?
           | Parameter     {% onZip enterScope } 
 
-EnumConsList: ENUM                      { [$1]  }
-            | EnumConsList "," ENUM     { $3:$1 }
+EnumConsList: ENUM                      {% insertEnumCons 1  $1 }
+            | EnumConsList "," ENUM     {% insertEnumCons $1 $3 }
 
-FieldsList  : ID     "::" PrimType                   {% return ()}
-            | DATAID "::" DATAID                     {% return ()}
-            | FieldsList  "," ID     "::" PrimType   {% return ()}
-            | FieldsList  "," DATAID "::" DATAID     {% return ()}
+FieldsList  : ID "::" PrimType            {% insertDeclareInScope   (makeDec  $3 (position $1)   Nothing) $1 False}
+            | ID "::" Ptrs PrimType       {% insertDeclareInScope   (makePtrs $4 (position $1) $3 Nothing) $1  False }
+            | ID "::" DataType DATAID     {% insertDeclareInScope   (makeDec  $3 (position $1) (Just (lexeme $4))) $1 False} --verificar que realmente existe
+            | ID "::" Ptrs DataType DATAID             {% insertDeclareInScope   (makePtrs $4 (position $1) $3 (Just (lexeme $5))) $1  False } --verificar que realmente existe
+            | FieldsList  "," ID "::" PrimType         {% insertDeclareInScope   (makeDec  $5 (position $3) Nothing) $3 False    }
+            | FieldsList  "," ID "::" Ptrs PrimType    {% insertDeclareInScope   (makePtrs $6 (position $2) $5 Nothing) $3  False}
+            | FieldsList  "," ID "::" DataType DATAID  {% insertDeclareInScope   (makeDec  $5 (position $3) (Just (lexeme $6))) $3 False} --verificar que realmente existe
+            | FieldsList  "," ID "::" Ptrs DataType DATAID  {% insertDeclareInScope (makePtrs $6 (position $3) $5 (Just (lexeme $7))) $3  False } --verificar que realmente existe
 
 -- Counts nesting levels
 Ptrs: "*"        {    1    }
@@ -283,8 +287,9 @@ Term: TRUE         {% return($1) }
     | INT          {% return($1) }
     | CHAR         {% return($1) }
 
-Ent : {- λ -}     {% onZip enterScope }
-Ent3 :  ID          {% insertDeclareInScope (makeIter $1 (position $1)) $1 False } 
+Ent  : {- λ -}      {% onZip enterScope }
+Ent1 : DATAID      { $1 } -- Agregar inmediatamente al scope global la declaracion y verificar si ya no estaba
+Ent3 : ID          {% insertDeclareInScope (makeIter $1 (position $1)) $1 False } 
 
 {
 
@@ -357,6 +362,50 @@ insertFunction typ ident  = do
         whathappened = S.singleton $ Right $ "Function " ++ lexeme ident ++ " added at "++ linecol
         linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident 
 
+
+insertData :: Token -> Bool -> OurMonad ()
+insertData typ isStruct = do 
+    state <- get
+    if isMember ((fromScope.scp) state) (lexeme typ) -- Chequear que es vaina forward
+        then tell error1
+        else do tell whathappened
+                onScope $ insert (lexeme typ)
+                                  (if isStruct 
+                                     then Struct p name (fromZipper (zipp state))
+                                     else Union  p name (fromZipper (zipp state)))
+                onZip (const (fromScope emptyScope)) -- Clean zipper
+  where error1       = S.singleton $ Left  $ "Error:" ++ linecol ++" redeclaraci'o del tipo " ++ lexeme typ
+        whathappened = S.singleton $ Right $ "Agregada la estructura/union "  ++ lexeme typ ++ " en "++ linecol
+        linecol      = (show.fst.position) typ ++":"++(show.snd.position) typ
+        p     = position typ
+        name  = lexeme typ
+
+insertEnum :: Token -> OurMonad ()
+insertEnum id = do
+    state <- get 
+    if isMember ((fromScope.scp) state) (lexeme id) 
+        then tell error1
+        else do tell whathappened
+                onScope $ insert (lexeme id)
+                                 (Enum (position id) (fromZipper (zipp state)))
+    onZip (const (fromScope emptyScope)) -- Clean zipper
+  where error1       = S.singleton $ Left $ "Error:" ++ linecol ++" redeclaraci'o del enum" ++ lexeme id
+        whathappened = S.singleton $ Right $ "Agregado el enum "  ++ lexeme id ++ " en "    ++ linecol
+        linecol      = (show.fst.position) id ++":"++(show.snd.position) id
+
+insertEnumCons :: Int -> Token -> OurMonad(Int)
+insertEnumCons ord (TkEnumCons (l,c) str) = do
+    state <- get
+    if isMember (zipp state) str
+        then tell error1
+        else do tell whathappened
+                onZip $ apply $ insert str (EnumCons (l,c) str ord)
+    return (succ (ord))
+  where error1       = S.singleton $ Left $ "Error:" ++ linecol ++" constante de enum " ++ str ++ " ya declarada."
+        whathappened = S.singleton $ Right $ "Agregada constante de enum "  ++ str ++ " en "    ++ linecol
+        linecol      = show l ++":"++ show c
+
+
 --se deberia verificar que el valor no esta ya en alguna constante
 {-addStr declare = do id  <- gets constGen
                     succCons
@@ -383,6 +432,7 @@ insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) isGlob = do
     tell whathappened
     where error1       = S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" redefinition of " ++ lexeme
           whathappened = S.singleton $ Right $ "Added " ++ lexeme ++ " at "++show l++":"++show c
+
 
 checkItsDeclared :: Token -> OurMonad (Token)
 checkItsDeclared (TkId (l,c) lex) = do
