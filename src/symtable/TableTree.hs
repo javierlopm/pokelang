@@ -11,6 +11,7 @@
     enterScope,
     insert,
     isMember,
+    isInScope,
     lookUp,
     fromScope,
     fromZipper,
@@ -155,6 +156,8 @@ goTop inp@(scp, (Breadcrumb lft rgt act)) = if (act==[RootA] || act==[]) then in
 isMember :: Zipper a -> String -> Bool
 isMember ((Scope st chld),brc) key = Map.member key st
 
+isInScope :: Scope a -> String -> Bool
+isInScope (Scope st _ ) key = Map.member key st
 
 getVal :: Zipper a -> String -> Maybe a
 getVal ((Scope st chld),brc) key = Map.lookup key st

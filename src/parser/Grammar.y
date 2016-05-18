@@ -163,7 +163,7 @@ PrntArgs: {- λ -}             {% return ()}
 NextIf: {- λ -}             {% return ()}
       | NextIf ELIF  Exp ":" Ent SmplDcls Ins {% exitScope  }
 
-Else: {- λ -}      {% return ()}
+Else: {- λ -}                   {% return ()}
     | ELSE ":" Ent SmplDcls Ins {% exitScope  }
 
 
@@ -204,7 +204,7 @@ Parameter: ListParam PrimType           ID   {% insertDeclareInScope   (makeDec 
          | ListParam PrimType Ptrs      ID   {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
          | ListParam PrimType EmptyArrs ID   {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
 
-ListParam: {- λ -}                           {% return () }
+ListParam: {- λ -}                              {% return () }
          | ListParam PrimType        ID ","     {% insertDeclareInScope   (makeDec  $2 (position $3) Nothing) $3 False }
          | ListParam DataType DATAID ID ","     {% insertDeclareInScope   (makeDec  $2 (position $3) (Just (lexeme $3))) $4 False }
          | ListParam PrimType Ptrs   ID ","     {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
@@ -235,52 +235,52 @@ StaticArrs: "[" INT "]"             { [value $2] }
 
 Exp : 
     -- Expresiones Aritméticas.
-      Exp "+" Exp       {% return ()}
-    | Exp "-" Exp       {% return ()}
-    | Exp "^" Exp       {% return ()}
-    | Exp "*" Exp       {% return ()}
-    | Exp "/" Exp       {% return ()}
-    | Exp "//" Exp      {% return ()}
-    | Exp "%" Exp       {% return ()}
-    | "-" Exp %prec NEG {% return ()}
+      Exp "+" Exp       { $1 }
+    | Exp "-" Exp       { $1 }
+    | Exp "^" Exp       { $1 }
+    | Exp "*" Exp       { $1 }
+    | Exp "/" Exp       { $1 }
+    | Exp "//" Exp      { $1 }
+    | Exp "%" Exp       { $1 }
+    | "-" Exp %prec NEG { $1 }
     -- Expresiones Booleanas.
-    | Exp OR Exp        {% return ()}
-    | Exp "||" Exp      {% return ()}
-    | Exp AND Exp       {% return ()}
-    | Exp "&&" Exp      {% return ()}
-    | "!" Exp         {% return ()}
+    | Exp OR Exp        { $1 }
+    | Exp "||" Exp      { $1 }
+    | Exp AND Exp       { $1 }
+    | Exp "&&" Exp      { $1 }
+    | "!" Exp           { $1 }
     -- Expresiones relacionales.
-    | Exp "<"  Exp      {% return ()}
-    | Exp "<=" Exp      {% return ()}
-    | Exp ">"  Exp      {% return ()}
-    | Exp ">=" Exp      {% return ()}
-    | Exp "==" Exp      {% return ()}
-    | Exp "!=" Exp      {% return ()}
+    | Exp "<"  Exp      { $1 }
+    | Exp "<=" Exp      { $1 }
+    | Exp ">"  Exp      { $1 }
+    | Exp ">=" Exp      { $1 }
+    | Exp "==" Exp      { $1 }
+    | Exp "!=" Exp      { $1 }
     -- Expresiones sobre lienzo.
-    | Exp "!!" Exp           {% return ()}
-    | Exp "."  Exp           {% return ()}
-    | ID "[" Exp "]" %prec ARR {% return ()}
+    | Exp "!!" Exp           { $1 }
+    | Exp "."  Exp           { $1 }
+    | ID "[" Exp "]" %prec ARR { $1 }
     --Llamadas a funciones
-    | ID "(" Exp ")"         {% return ()}
+    | ID "(" Exp ")"         { $1 }
     --Acceso a apuntadores
-    | "*" Exp %prec POINT  {% return ()}
+    | "*" Exp %prec POINT  { $1 }
     -- Asociatividad.
-    | "(" Exp ")"    {% return ()}
+    | "(" Exp ")"    { $1 }
     -- Constantes.
-    | Term           {% return ()}
+    | Term           { $1  }
     -- Llamadas
-    | MALLOC "(" Exp ")"       {% return ()}
-    | SIZEOF "(" Exp ")"       {% return ()}
-    | SIZEOF "(" PrimType ")"  {% return ()}
-    | GET    "(" ENUM ")"      {% return ()}
+    | MALLOC "(" Exp ")"       { $1 }
+    | SIZEOF "(" Exp ")"       { $1 }
+    | SIZEOF "(" PrimType ")"  { $1 }
+    | GET    "(" ENUM ")"      { $1 }
 
-Term: TRUE         {   $1   }
-    | FALSE        {   $1   }
-    | ID           {   $1   }
-    | DATAID       {   $1   }
-    | FLOAT        {   $1   }
-    | INT          {   $1   }
-    | CHAR         {   $1   }
+Term: TRUE         {% return($1) }
+    | FALSE        {% return($1) }
+    | ID           {% checkItsDeclared $1 }
+    | DATAID       {  $1  }
+    | FLOAT        {% return($1) }
+    | INT          {% return($1) }
+    | CHAR         {% return($1) }
 
 Ent : {- λ -}     {% onZip enterScope }
 
@@ -354,9 +354,16 @@ insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) isGlob = do
                 then onScope $ insert lexeme dcltype 
                 else onZip $ apply  $ insert lexeme dcltype       
     tell whathappened
-    where error1       = S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" redeclaraci'o de " ++ lexeme
+    where error1       = S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" redeclaración de " ++ lexeme
           whathappened = S.singleton $ Right $ "Agregado " ++ lexeme ++ " en "++show l++":"++show c
 
+checkItsDeclared :: Token -> OurMonad (Token)
+checkItsDeclared (TkId (l,c) lex) = do
+    state <- get
+    if isMember (zipp state) lex || isInScope (scp state) lex
+        then tell $ S.singleton $ Right  $ "Variable " ++ lex ++ ":" ++ show l++":"++show c ++ " bien utilizada."
+        else tell $ S.singleton $ Left   $ concat $ ["Error:",show l,":",show c," variable ",lex," usada pero no declarada."]
+    return $ TkId (l,c) lex
   
 
 parseError [] = error $ "EOF Inesperado"
