@@ -1,10 +1,10 @@
 To-Do:
 #Instrucciones
-**Acciones monadicas de instrucciones
+**Acciones monadicas de instrucciones                          --Avance, Read and write.
 **Verificar que no se asigne la variable de iteracion
-**ID's ya esten declarados en las instrucciones
+**ID's ya esten declarados en las instrucciones                √ 
 #Expresiones
-**ID's ya esten declarados en las expresiones
+**ID's ya esten declarados en las expresiones                  √ 
 **ID's de las llamadas a funciones correspondan a una funcion
 **Simbol Table de las instancias de funciones
 **Simbol Table de las instancias de structs

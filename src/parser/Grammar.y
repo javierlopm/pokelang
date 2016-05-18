@@ -137,22 +137,23 @@ import qualified Data.Sequence as S
 Prog : Dcls  {% return ()}
 
 Ins : {- λ -}                                 {% return () }
-    | Ins PRINT "(" STRING PrntArgs ")"   ";" {% onScope $ insert ("_"++(content $4)) (Cons (position $4)) }
-    | Ins READ  "("       ID        ")"   ";" {% return ()}
-    | Ins WRITE "("       ID        ")"   ";" {% return ()}
+    | Ins PRINT "(" STRING PrntArgs ")"   ";" {% onScope $ insert ('_':(content $4)) (Cons (position $4)) }
+    | Ins READ  "("       ID        ")"   ";" {% checkReadable $4 True}
+    | Ins WRITE "("       ID        ")"   ";" {% checkReadable $4 False}
     | Ins Exp "=" Exp         ";"         {% return ()}
-    | Ins Exp "*=" Exp        ";"         {% return ()}
+    | Ins Exp "*=" Exp        ";"         {% checkLIter $2 }
     | Ins Exp "+=" Exp        ";"         {% return ()}
-    | Ins BREAK             ";"         {% return ()}
-    | Ins CONTINUE          ";"         {% return ()}
-    | Ins RETURN   Exp      ";"         {% return ()}
-    | Ins EXIT              ";"         {% return ()}
-    | Ins FREE "("ID")"     ";"         {% return ()}
-    | Ins FREE "("DATAID")" ";"         {% return ()}
-    | Ins READ "("DATAID")" ";"         {% return ()}
+    | Ins BREAK             ";"         {% return ()} --√
+    | Ins CONTINUE          ";"         {% return ()} --√
+    | Ins RETURN   Exp      ";"         {% return ()} --√
+    | Ins RETURN            ";"         {% return ()} --En los void?  --√
+    | Ins EXIT              ";"         {% return ()} --√ 
+    | Ins FREE "("ID")"     ";"         {% return ()} --√
+    --| Ins FREE "("DATAID")" ";"         {% return ()}
+    --| Ins READ "("DATAID")" ";"         {% return ()}
     | Ins IF Exp    ":" Ent SmplDcls Ins NextIf Else END            {% exitScope  }
     | Ins WHILE Exp ":" Ent SmplDcls Ins END                        {% exitScope  }
-    | Ins FOR ID "=" Exp  "|" Exp "|" Exp ":" Ent SmplDcls Ins  END {% exitScope  }
+    | Ins FOR ID "=" Exp  "|" Exp "|" Exp ":" Ent SmplDcls Ins  END {% onZip enterScope >> insertDeclareInScope (makeIter $3 (position $3)) $3 False  >> exitScope }
     | Ins FOR ID "=" Exp  "|" Exp         ":" Ent SmplDcls Ins  END {% exitScope  }
     | Ins FOR ID "=" ENUM "|" ENUM        ":" Ent SmplDcls Ins  END {% exitScope  }
     | Ins BEGIN Ent SmplDcls Ins END                                {% exitScope  } -- No debe aceptar funciones
@@ -175,16 +176,16 @@ SmplDcls: {- λ -}                                     {% return () }
     | SmplDcls IsGlob PrimType               ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $4) Nothing) $4  $2}
     | SmplDcls IsGlob DataType DATAID        ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $5) (Just (lexeme $4))) $5  $2}
 
-Dcls:  {- λ -}                                {% return ()}
+Dcls:  {- λ -}                                       {% return ()}
     | Dcls FUNC PrimType ID "(" Parameters ")" ":" SmplDcls Ins END {% insertFunction $3 $4 }
-    | Dcls PrimType Ptrs       ID  ";"  {% return ()}
-    | Dcls PrimType EmptyArrs  ID  ";"  {% return ()}
-    | Dcls PrimType StaticArrs ID  ";"  {% return ()}
-    | Dcls PrimType            ID  ";"   {% return ()}
-    | Dcls FWD DataType    DATAID     ";"          {% return ()}    -- Forward declarations solo
-    | Dcls ENUMDEC DATAID   "{" EnumConsList "}"   {% return ()}
+    | Dcls PrimType Ptrs       ID  ";"               {% return ()}
+    | Dcls PrimType EmptyArrs  ID  ";"               {% return ()}
+    | Dcls PrimType StaticArrs ID  ";"               {% return ()}
+    | Dcls PrimType            ID  ";"               {% return ()}
+    | Dcls FWD DataType    DATAID     ";"            {% return ()}    -- Forward declarations solo
+    | Dcls ENUMDEC DATAID   "{" EnumConsList "}"     {% return ()}
     | Dcls STRUCTDEC  DATAID  "{" FieldsList   "}"   {% return ()}
-    | Dcls UNIONDEC  DATAID  "{" FieldsList   "}"   {% return ()}
+    | Dcls UNIONDEC  DATAID  "{" FieldsList   "}"    {% return ()}
 
 IsGlob : {- λ -}     { False }
          | GLOBAL    { True  }
@@ -295,6 +296,16 @@ data ScopeNZip = ScopeNZip { scp      :: SymTable
                            , zipp     :: TableZipper} 
                            deriving (Show)
 
+checkReadable :: Token -> Bool -> OurMonad ()
+checkReadable (TkId (l,c) lex) bit = do
+    state <- get
+    let word = if bit then "readable."
+                      else "writeable."
+    if isReadable (lookUp (zipp state) lex) || isReadable (getValS lex (scp state) )
+        then tell $ S.singleton $ Right  $ "Variable " ++ lex ++ ":" ++ show l++":"++show c ++ " is "++word
+        else tell $ S.singleton $ Left   $ concat $ ["Error:",show l,":",show c," variable ",lex," is not "++word++"ESTOY EN:\n","================",(show . fst) (zipp state),"==================","\n"]
+    return ()
+  
 initialState :: ScopeNZip
 initialState = ScopeNZip emptyScope (fromScope emptyScope)
 
@@ -331,8 +342,8 @@ insertFunction typ ident  = do
                                            (makeType typ) 
                                            (fromZipper (zipp state)))
                 onZip (const (fromScope emptyScope)) -- Clean zipper
-  where error1       = S.singleton $ Left  $ "Error:" ++ linecol ++" redeclaraci'o de " ++ lexeme ident
-        whathappened = S.singleton $ Right $ "Agregada la funcion " ++ lexeme ident ++ " en "++ linecol
+  where error1       = S.singleton $ Left  $ "Error:" ++ linecol ++" redefinition of " ++ lexeme ident
+        whathappened = S.singleton $ Right $ "Function " ++ lexeme ident ++ " added at "++ linecol
         linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident 
 
 --se deberia verificar que el valor no esta ya en alguna constante
@@ -344,7 +355,7 @@ insertDeclareInScope :: Maybe Declare -> Token -> Bool -> OurMonad ()
 insertDeclareInScope Nothing (TkId (l,c) lexeme ) _ =
     tell $ S.singleton $ Left  $ 
     "Error:" ++show l++":"++show c ++" "  ++ lexeme ++ 
-    " es del tipo VOIDtorb, el cual solo puede ser instanciado como referencia."
+    " is VOIDtorb, but it may only be instanced as reference."
 insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) isGlob = do 
     table <- get 
     if isMember (zipp table) lexeme
@@ -353,19 +364,19 @@ insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) isGlob = do
                 then onScope $ insert lexeme dcltype 
                 else onZip $ apply  $ insert lexeme dcltype       
     tell whathappened
-    where error1       = S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" redeclaración de " ++ lexeme
-          whathappened = S.singleton $ Right $ "Agregado " ++ lexeme ++ " en "++show l++":"++show c
+    where error1       = S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" redefinition of " ++ lexeme
+          whathappened = S.singleton $ Right $ "Added " ++ lexeme ++ " at "++show l++":"++show c
 
 checkItsDeclared :: Token -> OurMonad (Token)
 checkItsDeclared (TkId (l,c) lex) = do
     state <- get
     if (not . isNothing) (lookUp (zipp state) lex) || isInScope (scp state) lex
-        then tell $ S.singleton $ Right  $ "Variable " ++ lex ++ ":" ++ show l++":"++show c ++ " bien utilizada."
-        else tell $ S.singleton $ Left   $ concat $ ["Error:",show l,":",show c," variable ",lex," usada pero no declarada.ESTOY EN:\n","================",(show . fst) (zipp state),"==================","\n"]
+        then tell $ S.singleton $ Right  $ "Variable " ++ lex ++ " at " ++ show l++":"++show c ++ " well used."
+        else tell $ S.singleton $ Left   $ concat $ ["Error:",show l,":",show c," variable ",lex," used but not declared.ESTOY EN:\n","================",(show . fst) (zipp state),"==================","\n"]
     return $ TkId (l,c) lex
   
 
-parseError [] = error $ "EOF Inesperado"
+parseError [] = error $ "EOF unexpected"
 parseError l  = error $ "Parsing error at: \n" ++ show (head l)
 
 parse [] = print "Hola"

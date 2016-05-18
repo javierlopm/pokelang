@@ -3,10 +3,12 @@ module Types(
     Declare(..),
     Message,
     isPointer,
+    isReadable,
     makeDec,
     makePtrs,
     makeType,
-    makeArr
+    makeArr,
+    makeIter
 ) where
 
 import TableTree(Scope(..))
@@ -19,7 +21,8 @@ import Tokens(Token(TkInt
                    ,TkUnion
                    ,TkEnum
                    ,TkNull
-                   ,TkDId))
+                   ,TkDId
+                   ,TkId))
 
 type Message = Either String String -- Monad writer message unit
 type Pos = (Int,Int)
@@ -47,10 +50,11 @@ data Declare = Function     { pos::Pos,
              deriving(Show) -- Instance de Eq que ignore por para ver si ya algo esta en las glob
 
 data PrimType = PrimInt     Int
+              | PrimIter    Int
               | PrimBool    Bool
               | PrimChar    Char
-              | PrimString  String
               | PrimFloat   Float
+              | PrimString  String
               | PrimEnum    String
               | PrimUnion   String
               | PrimStruct  String
@@ -66,6 +70,17 @@ data Type = TypeInt       -- Marcar con Maybe?
           | TypeStruct  
           | TypeUnion  
           deriving(Show,Eq)
+
+--Checks if a declaration is readable
+isReadable :: Maybe Declare -> Bool
+isReadable (Just (Variable _ stType)) = case (stType) of
+                                          PrimInt    _  -> True
+                                          PrimIter   _  -> True
+                                          PrimBool   _  -> True
+                                          PrimChar   _  -> True
+                                          PrimFloat  _  -> True
+                                          otherwise     -> False
+isReadable a = False
 
 -- Check if declare is a pointer
 isPointer :: Declare -> Bool
@@ -86,6 +101,10 @@ makeDec t p Nothing = Just $
         TkBool   _ -> Variable p (PrimBool False)
         TkChar   _ -> Variable p (PrimChar '\0')
         TkFloat  _ -> Variable p (PrimFloat 0.0)
+
+makeIter :: Token -> Pos -> Maybe Declare
+makeIter (TkId _ _) p = Just $ Variable p (PrimIter 0) 
+makeIter a p = Nothing
 
 -- Create a pointer declaration
 makePtrs :: Token -> Pos -> Int -> Maybe String -> Maybe Declare

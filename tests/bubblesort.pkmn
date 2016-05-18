@@ -1,14 +1,21 @@
 --
     Implementacio'n de bubblesort en pokelang
 --
+
+funcball VOIDtorb nothing( pINTachu arr,pINTachu size):
+    pINTachu ordenados;
+vamo_a_calmano
+
 funcball VOIDtorb bubble( pINTachu arr, 
                           pINTachu size ):      
-
     pINTachu temp;
     pINTachu ordenados;
     pINTachu pos;
     --pINTachu ordenados;--
     VOIDtorb *voidtype;
+    pINTachu holis;
+    vamo_a_lee(holis);
+    --vamo_a_escribi(bubbles);--
 
     vamo_a_imprimi("hola mundo");
 
@@ -23,9 +30,7 @@ funcball VOIDtorb bubble( pINTachu arr,
             vamo_a_calmano
         vamo_a_calmano
     vamo_a_calmano
-
 vamo_a_calmano
 
-funcball VOIDtorb nothing( pINTachu arr,pINTachu size):
-    pINTachu ordenados;
-vamo_a_calmano
+
+

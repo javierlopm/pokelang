@@ -15,6 +15,7 @@
     lookUp,
     fromScope,
     fromZipper,
+    getValS,
     fuse
     ) where
 
@@ -158,6 +159,10 @@ isMember ((Scope st chld),brc) key = Map.member key st
 
 isInScope :: Scope a -> String -> Bool
 isInScope (Scope st _ ) key = Map.member key st
+
+getValS :: String -> Scope a -> Maybe a
+getValS key (Scope st chld)= Map.lookup key st
+
 
 getVal :: Zipper a -> String -> Maybe a
 getVal ((Scope st chld),brc) key = Map.lookup key st
