@@ -29,7 +29,7 @@ main = do
                                 putStrLn "Log:"
                                 mapM_ print $ toList $ strlog
                                 putStrLn "Table:"
-                                print $ makeTable state -- $ fromZipper state
+                                (putStrLn . show) $ makeTable state -- $ fromZipper state
                 "-a"      -> do mapM_ print goods
                                 putStrLn "\n" 
                                 let (state,strlog) = execRWS (parser goods) "" initialState

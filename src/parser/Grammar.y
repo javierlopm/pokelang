@@ -3,7 +3,7 @@ module Grammar(parser,ScopeNZip(..),makeTable,initialState) where
 import Tokens
 import TableTree
 import Types
-import Data.Maybe(fromJust)
+import Data.Maybe(fromJust,isNothing)
 import Control.Monad.RWS.Strict
 import qualified Data.Sequence as S
 
@@ -360,9 +360,9 @@ insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) isGlob = do
 checkItsDeclared :: Token -> OurMonad (Token)
 checkItsDeclared (TkId (l,c) lex) = do
     state <- get
-    if isMember (zipp state) lex || isInScope (scp state) lex
+    if (not . isNothing) (lookUp (zipp state) lex) || isInScope (scp state) lex
         then tell $ S.singleton $ Right  $ "Variable " ++ lex ++ ":" ++ show l++":"++show c ++ " bien utilizada."
-        else tell $ S.singleton $ Left   $ concat $ ["Error:",show l,":",show c," variable ",lex," usada pero no declarada."]
+        else tell $ S.singleton $ Left   $ concat $ ["Error:",show l,":",show c," variable ",lex," usada pero no declarada.ESTOY EN:\n","================",(show . fst) (zipp state),"==================","\n"]
     return $ TkId (l,c) lex
   
 
