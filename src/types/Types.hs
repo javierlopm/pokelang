@@ -3,6 +3,7 @@ module Types(
     Declare(..),
     Message,
     isPointer,
+    isEmpty,
     isReadable,
     isLIter,
     makeDec,
@@ -104,6 +105,10 @@ isReadable a = False
 isPointer :: Declare -> Bool
 isPointer (Pointer _ _ _ _) = True
 isPointer _                = False
+
+isEmpty :: Declare -> Bool
+isEmpty Empty = True
+isEmpty _     = False
 
 -- Create declare with a Token an a position
 makeDec :: Token -> Pos -> Maybe String -> Maybe Declare

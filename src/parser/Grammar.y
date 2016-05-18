@@ -177,7 +177,7 @@ SmplDcls: {- λ -}                                     {% return () }
     | SmplDcls IsGlob DataType DATAID        ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $5) (Just (lexeme $4))) $5  $2}
 
 Dcls:  {- λ -}                                       {% return ()}
-    | Dcls FUNC PrimType ID "(" Parameters ")" ":" SmplDcls Ins END {% insertFunction $3 $4 }
+    | Dcls FUNC PrimType Ent2 "(" Parameters ")" ":" SmplDcls Ins END {% insertFunction $3 $4 }
     | Dcls PrimType Ptrs       ID  ";"            {% return ()}
     | Dcls PrimType EmptyArrs  ID  ";"            {% return ()}
     | Dcls PrimType StaticArrs ID  ";"            {% return ()}
@@ -287,8 +287,9 @@ Term: TRUE         {% return($1) }
     | INT          {% return($1) }
     | CHAR         {% return($1) }
 
-Ent  : {- λ -}      {% onZip enterScope }
-Ent1 : DATAID      { $1 } -- Agregar inmediatamente al scope global la declaracion y verificar si ya no estaba
+Ent  : {- λ -}     {% onZip enterScope  }
+Ent1 : DATAID      {% insertCheckFunc $1 >> return $1 } 
+Ent2 : ID          {% insertCheckFunc $1 >> return $1 } 
 Ent3 : ID          {% insertDeclareInScope (makeIter $1 (position $1)) $1 False } 
 
 {
@@ -347,11 +348,30 @@ succCons = do conG  <- gets constGen
 exitScope :: OurMonad ()
 exitScope = onZip (fromJust.goUp)
 
+-- Agregar por adelantado para recursion
+insertCheckFunc :: Token -> OurMonad ()
+insertCheckFunc tk = do
+    state <- get
+    if isMember ((fromScope.scp) state) (lexeme tk)
+        then tell error1
+        else do tell whathappened
+                onScope $ insert (lexeme tk) Empty
+  where error1       = S.singleton $ Left  $ "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
+        whathappened = S.singleton $ Right $ "Agregando " ++ lexeme tk ++ " por adelantado en "++ linecol
+        linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk 
+
 insertFunction :: Token -> Token -> OurMonad ()
 insertFunction typ ident  = do 
     state <- get
-    if isMember ((fromScope.scp) state) (lexeme ident)
-        then tell error1
+    if isMember ((fromScope.scp) state) (lexeme ident) 
+        then do if ( isEmpty . fromJust ) (getValS (lexeme ident) (scp state)) 
+                    then do tell whathappened
+                            onScope $ insert (lexeme ident) 
+                                             (Function (position ident) 
+                                                       (makeType typ) 
+                                                       (fromZipper (zipp state)))
+                            onZip (const (fromScope emptyScope)) -- Clean zipper
+                    else tell error1
         else do tell whathappened
                 onScope $ insert (lexeme ident) 
                                  (Function (position ident) 
@@ -367,7 +387,14 @@ insertData :: Token -> Bool -> OurMonad ()
 insertData typ isStruct = do 
     state <- get
     if isMember ((fromScope.scp) state) (lexeme typ) -- Chequear que es vaina forward
-        then tell error1
+        then do if ( isEmpty . fromJust ) (getValS (lexeme typ) (scp state))  
+                    then do tell whathappened
+                            onScope $ insert (lexeme typ)
+                                              (if isStruct 
+                                                 then Struct p name (fromZipper (zipp state))
+                                                 else Union  p name (fromZipper (zipp state)))
+                            onZip (const (fromScope emptyScope)) -- Clean zipper
+                    else tell error1
         else do tell whathappened
                 onScope $ insert (lexeme typ)
                                   (if isStruct 
@@ -384,7 +411,11 @@ insertEnum :: Token -> OurMonad ()
 insertEnum id = do
     state <- get 
     if isMember ((fromScope.scp) state) (lexeme id) 
-        then tell error1
+        then do if ( isEmpty . fromJust ) (getValS (lexeme id) (scp state))  
+                    then do tell whathappened
+                            onScope $ insert (lexeme id)
+                                    (Enum (position id) (fromZipper (zipp state)))
+                    else tell error1
         else do tell whathappened
                 onScope $ insert (lexeme id)
                                  (Enum (position id) (fromZipper (zipp state)))
