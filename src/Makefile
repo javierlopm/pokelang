@@ -1,7 +1,7 @@
 target: Pokelang
 nolex: PokelangNoLex # Without lex recompilation
 
-alldirs = -ilexer -itokens -iparser -isymtable -itypes
+alldirs = -ilexer -itokens -iparser -isymtable -itypes -imonads
 
 Tokens.o: 
 	ghc  tokens/Tokens.hs
@@ -11,6 +11,9 @@ Lexer.hs: Tokens.o
 	alex --latin1 lexer/Lexer.x -o lexer/Lexer.hs
 
 # Parser
+Rwsgrammar.o: Tokens.o Types.o SymTable.o
+	ghc monads/GrammarMonad.hs -itokens -isymtable -itypes
+
 Grammar.hs: Tokens.o 
 	happy parser/Grammar.y -o parser/Grammar.hs # --info=grammarinfo.md
 
@@ -24,10 +27,10 @@ Types.o: SymTable.o Tokens.o
 	ghc types/Types.hs -isymtable -itokens
 
 # Main
-Pokelang: Grammar.hs SymTable.o Types.o Lexer.hs
+Pokelang: Grammar.hs SymTable.o Types.o Lexer.hs Rwsgrammar.o
 	ghc pokelang.hs $(alldirs)
 
-PokelangNoLex: Grammar.hs SymTable.o Types.o
+PokelangNoLex: Grammar.hs SymTable.o Types.o Rwsgrammar.o
 	ghc pokelang.hs $(alldirs)
 
 clean:
@@ -35,4 +38,5 @@ clean:
 	cd tokens   ; rm -f *.o *.hi
 	cd lexer    ; rm -f *.o *.hi Lexer.hs
 	cd parser   ; rm -f *.o *.hi Grammar.hs
-	cd symtable ; rm -f *.o *.hi 
+	cd symtable ; rm -f *.o *.hi
+	cd monads   ; rm -f *.o *.hi

@@ -6,7 +6,7 @@ import Grammar
 import Lexer
 import TableTree
 import Types
-import Control.Monad.RWS.Strict
+import GrammarMonad
 import Data.Foldable(toList)
 
 
@@ -25,14 +25,14 @@ main = do
   if null errors 
       then case runargs of 
                 "-l"      -> mapM_ print goods
-                "-p"      -> do let (state,strlog) = execRWS (parser goods) "" initialState
+                "-p"      -> do let (state,strlog) = exec (parser goods) "" initialState
                                 putStrLn "Log:"
                                 mapM_ print $ toList $ strlog
                                 putStrLn "Table:"
                                 (putStrLn . show) $ makeTable state -- $ fromZipper state
                 "-a"      -> do mapM_ print goods
                                 putStrLn "\n" 
-                                let (state,strlog) = execRWS (parser goods) "" initialState
+                                let (state,strlog) = exec (parser goods) "" initialState
                                 putStrLn "Log:"
                                 print strlog
                                 putStrLn "Table:"
