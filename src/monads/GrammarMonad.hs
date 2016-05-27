@@ -11,6 +11,7 @@ module GrammarMonad(
     makeTable,
     onZip,
     onScope,
+    onStrigns,
     exitScope,
     insertCheckFunc,
     insertFunction,
@@ -34,6 +35,7 @@ type TableZipper = Zipper Declare
 
 -- state from monad State
 data ScopeNZip = ScopeNZip { scp      :: SymTable
+                           , strTbl  :: SymTable,
                            , zipp     :: TableZipper} 
                            deriving (Show)
 
@@ -78,6 +80,12 @@ onZip :: (TableZipper -> TableZipper ) -> OurMonad()
 onZip fun = do zipper <- gets zipp
                state  <- get
                put state { zipp = fun zipper }
+
+
+onStrigns :: (TableZipper -> TableZipper ) -> OurMonad()
+onStrigns fun = do zipper <- gets zipp
+                   state  <- get
+                   put state { strTbl = fun strTbl }
 
 
 onScope :: (SymTable -> SymTable) -> OurMonad ()

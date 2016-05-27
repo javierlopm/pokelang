@@ -29,7 +29,7 @@ INSERTAR NOMBRE AS SOON AS POSSIBLE MISSING --javier working on it
 mover errores a la salida estandar
 Unificar lenguaje spanglish de errores
 mejorar prints de declaraciones
-mover strings a una tabla aparte
+mover strings a una tabla aparte               -- javier working on it
 arreglar parametros de llamadas a funciones
 forward declarations
 Maybe ~ arreglar los flags para mostrar o no los logs
