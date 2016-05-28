@@ -141,49 +141,51 @@ import GrammarMonad
 
 Prog : Dcls  {% return ()}
 
-Ins : {- λ -}                                 {% return () }
-    | Ins PRINT "(" STRING PrntArgs ")"   ";" {% onStrScope $ insert (content $4) (Cons (position $4)) }
-    | Ins READ  "("       ID        ")"   ";" {% checkReadable $4 True}
-    | Ins WRITE "("       ID        ")"   ";" {% checkReadable $4 False}
-    | Ins Exp "=" Exp         ";"         {% checkLIter $2}
-    | Ins Exp "*=" Exp        ";"         {% checkLIter $2 }
-    | Ins Exp "+=" Exp        ";"         {% checkLIter $2}
-    | Ins Exp "-=" Exp        ";"         {% checkLIter $2}
-    | Ins BREAK             ";"         {% return ()} --√
-    | Ins CONTINUE          ";"         {% return ()} --√
-    | Ins RETURN   Exp      ";"         {% return ()} --√
-    | Ins RETURN            ";"         {% return ()} --En los void?  --√
-    | Ins EXIT              ";"         {% return ()} --√ 
-    | Ins FREE "("ID")"     ";"         {% return ()} --√
-    --| Ins FREE "("DATAID")" ";"         {% return ()}
-    --| Ins READ "("DATAID")" ";"         {% return ()}
-    | Ins IF Exp    ":" Ent0 SmplDcls Ins NextIf Else END            {% exitScope  }
-    | Ins WHILE Exp ":" Ent0 SmplDcls Ins END                        {% exitScope  }
+Ins : {- λ -}                   {% return () }
+    | Ins Exp "=" Exp    ";"    {% checkLIter $2}
+    | Ins Exp "*=" Exp   ";"    {% checkLIter $2 }
+    | Ins Exp "+=" Exp   ";"    {% checkLIter $2}
+    | Ins Exp "-=" Exp   ";"    {% checkLIter $2}
+    | Ins BREAK          ";"    {% return ()}
+    | Ins CONTINUE       ";"    {% return ()}
+    | Ins RETURN   Exp   ";"    {% return ()}
+    | Ins RETURN         ";"    {% return ()}
+    | Ins EXIT           ";"    {% return ()} 
+    | Ins PRINT "(" STRING PrntArgs ")" ";" {% onStrScope $ insert (content $4) (Cons (position $4)) }
+    | Ins READ  "("       ID        ")" ";" {% checkReadable $4 True}
+    | Ins WRITE "("       ID        ")" ";" {% checkReadable $4 False}
+    | Ins FREE  "("       ID        ")" ";" {% return ()}
+    | Ins FREE  "("     DATAID      ")" ";" {% return ()}
+    | Ins READ  "("     DATAID      ")" ";" {% return ()}
+    | Ins BEGIN Ent0 SmplDcls Ins END       {% exitScope  } -- No debe aceptar funciones
+    | Ins IF Exp    ":" Ent0 SmplDcls Ins NextIf Else END    {% exitScope  }
+    | Ins WHILE Exp ":" Ent0 SmplDcls Ins END                {% exitScope  }
     | Ins FOR Ent0 Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope  }
     | Ins FOR Ent0 Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope  }
     | Ins FOR Ent0 Ent3 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope  }
-    | Ins BEGIN Ent0 SmplDcls Ins END                                {% exitScope  } -- No debe aceptar funciones
 
 PrntArgs: {- λ -}             {% return ()}
-        | PrntArgs "," Exp    {% return ()} -- Siempre es necesaria una coma a la izq
+        | PrntArgs "," Exp    {% return ()} 
 
-NextIf: {- λ -}             {% return ()}
+NextIf: {- λ -}                                {% return ()}
       | NextIf ELIF  Exp ":" Ent0 SmplDcls Ins {% exitScope  }
 
-Else: {- λ -}                   {% return ()}
+Else: {- λ -}                    {% return ()  }
     | ELSE ":" Ent0 SmplDcls Ins {% exitScope  }
 
 
-SmplDcls: {- λ -}                             {% return ()}        
-        | SmplDcls GlobDeclare ";"              {% return ()}
+SmplDcls: {- λ -}                    {% return ()}        
+        | SmplDcls GlobDeclare ";"   {% return ()}
 
-Dcls:  {- λ -}                                       {% return ()}
+Dcls:  {- λ -}                                                        {% return ()}
+    | Dcls Reference              ";"   {% return ()} -- Always global
+    | Dcls FWD STRUCTDEC  DATAID  ";"   {% return ()}    -- Forward declarations solo, agregar con Dec Empty
+    | Dcls FWD UNIONDEC   DATAID  ";"   {% return ()}    -- Forward declarations solo, agregar con Dec Empty
+    | Dcls FUNC PrimType Ent2 "(" Parameters ")" ";" {% return () }
+    | Dcls ENUMDEC    Ent1 "{" EnumConsList "}"      {% insertEnum $3        }
+    | Dcls STRUCTDEC  Ent1 "{" FieldsList   "}"      {% insertData $3  True  }
+    | Dcls UNIONDEC   Ent1 "{" FieldsList   "}"      {% insertData $3  False }
     | Dcls FUNC PrimType Ent2 "(" Parameters ")" ":" SmplDcls Ins END {% insertFunction $3 $4 }
-    | Dcls Reference  ";"            {% return ()} -- Always global
-    | Dcls FWD DataType  DATAID     ";"           {% return ()}    -- Forward declarations solo, agregar con Dec Empty
-    | Dcls ENUMDEC    Ent1 "{" EnumConsList "}"   {% insertEnum $3 }
-    | Dcls STRUCTDEC  Ent1 "{" FieldsList   "}"   {% insertData $3  True }
-    | Dcls UNIONDEC   Ent1 "{" FieldsList   "}"   {% insertData $3  False }
 
 GlobDeclare : Reference          { False }
             | GLOBAL Reference   { True  }
@@ -232,17 +234,6 @@ CleanType : INTDEC           { $1 }
 
 FieldsList  : ID "::" CleanRef                  {% return ()}
             | FieldsList  "," ID "::" CleanRef  {% return () } --verificar que realmente existe
-
--- FieldsList  : ID "::" PrimType            {% insertDeclareInScope   (makeDec  $3 (position $1)   Nothing) $1 False}
---             | ID "::" Ptrs PrimType       {% insertDeclareInScope   (makePtrs $4 (position $1) $3 Nothing) $1  False }
---             | ID "::" DataType DATAID     {% insertDeclareInScope   (makeDec  $3 (position $1) (Just (lexeme $4))) $1 False} --verificar que realmente existe
---             | ID "::" Ptrs DataType DATAID             {% insertDeclareInScope   (makePtrs $4 (position $1) $3 (Just (lexeme $5))) $1  False } --verificar que realmente existe
---             | FieldsList  "," ID "::" PrimType         {% insertDeclareInScope   (makeDec  $5 (position $3) Nothing) $3 False    }
---             | FieldsList  "," ID "::" Ptrs PrimType    {% insertDeclareInScope   (makePtrs $6 (position $2) $5 Nothing) $3  False}
---             | FieldsList  "," ID "::" DataType DATAID  {% insertDeclareInScope   (makeDec  $5 (position $3) (Just (lexeme $6))) $3 False} --verificar que realmente existe
---             | FieldsList  "," ID "::" Ptrs DataType DATAID  {% insertDeclareInScope (makePtrs $6 (position $3) $5 (Just (lexeme $7))) $3  False } --verificar que realmente existe
-
-
 
 Exp : 
     -- Expresiones Aritméticas.
