@@ -22,6 +22,9 @@ checkParseError = F.foldr pick ([],[],0)
     where pick (Left str)  (gs,bds,count) = (gs,str:bds,count+1)
           pick (Right str) (gs,bds,count) = (str:gs,bds,count)
 
--- Print errors to stderr
-printErrors :: Show a => [a] -> IO()
-printErrors = mapM_ ((hPutStrLn  stderr) . show)
+-- Print error count and errors to stderr
+printErrors :: Show a => Int -> (a->String) -> [a] -> IO()
+printErrors c f l = do 
+    mapM_ ((hPutStrLn  stderr) . f) l
+    hPutStrLn  stderr $ "pkcc: "++ show c ++ if c > 1 then " errors found."
+                                                      else " error sfound"

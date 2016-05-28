@@ -1,12 +1,12 @@
 Done
 ====
-mover strings a una tabla aparte               -- done
+mover strings a una tabla aparte
+mover errores a la salida estandar
 
 In process
 =======
-mover errores a la salida estandar            -- javier 
-Unificar lenguaje spanglish de errores        -- javier 
-mejorar prints de declaraciones               -- javier 
+Unificar lenguaje spanglish de errores y formato   -- javier 
+mejorar prints de declaraciones                    -- javier 
 
 Missing
 =======

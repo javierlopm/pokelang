@@ -26,11 +26,11 @@ funcball VOIDtorb bubble( pINTachu arr,
     pINTachu temp;
     pINTachu ordenados;
     pINTachu pos;
-    --pINTachu ordenados;--
+    #pINTachu ordenados;
     VOIDtorb *voidtype;
     pINTachu holis;
     vamo_a_lee(holis);
-    --vamo_a_escribi(bubbles);--
+    #vamo_a_escribi(bubbles);
 
     vamo_a_imprimi("hola mundo");
     vamo_a_imprimi("hola mundo");
@@ -38,12 +38,12 @@ funcball VOIDtorb bubble( pINTachu arr,
     temp = temp * temp;
 
     vamo_a_itera ordenados = 0 |size-2|1: 
-        ordenados = ordenados+ 1;
-        ordenados -= 1;
+        #ordenados = ordenados+ 1;
+        #ordenados -= 1;
         vamo_a_itera pos = ordenados |size-2|1:
             si arr[pos] < arr[pos+1]:
                 temp       = arr[pos+1];
-                temp       = nothing(1);
+                #temp       = nothing(1);
                 arr[pos+1] = arr[pos];
                 arr[pos]   = temp;
             vamo_a_calmano

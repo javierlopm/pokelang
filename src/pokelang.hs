@@ -30,9 +30,7 @@ execParser printLex tokens = do
     then do let (strs,scps) =  makeTable state -- $ fromZipper state
             putStrLn $ "Strings: \n======================="  ++ show strs
             putStrLn $ "SymTable:\n========================" ++ show scps
-    else do print $ "--pkcc: "++ show errorcount ++ " errors found."
-            printErrors errors
-
+    else do printErrors errorcount id errors
 
 main = do
   arg1:arg2:_ <- getArgs
@@ -46,5 +44,4 @@ main = do
                 "-p"      -> execParser False goods
                 "-a"      -> execParser True  goods
                 otherwise -> print $ "Unrecognized argument" ++ runargs
-      else do printErrors errors
-              print $ "--pkcc: "++ show errorcount ++ " errors found."
+      else do print $ "--pkcc: "++ show errorcount ++ " errors found."
