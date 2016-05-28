@@ -109,7 +109,6 @@ import GrammarMonad
 -- Para las expresiones relacionales.
 --%nonassoc '<' <\=' '>' '>\=' '=' '\/=' '..'
 
-
 -- Para los booleanos.
 %left  OR
 %left  AND
@@ -143,7 +142,7 @@ Prog : Dcls  {% return ()}
 
 Ins : {- λ -}                   {% return () }
     | Ins Exp "=" Exp    ";"    {% checkLIter $2}
-    | Ins Exp "*=" Exp   ";"    {% checkLIter $2 }
+    | Ins Exp "*=" Exp   ";"    {% checkLIter $2}
     | Ins Exp "+=" Exp   ";"    {% checkLIter $2}
     | Ins Exp "-=" Exp   ";"    {% checkLIter $2}
     | Ins BREAK          ";"    {% return ()}
@@ -164,37 +163,44 @@ Ins : {- λ -}                   {% return () }
     | Ins FOR Ent0 Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope  }
     | Ins FOR Ent0 Ent3 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope  }
 
+-- Print arguments
 PrntArgs: {- λ -}             {% return ()}
         | PrntArgs "," Exp    {% return ()} 
 
+-- List of elseif
 NextIf: {- λ -}                                {% return ()}
       | NextIf ELIF  Exp ":" Ent0 SmplDcls Ins {% exitScope  }
 
+-- Else list
 Else: {- λ -}                    {% return ()  }
     | ELSE ":" Ent0 SmplDcls Ins {% exitScope  }
 
-
+-- Declarations that could be global.
 SmplDcls: {- λ -}                    {% return ()}        
         | SmplDcls GlobDeclare ";"   {% return ()}
 
-Dcls:  {- λ -}                                                        {% return ()}
-    | Dcls Reference              ";"   {% return ()} -- Always global
-    | Dcls FWD STRUCTDEC  DATAID  ";"   {% return ()}    -- Forward declarations solo, agregar con Dec Empty
-    | Dcls FWD UNIONDEC   DATAID  ";"   {% return ()}    -- Forward declarations solo, agregar con Dec Empty
-    | Dcls FUNC PrimType Ent2 "(" Parameters ")" ";" {% return () }
-    | Dcls ENUMDEC    Ent1 "{" EnumConsList "}"      {% insertEnum $3        }
-    | Dcls STRUCTDEC  Ent1 "{" FieldsList   "}"      {% insertData $3  True  }
-    | Dcls UNIONDEC   Ent1 "{" FieldsList   "}"      {% insertData $3  False }
-    | Dcls FUNC PrimType Ent2 "(" Parameters ")" ":" SmplDcls Ins END {% insertFunction $3 $4 }
-
+-- Global declarations of references
 GlobDeclare : Reference          { False }
             | GLOBAL Reference   { True  }
 
+-- Randomly nested Pointer-Array-Empty_Arrray references (or not)
 Reference: PrimType              {return ()}
          | Reference PrimType    {return ()}
          | Reference "*"         {return ()}
          | Reference "[" "]"     {return ()}
          | Reference "[" INT "]" {return ()}
+
+-- Global declarations on scope level 0
+Dcls:  {- λ -}                          {% return ()}
+    | Dcls Reference              ";"   {% return ()} -- Always global, GlobDeclare not needed
+    | Dcls FWD STRUCTDEC  DATAID  ";"   {% return ()} -- Forward declarations solo, agregar con Dec Empty
+    | Dcls FWD UNIONDEC   DATAID  ";"   {% return ()} -- Forward declarations solo, agregar con Dec Empty
+    | Dcls FUNC PrimType Ent2 "(" Parameters ")" ";" {% return () } -- Function forward declaration
+    | Dcls ENUMDEC    Ent1 "{" EnumConsList "}"      {% insertEnum $3        }
+    | Dcls STRUCTDEC  Ent1 "{" FieldsList   "}"      {% insertData $3  True  }
+    | Dcls UNIONDEC   Ent1 "{" FieldsList   "}"      {% insertData $3  False }
+    | Dcls FUNC PrimType Ent2 "(" Parameters ")" ":" SmplDcls Ins END {% insertFunction $3 $4 }
+
 
 PrimType : INTDEC    ID        { $1 }
          | BOOLDEC   ID        { $1 }
@@ -217,6 +223,10 @@ Parameters: {- λ -}       {% onZip enterScope } -- Tiene sentido?
 EnumConsList: ENUM                      {% insertEnumCons 1  $1 }
             | EnumConsList "," ENUM     {% insertEnumCons $1 $3 }
 
+FieldsList  : ID "::" CleanRef                  {% return ()}
+            | FieldsList  "," ID "::" CleanRef  {% return () } --verificar que realmente existe
+
+-- Types without identifier
 CleanRef : CleanType             {return ()}
          | Reference CleanType   {return ()}
          | Reference "*"         {return ()}
@@ -232,8 +242,6 @@ CleanType : INTDEC           { $1 }
           | STRUCTDEC DATAID { $1 }
           | UNIONDEC  DATAID { $1 }
 
-FieldsList  : ID "::" CleanRef                  {% return ()}
-            | FieldsList  "," ID "::" CleanRef  {% return () } --verificar que realmente existe
 
 Exp : 
     -- Expresiones Aritméticas.
