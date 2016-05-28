@@ -42,36 +42,6 @@ data ScopeNZip = ScopeNZip { strTbl   :: SymTable
 -- Alias for executing RWS monad
 exec = execRWS
 
--- Check if given token is a valid function/procedure that can be called
-checkIsFunc :: Token -> OurMonad()
-checkIsFunc (TkId (r,c) lex) = do
-                    state <- get
-                    let treeSearch  = (lookUp (zipp state) lex)
-                    let scopeSearch = (getValS lex (scp state))
-                    if isFunc treeSearch || isFunc scopeSearch
-                        then tell $ S.singleton $ Left  $ lex ++ "\' at " ++ show r++":"++show c ++ " it's a callable function or procedure."
-                        else tell $ S.singleton $ Right $ "Error: "++lex ++ "\' at " ++ show r++":"++show c ++ " it's not a function or procedure."
-
-checkLIter :: Token -> OurMonad()
-checkLIter (TkId (r,c) lex) = do
-                    state <- get
-                    let treeSearch = (lookUp (zipp state) lex)
-                    let scopeSearch = (getValS lex (scp state))
-                    if  (\x -> isLIter x && (not.isNothing) x)  treeSearch || (\x -> isLIter x && (not.isNothing) x) scopeSearch
-                                then tell $ S.singleton $ Left  $ "Cannot assing to \'" ++ lex ++ "\' at " ++ show r++":"++show c ++ " because it's an iteration Variable."
-                                else if isNothing treeSearch && isNothing scopeSearch  
-                                    then tell $ S.singleton $ Left  $ "Cannot assing to \'" ++ lex ++ "\' at " ++ show r++":"++show c ++ " because it's not declared."
-                                    else tell $ S.singleton $ Right  $ "Variable " ++ lex ++ " at " ++ show r++":"++show c ++ " can be assing."
-
-checkReadable :: Token -> Bool -> OurMonad ()
-checkReadable (TkId (l,c) lex) bit = do
-    state <- get
-    let word = if bit then "readable."
-                      else "writeable."
-    if isReadable (lookUp (zipp state) lex) || isReadable (getValS lex (scp state) )
-        then tell $ S.singleton $ Right  $ "Variable " ++ lex ++ " at " ++ show l++":"++show c ++ " is "++word
-        else tell $ S.singleton $ Left   $ concat $ ["Error:",show l,":",show c," variable ",lex," is not "++word++"ESTOY EN:\n","================",(show . fst) (zipp state),"==================","\n"]
-
 -- Monad initial state: two empty scopes and one zipper for an empty scope
 initialState :: ScopeNZip
 initialState = ScopeNZip emptyScope emptyScope (fromScope emptyScope)
@@ -81,29 +51,78 @@ initialState = ScopeNZip emptyScope emptyScope (fromScope emptyScope)
 makeTable :: ScopeNZip -> ( Scope Declare ,Scope Declare)
 makeTable (ScopeNZip str gscp z) = ( str ,fuse gscp z)
 
--- Modify function for the zipper in the state
+-- Aliases for writing to the log
+mkErr = S.singleton . Left
+mkLog = S.singleton . Right
+tellError = tell . mkErr
+tellLog   = tell . mkLog
+
+
+{- 
+    Modifier functions for the state monad
+-}
+
+-- Modify zipper
 onZip :: (TableZipper -> TableZipper ) -> OurMonad()
 onZip fun = do zipper <- gets zipp
                state  <- get
                put state { zipp = fun zipper }
 
 
--- Modify function for the string symbol table in the state
+-- Modify string symbol table
 onStrScope :: (SymTable -> SymTable ) -> OurMonad()
 onStrScope fun = do stringTable <- gets strTbl
                     state       <- get
                     put state { strTbl = fun stringTable }
 
 
--- Modify function for the global variables table in the state monad
+-- Modify global variables table 
 onScope :: (SymTable -> SymTable) -> OurMonad ()
 onScope fun = do scope <- gets scp
                  state <- get
                  put state { scp = fun scope }
 
-
+-- Exit the actual scope in the Zipper
 exitScope :: OurMonad ()
 exitScope = onZip (fromJust.goUp)
+
+{-
+    Check, add to scope, log functions
+-}
+
+-- Check if given token is a valid function/procedure that can be called
+checkIsFunc :: Token -> OurMonad()
+checkIsFunc (TkId (r,c) lex) = do
+    state <- get
+    let treeSearch  = (lookUp (zipp state) lex)
+    let scopeSearch = (getValS lex (scp state))
+    if isFunc treeSearch || isFunc scopeSearch
+        then tellError $ "Error:"++show r++":"++show c++" \'"++lex ++ "\' at " ++ " it's not a callable function or procedure."
+        else tellLog   $ lex ++ "\' at " ++ show r++":"++show c ++ " it's a callable function or procedure."
+
+checkLIter :: Token -> OurMonad()
+checkLIter (TkId (r,c) lex) = do
+    state <- get
+    let treeSearch  = (lookUp (zipp state) lex)
+    let scopeSearch = (getValS lex (scp state))
+    if  (\x -> isLIter x && (not.isNothing) x)  treeSearch || (\x -> isLIter x && (not.isNothing) x) scopeSearch
+                then tellError error1
+                else if isNothing treeSearch && isNothing scopeSearch  
+                    then tellError error2
+                    else tellLog   whathappened
+  where error1 = "Error:"++ show r++":"++show c ++" Cannot assing to \'"++ lex ++ "\' because it's an iteration variable."
+        error2 = "Error:"++ show r++":"++show c ++" Cannot assing to \'"++ lex ++ "\' because it's not declared."
+        whathappened = "Variable " ++ lex ++ " at " ++ show r++":"++show c ++ " can be assing."
+
+checkReadable :: Token -> Bool -> OurMonad ()
+checkReadable (TkId (l,c) lex) bit = do
+    state <- get
+    let word = if bit then "readable."
+                      else "writeable."
+    if isReadable (lookUp (zipp state) lex) || isReadable (getValS lex (scp state) )
+        then tellLog   $ "Variable " ++ lex ++ " at " ++ show l++":"++show c ++ " is "++ word
+        else tellError $ concat $ ["Error:",show l,":",show c," variable ",lex," is not.",word]
+
 
 -- Agregar por adelantado para recursion
 insertCheckFunc :: Token -> OurMonad ()
@@ -113,8 +132,8 @@ insertCheckFunc tk = do
         then tell error1
         else do tell whathappened
                 onScope $ insert (lexeme tk) Empty
-  where error1       = S.singleton $ Left  $ "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
-        whathappened = S.singleton $ Right $ "Agregando " ++ lexeme tk ++ " por adelantado en "++ linecol
+  where error1       = mkErr  $ "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
+        whathappened = mkLog  $ "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk 
 
 insertFunction :: Token -> Token -> OurMonad ()
@@ -135,11 +154,12 @@ insertFunction typ ident  = do
                                            (makeType typ) 
                                            (fromZipper (zipp state)))
                 onZip (const (fromScope emptyScope)) -- Clean zipper
-  where error1       = S.singleton $ Left  $ "Error:" ++ linecol ++" redefinition of " ++ lexeme ident
-        whathappened = S.singleton $ Right $ "Function " ++ lexeme ident ++ " added at "++ linecol
+  where error1       = mkErr $ "Error:" ++ linecol ++" redefinition of " ++ lexeme ident
+        whathappened = mkLog $ "Function " ++ lexeme ident ++ " added at "++ linecol
         linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident 
 
 
+-- Check,add, log for structs and union
 insertData :: Token -> Bool -> OurMonad ()
 insertData typ isStruct = do 
     state <- get
@@ -158,12 +178,13 @@ insertData typ isStruct = do
                                      then Struct p name (fromZipper (zipp state))
                                      else Union  p name (fromZipper (zipp state)))
                 onZip (const (fromScope emptyScope)) -- Clean zipper
-  where error1       = S.singleton $ Left  $ "Error:" ++ linecol ++" redeclaraci'o del tipo " ++ lexeme typ
-        whathappened = S.singleton $ Right $ "Agregada la estructura/union "  ++ lexeme typ ++ " en "++ linecol
+  where error1       = mkErr $ "Error:" ++ linecol ++" type \'" ++ lexeme typ ++ "\' already declared."
+        whathappened = mkLog $ "Adding struct/union "  ++ lexeme typ ++ " at "++ linecol
         linecol      = (show.fst.position) typ ++":"++(show.snd.position) typ
         p     = position typ
         name  = lexeme typ
 
+-- Check,add, log for enums
 insertEnum :: Token -> OurMonad ()
 insertEnum id = do
     state <- get 
@@ -177,8 +198,8 @@ insertEnum id = do
                 onScope $ insert (lexeme id)
                                  (Enum (position id) (fromZipper (zipp state)))
     onZip (const (fromScope emptyScope)) -- Clean zipper
-  where error1       = S.singleton $ Left $ "Error:" ++ linecol ++" redeclaraci'o del enum" ++ lexeme id
-        whathappened = S.singleton $ Right $ "Agregado el enum "  ++ lexeme id ++ " en "    ++ linecol
+  where error1       = mkErr $ "Error:" ++ linecol ++" lexeme \'" ++ lexeme id ++ "\' used in enum already declared."
+        whathappened = mkLog $ "Adding enum "  ++ lexeme id ++ " at "    ++ linecol
         linecol      = (show.fst.position) id ++":"++(show.snd.position) id
 
 insertEnumCons :: Int -> Token -> OurMonad(Int)
@@ -189,14 +210,14 @@ insertEnumCons ord (TkEnumCons (l,c) str) = do
         else do tell whathappened
                 onZip $ apply $ insert str (EnumCons (l,c) str ord)
     return (succ (ord))
-  where error1       = S.singleton $ Left $ "Error:" ++ linecol ++" constante de enum " ++ str ++ " ya declarada."
-        whathappened = S.singleton $ Right $ "Agregada constante de enum "  ++ str ++ " en "    ++ linecol
+  where error1       = mkErr $ "Error:" ++ linecol ++" enum constant " ++ str ++ " already declared in this scope."
+        whathappened = mkLog $ "Enum "  ++ str ++ " add at "    ++ linecol
         linecol      = show l ++":"++ show c
 
 
 insertDeclareInScope :: Maybe Declare -> Token -> Bool -> OurMonad ()
 insertDeclareInScope Nothing (TkId (l,c) lexeme ) _ =
-    tell $ S.singleton $ Left  $ 
+    tellError $ 
     "Error:" ++show l++":"++show c ++" "  ++ lexeme ++ 
     " is VOIDtorb, but it may only be instanced as reference."
 insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) isGlob = do 
@@ -207,14 +228,14 @@ insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) isGlob = do
                 then onScope $ insert lexeme dcltype 
                 else onZip $ apply  $ insert lexeme dcltype       
     tell whathappened
-    where error1       = S.singleton $ Left  $ "Error:" ++show l++":"++show c ++" redefinition of " ++ lexeme
-          whathappened = S.singleton $ Right $ "Added " ++ lexeme ++ " at "++show l++":"++show c
+    where error1       = mkErr $ "Error:" ++show l++":"++show c ++" redefinition of " ++ lexeme
+          whathappened = mkLog $ "Added " ++ lexeme ++ " at "++show l++":"++show c
 
 
 checkItsDeclared :: Token -> OurMonad (Token)
 checkItsDeclared (TkId (l,c) lex) = do
     state <- get
     if (not . isNothing) (lookUp (zipp state) lex) || isInScope (scp state) lex
-        then tell $ S.singleton $ Right  $ "Variable " ++ lex ++ " at " ++ show l++":"++show c ++ " well used."
-        else tell $ S.singleton $ Left   $ concat $ ["Error:",show l,":",show c," variable ",lex," used but not declared.ESTOY EN:\n","================",(show . fst) (zipp state),"==================","\n"]
+        then tellLog  $ "Variable " ++ lex ++ " at " ++ show l++":"++show c ++ " well used."
+        else (tell.mkErr .concat) $ ["Error:",show l,":",show c," variable ",lex," used but not declared."]
     return $ TkId (l,c) lex
