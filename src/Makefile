@@ -1,6 +1,7 @@
 target:  Pokelang
 nolex:   PokelangNoLex # Without lex recompilation
 noparse: PokelangNoParser
+grammar: Grammar.hs
 
 alldirs = -ilexer -itokens -iparser -isymtable -itypes -imonads -ierrors
 
@@ -17,7 +18,7 @@ Rwsgrammar.o: Tokens.o Types.o SymTable.o
 	ghc monads/GrammarMonad.hs -itokens -isymtable -itypes
 
 Grammar.hs: Tokens.o 
-	happy parser/Grammar.y -o parser/Grammar.hs # --info=grammarinfo.md
+	happy parser/Grammar.y -o parser/Grammar.hs  --info=grammarinfo.md
 
 
 # Symbol Tables

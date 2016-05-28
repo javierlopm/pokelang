@@ -174,51 +174,57 @@ Else: {- λ -}                   {% return ()}
     | ELSE ":" Ent0 SmplDcls Ins {% exitScope  }
 
 
-SmplDcls: {- λ -}                                     {% return () }        
-    | SmplDcls IsGlob PrimType Ptrs          ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 Nothing) $5  $2}
-    | SmplDcls IsGlob DataType DATAID  Ptrs  ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $6) $5 (Just (lexeme $4))) $6  $2}
-    | SmplDcls IsGlob PrimType EmptyArrs     ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 Nothing) $5  $2} -- Azucar sintactico? jeje
-    | SmplDcls IsGlob PrimType StaticArrs    ID  ";"  {% insertDeclareInScope (makeArr  $3 (position $5) $4) $5  $2}
-    | SmplDcls IsGlob PrimType               ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $4) Nothing) $4  $2}
-    | SmplDcls IsGlob DataType DATAID        ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $5) (Just (lexeme $4))) $5  $2}
+SmplDcls: {- λ -}                             {% return ()}        
+        | SmplDcls GlobDeclare ";"              {% return ()}
+    -- | SmplDcls IsGlob PrimType Ptrs          ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 Nothing) $5  $2}
+    -- | SmplDcls IsGlob DataType DATAID  Ptrs  ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $6) $5 (Just (lexeme $4))) $6  $2}
+    -- | SmplDcls IsGlob PrimType EmptyArrs     ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 Nothing) $5  $2} -- Azucar sintactico? jeje
+    -- | SmplDcls IsGlob PrimType StaticArrs    ID  ";"  {% insertDeclareInScope (makeArr  $3 (position $5) $4) $5  $2}
+    -- | SmplDcls IsGlob PrimType               ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $4) Nothing) $4  $2}
+    -- | SmplDcls IsGlob DataType DATAID        ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $5) (Just (lexeme $4))) $5  $2}
 
 Dcls:  {- λ -}                                       {% return ()}
     | Dcls FUNC PrimType Ent2 "(" Parameters ")" ":" SmplDcls Ins END {% insertFunction $3 $4 }
-    | Dcls PrimType Ptrs       ID  ";"            {% return ()}
-    | Dcls PrimType EmptyArrs  ID  ";"            {% return ()}
-    | Dcls PrimType StaticArrs ID  ";"            {% return ()}
-    | Dcls PrimType            ID  ";"            {% return ()}
-    | Dcls FWD DataType    DATAID     ";"         {% return ()}    -- Forward declarations solo, agregar con Dec Empty
-    | Dcls ENUMDEC    Ent1 "{" EnumConsList "}"   {% insertEnum $3 }
-    | Dcls STRUCTDEC  Ent1 "{" FieldsList   "}"   {% insertData $3  True }
-    | Dcls UNIONDEC   Ent1 "{" FieldsList   "}"   {% insertData $3  False }
+    -- | Dcls PrimType Ptrs       ID  ";"            {% return ()}
+    -- | Dcls PrimType EmptyArrs  ID  ";"            {% return ()}
+    -- | Dcls PrimType StaticArrs ID  ";"            {% return ()}
+    -- | Dcls PrimType            ID  ";"            {% return ()}
+    -- | Dcls FWD DataType    DATAID     ";"         {% return ()}    -- Forward declarations solo, agregar con Dec Empty
+    -- | Dcls ENUMDEC    Ent1 "{" EnumConsList "}"   {% insertEnum $3 }
+    -- | Dcls STRUCTDEC  Ent1 "{" FieldsList   "}"   {% insertData $3  True }
+    -- | Dcls UNIONDEC   Ent1 "{" FieldsList   "}"   {% insertData $3  False }
 
-IsGlob : {- λ -}     { False }
-         | GLOBAL    { True  }
+GlobDeclare : Reference          { False }
+            | GLOBAL Reference   { True  }
 
-PrimType : INTDEC         { $1 }
-         | BOOLDEC        { $1 }
-         | CHARDEC        { $1 }
-         | VOIDDEC        { $1 }
-         | FLOATDEC       { $1 }
+Reference: PrimType              {return ()}
+         | Reference PrimType    {return ()}
+         | Reference "*"         {return ()}
+         | Reference "[" "]"     {return ()}
+         | Reference "[" INT "]" {return ()}
 
-DataType : ENUMDEC        { $1 }
-         | STRUCTDEC      { $1 }
-         | UNIONDEC       { $1 }
+PrimType : INTDEC    ID        { $1 }
+         | BOOLDEC   ID        { $1 }
+         | CHARDEC   ID        { $1 }
+         | VOIDDEC   ID        { $1 }
+         | FLOATDEC  ID        { $1 }
+         | ENUMDEC   DATAID ID { $1 }
+         | STRUCTDEC DATAID ID { $1 }
+         | UNIONDEC  DATAID ID { $1 }
 
-Parameter: ListParam PrimType             ID   {% insertDeclareInScope   (makeDec  $2 (position $3) Nothing) $3 False }
-         | ListParam DataType DATAID      ID   {% insertDeclareInScope   (makeDec  $2 (position $3) (Just (lexeme $3))) $4 False }
-         | ListParam DataType DATAID Ptrs ID   {% insertDeclareInScope (makePtrs $2 (position $5) $4 (Just (lexeme $3))) $5 False}
-         | ListParam PrimType Ptrs        ID   {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
-         | ListParam PrimType EmptyArrs   ID   {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
+Parameter: ListParam Reference   {% insertDeclareInScope   (makeDec  $2 (position $0) Nothing) $0 False }
+         -- | ListParam DataType DATAID      ID   {% insertDeclareInScope   (makeDec  $2 (position $3) (Just (lexeme $3))) $4 False }
+         -- | ListParam DataType DATAID Ptrs ID   {% insertDeclareInScope (makePtrs $2 (position $5) $4 (Just (lexeme $3))) $5 False}
+         -- | ListParam PrimType Ptrs        ID   {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
+         -- | ListParam PrimType EmptyArrs   ID   {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
 
 
-ListParam: {- λ -}                                {% return () }
-         | ListParam PrimType               ID ","  {% insertDeclareInScope   (makeDec  $2 (position $3) Nothing) $3 False }
-         | ListParam DataType DATAID  Ptrs  ID ","  {% insertDeclareInScope (makePtrs $2 (position $5) $4 (Just (lexeme $3))) $5 False}
-         | ListParam DataType DATAID        ID ","  {% insertDeclareInScope   (makeDec  $2 (position $3) (Just (lexeme $3))) $4 False }
-         | ListParam PrimType Ptrs          ID ","  {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
-         | ListParam PrimType EmptyArrs     ID ","  {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
+ListParam: {- λ -}                  {% return () }
+         | ListParam Reference ","  {% insertDeclareInScope   (makeDec  $2 (position $0) Nothing) $3 False }
+         -- | ListParam DataType DATAID  Ptrs  ID ","  {% insertDeclareInScope (makePtrs $2 (position $5) $4 (Just (lexeme $3))) $5 False}
+         -- | ListParam DataType DATAID        ID ","  {% insertDeclareInScope   (makeDec  $2 (position $3) (Just (lexeme $3))) $4 False }
+         -- | ListParam PrimType Ptrs          ID ","  {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
+         -- | ListParam PrimType EmptyArrs     ID ","  {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
 
 Parameters: {- λ -}       {% onZip enterScope } -- Tiene sentido?
           | Parameter     {% onZip enterScope } 
@@ -226,26 +232,43 @@ Parameters: {- λ -}       {% onZip enterScope } -- Tiene sentido?
 EnumConsList: ENUM                      {% insertEnumCons 1  $1 }
             | EnumConsList "," ENUM     {% insertEnumCons $1 $3 }
 
-FieldsList  : ID "::" PrimType            {% insertDeclareInScope   (makeDec  $3 (position $1)   Nothing) $1 False}
-            | ID "::" Ptrs PrimType       {% insertDeclareInScope   (makePtrs $4 (position $1) $3 Nothing) $1  False }
-            | ID "::" DataType DATAID     {% insertDeclareInScope   (makeDec  $3 (position $1) (Just (lexeme $4))) $1 False} --verificar que realmente existe
-            | ID "::" Ptrs DataType DATAID             {% insertDeclareInScope   (makePtrs $4 (position $1) $3 (Just (lexeme $5))) $1  False } --verificar que realmente existe
-            | FieldsList  "," ID "::" PrimType         {% insertDeclareInScope   (makeDec  $5 (position $3) Nothing) $3 False    }
-            | FieldsList  "," ID "::" Ptrs PrimType    {% insertDeclareInScope   (makePtrs $6 (position $2) $5 Nothing) $3  False}
-            | FieldsList  "," ID "::" DataType DATAID  {% insertDeclareInScope   (makeDec  $5 (position $3) (Just (lexeme $6))) $3 False} --verificar que realmente existe
-            | FieldsList  "," ID "::" Ptrs DataType DATAID  {% insertDeclareInScope (makePtrs $6 (position $3) $5 (Just (lexeme $7))) $3  False } --verificar que realmente existe
+-- FieldsList  : ID "::" PrimType            {% insertDeclareInScope   (makeDec  $3 (position $1)   Nothing) $1 False}
+--             | ID "::" Ptrs PrimType       {% insertDeclareInScope   (makePtrs $4 (position $1) $3 Nothing) $1  False }
+--             | ID "::" DataType DATAID     {% insertDeclareInScope   (makeDec  $3 (position $1) (Just (lexeme $4))) $1 False} --verificar que realmente existe
+--             | ID "::" Ptrs DataType DATAID             {% insertDeclareInScope   (makePtrs $4 (position $1) $3 (Just (lexeme $5))) $1  False } --verificar que realmente existe
+--             | FieldsList  "," ID "::" PrimType         {% insertDeclareInScope   (makeDec  $5 (position $3) Nothing) $3 False    }
+--             | FieldsList  "," ID "::" Ptrs PrimType    {% insertDeclareInScope   (makePtrs $6 (position $2) $5 Nothing) $3  False}
+--             | FieldsList  "," ID "::" DataType DATAID  {% insertDeclareInScope   (makeDec  $5 (position $3) (Just (lexeme $6))) $3 False} --verificar que realmente existe
+--             | FieldsList  "," ID "::" Ptrs DataType DATAID  {% insertDeclareInScope (makePtrs $6 (position $3) $5 (Just (lexeme $7))) $3  False } --verificar que realmente existe
 
--- Counts nesting levels
-Ptrs: "*"        {    1    }
-    | Ptrs "*"   { succ $1 } 
+CleanRef : CleanType             {return ()}
+         | Reference CleanType   {return ()}
+         | Reference "*"         {return ()}
+         | Reference "[" "]"     {return ()}
+         | Reference "[" INT "]" {return ()}
 
--- Counts nesting levels
-EmptyArrs: "[" "]"             {    1    }
-         |  EmptyArrs "[" "]"  { succ $1 }
+CleanType : INTDEC           { $1 }
+          | BOOLDEC          { $1 }
+          | CHARDEC          { $1 }
+          | VOIDDEC          { $1 }
+          | FLOATDEC         { $1 }
+          | ENUMDEC   DATAID { $1 }
+          | STRUCTDEC DATAID { $1 }
+          | UNIONDEC  DATAID { $1 }
 
--- Counts dimensions
-StaticArrs: "[" INT "]"             { [value $2] }
-          | StaticArrs "[" INT "]"  { (value $3):$1}
+FieldsList  : ID "::" CleanRef                  {% return ()}
+            | FieldsList  "," ID "::" CleanRef  {% return () } --verificar que realmente existe
+
+-- FieldsList  : ID "::" PrimType            {% insertDeclareInScope   (makeDec  $3 (position $1)   Nothing) $1 False}
+--             | ID "::" Ptrs PrimType       {% insertDeclareInScope   (makePtrs $4 (position $1) $3 Nothing) $1  False }
+--             | ID "::" DataType DATAID     {% insertDeclareInScope   (makeDec  $3 (position $1) (Just (lexeme $4))) $1 False} --verificar que realmente existe
+--             | ID "::" Ptrs DataType DATAID             {% insertDeclareInScope   (makePtrs $4 (position $1) $3 (Just (lexeme $5))) $1  False } --verificar que realmente existe
+--             | FieldsList  "," ID "::" PrimType         {% insertDeclareInScope   (makeDec  $5 (position $3) Nothing) $3 False    }
+--             | FieldsList  "," ID "::" Ptrs PrimType    {% insertDeclareInScope   (makePtrs $6 (position $2) $5 Nothing) $3  False}
+--             | FieldsList  "," ID "::" DataType DATAID  {% insertDeclareInScope   (makeDec  $5 (position $3) (Just (lexeme $6))) $3 False} --verificar que realmente existe
+--             | FieldsList  "," ID "::" Ptrs DataType DATAID  {% insertDeclareInScope (makePtrs $6 (position $3) $5 (Just (lexeme $7))) $3  False } --verificar que realmente existe
+
+
 
 Exp : 
     -- Expresiones Aritméticas.
