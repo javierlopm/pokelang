@@ -11,7 +11,7 @@ module GrammarMonad(
     makeTable,
     onZip,
     onScope,
-    onStrigns,
+    onStrScope,
     exitScope,
     insertCheckFunc,
     insertFunction,
@@ -34,17 +34,19 @@ type SymTable    = Scope Declare
 type TableZipper = Zipper Declare 
 
 -- state from monad State
-data ScopeNZip = ScopeNZip { scp      :: SymTable
-                           , strTbl  :: SymTable,
+data ScopeNZip = ScopeNZip { strTbl   :: SymTable
+                           , scp      :: SymTable
                            , zipp     :: TableZipper} 
                            deriving (Show)
 
+-- Alias for executing RWS monad
 exec = execRWS
 
+-- Check if given token is a valid function/procedure that can be called
 checkIsFunc :: Token -> OurMonad()
 checkIsFunc (TkId (r,c) lex) = do
                     state <- get
-                    let treeSearch = (lookUp (zipp state) lex)
+                    let treeSearch  = (lookUp (zipp state) lex)
                     let scopeSearch = (getValS lex (scp state))
                     if isFunc treeSearch || isFunc scopeSearch
                         then tell $ S.singleton $ Left  $ lex ++ "\' at " ++ show r++":"++show c ++ " it's a callable function or procedure."
@@ -69,34 +71,36 @@ checkReadable (TkId (l,c) lex) bit = do
     if isReadable (lookUp (zipp state) lex) || isReadable (getValS lex (scp state) )
         then tell $ S.singleton $ Right  $ "Variable " ++ lex ++ " at " ++ show l++":"++show c ++ " is "++word
         else tell $ S.singleton $ Left   $ concat $ ["Error:",show l,":",show c," variable ",lex," is not "++word++"ESTOY EN:\n","================",(show . fst) (zipp state),"==================","\n"]
-  
+
+-- Monad initial state: two empty scopes and one zipper for an empty scope
 initialState :: ScopeNZip
-initialState = ScopeNZip emptyScope (fromScope emptyScope)
+initialState = ScopeNZip emptyScope emptyScope (fromScope emptyScope)
 
-makeTable :: ScopeNZip -> Scope Declare
-makeTable (ScopeNZip s z) = fuse s z
+-- Make a tuple with the String Scope and a Scope tree with globals and local
+-- scopes fused. Scopeception
+makeTable :: ScopeNZip -> ( Scope Declare ,Scope Declare)
+makeTable (ScopeNZip str gscp z) = ( str ,fuse gscp z)
 
+-- Modify function for the zipper in the state
 onZip :: (TableZipper -> TableZipper ) -> OurMonad()
 onZip fun = do zipper <- gets zipp
                state  <- get
                put state { zipp = fun zipper }
 
 
-onStrigns :: (TableZipper -> TableZipper ) -> OurMonad()
-onStrigns fun = do zipper <- gets zipp
-                   state  <- get
-                   put state { strTbl = fun strTbl }
+-- Modify function for the string symbol table in the state
+onStrScope :: (SymTable -> SymTable ) -> OurMonad()
+onStrScope fun = do stringTable <- gets strTbl
+                    state       <- get
+                    put state { strTbl = fun stringTable }
 
 
+-- Modify function for the global variables table in the state monad
 onScope :: (SymTable -> SymTable) -> OurMonad ()
 onScope fun = do scope <- gets scp
                  state <- get
                  put state { scp = fun scope }
 
-{-succCons ::  OurMonad ()
-succCons = do conG  <- gets constGen
-              state <- get
-              put state { constGen = succ conG }-}
 
 exitScope :: OurMonad ()
 exitScope = onZip (fromJust.goUp)
@@ -189,17 +193,6 @@ insertEnumCons ord (TkEnumCons (l,c) str) = do
         whathappened = S.singleton $ Right $ "Agregada constante de enum "  ++ str ++ " en "    ++ linecol
         linecol      = show l ++":"++ show c
 
-
---se deberia verificar que el valor no esta ya en alguna constante
-{-addStr declare = do id  <- gets constGen
-                    succCons
-                    onScope $ insert (show id) declare -}
-
---insertIter :: Maybe Declare -> Token -> OurMonad(Token)
---insertIter Nothing (TkId (l,c) lexeme ) = do tell $ S.singleton $ Left  $ "Token " ++ lex ++ " at " ++ show l++":"++show c ++ " is not var." 
---                                             return $ TkId (l,c) lex
---insertIter Nothing (TkId (l,c) lexeme ) = do tell $ S.singleton $ Left  $ "Token " ++ lex ++ " at " ++ show l++":"++show c ++ " is not var." 
---                                             return $ TkId (l,c) lex
 
 insertDeclareInScope :: Maybe Declare -> Token -> Bool -> OurMonad ()
 insertDeclareInScope Nothing (TkId (l,c) lexeme ) _ =

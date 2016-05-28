@@ -142,7 +142,7 @@ import GrammarMonad
 Prog : Dcls  {% return ()}
 
 Ins : {- λ -}                                 {% return () }
-    | Ins PRINT "(" STRING PrntArgs ")"   ";" {% onStrigns $ insert (content $4) (Cons (position $4)) }
+    | Ins PRINT "(" STRING PrntArgs ")"   ";" {% onStrScope $ insert (content $4) (Cons (position $4)) }
     | Ins READ  "("       ID        ")"   ";" {% checkReadable $4 True}
     | Ins WRITE "("       ID        ")"   ";" {% checkReadable $4 False}
     | Ins Exp "=" Exp         ";"         {% checkLIter $2}

@@ -2,8 +2,6 @@
 
 module Tokens(
     Token     (..),
-    checkErrors,
-    checkErrors',
     createNum,
     createFloat,
     createChar,
@@ -11,7 +9,6 @@ module Tokens(
 ) where
 
 import Data.Data(toConstr,Data,Typeable)
-import System.IO(hPrint,stderr)  
 
 type Pos = (Int,Int)
 
@@ -171,11 +168,5 @@ createChar p str
     where is str2 = str == str2
 
 
-checkErrors :: Token -> (IO(),Int)
-checkErrors myTok@TkError{} =  (hPrint stderr myTok, 1)
-checkErrors myTok =  (print myTok,0)
 
-checkErrors' :: [Token] -> ([Token],[Token],Int)
-checkErrors' = foldr pickGoods ([],[],0)
-    where pickGoods myTok@TkError{} (gs,bs,bcount) = (gs,myTok:bs,bcount+1)
-          pickGoods myTok           (gs,bs,bcount) = (myTok:gs,bs,bcount)
+

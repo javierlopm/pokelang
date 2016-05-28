@@ -1,10 +1,12 @@
-target: Pokelang
-nolex: PokelangNoLex # Without lex recompilation
+target:  Pokelang
+nolex:   PokelangNoLex # Without lex recompilation
+noparse: PokelangNoParser
 
-alldirs = -ilexer -itokens -iparser -isymtable -itypes -imonads
+alldirs = -ilexer -itokens -iparser -isymtable -itypes -imonads -ierrors
 
 Tokens.o: 
 	ghc  tokens/Tokens.hs
+
 
 # Lexer
 Lexer.hs: Tokens.o
@@ -26,12 +28,21 @@ SymTable.o:
 Types.o: SymTable.o Tokens.o
 	ghc types/Types.hs -isymtable -itokens
 
+# Errors
+ErrorHandle.o: Tokens.o
+	ghc errors/ErrorHandle.hs -itokens
+
+
 # Main
-Pokelang: Grammar.hs SymTable.o Types.o Lexer.hs Rwsgrammar.o
+Pokelang: Grammar.hs SymTable.o Types.o Lexer.hs Rwsgrammar.o ErrorHandle.o
 	ghc pokelang.hs $(alldirs)
 
-PokelangNoLex: Grammar.hs SymTable.o Types.o Rwsgrammar.o
+PokelangNoLex: Grammar.hs SymTable.o Types.o Rwsgrammar.o ErrorHandle.o
 	ghc pokelang.hs $(alldirs)
+
+PokelangNoParser: SymTable.o Types.o Rwsgrammar.o ErrorHandle.o
+	ghc pokelang.hs $(alldirs)
+
 
 clean:
 	rm pokelang ; rm *.o *.hi

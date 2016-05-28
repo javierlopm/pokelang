@@ -16,6 +16,7 @@
     fromScope,
     fromZipper,
     getValS,
+    showScope,
     fuse
     ) where
 
