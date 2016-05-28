@@ -157,21 +157,21 @@ Ins : {- λ -}                                 {% return () }
     | Ins FREE "("ID")"     ";"         {% return ()} --√
     --| Ins FREE "("DATAID")" ";"         {% return ()}
     --| Ins READ "("DATAID")" ";"         {% return ()}
-    | Ins IF Exp    ":" Ent SmplDcls Ins NextIf Else END            {% exitScope  }
-    | Ins WHILE Exp ":" Ent SmplDcls Ins END                        {% exitScope  }
-    | Ins FOR Ent Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope  }
-    | Ins FOR Ent Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope  }
-    | Ins FOR Ent Ent3 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope  }
-    | Ins BEGIN Ent SmplDcls Ins END                                {% exitScope  } -- No debe aceptar funciones
+    | Ins IF Exp    ":" Ent0 SmplDcls Ins NextIf Else END            {% exitScope  }
+    | Ins WHILE Exp ":" Ent0 SmplDcls Ins END                        {% exitScope  }
+    | Ins FOR Ent0 Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope  }
+    | Ins FOR Ent0 Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope  }
+    | Ins FOR Ent0 Ent3 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope  }
+    | Ins BEGIN Ent0 SmplDcls Ins END                                {% exitScope  } -- No debe aceptar funciones
 
 PrntArgs: {- λ -}             {% return ()}
         | PrntArgs "," Exp    {% return ()} -- Siempre es necesaria una coma a la izq
 
 NextIf: {- λ -}             {% return ()}
-      | NextIf ELIF  Exp ":" Ent SmplDcls Ins {% exitScope  }
+      | NextIf ELIF  Exp ":" Ent0 SmplDcls Ins {% exitScope  }
 
 Else: {- λ -}                   {% return ()}
-    | ELSE ":" Ent SmplDcls Ins {% exitScope  }
+    | ELSE ":" Ent0 SmplDcls Ins {% exitScope  }
 
 
 SmplDcls: {- λ -}                                     {% return () }        
@@ -296,7 +296,7 @@ Term: TRUE         {% return($1) }
     | INT          {% return($1) }
     | CHAR         {% return($1) }
 
-Ent  : {- λ -}     {% onZip enterScope  }
+Ent0  : {- λ -}    {% onZip enterScope  }
 Ent1 : DATAID      {% insertCheckFunc $1 >> return $1 } 
 Ent2 : ID          {% insertCheckFunc $1 >> return $1 } 
 Ent3 : ID          {% insertDeclareInScope (makeIter $1 (position $1)) $1 False } 

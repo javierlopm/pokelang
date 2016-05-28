@@ -6,11 +6,7 @@ import System.IO(hPutStrLn,stderr)
 import qualified Data.Foldable as F(foldr)
 import Data.Sequence(Seq)
 
-
--- checkErrors :: Token -> (IO(),Int)
--- checkErrors myTok@TkError{} =  (hPrint stderr myTok, 1)
--- checkErrors myTok =  (print myTok,0)
-
+-- Check token list for TkError and count them
 checkTokenError :: [Token] -> ([Token],[Token],Int)
 checkTokenError = foldr pickGoods ([],[],0)
     where pickGoods myTok@TkError{} (gs,bs,bcount) = (gs,myTok:bs,bcount+1)

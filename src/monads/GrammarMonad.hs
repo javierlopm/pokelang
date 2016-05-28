@@ -186,21 +186,22 @@ insertData typ isStruct = do
 
 -- Check,add, log for enums
 insertEnum :: Token -> OurMonad ()
-insertEnum id = do
+insertEnum id_ = do
     state <- get 
-    if isMember ((fromScope.scp) state) (lexeme id) 
-        then do if ( isEmpty . fromJust ) (getValS (lexeme id) (scp state))  
-                    then do tell whathappened
-                            onScope $ insert (lexeme id)
-                                    (Enum (position id) (fromZipper (zipp state)))
+    if isMember ((fromScope.scp) state) (lexeme id_) 
+        then do if ( isEmpty . fromJust ) (getValS (lexeme id_) (scp state))  
+                    then insertNTell state
                     else tell error1
-        else do tell whathappened
-                onScope $ insert (lexeme id)
-                                 (Enum (position id) (fromZipper (zipp state)))
+        else insertNTell state
     onZip (const (fromScope emptyScope)) -- Clean zipper
-  where error1       = mkErr $ "Error:" ++ linecol ++" lexeme \'" ++ lexeme id ++ "\' used in enum already declared."
-        whathappened = mkLog $ "Adding enum "  ++ lexeme id ++ " at "    ++ linecol
-        linecol      = (show.fst.position) id ++":"++(show.snd.position) id
+  where error1       = mkErr $ "Error:" ++ linecol ++" lexeme \'" ++ lexeme id_ ++ "\' used in enum already declared."
+        whathappened = mkLog $ "Adding enum "  ++ lexeme id_ ++ " at "    ++ linecol
+        linecol      = (show.fst.position) id_ ++":"++(show.snd.position) id_
+        insertNTell state = do tell whathappened
+                               onScope $ insert (lexeme id_) 
+                                                (Enum (position id_) 
+                                                      (lexeme id_) 
+                                                      (fromZipper (zipp state)))
 
 insertEnumCons :: Int -> Token -> OurMonad(Int)
 insertEnumCons ord (TkEnumCons (l,c) str) = do
@@ -210,16 +211,12 @@ insertEnumCons ord (TkEnumCons (l,c) str) = do
         else do tell whathappened
                 onZip $ apply $ insert str (EnumCons (l,c) str ord)
     return (succ (ord))
-  where error1       = mkErr $ "Error:" ++ linecol ++" enum constant " ++ str ++ " already declared in this scope."
+  where error1       = mkErr $ "Error:" ++ linecol ++ " enum constant " ++ str ++ " already declared in this scope."
         whathappened = mkLog $ "Enum "  ++ str ++ " add at "    ++ linecol
         linecol      = show l ++":"++ show c
 
 
 insertDeclareInScope :: Maybe Declare -> Token -> Bool -> OurMonad ()
-insertDeclareInScope Nothing (TkId (l,c) lexeme ) _ =
-    tellError $ 
-    "Error:" ++show l++":"++show c ++" "  ++ lexeme ++ 
-    " is VOIDtorb, but it may only be instanced as reference."
 insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) isGlob = do 
     table <- get 
     if isMember (zipp table) lexeme
@@ -230,6 +227,9 @@ insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) isGlob = do
     tell whathappened
     where error1       = mkErr $ "Error:" ++show l++":"++show c ++" redefinition of " ++ lexeme
           whathappened = mkLog $ "Added " ++ lexeme ++ " at "++show l++":"++show c
+insertDeclareInScope Nothing (TkId (l,c) lexeme ) _ =
+    tellError $ "Error:" ++show l++":"++show c ++" "  ++ lexeme ++ 
+    " is VOIDtorb, but it may only be instanced as reference."
 
 
 checkItsDeclared :: Token -> OurMonad (Token)
