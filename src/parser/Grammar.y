@@ -176,23 +176,14 @@ Else: {- λ -}                   {% return ()}
 
 SmplDcls: {- λ -}                             {% return ()}        
         | SmplDcls GlobDeclare ";"              {% return ()}
-    -- | SmplDcls IsGlob PrimType Ptrs          ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 Nothing) $5  $2}
-    -- | SmplDcls IsGlob DataType DATAID  Ptrs  ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $6) $5 (Just (lexeme $4))) $6  $2}
-    -- | SmplDcls IsGlob PrimType EmptyArrs     ID  ";"  {% insertDeclareInScope (makePtrs $3 (position $5) $4 Nothing) $5  $2} -- Azucar sintactico? jeje
-    -- | SmplDcls IsGlob PrimType StaticArrs    ID  ";"  {% insertDeclareInScope (makeArr  $3 (position $5) $4) $5  $2}
-    -- | SmplDcls IsGlob PrimType               ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $4) Nothing) $4  $2}
-    -- | SmplDcls IsGlob DataType DATAID        ID  ";"  {% insertDeclareInScope (makeDec  $3 (position $5) (Just (lexeme $4))) $5  $2}
 
 Dcls:  {- λ -}                                       {% return ()}
     | Dcls FUNC PrimType Ent2 "(" Parameters ")" ":" SmplDcls Ins END {% insertFunction $3 $4 }
-    -- | Dcls PrimType Ptrs       ID  ";"            {% return ()}
-    -- | Dcls PrimType EmptyArrs  ID  ";"            {% return ()}
-    -- | Dcls PrimType StaticArrs ID  ";"            {% return ()}
-    -- | Dcls PrimType            ID  ";"            {% return ()}
-    -- | Dcls FWD DataType    DATAID     ";"         {% return ()}    -- Forward declarations solo, agregar con Dec Empty
-    -- | Dcls ENUMDEC    Ent1 "{" EnumConsList "}"   {% insertEnum $3 }
-    -- | Dcls STRUCTDEC  Ent1 "{" FieldsList   "}"   {% insertData $3  True }
-    -- | Dcls UNIONDEC   Ent1 "{" FieldsList   "}"   {% insertData $3  False }
+    | Dcls Reference  ";"            {% return ()} -- Always global
+    | Dcls FWD DataType  DATAID     ";"           {% return ()}    -- Forward declarations solo, agregar con Dec Empty
+    | Dcls ENUMDEC    Ent1 "{" EnumConsList "}"   {% insertEnum $3 }
+    | Dcls STRUCTDEC  Ent1 "{" FieldsList   "}"   {% insertData $3  True }
+    | Dcls UNIONDEC   Ent1 "{" FieldsList   "}"   {% insertData $3  False }
 
 GlobDeclare : Reference          { False }
             | GLOBAL Reference   { True  }
@@ -213,33 +204,16 @@ PrimType : INTDEC    ID        { $1 }
          | UNIONDEC  DATAID ID { $1 }
 
 Parameter: ListParam Reference   {% insertDeclareInScope   (makeDec  $2 (position $0) Nothing) $0 False }
-         -- | ListParam DataType DATAID      ID   {% insertDeclareInScope   (makeDec  $2 (position $3) (Just (lexeme $3))) $4 False }
-         -- | ListParam DataType DATAID Ptrs ID   {% insertDeclareInScope (makePtrs $2 (position $5) $4 (Just (lexeme $3))) $5 False}
-         -- | ListParam PrimType Ptrs        ID   {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
-         -- | ListParam PrimType EmptyArrs   ID   {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
-
+        
 
 ListParam: {- λ -}                  {% return () }
          | ListParam Reference ","  {% insertDeclareInScope   (makeDec  $2 (position $0) Nothing) $3 False }
-         -- | ListParam DataType DATAID  Ptrs  ID ","  {% insertDeclareInScope (makePtrs $2 (position $5) $4 (Just (lexeme $3))) $5 False}
-         -- | ListParam DataType DATAID        ID ","  {% insertDeclareInScope   (makeDec  $2 (position $3) (Just (lexeme $3))) $4 False }
-         -- | ListParam PrimType Ptrs          ID ","  {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
-         -- | ListParam PrimType EmptyArrs     ID ","  {% insertDeclareInScope   (makePtrs $2 (position $4) $3 Nothing) $4  False }
-
+         
 Parameters: {- λ -}       {% onZip enterScope } -- Tiene sentido?
           | Parameter     {% onZip enterScope } 
 
 EnumConsList: ENUM                      {% insertEnumCons 1  $1 }
             | EnumConsList "," ENUM     {% insertEnumCons $1 $3 }
-
--- FieldsList  : ID "::" PrimType            {% insertDeclareInScope   (makeDec  $3 (position $1)   Nothing) $1 False}
---             | ID "::" Ptrs PrimType       {% insertDeclareInScope   (makePtrs $4 (position $1) $3 Nothing) $1  False }
---             | ID "::" DataType DATAID     {% insertDeclareInScope   (makeDec  $3 (position $1) (Just (lexeme $4))) $1 False} --verificar que realmente existe
---             | ID "::" Ptrs DataType DATAID             {% insertDeclareInScope   (makePtrs $4 (position $1) $3 (Just (lexeme $5))) $1  False } --verificar que realmente existe
---             | FieldsList  "," ID "::" PrimType         {% insertDeclareInScope   (makeDec  $5 (position $3) Nothing) $3 False    }
---             | FieldsList  "," ID "::" Ptrs PrimType    {% insertDeclareInScope   (makePtrs $6 (position $2) $5 Nothing) $3  False}
---             | FieldsList  "," ID "::" DataType DATAID  {% insertDeclareInScope   (makeDec  $5 (position $3) (Just (lexeme $6))) $3 False} --verificar que realmente existe
---             | FieldsList  "," ID "::" Ptrs DataType DATAID  {% insertDeclareInScope (makePtrs $6 (position $3) $5 (Just (lexeme $7))) $3  False } --verificar que realmente existe
 
 CleanRef : CleanType             {return ()}
          | Reference CleanType   {return ()}
