@@ -39,7 +39,7 @@ type Pos = (Int,Int)
 -- Declarations might be functions,variables or structure types
 data Declare = Function  { pos::Pos, storedType::Type, fields::(Scope Declare)}
              | Variable  { pos::Pos, storedType::Type, storedTypeV::PrimType }
-             | Cons      { pos::Pos, storedType::Type} 
+             | Cons      { pos::Pos } 
              | Struct    { pos::Pos, typeName ::String, fields::(Scope Declare)}
              | Union     { pos::Pos, typeName ::String, fields::(Scope Declare)} 
              | Enum      { pos::Pos, typeName ::String, fields::(Scope Declare)}

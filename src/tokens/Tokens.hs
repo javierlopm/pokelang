@@ -89,7 +89,7 @@ data Token =  TkLBracket  { position :: Pos }
             | TkCharVal   { position :: Pos, char   :: Char   }
             | TkEnumCons  { position :: Pos, lexeme :: String }
             | TkString    { position :: Pos, content:: String }
-            | TkNum       { position :: Pos, value  :: Integer}
+            | TkNum       { position :: Pos, value  :: Int    }
             | TkFloatVal  { position :: Pos, rep    :: Float  }
             | TkError     { position :: Pos, content:: String, message::String }
             deriving(Data,Typeable)
@@ -132,7 +132,7 @@ instance Show Token where
   show generic = show (toConstr generic ) ++ "\n" ++ showPos (position generic)
 
 createNum :: Pos -> String -> Token
-createNum p s = if number <= 2147483648 then TkNum    p number
+createNum p s = if number <= 2147483648 then TkNum    p (fromInteger number)
                                         else TkError  p s "Number overflow"
     where number = read s :: Integer
 

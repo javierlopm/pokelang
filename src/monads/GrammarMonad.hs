@@ -217,25 +217,39 @@ insertEnumCons ord (TkEnumCons (l,c) str) = do
 
 
 insertDeclareInScope :: Maybe Declare -> Token -> Bool -> OurMonad ()
+insertDeclareInScope Nothing (TkId (l,c) lexeme ) _ = (tellError .concat) $ ["Error:",show l,":",show c," ",lexeme ," is VOIDtorb, but it may only be instanced as reference."]
 insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) isGlob = do 
-    table <- get 
-    if isMember (zipp table) lexeme
-        then tell error1
-        else if isGlob 
-                then onScope $ insert lexeme dcltype 
-                else onZip $ apply  $ insert lexeme dcltype       
-    tell whathappened
-    where error1       = mkErr $ "Error:" ++show l++":"++show c ++" redefinition of " ++ lexeme
-          whathappened = mkLog $ "Added " ++ lexeme ++ " at "++show l++":"++show c
-insertDeclareInScope Nothing (TkId (l,c) lexeme ) _ =
-    tellError $ "Error:" ++show l++":"++show c ++" "  ++ lexeme ++ 
-    " is VOIDtorb, but it may only be instanced as reference."
+    state <- get
+    if isMember (zipp state) lexeme -- Most recent scope
+      then tellError error1
+      else if isGlob 
+            then if isInScope (scp state) lexeme -- global scope
+                    then tellError error2
+                    else do tellLog whathappened 
+                            onScope $ insert lexeme dcltype    
+            else do tellLog whathappened
+                    (onZip . apply) $ insert lexeme dcltype
+    where error1       = generror ++ " in actual scope."
+          error2       = generror ++ " in global scope."
+          generror     = "Error:" ++ show l ++":"++show c ++" redefinition of " ++ lexeme
+          whathappened = "Added " ++ lexeme ++" at "++show l++":"++show c
 
 
-checkItsDeclared :: Token -> OurMonad (Token)
+
+checkItsDeclared :: Token -> OurMonad ()
 checkItsDeclared (TkId (l,c) lex) = do
     state <- get
     if (not . isNothing) (lookUp (zipp state) lex) || isInScope (scp state) lex
-        then tellLog  $ "Variable " ++ lex ++ " at " ++ show l++":"++show c ++ " well used."
-        else (tell.mkErr .concat) $ ["Error:",show l,":",show c," variable ",lex," used but not declared."]
-    return $ TkId (l,c) lex
+        then (tellLog . concat) whathappened
+        else (tell.mkErr .concat) error1
+  where whathappened = ["Variable ",lex," at ",show l,":",show c," well used."]
+        error1       = ["Error:",show l,":",show c," variable ",lex," used but not declared."]
+
+-- checkRedeclare :: Token -> OurMonad (Token)
+-- checkRedeclare (TkId (l,c) lex) = do
+--     state <- get
+--     if isMember (zipp state) lex then (tellError . concat) 
+--                                  else (tellLog   . concat)  
+--     return $ TkId (l,c) lex
+--   where whathappened = ["V"]
+--         error1       = ["Error:",show l,":",show c," variable ",lex," already declared in this scope."]

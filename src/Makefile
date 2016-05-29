@@ -1,5 +1,5 @@
 target:  Pokelang
-nolex:   PokelangNoLex # Without lex recompilation
+nolex:   PokelangNoLex 
 noparse: PokelangNoParser
 grammar: Grammar.hs
 
