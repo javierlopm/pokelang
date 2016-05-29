@@ -102,8 +102,8 @@ isLIter (Variable _ _ iterVar) = iterVar
 isLIter _                      = False
 
 --Checks if a declaration is readable
-isReadable :: Declare -> Bool
-isReadable (Variable _ stType _) = 
+isReadable :: Maybe Declare -> Bool
+isReadable (Just (Variable _ stType _)) = 
   case (stType) of
     TypeInt       -> True
     TypeBool      -> True

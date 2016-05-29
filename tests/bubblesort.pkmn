@@ -3,8 +3,8 @@
 --
 articUNION poketrainer {
     socialSecurityNumber :: pINTachu,
-    best_friend          :: *articUNION poketrainer,
-    name                 :: *CHARmander
+    best_friend          :: articUNION poketrainer* ,
+    name                 :: CHARmander *
 }
 
 ENUManyte pokeDaysLaborables { 

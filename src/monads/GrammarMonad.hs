@@ -129,16 +129,14 @@ checkLIter (TkId (l,c) lexeme) = do
         whathappened = "Variable " ++ lexeme ++ " at " ++ show l++":"++show c ++ " can be assing."
 
 
-
-checkReadable = undefined
--- checkReadable :: Token -> Bool -> OurMonad ()
--- checkReadable (TkId (l,c) lex) bit = do
---     state <- get
---     let word = if bit then "readable."
---                       else "writeable."
---     if  isReadable (lookUp (zipp state) lex) || isReadable $ fromJust $ getValS lex (scp state)  -- No se debe verificar que esta?
---         then tellLog   $ "Variable " ++ lex ++ " at " ++ show l++":"++show c ++ " is "++ word
---         else tellError $ strError (l,c) " variable " lex (" is not " ++ word )
+checkReadable :: Token -> Bool -> OurMonad ()
+checkReadable (TkId (l,c) lexeme) bit = do
+     state <- get
+     let word = if bit then "readable."
+                       else "writeable."
+     if (isReadable (lookUp (zipp state) lexeme)) || (isReadable $ getValS lexeme (scp state))
+         then tellLog   $ "Variable " ++ lexeme ++ " at " ++ show l++":"++show c ++ " is "++ word
+         else tellError $ strError (l,c) " variable " lexeme (" is not " ++ word )
 
 
 -- Agregar por adelantado para recursion
