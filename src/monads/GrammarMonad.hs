@@ -151,22 +151,22 @@ insertCheckFunc tk = do
         whathappened = mkLog  $ "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk 
 
-insertFunction :: Token -> Token -> OurMonad ()
+insertFunction :: Type -> Token -> OurMonad ()
 insertFunction typ ident  = do 
     state <- get
-    if isMember ((fromScope.scp) state) (lexeme ident) 
+    if isMember ((fromScope .scp) state) (lexeme ident) 
         then do if ( isEmpty . fromJust ) (getValS (lexeme ident) (scp state)) 
                     then do tell whathappened
                             onScope $ insert (lexeme ident) 
                                              (Function (position ident) 
-                                                       (makeType typ) 
+                                                       typ 
                                                        (fromZipper (zipp state)))
                             onZip (const (fromScope emptyScope)) -- Clean zipper
                     else tell error1
         else do tell whathappened
                 onScope $ insert (lexeme ident) 
                                  (Function (position ident) 
-                                           (makeType typ) 
+                                           typ 
                                            (fromZipper (zipp state)))
                 onZip (const (fromScope emptyScope)) -- Clean zipper
   where error1       = mkErr $ "Error:" ++ linecol ++" redefinition of " ++ lexeme ident
@@ -232,7 +232,7 @@ insertEnumCons ord (TkEnumCons (l,c) str) = do
 
 
 insertDeclareInScope :: Type -> Token -> Bool -> Bool -> OurMonad ()
-insertDeclareInScope TypeVoid (TkId (l,c) lexeme ) _      _ = (tellError .concat) $ ["Error:",show l,":",show c," ",lexeme ," is VOIDtorb, but it may only be instanced as reference."]
+insertDeclareInScope  TypeVoid (TkId (l,c) lexeme ) _      _ = (tellError .concat) $ ["Error:",show l,":",show c," ",lexeme ," is VOIDtorb, but it may only be instanced as reference."]
 insertDeclareInScope dcltype  (TkId (l,c) lexeme ) isGlob readonly = do 
     state <- get
     if isMember (zipp state) lexeme -- Most recent scope

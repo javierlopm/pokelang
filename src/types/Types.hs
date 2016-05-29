@@ -20,8 +20,9 @@ module Types(
 ) where
 
 import Data.List(intersperse)
-import TableTree(Scope(..))
+import TableTree(Scope(..),showScope)
 import Data.Sequence(Seq,(|>),empty)
+import Data.Foldable (toList)
 import Tokens(Token(TkInt  ,TkBool ,TkChar
                    ,TkVoid ,TkFloat,TkStruct
                    ,TkUnion,TkEnum ,TkNull
@@ -42,7 +43,22 @@ data Declare = Function  { pos::Pos, storedType::Type, fields   ::(Scope Declare
              | EnumCons  { pos::Pos, name :: String,ord  :: Int} 
              | EmptyWithType { storedType :: Type } -- Forward declare with type
              | Empty                                -- Empty forward declare
-             deriving(Show) -- Instance de Eq que ignore por para ver si ya algo esta en las glob
+
+instance Show Declare where
+  show (Function (l,c) t scope ) = 
+      "Function ("++show l++","++show c++ ") Type:" ++show t ++ "" ++
+        showScope 1 scope ++ "\n"
+  show (Variable (l,c) t readonly ) = 
+      "Variable ("++show l++","++show c++ ") Type:" ++show t++ " " ++ cons readonly
+        where cons True = "| Iteration Var"
+              cons _    = ""
+  show (Cons (l,c)) = "Constant value"
+  show (EnumCons (l,c) n ord) = "Enum Constant("++show l++","++show c++ ") \'" ++ n ++ "\' with cardinaly " ++ show ord
+  show (EmptyWithType t) = "Forward Declaration of type "++ show t ++", this shouldn't be here" 
+  show Empty  = " EMPTY " 
+  show (Enum   (l,c) n scp ) = "Enum("++show l++","++show c++ ") " ++ n ++ " with scope: " ++ showScope 1 scp ++ "\n"
+  show (Union  (l,c) n scp ) = "Union("++show l++","++show c++ ") " ++ n ++ " with scope: " ++ showScope 1 scp ++ "\n"
+  show (Struct (l,c) n scp ) = "Struct("++show l++","++show c++ ") " ++ n ++ " with scope: " ++ showScope 1 scp ++ "\n"
 
 -- Polymorphic store type
 data PrimType = PrimInt        Int
@@ -68,11 +84,13 @@ data Type = TypeInt
           | TypePointer    Type
           | TypeEmptyArray Type
           | TypeArray      Type Int
-          | TypeFunction   [Type] -- DEBE SER data sequence
+          | TypeFunction   (Seq Type) -- DEBE SER data sequence
+          | TypeUndefined  -- Temporal
           deriving(Eq)
 
 instance Show Type where
   show (TypeInt      ) = "Integer"
+  show (TypeUndefined) = "NILL"
   show (TypeBool     ) = "Boolean"
   show (TypeChar     ) = "Character"
   show (TypeFloat    ) = "Float"
@@ -83,7 +101,7 @@ instance Show Type where
   show (TypePointer     t     ) = "Pointer to " ++ show t
   show (TypeEmptyArray  t     ) = "Array to "   ++ show t
   show (TypeArray       t dim ) = "Array size " ++ show dim ++ " of " ++ show t
-  show (TypeFunction    l     ) = "Function of type " ++ (concat . intersperse " × " . (map show)) l
+  show (TypeFunction    l     ) = "Function of type " ++ (concat . intersperse " × " . (map show) . toList) l
 
 
 enumMatches :: Declare -> String -> Bool
@@ -183,15 +201,4 @@ makeDataType (TkUnion  _ ) dataId =  TypeStruct (lexeme dataId)
 makeDataType (TkEnum   _ ) dataId =  TypeUnion  (lexeme dataId)
 
 
--- Create a static array declaration
--- makeArr :: Token -> Pos -> [Integer] -> Maybe Declare
--- makeArr t p li = Just $
---     case t of 
---         TkInt    _ -> StaticArray p TypeInt    li
---         TkBool   _ -> StaticArray p TypeBool   li
---         TkChar   _ -> StaticArray p TypeChar   li
---         TkFloat  _ -> StaticArray p TypeFloat  li
---         TkVoid   _ -> StaticArray p TypeVoid   li
-        --TkStruct _ -> StaticArray p TypeStruct i $ s
-        --TkUnion  _ -> StaticArray p TypeUnion  i $ s
-        --TkEnum   _ -> StaticArray p TypeEnum   i $ s
+type TypeTuple = Seq Type
