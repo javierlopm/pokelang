@@ -20,6 +20,7 @@ module GrammarMonad(
     insertEnumCons,
     insertDeclareInScope,
     checkItsDeclared,
+    checkEnumAndInsert
 ) where
 
 import Control.Monad.RWS.Strict
@@ -27,6 +28,7 @@ import Data.Maybe(fromJust,isNothing)
 import Tokens
 import TableTree
 import Types
+import ErrorHandle(strError)
 import qualified Data.Sequence as S
 
 type OurMonad    = RWS String (S.Seq(Message)) ScopeNZip
@@ -100,28 +102,43 @@ checkIsFunc (TkId (r,c) lex) = do
         then tellError $ "Error:"++show r++":"++show c++" \'"++lex ++ "\' at " ++ " it's not a callable function or procedure."
         else tellLog   $ lex ++ "\' at " ++ show r++":"++show c ++ " it's a callable function or procedure."
 
-checkLIter :: Token -> OurMonad()
-checkLIter (TkId (r,c) lex) = do
-    state <- get
-    let treeSearch  = (lookUp (zipp state) lex)
-    let scopeSearch = (getValS lex (scp state))
-    if  (\x -> isLIter x && (not.isNothing) x)  treeSearch || (\x -> isLIter x && (not.isNothing) x) scopeSearch
-                then tellError error1
-                else if isNothing treeSearch && isNothing scopeSearch  
-                    then tellError error2
-                    else tellLog   whathappened
-  where error1 = "Error:"++ show r++":"++show c ++" Cannot assing to \'"++ lex ++ "\' because it's an iteration variable."
-        error2 = "Error:"++ show r++":"++show c ++" Cannot assing to \'"++ lex ++ "\' because it's not declared."
-        whathappened = "Variable " ++ lex ++ " at " ++ show r++":"++show c ++ " can be assing."
+-- checkLIter :: Token -> OurMonad()
+-- checkLIter (TkId (r,c) lex) = do
+--     state <- get
+--     let treeSearch  = (lookUp (zipp state) lex)
+--     let scopeSearch = (getValS lex (scp state))
+--     if  (\x -> isLIter x && (not.isNothing) x)  treeSearch || (\x -> isLIter x && (not.isNothing) x) scopeSearch
+--                 then tellError error1
+--                 else if isNothing treeSearch && isNothing scopeSearch  
+--                     then tellError error2
+--                     else tellLog  whathappened
+--   where error1 = "Error:"++ show r++":"++show c ++" Cannot assing to \'"++ lex ++ "\' because it's an iteration variable."
+--         error2 = "Error:"++ show r++":"++show c ++" Cannot assing to \'"++ lex ++ "\' because it's not declared."
+--         whathappened = "Variable " ++ lex ++ " at " ++ show r++":"++show c ++ " can be assing."
 
-checkReadable :: Token -> Bool -> OurMonad ()
-checkReadable (TkId (l,c) lex) bit = do
-    state <- get
-    let word = if bit then "readable."
-                      else "writeable."
-    if isReadable (lookUp (zipp state) lex) || isReadable (getValS lex (scp state) )
-        then tellLog   $ "Variable " ++ lex ++ " at " ++ show l++":"++show c ++ " is "++ word
-        else tellError $ concat $ ["Error:",show l,":",show c," variable ",lex," is not.",word]
+checkLIter :: Token -> OurMonad()
+checkLIter (TkId (l,c) lexeme) = do
+    state <- get 
+    if isMember (zipp state) lexeme
+        then if isLIter $ fromJust $ getVal (zipp state) lexeme
+                then tellError error2 
+                else tellLog whathappened
+        else tellLog error1 -- Verificacion ya existente en niveles mas bajos. No se requiere indicar error
+  where error1 = strError (l,c) "Cannot assign to" lexeme "because it's an iteration variable."
+        error2 = strError (l,c) "Cannot assign to" lexeme "because it's not declared."
+        whathappened = "Variable " ++ lexeme ++ " at " ++ show l++":"++show c ++ " can be assing."
+
+
+
+checkReadable = undefined
+-- checkReadable :: Token -> Bool -> OurMonad ()
+-- checkReadable (TkId (l,c) lex) bit = do
+--     state <- get
+--     let word = if bit then "readable."
+--                       else "writeable."
+--     if  isReadable (lookUp (zipp state) lex) || isReadable $ fromJust $ getValS lex (scp state)  -- No se debe verificar que esta?
+--         then tellLog   $ "Variable " ++ lex ++ " at " ++ show l++":"++show c ++ " is "++ word
+--         else tellError $ strError (l,c) " variable " lex (" is not " ++ word )
 
 
 -- Agregar por adelantado para recursion
@@ -216,24 +233,38 @@ insertEnumCons ord (TkEnumCons (l,c) str) = do
         linecol      = show l ++":"++ show c
 
 
-insertDeclareInScope :: Maybe Declare -> Token -> Bool -> OurMonad ()
-insertDeclareInScope Nothing (TkId (l,c) lexeme ) _ = (tellError .concat) $ ["Error:",show l,":",show c," ",lexeme ," is VOIDtorb, but it may only be instanced as reference."]
-insertDeclareInScope (Just dcltype) (TkId (l,c) lexeme ) isGlob = do 
+insertDeclareInScope :: Type -> Token -> Bool -> Bool -> OurMonad ()
+insertDeclareInScope TypeVoid (TkId (l,c) lexeme ) _      _ = (tellError .concat) $ ["Error:",show l,":",show c," ",lexeme ," is VOIDtorb, but it may only be instanced as reference."]
+insertDeclareInScope dcltype  (TkId (l,c) lexeme ) isGlob readonly = do 
     state <- get
     if isMember (zipp state) lexeme -- Most recent scope
       then tellError error1
       else if isGlob 
-            then if isInScope (scp state) lexeme -- global scope
+            then if isInScope (scp state) lexeme -- global scope enum
                     then tellError error2
                     else do tellLog whathappened 
-                            onScope $ insert lexeme dcltype    
+                            onScope $ insert lexeme scopevar    
             else do tellLog whathappened
-                    (onZip . apply) $ insert lexeme dcltype
+                    (onZip . apply) $ insert lexeme scopevar
     where error1       = generror ++ " in actual scope."
           error2       = generror ++ " in global scope."
+          scopevar     = (Variable (l,c) dcltype readonly)
           generror     = "Error:" ++ show l ++":"++show c ++" redefinition of " ++ lexeme
           whathappened = "Added " ++ lexeme ++" at "++show l++":"++show c
 
+-- Check if datatype is enum and insert as readonly
+checkEnumAndInsert :: Token -> Token -> OurMonad ()
+checkEnumAndInsert (TkDId (lD,cD) lexemeD) (TkId (l,c) lexeme) = do
+    state <- get
+    if isInScope (scp state) lexemeD  -- Check in globals for enum
+        then if enumMatches (fromJust (getValS lexeme (scp state))) lexemeD -- if its enum and has same name --enumMatches (fromJust (getValS lexeme (scp state))) lexemeD
+                then do tellLog whathappened
+                        onScope $ insert lexeme (Variable (l,c) (TypeEnum lexemeD) True)
+                else tellError  $ error2 
+        else tellError error1
+  where whathappened  = "Iter enum at "++show lD ++":"++show cD++" inserted in scope"
+        error1    = "Error:"++ show lD ++":"++show cD ++" datatype "++lexemeD++" used but not found."
+        error2    = "Error:"++ show lD ++":"++show cD ++" trying to iterate over non ENUM type"
 
 
 checkItsDeclared :: Token -> OurMonad ()

@@ -14,8 +14,8 @@ Lexer.hs: Tokens.o
 	alex --latin1 lexer/Lexer.x -o lexer/Lexer.hs
 
 # Parser
-Rwsgrammar.o: Tokens.o Types.o SymTable.o
-	ghc monads/GrammarMonad.hs -itokens -isymtable -itypes
+Rwsgrammar.o: Tokens.o Types.o SymTable.o ErrorHandle.o
+	ghc monads/GrammarMonad.hs -itokens -isymtable -itypes -ierrors
 
 Grammar.hs: Tokens.o 
 	happy parser/Grammar.y -o parser/Grammar.hs  --info=grammarinfo.md

@@ -9,9 +9,11 @@ module Types(
     toPointer,
     toEmptyArray,
     toArray,
-    makeDec,
     makeType,
-    makeIter
+    enumMatches,
+    makeDataType
+    -- makeIter
+    -- makeDec,
     -- isPointer,
     -- makeArr,
     -- makePtrs,
@@ -19,17 +21,11 @@ module Types(
 
 import Data.List(intersperse)
 import TableTree(Scope(..))
-import Tokens(Token(TkInt
-                   ,TkBool
-                   ,TkChar
-                   ,TkVoid
-                   ,TkFloat
-                   ,TkStruct
-                   ,TkUnion
-                   ,TkEnum
-                   ,TkNull
-                   ,TkDId
-                   ,TkId))
+import Data.Sequence(Seq,(|>),empty)
+import Tokens(Token(TkInt  ,TkBool ,TkChar
+                   ,TkVoid ,TkFloat,TkStruct
+                   ,TkUnion,TkEnum ,TkNull
+                   ,TkDId,TkId,lexeme))
 
 type Message = Either String String -- Monad writer message unit
 type Pos = (Int,Int)
@@ -37,8 +33,8 @@ type Pos = (Int,Int)
 -- Las constantes enumeradas no deberian estar en un scope grande y universal?
 
 -- Declarations might be functions,variables or structure types
-data Declare = Function  { pos::Pos, storedType::Type, fields::(Scope Declare)}
-             | Variable  { pos::Pos, storedType::Type, storedTypeV::PrimType }
+data Declare = Function  { pos::Pos, storedType::Type, fields   ::(Scope Declare)}
+             | Variable  { pos::Pos, storedType::Type, readonly :: Bool  } -- , storedTypeV::PrimType -- No se necesaita todavia
              | Cons      { pos::Pos } 
              | Struct    { pos::Pos, typeName ::String, fields::(Scope Declare)}
              | Union     { pos::Pos, typeName ::String, fields::(Scope Declare)} 
@@ -66,28 +62,34 @@ data Type = TypeInt
           | TypeChar   
           | TypeFloat  
           | TypeVoid   
-          | TypeEnum       String -- Tipos de datos seran comparados por nombres 
+          | TypeEnum       String -- Name comparison 
           | TypeStruct     String
           | TypeUnion      String
           | TypePointer    Type
           | TypeEmptyArray Type
           | TypeArray      Type Int
-          | TypeFunction   [Type] -- Potencialmente cambiar por data sequence
+          | TypeFunction   [Type] -- DEBE SER data sequence
           deriving(Eq)
 
 instance Show Type where
-  show (TypeInt     ) = "Integer"
-  show (TypeBool    ) = "Boolean"
-  show (TypeChar    ) = "Character"
-  show (TypeFloat   ) = "Float"
-  show (TypeVoid    ) = "Void"
+  show (TypeInt      ) = "Integer"
+  show (TypeBool     ) = "Boolean"
+  show (TypeChar     ) = "Character"
+  show (TypeFloat    ) = "Float"
+  show (TypeVoid     ) = "Void"
   show (TypeEnum   s ) = "Enum "   ++ s
   show (TypeUnion  s ) = "Union "  ++ s
   show (TypeStruct s ) = "Struct " ++ s
-  show (TypePointer     t      ) = "Pointer to " ++ show t
-  show (TypeEmptyArray  t      ) = "Array to "   ++ show t
-  show (TypeArray       t dim  ) = "Array size " ++ show dim ++ " of " ++ show t
-  show (TypeFunction    l      ) = "Function of type " ++ (concat . intersperse " × " . (map show)) l
+  show (TypePointer     t     ) = "Pointer to " ++ show t
+  show (TypeEmptyArray  t     ) = "Array to "   ++ show t
+  show (TypeArray       t dim ) = "Array size " ++ show dim ++ " of " ++ show t
+  show (TypeFunction    l     ) = "Function of type " ++ (concat . intersperse " × " . (map show)) l
+
+
+enumMatches :: Declare -> String -> Bool
+enumMatches (Enum _ name _ ) str = name == str
+enumMatches _ _                  = False
+
 
 isFunc :: Maybe Declare -> Bool
 isFunc Nothing = False
@@ -95,24 +97,18 @@ isFunc (Just (Function _ _ _)) = True
 isFunc (Just Empty) = True
 isFunc a = False
 
-isLIter :: Maybe Declare -> Bool
-isLIter (Just (Variable _ _ stType)) = 
-  case (stType) of
-        PrimIter   _  -> True
-        otherwise     -> False
-isLIter Nothing = False
-isLIter a = False
+isLIter :: Declare -> Bool
+isLIter (Variable _ _ iterVar) = iterVar
+isLIter _                      = False
 
 --Checks if a declaration is readable
-isReadable :: Maybe Declare -> Bool
-isReadable Nothing = False
-isReadable (Just (Variable _ _ stType)) = 
+isReadable :: Declare -> Bool
+isReadable (Variable _ stType _) = 
   case (stType) of
-    PrimInt    _  -> True
-    PrimIter   _  -> True
-    PrimBool   _  -> True
-    PrimChar   _  -> True
-    PrimFloat  _  -> True
+    TypeInt       -> True
+    TypeBool      -> True
+    TypeChar      -> True
+    TypeFloat     -> True
     otherwise     -> False
 isReadable a = False
 
@@ -127,19 +123,19 @@ isEmpty Empty = True
 isEmpty _     = False
 
 -- Create declare with a Token an a position
-makeDec :: Token -> Pos -> Maybe String -> Maybe Declare
-makeDec (TkVoid _) _ _  = Nothing
-makeDec t p (Just s)  = Just $
-    case t of 
-        TkStruct _ -> Variable p (TypeStruct s) (PrimStruct s)
-        TkUnion  _ -> Variable p (TypeUnion  s) (PrimUnion s)
-        TkEnum   _ -> Variable p (TypeEnum   s) (PrimEnum s)
-makeDec t p Nothing = Just $
-    case t of 
-        TkInt    _ -> Variable p (TypeInt)   (PrimInt 0) 
-        TkBool   _ -> Variable p (TypeBool)  (PrimBool False)
-        TkChar   _ -> Variable p (TypeChar)  (PrimChar '\0')
-        TkFloat  _ -> Variable p (TypeFloat) (PrimFloat 0.0)
+-- makeDec :: Token -> Pos -> Maybe String -> Maybe Declare
+-- makeDec (TkVoid _) _ _  = Nothing
+-- makeDec t p (Just s)  = Just $
+--     case t of 
+--         TkStruct _ -> Variable p (TypeStruct s) (PrimStruct s)
+--         TkUnion  _ -> Variable p (TypeUnion  s) (PrimUnion s)
+--         TkEnum   _ -> Variable p (TypeEnum   s) (PrimEnum s)
+-- makeDec t p Nothing = Just $
+--     case t of 
+--         TkInt    _ -> Variable p (TypeInt)   (PrimInt 0) 
+--         TkBool   _ -> Variable p (TypeBool)  (PrimBool False)
+--         TkChar   _ -> Variable p (TypeChar)  (PrimChar '\0')
+--         TkFloat  _ -> Variable p (TypeFloat) (PrimFloat 0.0)
 
 {-
     Declare type transformation functions
@@ -157,9 +153,9 @@ toArray  :: Declare -> Int -> Declare
 toArray dec dim = dec { storedType = TypeArray oldtype dim }
     where oldtype = storedType dec
 
-makeIter :: Token -> Pos -> Type -> Maybe Declare
-makeIter (TkId _ _) p t = Just $ Variable  p t (PrimIter 0) 
-makeIter a  p  t        = Nothing
+-- makeIter :: Token -> Pos->  Declare
+-- makeIter (TkId _ _) (l,c)   = Variable  (l,c) TkInt True 
+-- makeIter a  p               = error "what are you doing?"
 
 -- Create a pointer declaration
 -- makePtrs :: Token -> Pos -> Int -> Maybe String -> Maybe Declare
@@ -180,6 +176,12 @@ makeType (TkBool  _) = TypeBool
 makeType (TkChar  _) = TypeChar
 makeType (TkVoid  _) = TypeVoid
 makeType (TkFloat _) = TypeFloat
+
+makeDataType :: Token -> Token -> Type
+makeDataType (TkStruct _ ) dataId =  TypeEnum   (lexeme dataId)
+makeDataType (TkUnion  _ ) dataId =  TypeStruct (lexeme dataId)
+makeDataType (TkEnum   _ ) dataId =  TypeUnion  (lexeme dataId)
+
 
 -- Create a static array declaration
 -- makeArr :: Token -> Pos -> [Integer] -> Maybe Declare

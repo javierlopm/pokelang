@@ -6,6 +6,9 @@ import System.IO(hPutStrLn,stderr)
 import qualified Data.Foldable as F(foldr)
 import Data.Sequence(Seq)
 
+strError :: (Int,Int) -> String -> String -> String -> String
+strError (l,c) msg1 lexeme msg2 = "Error:"++ show l++":"++show c ++ " " ++ msg1 ++" \'" ++ lexeme ++ " \' " ++ msg2
+
 -- Check token list for TkError and count them
 checkTokenError :: [Token] -> ([Token],[Token],Int)
 checkTokenError = foldr pickGoods ([],[],0)

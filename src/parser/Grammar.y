@@ -146,7 +146,7 @@ import GrammarMonad
 Prog : Dcls  {% return ()}
 
 Ins : {- λ -}                   {% return () }
-    | Ins Exp "=" Exp    ";"    {% checkLIter $2}
+    | Ins Exp "="  Exp   ";"    {% checkLIter $2}
     | Ins Exp "*=" Exp   ";"    {% checkLIter $2}
     | Ins Exp "+=" Exp   ";"    {% checkLIter $2}
     | Ins Exp "-=" Exp   ";"    {% checkLIter $2}
@@ -164,9 +164,9 @@ Ins : {- λ -}                   {% return () }
     | Ins BEGIN Ent0 SmplDcls Ins END       {% exitScope  } -- No debe aceptar funciones
     | Ins IF Exp    ":" Ent0 SmplDcls Ins NextIf Else END    {% exitScope  }
     | Ins WHILE Exp ":" Ent0 SmplDcls Ins END                {% exitScope  }
-    | Ins FOR Ent0 Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope  }
-    | Ins FOR Ent0 Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope  }
-    | Ins FOR Ent0 Ent3 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope  }
+    | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope  }
+    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope  }
+    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope  }
 
 -- Print arguments
 PrntArgs: {- λ -}             {% return ()}
@@ -189,28 +189,28 @@ GlobDeclare : Reference          { ( $1 ,False) }
             | GLOBAL Reference   { ( $2 ,True ) }
 
 -- Randomly nested Pointer-Array-Empty_Arrray references (or not)
-Reference: PrimType              { $1 }
-         | Reference "*"         { TypePointer    $1 }
-         | Reference "[" "]"     { TypeEmptyArray $1 }
+Reference: PrimType              {            $1           }
+         | Reference "*"         { TypePointer    $1       }
+         | Reference "[" "]"     { TypeEmptyArray $1       }
          | Reference "[" INT "]" { TypeArray $1 (value $3) }
 
-PrimType : INTDEC           { TypeInt   }
-         | BOOLDEC          { TypeBool  }
-         | CHARDEC          { TypeChar  }
-         | VOIDDEC          { TypeVoid  }
-         | FLOATDEC         { TypeFloat }
-         | ENUMDEC   DATAID { TypeEnum   (lexeme $2) }
-         | STRUCTDEC DATAID { TypeStruct (lexeme $2) }
-         | UNIONDEC  DATAID { TypeUnion  (lexeme $2) }
+PrimType : INTDEC           {     makeType $1    }
+         | BOOLDEC          {     makeType $1    }
+         | CHARDEC          {     makeType $1    }
+         | VOIDDEC          {     makeType $1    }
+         | FLOATDEC         {     makeType $1    }
+         | ENUMDEC   DATAID { makeDataType $1 $2 }
+         | STRUCTDEC DATAID { makeDataType $1 $2 }
+         | UNIONDEC  DATAID { makeDataType $1 $2 }
 
 
 
 
 -- Global declarations on scope level 0
-Dcls:  {- λ -}                          {% return ()}
-    | Dcls Reference   ID         ";"   {% return ()} -- Always global, GlobDeclare not needed
-    | Dcls FWD STRUCTDEC  DATAID  ";"   {% return ()} -- Forward declarations solo, agregar con Dec Empty
-    | Dcls FWD UNIONDEC   DATAID  ";"   {% return ()} -- Forward declarations solo, agregar con Dec Empty
+Dcls:  {- λ -}                          {% return () }
+    | Dcls Reference   ID         ";"   {% return () } -- Always global, GlobDeclare not needed
+    | Dcls FWD STRUCTDEC  DATAID  ";"   {% return () } -- Forward declarations solo, agregar con Dec Empty
+    | Dcls FWD UNIONDEC   DATAID  ";"   {% return () } -- Forward declarations solo, agregar con Dec Empty
     | Dcls FUNC Reference Ent2 "(" Parameters ")" ";" {% return () } -- Function forward declaration
     | Dcls ENUMDEC    Ent1 "{" EnumConsList "}"       {% insertEnum $3        }
     | Dcls STRUCTDEC  Ent1 "{" FieldsList   "}"       {% insertData $3  True  }
@@ -290,8 +290,10 @@ Term: TRUE         {% return($1) }
 Ent0 : {- λ -}     {% onZip enterScope  }
 Ent1 : DATAID      { $1 } 
 Ent2 : ID          {% insertCheckFunc $1 >> return $1 } 
-Ent3 : ID          {% insertDeclareInScope (makeIter $1 (position $1) TypeInt) $1 False } 
-
+Ent3 : ID          {%  onZip enterScope >>
+                         insertDeclareInScope TypeInt $1 True True >>
+                            return $1                             } 
+Ent4 : DATAID ID   {% onZip enterScope >> checkEnumAndInsert $1 $2 >> return $1 } 
 
 {
   
