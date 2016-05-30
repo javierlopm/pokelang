@@ -211,8 +211,8 @@ Dcls:  {- λ -}                          {% return () }
     | Dcls FWD UNIONDEC   DATAID  ";"   {% return () } -- Forward declarations solo, agregar con Dec Empty
     | Dcls FWD FUNC Reference ID "(" Parameters ")" ";"   {% insertForwardFunc (addType $7 $4) $5 }
     | Dcls ENUMDEC DATAID "{" EnumConsList "}"  {% insertEnum $3 }
-    | Dcls Ent5 "{" FieldsList "}" {% insertData $2  }
-    | Dcls Ent6 "{" FieldsList "}" {% insertData $2  }
+    | Dcls Ent5 "{" FieldsList "}" {% insertData $2 $4  }
+    | Dcls Ent6 "{" FieldsList "}" {% insertData $2 $4  }
     | Dcls FUNC Reference Ent2 "(" Parameters ")" Ent0  ":"  SmplDcls Ins END -- Ent0 Ent5
     {% insertFunction (addType $6 $3) $4 }
 
@@ -230,8 +230,10 @@ ListParam: {- λ -}                    {% return emptytuple }
 EnumConsList: ENUM                      {% insertEnumCons 1  $1 }
             | EnumConsList "," ENUM     {% insertEnumCons $1 $3 }
 
-FieldsList  : ID "::" Reference                  {% return ()}
-            | FieldsList  "," ID "::" Reference  {% return ()} --verificar que realmente existe
+FieldsList  : ID "::" Reference                  {% insertDeclareInScope $1 $3 >> 
+                                                        return addType emptytuple $3  }
+            | FieldsList  "," ID "::" Reference  {% insertDeclareInScope $3 $5 >> 
+                                                        return addType $1 $5 } --verificar que realmente existe
 
 
 

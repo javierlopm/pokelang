@@ -12,6 +12,7 @@ module Types(
     toArray,
     makeType,
     enumMatches,
+    dataNameMatches,
     makeDataType,
     emptytuple,
     addType
@@ -40,8 +41,8 @@ type Pos = (Int,Int)
 data Declare = Function  { pos::Pos, storedType::Type, fields   ::(Scope Declare)}
              | Variable  { pos::Pos, storedType::Type, readonly :: Bool  } -- , storedTypeV::PrimType -- No se necesaita todavia
              | Cons      { pos::Pos } 
-             | Struct    { pos::Pos, typeName ::String, fields::(Scope Declare)}
-             | Union     { pos::Pos, typeName ::String, fields::(Scope Declare)} 
+             | Struct    { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare)}
+             | Union     { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare)} 
              | Enum      { pos::Pos, typeName ::String, fields::(Scope Declare)}
              | EnumCons  { pos::Pos, name :: String,ord  :: Int} 
              | EmptyWithType { storedType :: Type } -- Forward declare with type
@@ -59,9 +60,9 @@ instance Show Declare where
   show (EnumCons (l,c) n ord) = "Enum Constant("++show l++","++show c++ ") \'" ++ n ++ "\' with cardinaly " ++ show ord
   show (EmptyWithType t) = "Forward Declaration of type "++ show t ++", this shouldn't be here" 
   show Empty  = " EMPTY " 
-  show (Enum   (l,c) n scp ) = "Enum("++show l++","++show c++ ") " ++ n ++ " with scope: " ++ showScope 1 scp ++ "\n"
-  show (Union  (l,c) n scp ) = "Union("++show l++","++show c++ ") " ++ n ++ " with scope: " ++ showScope 1 scp ++ "\n"
-  show (Struct (l,c) n scp ) = "Struct("++show l++","++show c++ ") " ++ n ++ " with scope: " ++ showScope 1 scp ++ "\n"
+  show (Enum   (l,c) n   scp ) = "Enum("++show l++","++show c++ ") " ++ show n ++ " with scope: " ++ showScope 1 scp ++ "\n"
+  show (Union  (l,c) n t scp ) = "Union("++show l++","++show c++ ") " ++ show n ++ " Type: " ++ show (TypeFunction t) ++" with scope: " ++ showScope 1 scp ++ "\n"
+  show (Struct (l,c) n t scp ) = "Struct("++show l++","++show c++ ") " ++ show n ++ " Type: " ++ show (TypeFunction t) ++" with scope: " ++ showScope 1 scp ++ "\n"
 
 -- Polymorphic store type
 data PrimType = PrimInt        Int
@@ -82,12 +83,12 @@ data Type = TypeInt
           | TypeFloat  
           | TypeVoid   
           | TypeEnum       String -- Name comparison 
-          | TypeStruct     String
-          | TypeUnion      String
+          | TypeStruct     String 
+          | TypeUnion      String 
           | TypePointer    Type
           | TypeEmptyArray Type
           | TypeArray      Type Int
-          | TypeFunction   (Seq Type) -- DEBE SER data sequence
+          | TypeFunction   (Seq Type) 
           | TypeUndefined  -- Temporal
           deriving(Eq)
 
@@ -111,6 +112,11 @@ enumMatches :: Declare -> String -> Bool
 enumMatches (Enum _ name _ ) str = name == str
 enumMatches _ _                  = False
 
+dataNameMatches :: Declare -> Bool -> Bool
+dataNameMatches (Struct _ name _ ) str = name == str
+dataNameMatches (Union  _ name _ ) str = name == str
+dataNameMatches  Empty   _             = True
+dataNameMatches _ _                    = False
 
 isFunc :: Maybe Declare -> Bool
 isFunc Nothing = False

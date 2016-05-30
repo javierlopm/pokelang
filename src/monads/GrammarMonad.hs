@@ -159,12 +159,12 @@ insertEmptyData datatk tk = do
     if isMember ((fromScope .scp) state) (lexeme tk)
         then tell error1
         else do tell whathappened
-                onScope $ insert (lexeme tk) (EmptyWithType typ)
+                onScope $ insert (lexeme tk) Empty
   where error1       = mkErr  $ "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
         whathappened = mkLog  $ "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
-        typ  = if isStruct datatk then (TypeStruct (lexeme tk) )
-                                  else (TypeUnion  (lexeme tk) )
+        typ  = if isStruct datatk then TypeStruct (lexeme tk)
+                                  else TypeUnion  (lexeme tk)
 
 insertForwardFunc :: TypeTuple -> Token -> OurMonad ()
 insertForwardFunc typ tk = do
@@ -201,29 +201,19 @@ insertFunction tuple ident  = do
 
 
 -- Check,add, log for structs and union
-insertData :: (Token,Token) -> Bool -> OurMonad ()
-insertData (typ,ident) isStruct = do 
+insertData :: (Token,Token) -> TypeTuple -> OurMonad ()
+insertData (typ,ident) tt = do 
     state <- get
-    if isMember ((fromScope.scp) state) (lexeme typ) -- Chequear que es vaina forward
-        then do if ( isEmpty . fromJust ) (getValS (lexeme typ) (scp state))  
-                    then do tell whathappened
-                            onScope $ insert (lexeme typ)
-                                              (if isStruct 
-                                                 then Struct p name (fromZipper (zipp state))
-                                                 else Union  p name (fromZipper (zipp state)))
-                            onZip (const (fromScope emptyScope)) -- Clean zipper
-                    else tell error1
-        else do tell whathappened
-                onScope $ insert (lexeme typ)
-                                  (if isStruct 
-                                     then Struct p name (fromZipper (zipp state))
-                                     else Union  p name (fromZipper (zipp state)))
-                onZip (const (fromScope emptyScope)) -- Clean zipper
-  where error1       = mkErr $ "Error:" ++ linecol ++" type \'" ++ lexeme typ ++ "\' already declared."
-        whathappened = mkLog $ "Adding struct/union "  ++ lexeme typ ++ " at "++ linecol
-        linecol      = (show.fst.position) typ ++":"++(show.snd.position) typ
-        p     = position typ
-        name  = lexeme typ
+    --let typeInScope =  fromJust $ getValS (lexeme ident) (scp state)
+    
+    tell whathappened
+    onScope $ insert (lexeme ident) 
+                     (if isStruct typ
+                          then Struct p (TypeStruct (lexeme ident)) tt (fromZipper (zipp state))
+                          else Union  p (TypeUnion  (lexeme ident)) tt (fromZipper (zipp state)))
+                            onZip (const (fromScope emptyScope))
+  where whathappened = mkLog $ "Adding struct/union "  ++ lexeme typ ++ " at "++ linecol
+        linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident
 
 -- Check,add, log for enums
 insertEnum :: Token -> OurMonad ()
