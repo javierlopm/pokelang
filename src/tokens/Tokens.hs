@@ -1,11 +1,12 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 
 module Tokens(
-    Token     (..),
+    Pos,
+    Token (..),
     createNum,
     createFloat,
     createChar,
-    Pos
+    isStruct
 ) where
 
 import Data.Data(toConstr,Data,Typeable)
@@ -167,6 +168,6 @@ createChar p str
     | otherwise = TkCharVal p $ head str
     where is str2 = str == str2
 
-
-
-
+isStruct :: Token -> Bool
+isStruct (TkStruct _) = True
+isStruct _        = False

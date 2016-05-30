@@ -210,13 +210,11 @@ Dcls:  {- λ -}                          {% return () }
     | Dcls FWD STRUCTDEC  DATAID  ";"   {% return () } -- Forward declarations solo, agregar con Dec Empty
     | Dcls FWD UNIONDEC   DATAID  ";"   {% return () } -- Forward declarations solo, agregar con Dec Empty
     | Dcls FWD FUNC Reference ID "(" Parameters ")" ";"   {% insertForwardFunc (addType $7 $4) $5 }
-    | Dcls ENUMDEC    Ent1 "{" EnumConsList "}"       {% insertEnum $3        }
-    | Dcls STRUCTDEC  Ent1 "{" FieldsList   "}"       {% insertData $3  True  }
-    | Dcls UNIONDEC   Ent1 "{" FieldsList   "}"       {% insertData $3  False }
+    | Dcls ENUMDEC DATAID "{" EnumConsList "}"  {% insertEnum $3 }
+    | Dcls Ent5 "{" FieldsList "}" {% insertData $2  }
+    | Dcls Ent6 "{" FieldsList "}" {% insertData $2  }
     | Dcls FUNC Reference Ent2 "(" Parameters ")" Ent0  ":"  SmplDcls Ins END -- Ent0 Ent5
     {% insertFunction (addType $6 $3) $4 }
-
--- insertCheckFunc $1 >> return $1
 
 
 -- Parameter: ListParam Reference ID  {% insertDeclareInScope $2 $3 False False }    -- Falta Hacer la lista de tipos
@@ -288,13 +286,14 @@ Term: TRUE         {% return($1) }
     | CHAR         {% return($1) }
 
 Ent0 : {- λ -}     {% onZip enterScope  }
-Ent1 : DATAID      { $1 } 
-Ent2 : ID          {% insertCheckFunc $1  >> return($1)  } 
+-- Ent1 : DATAID      {% insertEmpty $1  >> return $1 } 
+Ent2 : ID          {% insertEmpty $1  >> return $1 } 
 Ent3 : ID          {%  onZip enterScope >>
                          insertDeclareInScope TypeInt $1 False True >>
                             return $1                             } 
 Ent4 : DATAID ID   {% onZip enterScope >> checkEnumAndInsert $1 $2 >> return $1 } 
--- Ent5 : ID          {% insertCheckFunc $1 >> enterScope >> return $1 }
+Ent5 : STRUCTDEC  DATAID {% insertEmptyData $1 $2 >> return ($1,$2)}
+Ent6 : UNIONDEC   DATAID {% insertEmptyData $1 $2 >> return ($1,$2)}
 
 {
   

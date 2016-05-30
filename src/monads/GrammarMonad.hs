@@ -13,7 +13,8 @@ module GrammarMonad(
     onScope,
     onStrScope,
     exitScope,
-    insertCheckFunc,
+    insertEmpty,
+    insertEmptyData,
     insertForwardFunc,
     insertFunction,
     insertData,
@@ -141,8 +142,8 @@ checkReadable (TkId (l,c) lexeme) bit = do
 
 
 -- Agregar por adelantado para recursion
-insertCheckFunc :: Token -> OurMonad ()
-insertCheckFunc tk = do
+insertEmpty :: Token -> OurMonad ()
+insertEmpty tk = do
     state <- get
     if isMember ((fromScope .scp) state) (lexeme tk)
         then tell error1
@@ -151,6 +152,19 @@ insertCheckFunc tk = do
   where error1       = mkErr  $ "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
         whathappened = mkLog  $ "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
+
+insertEmptyData :: Token -> Token -> OurMonad ()
+insertEmptyData datatk tk = do
+    state <- get
+    if isMember ((fromScope .scp) state) (lexeme tk)
+        then tell error1
+        else do tell whathappened
+                onScope $ insert (lexeme tk) (EmptyWithType typ)
+  where error1       = mkErr  $ "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
+        whathappened = mkLog  $ "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
+        linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
+        typ  = if isStruct datatk then (TypeStruct (lexeme tk) )
+                                  else (TypeUnion  (lexeme tk) )
 
 insertForwardFunc :: TypeTuple -> Token -> OurMonad ()
 insertForwardFunc typ tk = do
@@ -187,8 +201,8 @@ insertFunction tuple ident  = do
 
 
 -- Check,add, log for structs and union
-insertData :: Token -> Bool -> OurMonad ()
-insertData typ isStruct = do 
+insertData :: (Token,Token) -> Bool -> OurMonad ()
+insertData (typ,ident) isStruct = do 
     state <- get
     if isMember ((fromScope.scp) state) (lexeme typ) -- Chequear que es vaina forward
         then do if ( isEmpty . fromJust ) (getValS (lexeme typ) (scp state))  
