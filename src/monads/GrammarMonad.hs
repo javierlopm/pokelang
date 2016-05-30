@@ -209,9 +209,9 @@ insertData (typ,ident) tt = do
     tell whathappened
     onScope $ insert (lexeme ident) 
                      (if isStruct typ
-                          then Struct p (TypeStruct (lexeme ident)) tt (fromZipper (zipp state))
-                          else Union  p (TypeUnion  (lexeme ident)) tt (fromZipper (zipp state)))
-                            onZip (const (fromScope emptyScope))
+                          then Struct (position ident) (TypeStruct (lexeme ident)) tt (fromZipper (zipp state))
+                          else Union  (position ident) (TypeUnion  (lexeme ident)) tt (fromZipper (zipp state)))
+    onZip (const (fromScope emptyScope))
   where whathappened = mkLog $ "Adding struct/union "  ++ lexeme typ ++ " at "++ linecol
         linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident
 

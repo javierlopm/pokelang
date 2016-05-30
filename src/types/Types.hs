@@ -112,9 +112,9 @@ enumMatches :: Declare -> String -> Bool
 enumMatches (Enum _ name _ ) str = name == str
 enumMatches _ _                  = False
 
-dataNameMatches :: Declare -> Bool -> Bool
-dataNameMatches (Struct _ name _ ) str = name == str
-dataNameMatches (Union  _ name _ ) str = name == str
+dataNameMatches :: Declare -> String -> Bool
+dataNameMatches (Struct _ (TypeStruct name) _ _ ) str = name == str
+dataNameMatches (Union  _ (TypeUnion name)  _ _ ) str = name == str
 dataNameMatches  Empty   _             = True
 dataNameMatches _ _                    = False
 
