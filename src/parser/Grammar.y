@@ -230,9 +230,9 @@ ListParam: {- λ -}                    {% return emptytuple }
 EnumConsList: ENUM                      {% insertEnumCons 1  $1 }
             | EnumConsList "," ENUM     {% insertEnumCons $1 $3 }
 
-FieldsList  : ID "::" Reference                  {% insertDeclareInScope $1 $3 >> 
+FieldsList  : ID "::" Reference                  {% insertDeclareInScope $1 $3 False False >> 
                                                         return addType emptytuple $3  }
-            | FieldsList  "," ID "::" Reference  {% insertDeclareInScope $3 $5 >> 
+            | FieldsList  "," ID "::" Reference  {% insertDeclareInScope $3 $5 False False >> 
                                                         return addType $1 $5 } --verificar que realmente existe
 
 
