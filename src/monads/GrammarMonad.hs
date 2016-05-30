@@ -14,6 +14,7 @@ module GrammarMonad(
     onStrScope,
     exitScope,
     insertCheckFunc,
+    insertForwardFunc,
     insertFunction,
     insertData,
     insertEnum,
@@ -143,30 +144,41 @@ checkReadable (TkId (l,c) lexeme) bit = do
 insertCheckFunc :: Token -> OurMonad ()
 insertCheckFunc tk = do
     state <- get
-    if isMember ((fromScope.scp) state) (lexeme tk)
+    if isMember ((fromScope .scp) state) (lexeme tk)
         then tell error1
         else do tell whathappened
                 onScope $ insert (lexeme tk) Empty
   where error1       = mkErr  $ "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
         whathappened = mkLog  $ "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
+        linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
+
+insertForwardFunc :: TypeTuple -> Token -> OurMonad ()
+insertForwardFunc typ tk = do
+    state <- get
+    if isMember ((fromScope .scp) state) (lexeme tk)
+        then tell error1
+        else do tell whathappened
+                onScope $ insert (lexeme tk) (EmptyWithType (TypeFunction typ))
+  where error1       = mkErr  $ "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
+        whathappened = mkLog  $ "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk 
 
-insertFunction :: Type -> Token -> OurMonad ()
-insertFunction typ ident  = do 
+insertFunction :: TypeTuple -> Token -> OurMonad ()
+insertFunction tuple ident  = do 
     state <- get
     if isMember ((fromScope .scp) state) (lexeme ident) 
         then do if ( isEmpty . fromJust ) (getValS (lexeme ident) (scp state)) 
                     then do tell whathappened
                             onScope $ insert (lexeme ident) 
                                              (Function (position ident) 
-                                                       typ 
+                                                       (TypeFunction tuple) 
                                                        (fromZipper (zipp state)))
                             onZip (const (fromScope emptyScope)) -- Clean zipper
                     else tell error1
         else do tell whathappened
                 onScope $ insert (lexeme ident) 
                                  (Function (position ident) 
-                                           typ 
+                                           (TypeFunction tuple) 
                                            (fromZipper (zipp state)))
                 onZip (const (fromScope emptyScope)) -- Clean zipper
   where error1       = mkErr $ "Error:" ++ linecol ++" redefinition of " ++ lexeme ident

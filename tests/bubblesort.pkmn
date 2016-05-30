@@ -22,7 +22,8 @@ vamo_a_calmano
 
 funcball VOIDtorb bubble( pINTachu arr, 
                           pINTachu size,
-                          ENUManyte pokeDaysLaborables ** azuuuuuuucar):      
+                          ENUManyte pokeDaysLaborables ** azuuuuuuucar,
+                          VOIDtorb * quesesto):      
     pINTachu temp;
     pINTachu ordenados;
     pINTachu pos;
@@ -36,6 +37,10 @@ funcball VOIDtorb bubble( pINTachu arr,
     vamo_a_imprimi("hola mundo");
 
     temp = temp * temp;
+    
+    vamo_a_empeza
+    vamo_a_calmano
+    
 
     vamo_a_itera ordenados = 0 |size-2|1: 
         #ordenados = ordenados+ 1;

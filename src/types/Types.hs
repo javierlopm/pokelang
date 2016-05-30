@@ -2,6 +2,7 @@ module Types(
     Type(..),
     Declare(..),
     Message,
+    TypeTuple,
     isEmpty,
     isReadable,
     isLIter,
@@ -11,7 +12,9 @@ module Types(
     toArray,
     makeType,
     enumMatches,
-    makeDataType
+    makeDataType,
+    emptytuple,
+    addType
     -- makeIter
     -- makeDec,
     -- isPointer,
@@ -101,7 +104,7 @@ instance Show Type where
   show (TypePointer     t     ) = "Pointer to " ++ show t
   show (TypeEmptyArray  t     ) = "Array to "   ++ show t
   show (TypeArray       t dim ) = "Array size " ++ show dim ++ " of " ++ show t
-  show (TypeFunction    l     ) = "Function of type " ++ (concat . intersperse " × " . (map show) . toList) l
+  show (TypeFunction    l     ) = "(" ++ (concat . intersperse " × " . (map show) . toList) l ++ ")"
 
 
 enumMatches :: Declare -> String -> Bool
@@ -202,3 +205,9 @@ makeDataType (TkEnum   _ ) dataId =  TypeUnion  (lexeme dataId)
 
 
 type TypeTuple = Seq Type
+
+emptytuple :: Seq Type 
+emptytuple = empty
+
+addType :: Seq Type -> Type -> Seq Type
+addType = (|>)

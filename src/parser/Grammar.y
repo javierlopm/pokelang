@@ -204,30 +204,30 @@ PrimType : INTDEC           {     makeType $1    }
          | UNIONDEC  DATAID { makeDataType $1 $2 }
 
 
-
-
 -- Global declarations on scope level 0
 Dcls:  {- λ -}                          {% return () }
     | Dcls Reference   ID         ";"   {% insertDeclareInScope $2 $3 True False } -- Always global, GlobDeclare not needed
     | Dcls FWD STRUCTDEC  DATAID  ";"   {% return () } -- Forward declarations solo, agregar con Dec Empty
     | Dcls FWD UNIONDEC   DATAID  ";"   {% return () } -- Forward declarations solo, agregar con Dec Empty
-    | Dcls FUNC Reference Ent2 "(" Parameters ")" ";" {% return () } -- Function forward declaration
+    | Dcls FWD FUNC Reference ID "(" Parameters ")" ";"   {% insertForwardFunc (addType $7 $4) $5 }
     | Dcls ENUMDEC    Ent1 "{" EnumConsList "}"       {% insertEnum $3        }
     | Dcls STRUCTDEC  Ent1 "{" FieldsList   "}"       {% insertData $3  True  }
     | Dcls UNIONDEC   Ent1 "{" FieldsList   "}"       {% insertData $3  False }
-    | Dcls FUNC Reference Ent2 "(" Parameters ")" ":" SmplDcls Ins END {% insertFunction TypeUndefined $4 } -- {% insertFunction $3 $4 }
+    | Dcls FUNC Reference Ent2 "(" Parameters ")" Ent0  ":"  SmplDcls Ins END -- Ent0 Ent5
+    {% insertFunction (addType $6 $3) $4 }
 
 -- insertCheckFunc $1 >> return $1
 
 
-Parameter: ListParam Reference ID  {% insertDeclareInScope $2 $3 False False }    -- Falta Hacer la lista de tipos
+-- Parameter: ListParam Reference ID  {% insertDeclareInScope $2 $3 False False }    -- Falta Hacer la lista de tipos
         
+Parameters: {- λ -}                 {% return emptytuple } 
+          | ListParam Reference ID  {% insertDeclareInScope $2 $3 False False >> 
+                                         return ( addType $1 $2 ) } 
 
-ListParam: {- λ -}                    {% return () }
-         | ListParam Reference ID "," {% insertDeclareInScope $2 $3 False False } -- Falta Hacer la lista de tipos
+ListParam: {- λ -}                    {% return emptytuple }
+         | ListParam Reference ID "," {% insertDeclareInScope $2 $3 False False >> return ( addType $1 $2 ) } -- Falta Hacer la lista de tipos
          
-Parameters: {- λ -}       {% onZip enterScope } -- Tiene sentido?
-          | Parameter     {% onZip enterScope } 
 
 EnumConsList: ENUM                      {% insertEnumCons 1  $1 }
             | EnumConsList "," ENUM     {% insertEnumCons $1 $3 }
@@ -289,11 +289,12 @@ Term: TRUE         {% return($1) }
 
 Ent0 : {- λ -}     {% onZip enterScope  }
 Ent1 : DATAID      { $1 } 
-Ent2 : ID          {% insertCheckFunc $1 >> return $1 } 
+Ent2 : ID          {% insertCheckFunc $1  >> return($1)  } 
 Ent3 : ID          {%  onZip enterScope >>
                          insertDeclareInScope TypeInt $1 False True >>
                             return $1                             } 
 Ent4 : DATAID ID   {% onZip enterScope >> checkEnumAndInsert $1 $2 >> return $1 } 
+-- Ent5 : ID          {% insertCheckFunc $1 >> enterScope >> return $1 }
 
 {
   
