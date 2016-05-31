@@ -16,11 +16,6 @@ module Types(
     makeDataType,
     emptytuple,
     addType
-    -- makeIter
-    -- makeDec,
-    -- isPointer,
-    -- makeArr,
-    -- makePtrs,
 ) where
 
 import Data.List(intersperse)
@@ -149,30 +144,11 @@ isReadable (Just (Variable _ stType _)) =
     otherwise     -> False
 isReadable a = False
 
--- Check if declare is a pointer
--- isPointer :: Declare -> Bool
--- isPointer (Pointer _ _ _ _) = True
--- isPointer _                = False
-
 -- Check if the declare type is Empty (forward declarations)
 isEmpty :: Declare -> Bool
 isEmpty Empty = True
 isEmpty _     = False
 
--- Create declare with a Token an a position
--- makeDec :: Token -> Pos -> Maybe String -> Maybe Declare
--- makeDec (TkVoid _) _ _  = Nothing
--- makeDec t p (Just s)  = Just $
---     case t of 
---         TkStruct _ -> Variable p (TypeStruct s) (PrimStruct s)
---         TkUnion  _ -> Variable p (TypeUnion  s) (PrimUnion s)
---         TkEnum   _ -> Variable p (TypeEnum   s) (PrimEnum s)
--- makeDec t p Nothing = Just $
---     case t of 
---         TkInt    _ -> Variable p (TypeInt)   (PrimInt 0) 
---         TkBool   _ -> Variable p (TypeBool)  (PrimBool False)
---         TkChar   _ -> Variable p (TypeChar)  (PrimChar '\0')
---         TkFloat  _ -> Variable p (TypeFloat) (PrimFloat 0.0)
 
 {-
     Declare type transformation functions
@@ -190,22 +166,6 @@ toArray  :: Declare -> Int -> Declare
 toArray dec dim = dec { storedType = TypeArray oldtype dim }
     where oldtype = storedType dec
 
--- makeIter :: Token -> Pos->  Declare
--- makeIter (TkId _ _) (l,c)   = Variable  (l,c) TkInt True 
--- makeIter a  p               = error "what are you doing?"
-
--- Create a pointer declaration
--- makePtrs :: Token -> Pos -> Int -> Maybe String -> Maybe Declare
--- makePtrs t p i s = Just $
---     case t of 
---         TkInt    _ -> Pointer p TypeInt    i Nothing
---         TkBool   _ -> Pointer p TypeBool   i Nothing
---         TkChar   _ -> Pointer p TypeChar   i Nothing
---         TkFloat  _ -> Pointer p TypeFloat  i Nothing
---         TkVoid   _ -> Pointer p TypeVoid   i Nothing
---         TkStruct _ -> Pointer p TypeStruct i $ s
---         TkUnion  _ -> Pointer p TypeUnion  i $ s
---         TkEnum   _ -> Pointer p TypeEnum   i $ s
 
 makeType :: Token -> Type
 makeType (TkInt   _) = TypeInt

@@ -104,20 +104,7 @@ checkIsFunc (TkId (r,c) lex1) = do
   where error1   = "Error:"++show r++":"++show c++" \'"++lex1 ++ "\' at " ++ " it's not a callable function or procedure."
         whathpnd = lex1 ++ "\' at " ++ show r++":"++show c ++ " it's a callable function or procedure."
 
--- checkLIter :: Token -> OurMonad()
--- checkLIter (TkId (r,c) lex) = do
---     state <- get
---     let treeSearch  = (lookUp (zipp state) lex)
---     let scopeSearch = (getValS lex (scp state))
---     if  (\x -> isLIter x && (not.isNothing) x)  treeSearch || (\x -> isLIter x && (not.isNothing) x) scopeSearch
---                 then tellError error1
---                 else if isNothing treeSearch && isNothing scopeSearch  
---                     then tellError error2
---                     else tellLog  whathappened
---   where error1 = "Error:"++ show r++":"++show c ++" Cannot assing to \'"++ lex ++ "\' because it's an iteration variable."
---         error2 = "Error:"++ show r++":"++show c ++" Cannot assing to \'"++ lex ++ "\' because it's not declared."
---         whathappened = "Variable " ++ lex ++ " at " ++ show r++":"++show c ++ " can be assing."
-
+-- Check if variable it's an iteration varible (could it be used in assignment?)
 checkLIter :: Token -> OurMonad()
 checkLIter (TkId (l,c) lexeme) = do
     state <- get 
@@ -125,12 +112,12 @@ checkLIter (TkId (l,c) lexeme) = do
         then if isLIter $ fromJust $ getVal (zipp state) lexeme
                 then tellError error2 
                 else tellLog whathappened
-        else tellLog error1 -- Verificacion ya existente en niveles mas bajos. No se requiere indicar error
+        else tellLog error1 -- This check exists already in lower levels
   where error1 = strError (l,c) "Cannot assign to" lexeme "because it's an iteration variable."
         error2 = strError (l,c) "Cannot assign to" lexeme "because it's not declared."
         whathappened = "Variable " ++ lexeme ++ " at " ++ show l++":"++show c ++ " can be assing."
 
-
+-- Dunno lol
 checkReadable :: Token -> Bool -> OurMonad ()
 checkReadable (TkId (l,c) lexeme) bit = do
      state <- get
@@ -141,7 +128,7 @@ checkReadable (TkId (l,c) lexeme) bit = do
          else tellError $ strError (l,c) " variable " lexeme (" is not " ++ word )
 
 
--- Agregar por adelantado para recursion
+-- Adding identifier as soon as possible for recursion in functions
 insertEmpty :: Token -> OurMonad ()
 insertEmpty tk = do
     state <- get
@@ -153,6 +140,7 @@ insertEmpty tk = do
         whathappened = mkLog  $ "Adding " ++ lexeme tk ++ " as soon as possible at " ++ linecol ++ "with type Empty" 
         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
 
+-- Adding identifiers as soon as possible for recursion in datatypes
 insertEmptyData :: Token -> Token -> OurMonad ()
 insertEmptyData datatk tk = do
     state <- get
@@ -166,6 +154,7 @@ insertEmptyData datatk tk = do
         typ  = if isStruct datatk then TypeStruct (lexeme tk)
                                   else TypeUnion  (lexeme tk)
 
+-- Adding forward declartion to functions
 insertForwardFunc :: TypeTuple -> Token -> OurMonad ()
 insertForwardFunc typ tk = do
     state <- get
@@ -177,6 +166,7 @@ insertForwardFunc typ tk = do
         whathappened = mkLog  $ "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk 
 
+-- Adding function to global scope and cleaning actual zipper
 insertFunction :: TypeTuple -> Token -> OurMonad ()
 insertFunction tuple ident  = do 
     state <- get
@@ -204,8 +194,6 @@ insertFunction tuple ident  = do
 insertData :: (Token,Token) -> TypeTuple -> OurMonad ()
 insertData (typ,ident) tt = do 
     state <- get
-    --let typeInScope =  fromJust $ getValS (lexeme ident) (scp state)
-    
     tell whathappened
     onScope $ insert (lexeme ident) 
                      (if isStruct typ
@@ -289,12 +277,3 @@ checkItsDeclared (TkId (l,c) lex) = do
         else (tell.mkErr .concat) error1
   where whathappened = ["Variable ",lex," at ",show l,":",show c," well used."]
         error1       = ["Error:",show l,":",show c," variable ",lex," used but not declared."]
-
--- checkRedeclare :: Token -> OurMonad (Token)
--- checkRedeclare (TkId (l,c) lex) = do
---     state <- get
---     if isMember (zipp state) lex then (tellError . concat) 
---                                  else (tellLog   . concat)  
---     return $ TkId (l,c) lex
---   where whathappened = ["V"]
---         error1       = ["Error:",show l,":",show c," variable ",lex," already declared in this scope."]
