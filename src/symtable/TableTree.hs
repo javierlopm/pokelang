@@ -52,8 +52,8 @@ instance  Show a => Show (Scope a) where
 showScope :: Show a => Int -> Scope a -> String
 showScope i (Scope st chld) = "\n" ++ replicate (i*2) ' ' ++ 
                 "Level " ++ show i ++ ":\n" ++ 
-                replicate (i*2) ' ' ++  "—————————" ++ "\n" ++
-                showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) (toList chld) 
+                replicate (i*2) ' ' ++  "—————————\n" ++
+                showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) ((reverse . toList) chld) -- yarrrrr
 
 data Breadcrumb a = Breadcrumb { left  :: [Scope a]
                                , right :: Seq(Scope a)
@@ -77,6 +77,9 @@ emptyScope = Scope newtable empty
 enterScope' :: Scope a -> Scope a
 enterScope' (Scope symtable l)  = Scope symtable (emptyScope <| l)
 
+enterScope'' :: Scope a -> Scope a
+enterScope'' (Scope symtable l)  = Scope symtable ( l |> emptyScope )
+
 insert :: String -> a -> Scope a -> Scope a
 insert key val (Scope symtable chl) = Scope (addEntry key val symtable) chl
 
@@ -87,6 +90,10 @@ fromScope orig = (orig,Breadcrumb [] empty [RootA] )
 
 enterScope :: Zipper a -> Zipper a
 enterScope = fromJust . goDown . apply enterScope'
+
+-- enterScope :: Zipper a -> Zipper a
+-- enterScope = allwayRight . fromJust . goDown . apply enterScope' 
+
 
 fromZipper :: Zipper a -> Scope a
 fromZipper = fst . goTop
@@ -127,6 +134,13 @@ goLeft (scp, (Breadcrumb lft rgt (RightA:lact))) = Just ((head lft),(Breadcrumb 
           brk2  = break (/= RightA) $ fst brk1
           nAct  = (tail (fst brk2) ++ ((snd brk2)) ++ StChild:snd brk1)            --RightA,RightA,StChild,goDown,...
 goLeft (scp, (Breadcrumb lft rgt brc)) = Nothing
+
+-- Move righ hasta que choque el hueso
+allwayRight :: Zipper a -> Zipper a
+allwayRight zi = if isNothing newright 
+                    then zi
+                    else allwayRight . fromJust $ newright
+    where newright = goRight zi
 
 getST :: Scope a -> SymbolTable a
 getST (Scope st chld) = st

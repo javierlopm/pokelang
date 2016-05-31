@@ -56,7 +56,7 @@ instance Show Declare where
   show (EmptyWithType t) = "Forward Declaration of type "++ show t ++", this shouldn't be here" 
   show Empty  = " EMPTY " 
   show (Enum   (l,c) n   scp ) = "Enum("++show l++","++show c++ ") "   
-                                  ++ "\nType for variables: "++ show n 
+                                  ++ "\nType for variables: Enum "++ n 
                                   ++ "\nScope: " ++ showScope 1 scp ++ "\n"
   show (Union  (l,c) n t scp ) = "Union("++show l++","++show c++ ") "  
                                   ++ "\nType for variables: " ++ show n
@@ -110,7 +110,7 @@ instance Show Type where
   show (TypePointer     t     ) = "Pointer to " ++ show t
   show (TypeEmptyArray  t     ) = "Array to "   ++ show t
   show (TypeArray       t dim ) = "Array size " ++ show dim ++ " of " ++ show t
-  show (TypeFunction    l     ) = "(" ++ (concat . intersperse " × " . (map show) . toList) l ++ ")"
+  show (TypeFunction    l     ) = "(" ++ (concat . intersperse "->" . (map show) . toList) l ++ ")"
 
 
 enumMatches :: Declare -> String -> Bool

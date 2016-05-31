@@ -162,8 +162,8 @@ Ins : {- λ -}                   {% return () }
     | Ins FREE  "("     DATAID      ")" ";" {% return ()}
     | Ins READ  "("     DATAID      ")" ";" {% return ()}
     | Ins BEGIN Ent0 SmplDcls Ins END       {% exitScope  } -- No debe aceptar funciones
-    | Ins IF Exp    ":" Ent0 SmplDcls Ins NextIf Else END    {% exitScope  }
-    | Ins WHILE Exp ":" Ent0 SmplDcls Ins END                {% exitScope  }
+    | Ins IF Exp    ":" Ent0 SmplDcls Ins Ent1 NextIf Else END    {% return ()  }
+    | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                {% return ()  }
     | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope  }
     | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope  }
     | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope  }
@@ -174,11 +174,11 @@ PrntArgs: {- λ -}             {% return ()}
 
 -- List of elseif
 NextIf: {- λ -}                                {% return ()}
-      | NextIf ELIF  Exp ":" Ent0 SmplDcls Ins {% exitScope  }
+      | NextIf ELIF  Exp ":" Ent0 SmplDcls Ins Ent1 {% return ()  }
 
 -- Else list
 Else: {- λ -}                    {% return ()  }
-    | ELSE ":" Ent0 SmplDcls Ins {% exitScope  }
+    | ELSE ":" Ent0 SmplDcls  Ins Ent1 {% return ()  }
 
 -- Declarations that could be global.
 SmplDcls: {- λ -}                       {% return ()}        
@@ -287,7 +287,8 @@ Term: TRUE         {% return($1) }
     | INT          {% return($1) }
     | CHAR         {% return($1) }
 
-Ent0 : {- λ -}     {% onZip enterScope  }
+Ent0 : {- λ -}     {% onZip enterScope }
+Ent1 : {- λ -}     {% exitScope  }
 -- Ent1 : DATAID      {% insertEmpty $1  >> return $1 } 
 Ent2 : ID          {% insertEmpty $1  >> return $1 } 
 Ent3 : ID          {%  onZip enterScope >>
