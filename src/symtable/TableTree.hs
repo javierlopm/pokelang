@@ -170,12 +170,12 @@ getVal ((Scope st chld),brc) key = Map.lookup key st
 
 lookUp  :: Zipper a -> String -> Maybe a
 lookUp zip key = if isNothing mySearch
-         then (if isNothing mayUp
-             then Nothing
-             else lookUp (fromJust mayUp) key)
-         else mySearch
-        where mySearch = getVal zip key
-              mayUp    = (goUp zip)
+                    then if isNothing mayUp
+                            then Nothing
+                            else lookUp (fromJust mayUp) key
+                    else mySearch
+    where mySearch = getVal zip key
+          mayUp    = (goUp zip)
 
 fuse :: Scope a -> Zipper a -> Scope a
 fuse (Scope smtbl _ ) z =  Scope smtbl  (( chs . fromZipper) z)

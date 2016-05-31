@@ -13,7 +13,7 @@ import Data.Foldable(toList)
 
 
 myF :: String -> String -> (String,String)
-myF arg1 arg2 = if arg1 /= "-l" && arg1/="-p" && arg1/="-a"  
+myF arg1 arg2 = if arg1 /= "-l" && arg1/="-p" && arg1/="-a" 
                     then (arg1,arg2)
                     else (arg2,arg1)
 
@@ -23,7 +23,7 @@ execParser printLex tokens = do
   if printLex then mapM_ print tokens >> putStrLn ""
               else return ()
   let (state,strlog) = exec (parser tokens) "" initialState
-  -- putStrLn "Log:"
+  -- putStrLn "Log: \n======================="
   -- mapM_ print $ toList $ strlog
   let (logs,errors,errorcount) = checkParseError strlog
   if errorcount == 0
@@ -44,4 +44,5 @@ main = do
                 "-p"      -> execParser False goods
                 "-a"      -> execParser True  goods
                 otherwise -> print $ "Unrecognized argument" ++ runargs
-      else do print $ "--pkcc: "++ show errorcount ++ " errors found."
+      else do mapM_ print errors
+              putStrLn $ "--pkcc: "++ show errorcount ++ " errors found."

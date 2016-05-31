@@ -96,13 +96,13 @@ exitScope = onZip (fromJust.goUp)
 
 -- Check if given token is a valid function/procedure that can be called
 checkIsFunc :: Token -> OurMonad()
-checkIsFunc (TkId (r,c) lex) = do
+checkIsFunc (TkId (r,c) lex1) = do
     state <- get
-    let treeSearch  = (lookUp (zipp state) lex)
-    let scopeSearch = (getValS lex (scp state))
-    if isFunc treeSearch || isFunc scopeSearch
-        then tellError $ "Error:"++show r++":"++show c++" \'"++lex ++ "\' at " ++ " it's not a callable function or procedure."
-        else tellLog   $ lex ++ "\' at " ++ show r++":"++show c ++ " it's a callable function or procedure."
+    if isFunc (getValS lex1 (scp state)) -- Just checking in global scope,
+        then tellLog   whathpnd          -- cause functions are global
+        else tellError error1
+  where error1   = "Error:"++show r++":"++show c++" \'"++lex1 ++ "\' at " ++ " it's not a callable function or procedure."
+        whathpnd = lex1 ++ "\' at " ++ show r++":"++show c ++ " it's a callable function or procedure."
 
 -- checkLIter :: Token -> OurMonad()
 -- checkLIter (TkId (r,c) lex) = do
@@ -150,7 +150,7 @@ insertEmpty tk = do
         else do tell whathappened
                 onScope $ insert (lexeme tk) Empty
   where error1       = mkErr  $ "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
-        whathappened = mkLog  $ "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
+        whathappened = mkLog  $ "Adding " ++ lexeme tk ++ " as soon as possible at " ++ linecol ++ "with type Empty" 
         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
 
 insertEmptyData :: Token -> Token -> OurMonad ()

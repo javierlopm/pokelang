@@ -8,13 +8,13 @@ mejorar prints de declaraciones
 aplicar cambios en gramática para declaraciones nuevas
 forward declarations en funciones
 arreglar parametros de llamadas a funciones
+agregar scopes en uniones y structs
 
 In process
 =======
-agregar scopes en uniones y structs
+forward declarations en datos
 
 Missing
 =======
-forward declarations en datos
+Actualizar readme debido a los cambios
 Agregar Ampersand
-Maybe ~ arreglar los flags para mostrar o no los logs

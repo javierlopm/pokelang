@@ -46,9 +46,12 @@ PokelangNoParser: SymTable.o Types.o Rwsgrammar.o ErrorHandle.o
 
 
 clean:
-	rm pokelang ; rm *.o *.hi
-	cd tokens   ; rm -f *.o *.hi
-	cd lexer    ; rm -f *.o *.hi Lexer.hs
-	cd parser   ; rm -f *.o *.hi Grammar.hs
-	cd symtable ; rm -f *.o *.hi
-	cd monads   ; rm -f *.o *.hi
+	-rm -f pokelang  
+	-rm -f *.o *.hi
+	-rm -f tokens/*.o tokens/*.hi
+	-rm -f lexer/*.o lexer/*.hi lexer/Lexer.hs
+	-rm -f parser/*.o parser/*.hi parser/Grammar.hs
+	-rm -f symtable/*.o symtable/*.hi
+	-rm -f monads/*.o monads/*.hi
+	-rm -f errors/*.o errors/*.hi
+	-rm -f types/*.o types/*.hi

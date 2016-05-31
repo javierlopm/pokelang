@@ -20,6 +20,7 @@ funcball pINTachu fibo_iterativo(pINTachu n):
     pINTachu n1;
     pINTachu n2;
     pINTachu iter;
+    pINTachu aux;
 
 
     si n == 0:

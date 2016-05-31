@@ -221,19 +221,19 @@ Dcls:  {- λ -}                          {% return () }
         
 Parameters: {- λ -}                 {% return emptytuple } 
           | ListParam Reference ID  {% insertDeclareInScope $2 $3 False False >> 
-                                         return ( addType $1 $2 ) } 
+                                         return (addType $1 $2 ) } 
 
 ListParam: {- λ -}                    {% return emptytuple }
-         | ListParam Reference ID "," {% insertDeclareInScope $2 $3 False False >> return ( addType $1 $2 ) } -- Falta Hacer la lista de tipos
+         | ListParam Reference ID "," {% insertDeclareInScope $2 $3 False False >> return(addType $1 $2 ) } -- Falta Hacer la lista de tipos
          
 
 EnumConsList: ENUM                      {% insertEnumCons 1  $1 }
             | EnumConsList "," ENUM     {% insertEnumCons $1 $3 }
 
-FieldsList  : ID "::" Reference                  {% insertDeclareInScope $1 $3 False False >> 
-                                                        return addType emptytuple $3  }
-            | FieldsList  "," ID "::" Reference  {% insertDeclareInScope $3 $5 False False >> 
-                                                        return addType $1 $5 } --verificar que realmente existe
+FieldsList  : ID "::" Reference                  {% (insertDeclareInScope $3 $1 False False) >> 
+                                                        return(addType emptytuple (TypeField (lexeme $1) $3))  }
+            | FieldsList  "," ID "::" Reference  {% (insertDeclareInScope $5 $3 False False) >> 
+                                                        return(addType $1 (TypeField (lexeme $3) $5)) } --verificar que realmente existe
 
 
 

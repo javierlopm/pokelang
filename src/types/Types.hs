@@ -60,9 +60,17 @@ instance Show Declare where
   show (EnumCons (l,c) n ord) = "Enum Constant("++show l++","++show c++ ") \'" ++ n ++ "\' with cardinaly " ++ show ord
   show (EmptyWithType t) = "Forward Declaration of type "++ show t ++", this shouldn't be here" 
   show Empty  = " EMPTY " 
-  show (Enum   (l,c) n   scp ) = "Enum("++show l++","++show c++ ") " ++ show n ++ " with scope: " ++ showScope 1 scp ++ "\n"
-  show (Union  (l,c) n t scp ) = "Union("++show l++","++show c++ ") " ++ show n ++ " Type: " ++ show (TypeFunction t) ++" with scope: " ++ showScope 1 scp ++ "\n"
-  show (Struct (l,c) n t scp ) = "Struct("++show l++","++show c++ ") " ++ show n ++ " Type: " ++ show (TypeFunction t) ++" with scope: " ++ showScope 1 scp ++ "\n"
+  show (Enum   (l,c) n   scp ) = "Enum("++show l++","++show c++ ") "   
+                                  ++ "\nType for variables: "++ show n 
+                                  ++ "\nScope: " ++ showScope 1 scp ++ "\n"
+  show (Union  (l,c) n t scp ) = "Union("++show l++","++show c++ ") "  
+                                  ++ "\nType for variables: " ++ show n
+                                  ++ "\nDeclare Type: " ++ show (TypeFunction t) 
+                                  ++ "\nScope: " ++ showScope 1 scp ++ "\n"
+  show (Struct (l,c) n t scp ) = "Struct("++show l++","++show c++ ") " 
+                                  ++ "\nType for variables: " ++ show n
+                                  ++ "\nDeclare Type: " ++ show (TypeFunction t) 
+                                  ++ "\nScope: " ++ showScope 1 scp ++ "\n"
 
 -- Polymorphic store type
 data PrimType = PrimInt        Int
@@ -84,7 +92,8 @@ data Type = TypeInt
           | TypeVoid   
           | TypeEnum       String -- Name comparison 
           | TypeStruct     String 
-          | TypeUnion      String 
+          | TypeUnion      String
+          | TypeField      String Type
           | TypePointer    Type
           | TypeEmptyArray Type
           | TypeArray      Type Int
@@ -102,6 +111,7 @@ instance Show Type where
   show (TypeEnum   s ) = "Enum "   ++ s
   show (TypeUnion  s ) = "Union "  ++ s
   show (TypeStruct s ) = "Struct " ++ s
+  show (TypeField  s t) = "(" ++ show t ++ " as " ++ s ++ ")"
   show (TypePointer     t     ) = "Pointer to " ++ show t
   show (TypeEmptyArray  t     ) = "Array to "   ++ show t
   show (TypeArray       t dim ) = "Array size " ++ show dim ++ " of " ++ show t
@@ -212,8 +222,8 @@ makeDataType (TkEnum   _ ) dataId =  TypeUnion  (lexeme dataId)
 
 type TypeTuple = Seq Type
 
-emptytuple :: Seq Type 
-emptytuple = empty
+emptytuple :: TypeTuple 
+emptytuple = Data.Sequence.empty
 
-addType :: Seq Type -> Type -> Seq Type
+addType :: TypeTuple -> Type -> TypeTuple
 addType = (|>)
