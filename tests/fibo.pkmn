@@ -4,6 +4,8 @@
 
 FORWARDtortle STRUCTabuzz pokeAux;
 
+STRUCTabuzz pokeAux meeeeh;
+
 funcball pINTachu fibo(pINTachu n):
     si n == 0 || n == 1:
         vamo_a_retorna 1;

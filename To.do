@@ -10,6 +10,7 @@ forward declarations en funciones
 arreglar parametros de llamadas a funciones
 agregar scopes en uniones y structs
 forward declarations en datos
+Agregar Llamadas a funciones como instruccion
 
 In process
 =======
@@ -18,3 +19,5 @@ Actualizar readme debido a los cambios
 Missing
 =======
 Agregar Ampersand -- Later
+Cambiar especificacion README
+Verificacion de forward vacios

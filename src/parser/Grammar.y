@@ -167,6 +167,12 @@ Ins : {- λ -}                   {% return () }
     | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope  }
     | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope  }
     | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope  }
+    | Ins ID "(" Exp ")"     ";"     {% checkIsFunc $2 }  --Arreglar llamadas gramatica todo
+   
+
+{-Lvalues : ID                    { $1 }  --No usada
+        | Lvalues "*"           { $1 }
+        | Lvalues "[" INT "]"   { $1 } -}
 
 -- Print arguments
 PrntArgs: {- λ -}             {% return ()}
@@ -193,6 +199,7 @@ Reference: PrimType              {            $1           }
          | Reference "*"         { TypePointer    $1       }
          | Reference "[" "]"     { TypeEmptyArray $1       }
          | Reference "[" INT "]" { TypeArray $1 (value $3) }
+
 
 PrimType : INTDEC           {     makeType $1    }
          | BOOLDEC          {     makeType $1    }

@@ -8,7 +8,7 @@ funcball VOIDtorb ping(pINTachu n):
     vamo_a_imprimi("Ping!");
     si n == 0 :
     si_no:
-        vamo_a_retorna pong(n-1);
+        pong(n-1);
     vamo_a_calmano
 vamo_a_calmano
 
@@ -16,7 +16,7 @@ funcball VOIDtorb pong(pINTachu n):
     vamo_a_imprimi("Pong!");
     si n == 0 :
     si_no:
-        vamo_a_retorna ping(n-1);
+        ping(n-1);
     vamo_a_calmano
 vamo_a_calmano
 
