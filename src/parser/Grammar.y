@@ -199,16 +199,16 @@ PrimType : INTDEC           {     makeType $1    }
          | CHARDEC          {     makeType $1    }
          | VOIDDEC          {     makeType $1    }
          | FLOATDEC         {     makeType $1    }
-         | ENUMDEC   DATAID { makeDataType $1 $2 }
-         | STRUCTDEC DATAID { makeDataType $1 $2 }
-         | UNIONDEC  DATAID { makeDataType $1 $2 }
+         | ENUMDEC   DATAID {% checkItsDeclared $2 >> return(makeDataType $1 $2) }
+         | STRUCTDEC DATAID {% checkItsDeclared $2 >> return(makeDataType $1 $2) }
+         | UNIONDEC  DATAID {% checkItsDeclared $2 >> return(makeDataType $1 $2) }
 
 
 -- Global declarations on scope level 0
 Dcls:  {- λ -}                          {% return () }
     | Dcls Reference   ID         ";"   {% insertDeclareInScope $2 $3 True False } -- Always global, GlobDeclare not needed
-    | Dcls FWD STRUCTDEC  DATAID  ";"   {% insertEmptyData $3 $4 } -- Forward declarations solo, agregar con Dec Empty
-    | Dcls FWD UNIONDEC   DATAID  ";"   {% insertEmptyData $3 $4 } -- Forward declarations solo, agregar con Dec Empty
+    | Dcls FWD STRUCTDEC  DATAID  ";"   {% insertForwardData $3 $4 } -- Forward declarations solo, agregar con Dec Empty
+    | Dcls FWD UNIONDEC   DATAID  ";"   {% insertForwardData $3 $4 } -- Forward declarations solo, agregar con Dec Empty
     | Dcls FWD FUNC Reference ID Ent0 "(" Parameters ")" ";"   {% insertForwardFunc (addType $8 $4) $5 }
     | Dcls ENUMDEC DATAID "{" EnumConsList "}"  {% insertEnum $3 }
     | Dcls Ent5 "{" FieldsList "}" {% insertData $2 $4  }
@@ -295,8 +295,8 @@ Ent3 : ID          {%  onZip enterScope >>
                          insertDeclareInScope TypeInt $1 False True >>
                             return $1                             } 
 Ent4 : DATAID ID   {% onZip enterScope >> checkEnumAndInsert $1 $2 >> return $1 } 
-Ent5 : STRUCTDEC  DATAID {% insertEmptyData $1 $2 >> return ($1,$2)}
-Ent6 : UNIONDEC   DATAID {% insertEmptyData $1 $2 >> return ($1,$2)}
+Ent5 : STRUCTDEC  DATAID {% insertForwardData $1 $2 >> return ($1,$2)}
+Ent6 : UNIONDEC   DATAID {% insertForwardData $1 $2 >> return ($1,$2)}
 
 {
   

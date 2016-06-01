@@ -16,7 +16,8 @@ module Types(
     makeDataType,
     emptytuple,
     emptyTypeMatches,
-    addType
+    addType,
+    sameData
 ) where
 
 import Data.List(intersperse)
@@ -183,10 +184,15 @@ makeType (TkVoid  _) = TypeVoid
 makeType (TkFloat _) = TypeFloat
 
 makeDataType :: Token -> Token -> Type
-makeDataType (TkStruct _ ) dataId =  TypeEnum   (lexeme dataId)
-makeDataType (TkUnion  _ ) dataId =  TypeStruct (lexeme dataId)
-makeDataType (TkEnum   _ ) dataId =  TypeUnion  (lexeme dataId)
+makeDataType (TkStruct _ ) dataId =  TypeStruct (lexeme dataId)
+makeDataType (TkUnion  _ ) dataId =  TypeUnion  (lexeme dataId)
+makeDataType (TkEnum   _ ) dataId =  TypeEnum   (lexeme dataId)
 
+sameData :: Token -> Type -> Bool
+sameData (TkStruct _ )  (TypeStruct _ ) = True
+sameData (TkUnion  _ )  (TypeUnion  _ ) = True
+sameData (TkEnum   _ )  (TypeEnum   _ ) = True
+sameData _              _               = False
 
 type TypeTuple = Seq Type
 

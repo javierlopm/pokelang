@@ -14,8 +14,9 @@ module GrammarMonad(
     onStrScope,
     exitScope,
     insertEmpty,
-    insertEmptyData,
+   -- insertEmptyData,
     insertForwardFunc,
+    insertForwardData,
     insertFunction,
     insertData,
     insertEnum,
@@ -144,18 +145,19 @@ insertEmpty tk = do
 
 
 -- Adding identifiers as soon as possible for recursion in datatypes
-insertEmptyData :: Token -> Token -> OurMonad ()
-insertEmptyData datatk tk = do
-    state <- get
-    if isInGlobals state tk
-        then tell error1
-        else do tell whathappened
-                onScope $ insert (lexeme tk) Empty
-  where error1       = mkErr  $ "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
-        whathappened = mkLog  $ "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
-        linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
-        typ  = if isStruct datatk then TypeStruct (lexeme tk)
-                                  else TypeUnion  (lexeme tk)
+-- insertEmptyData :: Token -> Token -> OurMonad ()
+-- insertEmptyData datatk tk = do
+--     state <- get
+--     if isInGlobals state tk
+--         then tell error1
+--         else do tell whathappened
+--                 tellError $ "wtf im adding "++ show typ
+--                 onScope $ insert (lexeme tk) typ
+--   where error1       = mkErr  $ "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
+--         whathappened = mkLog  $ "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol 
+--         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
+--         typ  = if isStruct datatk then TypeStruct (lexeme tk)
+--                                   else TypeUnion  (lexeme tk)
 
 -- Adding forward declartion to functions
 insertForwardFunc :: TypeTuple -> Token -> OurMonad ()
@@ -174,28 +176,30 @@ insertForwardData :: Token-> Token -> OurMonad ()
 insertForwardData typ tk = do
     state <- get
     if isInGlobals state tk
-        then tellError error1
+        then if storedType (typeFound state) == storedType declare
+                then do tellLog whathappened
+                        onScope $ insert (lexeme tk)  declare
+                else tellError error1
         else do tellLog whathappened
-                onScope $ insert (lexeme tk) $ if isStruct typ
-                          then build Struct TypeStruct 
-                          else build Union  TypeUnion 
-  where error1       = "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
+                onScope $ insert (lexeme tk)  declare
+  where error1       = "Error:" ++ linecol ++" type of " ++ lexeme tk ++ " doesn't match."
         whathappened = "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
         build cons cons2  = cons (position tk) (cons2 (lexeme tk)) emptytuple emptyScope
+        declare = if isStruct typ then build Struct TypeStruct 
+                                  else build Union  TypeUnion 
+        typeFound state =  fromJust $ getValS (lexeme tk) (scp state)
 
 -- Adding function to global scope and cleaning actual zipper
 insertFunction :: TypeTuple -> Token -> OurMonad ()
 insertFunction tuple ident  = do 
     state <- get
-    if isMember ((fromScope .scp) state) (lexeme ident) 
-        then do if emptyTypeMatches (fromJust 
-                                        (getValS (lexeme ident)
-                                                 (scp state)))
+    if isInGlobals state ident
+        then do if emptyTypeMatches (fromJust (getValS (lexeme ident) (scp state)))
                                     tuple 
                     then insertNclean state
-                    else do tellError error1
-                            tellError $ "En " ++ lexeme ident ++ show (fromJust (getValS (lexeme ident) (scp state))) ++ " vs " ++ show tuple
+                    else tellError error1
+                            -- tellError $ "En " ++ lexeme ident ++ show (fromJust (getValS (lexeme ident) (scp state))) ++ " vs " ++ show tuple
         else insertNclean state
   where error1       = strError (position ident) "type of function" (lexeme ident) " doesn't match with forward declaration."
         whathappened = "Function " ++ lexeme ident ++ " added at "++ linecol
@@ -217,7 +221,7 @@ insertData (typ,ident) tt = do
                                           then build Struct TypeStruct state
                                           else build Union  TypeUnion  state
     onZip (const (fromScope emptyScope))
-  where whathappened = mkLog $ "Adding struct/union "  ++ lexeme typ ++ " at "++ linecol
+  where whathappened = mkLog $ "Adding struct/union "  ++ lexeme ident ++ " at "++ linecol
         linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident
         build cons cons2 state  = cons (position ident) 
                                        (cons2 (lexeme ident)) 
@@ -273,7 +277,7 @@ insertDeclareInScope dcltype  (TkId (l,c) lexeme ) isGlob readonly = do
           error2       = generror ++ " in global scope."
           scopevar     = (Variable (l,c) dcltype readonly)
           generror     = "Error:" ++ show l ++":"++show c ++" redefinition of " ++ lexeme
-          whathappened = "Added " ++ lexeme ++" at "++show l++":"++show c
+          whathappened = "Added " ++ lexeme ++" at "++show l++":"++show c ++ " with type " ++ show dcltype
 
 -- Check if datatype is enum and insert as readonly
 checkEnumAndInsert :: Token -> Token -> OurMonad ()
@@ -289,12 +293,11 @@ checkEnumAndInsert (TkDId (lD,cD) lexemeD) (TkId (l,c) lexeme) = do
         error1    = strError (lD,cD) "datatype" lexemeD "used but not found."
         error2    = strError (lD,cD) "trying to iterate" lexemeD "over non ENUM type."
 
-
 checkItsDeclared :: Token -> OurMonad ()
-checkItsDeclared (TkId (l,c) lex) = do
+checkItsDeclared tk = do
     state <- get
-    if (not . isNothing) (lookUp (zipp state) lex) || isInScope (scp state) lex
+    if (not . isNothing) (lookUp (zipp state) (lexeme tk)) || isInScope (scp state) (lexeme tk)
         then (tellLog . concat) whathappened
-        else (tell.mkErr .concat) error1
-  where whathappened = ["Variable ",lex," at ",show l,":",show c," well used."]
-        error1       = ["Error:",show l,":",show c," variable ",lex," used but not declared."]
+        else tellError error1
+  where whathappened = ["Variable ",lexeme tk," at ",(show . position) tk," well used."]
+        error1       = strError (position tk) " variable or datatype" (lexeme tk) "used but not declared."

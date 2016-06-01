@@ -1,5 +1,13 @@
+FORWARDtortle STRUCTabuzz pokemon;
+
 STRUCTabuzz poketrainer {
     socialSecurityNumber :: pINTachu,
-    best_friend          :: articUNION poketrainer* ,
-    name                 :: CHARmander *
+    best_friend          :: STRUCTabuzz poketrainer*,
+    name                 :: CHARmander *,
+    pkmns                :: STRUCTabuzz pokemon[6]
+}
+
+STRUCTabuzz pokemon {
+    number :: pINTachu,
+    name   :: CHARmander *
 }

@@ -9,12 +9,12 @@ aplicar cambios en gramática para declaraciones nuevas
 forward declarations en funciones
 arreglar parametros de llamadas a funciones
 agregar scopes en uniones y structs
+forward declarations en datos
 
 In process
 =======
-forward declarations en datos
+Actualizar readme debido a los cambios
 
 Missing
 =======
-Actualizar readme debido a los cambios
-Agregar Ampersand
+Agregar Ampersand -- Later
