@@ -1,0 +1,5 @@
+STRUCTabuzz poketrainer {
+    socialSecurityNumber :: pINTachu,
+    best_friend          :: articUNION poketrainer* ,
+    name                 :: CHARmander *
+}

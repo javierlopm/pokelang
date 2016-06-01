@@ -170,6 +170,20 @@ insertForwardFunc typ tk = do
         whathappened = "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk 
 
+insertForwardData :: Token-> Token -> OurMonad ()
+insertForwardData typ tk = do
+    state <- get
+    if isMember ((fromScope .scp) state) (lexeme tk)
+        then tellError error1
+        else do tellLog whathappened
+                onScope $ insert (lexeme tk) $ if isStruct typ
+                          then build Struct TypeStruct 
+                          else build Union  TypeUnion 
+  where error1       = "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
+        whathappened = "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
+        linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
+        build cons cons2  = cons (position tk) (cons2 (lexeme tk)) emptytuple emptyScope
+
 -- Adding function to global scope and cleaning actual zipper
 insertFunction :: TypeTuple -> Token -> OurMonad ()
 insertFunction tuple ident  = do 
@@ -199,13 +213,16 @@ insertData :: (Token,Token) -> TypeTuple -> OurMonad ()
 insertData (typ,ident) tt = do 
     state <- get
     tell whathappened
-    onScope $ insert (lexeme ident) 
-                     (if isStruct typ
-                          then Struct (position ident) (TypeStruct (lexeme ident)) tt (fromZipper (zipp state))
-                          else Union  (position ident) (TypeUnion  (lexeme ident)) tt (fromZipper (zipp state)))
+    onScope $ insert (lexeme ident) $ if isStruct typ
+                                          then build Struct TypeStruct state
+                                          else build Union  TypeUnion  state
     onZip (const (fromScope emptyScope))
   where whathappened = mkLog $ "Adding struct/union "  ++ lexeme typ ++ " at "++ linecol
         linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident
+        build cons cons2 state  = cons (position ident) 
+                                       (cons2 (lexeme ident)) 
+                                       tt 
+                                       (fromZipper (zipp state))
 
 -- Check,add, log for enums
 insertEnum :: Token -> OurMonad ()
@@ -269,8 +286,8 @@ checkEnumAndInsert (TkDId (lD,cD) lexemeD) (TkId (l,c) lexeme) = do
                 else tellError  $ error2 
         else tellError error1
   where whathappened  = "Iter enum at "++show lD ++":"++show cD++" inserted in scope"
-        error1    = "Error:"++ show lD ++":"++show cD ++" datatype "++lexemeD++" used but not found."
-        error2    = "Error:"++ show lD ++":"++show cD ++" trying to iterate over non ENUM type"
+        error1    = strError (lD,cD) "datatype" lexemeD "used but not found."
+        error2    = strError (lD,cD) "trying to iterate" lexemeD "over non ENUM type."
 
 
 checkItsDeclared :: Token -> OurMonad ()

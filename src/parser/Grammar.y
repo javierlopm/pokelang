@@ -207,8 +207,8 @@ PrimType : INTDEC           {     makeType $1    }
 -- Global declarations on scope level 0
 Dcls:  {- λ -}                          {% return () }
     | Dcls Reference   ID         ";"   {% insertDeclareInScope $2 $3 True False } -- Always global, GlobDeclare not needed
-    | Dcls FWD STRUCTDEC  DATAID  ";"   {% return () } -- Forward declarations solo, agregar con Dec Empty
-    | Dcls FWD UNIONDEC   DATAID  ";"   {% return () } -- Forward declarations solo, agregar con Dec Empty
+    | Dcls FWD STRUCTDEC  DATAID  ";"   {% insertEmptyData $3 $4 } -- Forward declarations solo, agregar con Dec Empty
+    | Dcls FWD UNIONDEC   DATAID  ";"   {% insertEmptyData $3 $4 } -- Forward declarations solo, agregar con Dec Empty
     | Dcls FWD FUNC Reference ID Ent0 "(" Parameters ")" ";"   {% insertForwardFunc (addType $8 $4) $5 }
     | Dcls ENUMDEC DATAID "{" EnumConsList "}"  {% insertEnum $3 }
     | Dcls Ent5 "{" FieldsList "}" {% insertData $2 $4  }
