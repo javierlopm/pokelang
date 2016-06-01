@@ -101,7 +101,7 @@ checkIsFunc (TkId (r,c) lex1) = do
     if isFunc (getValS lex1 (scp state)) -- Just checking in global scope,
         then tellLog   whathpnd          -- cause functions are global
         else tellError error1
-  where error1   = "Error:"++show r++":"++show c++" \'"++lex1 ++ "\' at " ++ " it's not a callable function or procedure."
+  where error1   = strError (r,c) "" lex1 " it's not a callable function or procedure."
         whathpnd = lex1 ++ "\' at " ++ show r++":"++show c ++ " it's a callable function or procedure."
 
 -- Check if variable it's an iteration varible (could it be used in assignment?)
@@ -133,12 +133,15 @@ insertEmpty :: Token -> OurMonad ()
 insertEmpty tk = do
     state <- get
     if isMember ((fromScope .scp) state) (lexeme tk)
-        then tell error1
-        else do tell whathappened
+        then do if isEmpty $ fromJust $ getValS (lexeme tk) (scp state)
+                  then tellLog "Nothing happened. Tryng to insert empty when forward declaration found"
+                  else tellLog error1
+        else do tellLog whathappened
                 onScope $ insert (lexeme tk) Empty
-  where error1       = mkErr  $ "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
-        whathappened = mkLog  $ "Adding " ++ lexeme tk ++ " as soon as possible at " ++ linecol ++ "with type Empty" 
+  where error1       = "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
+        whathappened = "Adding " ++ lexeme tk ++ " as soon as possible at " ++ linecol ++ "with type Empty" 
         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
+
 
 -- Adding identifiers as soon as possible for recursion in datatypes
 insertEmptyData :: Token -> Token -> OurMonad ()
@@ -159,11 +162,12 @@ insertForwardFunc :: TypeTuple -> Token -> OurMonad ()
 insertForwardFunc typ tk = do
     state <- get
     if isMember ((fromScope .scp) state) (lexeme tk)
-        then tell error1
-        else do tell whathappened
+        then tellError error1
+        else do tellLog whathappened
                 onScope $ insert (lexeme tk) (EmptyWithType (TypeFunction typ))
-  where error1       = mkErr  $ "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
-        whathappened = mkLog  $ "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
+    onZip (const (fromScope emptyScope)) -- Cleaning scope bc of parameters
+  where error1       = "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
+        whathappened = "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk 
 
 -- Adding function to global scope and cleaning actual zipper
@@ -171,23 +175,23 @@ insertFunction :: TypeTuple -> Token -> OurMonad ()
 insertFunction tuple ident  = do 
     state <- get
     if isMember ((fromScope .scp) state) (lexeme ident) 
-        then do if ( isEmpty . fromJust ) (getValS (lexeme ident) (scp state)) 
-                    then do tell whathappened
-                            onScope $ insert (lexeme ident) 
+        then do if emptyTypeMatches (fromJust 
+                                        (getValS (lexeme ident)
+                                                 (scp state)))
+                                    tuple 
+                    then insertNclean state
+                    else do tellError error1
+                            tellError $ "En " ++ lexeme ident ++ show (fromJust (getValS (lexeme ident) (scp state))) ++ " vs " ++ show tuple
+        else insertNclean state
+  where error1       = strError (position ident) "type of function" (lexeme ident) " doesn't match with forward declaration."
+        whathappened = "Function " ++ lexeme ident ++ " added at "++ linecol
+        linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident 
+        insertNclean state = do tellLog whathappened
+                                onScope $ insert (lexeme ident) 
                                              (Function (position ident) 
                                                        (TypeFunction tuple) 
                                                        (fromZipper (zipp state)))
-                            onZip (const (fromScope emptyScope)) -- Clean zipper
-                    else tell error1
-        else do tell whathappened
-                onScope $ insert (lexeme ident) 
-                                 (Function (position ident) 
-                                           (TypeFunction tuple) 
-                                           (fromZipper (zipp state)))
-                onZip (const (fromScope emptyScope)) -- Clean zipper
-  where error1       = mkErr $ "Error:" ++ linecol ++" redefinition of " ++ lexeme ident
-        whathappened = mkLog $ "Function " ++ lexeme ident ++ " added at "++ linecol
-        linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident 
+                                onZip (const (fromScope emptyScope)) -- Clean zipper
 
 
 -- Check,add, log for structs and union

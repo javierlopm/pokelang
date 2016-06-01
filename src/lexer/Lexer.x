@@ -82,7 +82,7 @@ tokens :-
   liberar                  { \p _ -> TkFree      (getPos p) }
   SIZEther                 { \p _ -> TkSizeOf    (getPos p) }
   pidGET                   { \p _ -> TkGet       (getPos p) }
-  FOWARDtortle             { \p _ -> TkFwd       (getPos p) }
+  FORWARDtortle             { \p _ -> TkFwd       (getPos p) }
   and                      { \p _ -> TkAnd       (getPos p) }
   or                       { \p _ -> TkOr        (getPos p) }
 

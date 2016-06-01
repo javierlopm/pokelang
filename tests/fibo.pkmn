@@ -2,8 +2,7 @@
     Fibonacci inocente
 --
 
-FOWARDtortle STRUCTabuzz pokeAux;
-
+FORWARDtortle STRUCTabuzz pokeAux;
 
 funcball pINTachu fibo(pINTachu n):
     si n == 0 || n == 1:

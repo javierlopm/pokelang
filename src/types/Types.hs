@@ -15,6 +15,7 @@ module Types(
     dataNameMatches,
     makeDataType,
     emptytuple,
+    emptyTypeMatches,
     addType
 ) where
 
@@ -125,7 +126,8 @@ dataNameMatches _ _                    = False
 
 isFunc :: Maybe Declare -> Bool
 isFunc Nothing = False
-isFunc (Just (Function _ _ _)) = True
+isFunc (Just (Function _ _ _))  = True
+isFunc (Just (EmptyWithType _)) = True -- Forward declaration
 isFunc (Just Empty) = True
 isFunc a = False
 
@@ -146,9 +148,15 @@ isReadable a = False
 
 -- Check if the declare type is Empty (forward declarations)
 isEmpty :: Declare -> Bool
-isEmpty Empty = True
+isEmpty Empty             = True
+isEmpty (EmptyWithType _) = True
 isEmpty _     = False
 
+-- Check if forward declaration matches
+emptyTypeMatches :: Declare -> TypeTuple -> Bool
+emptyTypeMatches (EmptyWithType (TypeFunction t1)) t2 = t1 == t2
+emptyTypeMatches Empty _ = True
+emptyTypeMatches _ _     = False
 
 {-
     Declare type transformation functions

@@ -178,7 +178,7 @@ NextIf: {- λ -}                                {% return ()}
 
 -- Else list
 Else: {- λ -}                    {% return ()  }
-    | ELSE ":" Ent0 SmplDcls  Ins Ent1 {% return ()  }
+    | ELSE ":" Ent0 SmplDcls Ins Ent1 {% return ()  }
 
 -- Declarations that could be global.
 SmplDcls: {- λ -}                       {% return ()}        
@@ -209,7 +209,7 @@ Dcls:  {- λ -}                          {% return () }
     | Dcls Reference   ID         ";"   {% insertDeclareInScope $2 $3 True False } -- Always global, GlobDeclare not needed
     | Dcls FWD STRUCTDEC  DATAID  ";"   {% return () } -- Forward declarations solo, agregar con Dec Empty
     | Dcls FWD UNIONDEC   DATAID  ";"   {% return () } -- Forward declarations solo, agregar con Dec Empty
-    | Dcls FWD FUNC Reference ID "(" Parameters ")" ";"   {% insertForwardFunc (addType $7 $4) $5 }
+    | Dcls FWD FUNC Reference ID Ent0 "(" Parameters ")" ";"   {% insertForwardFunc (addType $8 $4) $5 }
     | Dcls ENUMDEC DATAID "{" EnumConsList "}"  {% insertEnum $3 }
     | Dcls Ent5 "{" FieldsList "}" {% insertData $2 $4  }
     | Dcls Ent6 "{" FieldsList "}" {% insertData $2 $4  }
