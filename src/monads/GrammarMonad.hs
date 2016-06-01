@@ -60,7 +60,7 @@ mkErr = S.singleton . Left
 mkLog = S.singleton . Right
 tellError = tell . mkErr
 tellLog   = tell . mkLog
-
+isInGlobals state tk = isMember ((fromScope .scp) state) (lexeme tk)
 
 {- 
     Modifier functions for the state monad
@@ -132,7 +132,7 @@ checkReadable (TkId (l,c) lexeme) bit = do
 insertEmpty :: Token -> OurMonad ()
 insertEmpty tk = do
     state <- get
-    if isMember ((fromScope .scp) state) (lexeme tk)
+    if isInGlobals state tk
         then do if isEmpty $ fromJust $ getValS (lexeme tk) (scp state)
                   then tellLog "Nothing happened. Tryng to insert empty when forward declaration found"
                   else tellLog error1
@@ -147,7 +147,7 @@ insertEmpty tk = do
 insertEmptyData :: Token -> Token -> OurMonad ()
 insertEmptyData datatk tk = do
     state <- get
-    if isMember ((fromScope .scp) state) (lexeme tk)
+    if isInGlobals state tk
         then tell error1
         else do tell whathappened
                 onScope $ insert (lexeme tk) Empty
@@ -161,7 +161,7 @@ insertEmptyData datatk tk = do
 insertForwardFunc :: TypeTuple -> Token -> OurMonad ()
 insertForwardFunc typ tk = do
     state <- get
-    if isMember ((fromScope .scp) state) (lexeme tk)
+    if isInGlobals state tk
         then tellError error1
         else do tellLog whathappened
                 onScope $ insert (lexeme tk) (EmptyWithType (TypeFunction typ))
@@ -173,7 +173,7 @@ insertForwardFunc typ tk = do
 insertForwardData :: Token-> Token -> OurMonad ()
 insertForwardData typ tk = do
     state <- get
-    if isMember ((fromScope .scp) state) (lexeme tk)
+    if isInGlobals state tk
         then tellError error1
         else do tellLog whathappened
                 onScope $ insert (lexeme tk) $ if isStruct typ
