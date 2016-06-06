@@ -71,6 +71,7 @@ import GrammarMonad
     "%"       { TkMod    _ }    
     "=="      { TkEq     _ }    
     "="       { TkAssign _ }
+    "&"       { TkAmp    _ }
 
     FUNC      { TkFunc   _ }
 
@@ -130,8 +131,12 @@ import GrammarMonad
 --Llamadas a funciones
 %left CALL
 
+
 --Acceso a apuntadores
 %right POINT
+
+--Direccion de variable
+%right AMP
 
 %nonassoc "==" "!="
 %nonassoc "<" "<=" ">" ">="
@@ -146,10 +151,10 @@ import GrammarMonad
 Prog : Dcls  {% return ()}
 
 Ins : {- λ -}                   {% return () }
-    | Ins Exp "="  Exp   ";"    {% checkLIter $2}
-    | Ins Exp "*=" Exp   ";"    {% checkLIter $2}
-    | Ins Exp "+=" Exp   ";"    {% checkLIter $2}
-    | Ins Exp "-=" Exp   ";"    {% checkLIter $2}
+    | Ins Exp "="  Exp   ";"    {% return ()} --{% checkLIter $2}
+    | Ins Exp "*=" Exp   ";"    {% return ()} --{% checkLIter $2}
+    | Ins Exp "+=" Exp   ";"    {% return ()} --{% checkLIter $2}
+    | Ins Exp "-=" Exp   ";"    {% return ()} --{% checkLIter $2}
     | Ins BREAK          ";"    {% return ()}
     | Ins CONTINUE       ";"    {% return ()}
     | Ins RETURN   Exp   ";"    {% return ()}
@@ -247,44 +252,46 @@ FieldsList  : ID "::" Reference                  {% (insertDeclareInScope $3 $1 
 
 Exp : 
     -- Expresiones Aritméticas.
-      Exp "+" Exp       { $1 }
-    | Exp "-" Exp       { $1 }
-    | Exp "^" Exp       { $1 }
-    | Exp "*" Exp       { $1 }
-    | Exp "/" Exp       { $1 }
-    | Exp "//" Exp      { $1 }
-    | Exp "%" Exp       { $1 }
-    | "-" Exp %prec NEG { $2 }
+      Exp "+" Exp       {% checkBinary nums $1 $3 $2 }
+    | Exp "-" Exp       {% checkBinary nums $1 $3 $2 }
+    | Exp "^" Exp       { TypeBool }
+    | Exp "*" Exp       {% checkBinary nums $1 $3 $2 }
+    | Exp "/" Exp       {% checkBinary nums $1 $3 $2 }
+    | Exp "//" Exp      {% checkBinary nums $1 $3 $2 }
+    | Exp "%" Exp       {% checkBinary nums $1 $3 $2 }
+    | "-" Exp %prec NEG { TypeBool }
     -- Expresiones Booleanas.
-    | Exp OR Exp        { $1 }
-    | Exp "||" Exp      { $1 }
-    | Exp AND Exp       { $1 }
-    | Exp "&&" Exp      { $1 }
-    | "!" Exp           { $2 }
+    | Exp OR Exp        {% checkBinary [TypeBool] $1 $3 $2 }
+    | Exp "||" Exp      {% checkBinary [TypeBool] $1 $3 $2 }
+    | Exp AND Exp       {% checkBinary [TypeBool] $1 $3 $2 }
+    | Exp "&&" Exp      {% checkBinary [TypeBool] $1 $3 $2 }
+    | "!" Exp           { TypeBool }
     -- Expresiones relacionales.
-    | Exp "<"  Exp      { $1 }
-    | Exp "<=" Exp      { $1 }
-    | Exp ">"  Exp      { $1 }
-    | Exp ">=" Exp      { $1 }
-    | Exp "==" Exp      { $1 }
-    | Exp "!=" Exp      { $1 }
+    | Exp "<"  Exp      { TypeBool }
+    | Exp "<=" Exp      { TypeBool }
+    | Exp ">"  Exp      { TypeBool }
+    | Exp ">=" Exp      { TypeBool }
+    | Exp "==" Exp      { TypeBool }
+    | Exp "!=" Exp      { TypeBool }
     -- Expresiones sobre lienzo.
-    | Exp "!!" Exp           { $1 }
-    | Exp "."  Exp           { $1 }
-    | ID "[" Exp "]" %prec ARR { $1 }
+    | Exp "!!" Exp           { TypeBool }
+    | Exp "."  Exp           { TypeBool }
+    | ID "[" Exp "]" %prec ARR { TypeBool }
     --Llamadas a funciones
-    | ID "(" Exp ")"         {% checkIsFunc $1 >> return $3 }  --Arreglar llamadas gramatica todo
+    | ID "(" Exp ")"         {% checkIsFunc $1 >> return TypeBool }  --Arreglar llamadas gramatica todo
     --Acceso a apuntadores
-    | "*" Exp %prec POINT  { $2 }
+    | "*" Exp %prec POINT  { TypeBool }
+    --Direccion de variable
+    | "&" Exp %prec AMP    { TypeBool }
     -- Asociatividad.
-    | "(" Exp ")"    { $2 }
+    | "(" Exp ")"    { TypeBool }
     -- Constantes.
-    | Term           { $1  }
+    | Term           { TypeBool }
     -- Llamadas
-    | MALLOC "(" Exp ")"       { $3 }
-    | SIZEOF "(" Exp ")"       { $3 }
-    | SIZEOF "(" Reference ")" { $1 }
-    | GET    "(" ENUM ")"      { $3 }
+    | MALLOC "(" Exp ")"       { TypeBool }
+    | SIZEOF "(" Exp ")"       { TypeBool }
+    | SIZEOF "(" Reference ")" { TypeBool }
+    | GET    "(" ENUM ")"      { TypeBool }
 
 Term: TRUE         {% return($1) }
     | FALSE        {% return($1) }

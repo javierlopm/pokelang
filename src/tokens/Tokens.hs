@@ -6,7 +6,8 @@ module Tokens(
     createNum,
     createFloat,
     createChar,
-    isStruct
+    isStruct,
+    toStr
 ) where
 
 import Data.Data(toConstr,Data,Typeable)
@@ -35,6 +36,7 @@ data Token =  TkLBracket  { position :: Pos }
             | TkExcMark   { position :: Pos }
             | TkExcArr    { position :: Pos }
             | TkNEQ       { position :: Pos }
+            | TkAmp       { position :: Pos }
             | TkDAmp      { position :: Pos }
             | TkAnd       { position :: Pos }
             | TkPOr       { position :: Pos }
@@ -171,3 +173,42 @@ createChar p str
 isStruct :: Token -> Bool
 isStruct (TkStruct _) = True
 isStruct _        = False
+
+toStr :: Token -> String
+toStr (TkLBracket _ )    = "["            
+toStr (TkRBracket _ )    = "]"            
+toStr (TkLCurly   _ )    = "{"            
+toStr (TkRCurly   _ )    = "}"            
+toStr (TkLRound   _ )    = "("            
+toStr (TkRRound   _ )    = ")"            
+toStr (TkPipe     _ )    = "|"            
+toStr (TkDColon   _ )    = "::"           
+toStr (TkColon    _ )    = ":"            
+toStr (TkSColon   _ )    = ";"           
+toStr (TkComma    _ )    = ","           
+toStr (TkTEQ      _ )    = "*="          
+toStr (TkPEQ      _ )    = "+="          
+toStr (TkMEQ      _ )    = "-="          
+toStr (TkDot      _ )    = "."           
+toStr (TkExcMark  _ )    = "!"           
+toStr (TkExcArr   _ )    = "!!"          
+toStr (TkNEQ      _ )    = "!="          
+toStr (TkDAmp     _ )    = "&&"          
+toStr (TkPOr      _ )    = "||"          
+toStr (TkAnd      _ )    = "&&"           
+toStr (TkOr       _ )    = "||"            
+toStr (TkGE       _ )    = ">="          
+toStr (TkLE       _ )    = "<="          
+toStr (TkGT       _ )    = ">"           
+toStr (TkLT       _ )    = "<"           
+toStr (TkIDiv     _ )    = "/"           
+toStr (TkDiv      _ )    = "//"          
+toStr (TkSum      _ )    = "+"           
+toStr (TkMin      _ )    = "-"           
+toStr (TkPower    _ )    = "^"           
+toStr (TkTimes    _ )    = "*"           
+toStr (TkMod      _ )    = "%"           
+toStr (TkEq       _ )    = "=="          
+toStr (TkAssign   _ )    = "="       
+toStr (TkAmp      _ )    = "&"       
+toStr tok                = show (toConstr tok )       
