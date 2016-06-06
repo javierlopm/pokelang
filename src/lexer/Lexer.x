@@ -121,6 +121,7 @@ tokens :-
   \!                       { \p _ -> TkExcMark   (getPos p)}
   \!\=                     { \p _ -> TkNEQ       (getPos p)}
   \&\&                     { \p _ -> TkDAmp      (getPos p)}
+  \&                       { \p _ -> TkAmp       (getPos p)}
   \|\|                     { \p _ -> TkPOr       (getPos p)}
   \=\=                     { \p _ -> TkEq        (getPos p)}
   \>\=                     { \p _ -> TkGE        (getPos p)}

@@ -23,7 +23,8 @@ module GrammarMonad(
     insertEnumCons,
     insertDeclareInScope,
     checkItsDeclared,
-    checkEnumAndInsert
+    checkEnumAndInsert,
+    checkBinary
 ) where
 
 import Control.Monad.RWS.Strict
@@ -301,3 +302,17 @@ checkItsDeclared tk = do
         else tellError error1
   where whathappened = ["Variable ",lexeme tk," at ",(show . position) tk," well used."]
         error1       = strError (position tk) " variable or datatype" (lexeme tk) "used but not declared."
+
+
+checkBinary :: [Type] -> Type -> Type -> Token -> OurMonad (Type)
+checkBinary expected TypeError _ _ = return TypeError
+checkBinary expected _ TypeError _ = return TypeError
+checkBinary expected l r tok = do
+    if l == r 
+      then do if (any (==l) expected) 
+                  then return l
+                  else tellError error2 >> return TypeError
+      else do tellError error1 >> return TypeError
+  where error1 = strError (position tok) "Types in the operator" (toStr tok) "are not equal."
+        error2 = strError (position tok) "Types in" (toStr tok) "did't match any of the expected types."
+              

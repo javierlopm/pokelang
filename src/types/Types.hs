@@ -3,7 +3,9 @@ module Types(
     Declare(..),
     Message,
     TypeTuple,
+    nums,
     isEmpty,
+    isError,
     isReadable,
     isLIter,
     isFunc,
@@ -96,6 +98,7 @@ data Type = TypeInt
           | TypeArray      Type Int
           | TypeFunction   (Seq Type) 
           | TypeUndefined  -- Temporal
+          | TypeError  
           deriving(Eq)
 
 instance Show Type where
@@ -114,6 +117,9 @@ instance Show Type where
   show (TypeArray       t dim ) = "Array size " ++ show dim ++ " of " ++ show t
   show (TypeFunction    l     ) = "(" ++ (concat . intersperse "->" . (map show) . toList) l ++ ")"
 
+
+-- lists
+nums = [TypeInt,TypeFloat]
 
 enumMatches :: Declare -> String -> Bool
 enumMatches (Enum _ name _ ) str = name == str
@@ -175,6 +181,9 @@ toArray  :: Declare -> Int -> Declare
 toArray dec dim = dec { storedType = TypeArray oldtype dim }
     where oldtype = storedType dec
 
+isError :: Type -> Bool
+isError TypeError = True 
+isError _         = False 
 
 makeType :: Token -> Type
 makeType (TkInt   _) = TypeInt
