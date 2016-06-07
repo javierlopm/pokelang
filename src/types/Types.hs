@@ -19,13 +19,14 @@ module Types(
     emptytuple,
     emptyTypeMatches,
     addType,
-    sameData
+    sameData,
+    isRecursiveData
 ) where
 
-import Data.List(intersperse)
-import TableTree(Scope(..),showScope)
-import Data.Sequence(Seq,(|>),empty)
-import Data.Foldable (toList)
+import Data.List          (intersperse)
+import TableTree          (Scope(..),showScope)
+import Data.Sequence      (Seq,(|>),empty)
+import Data.Foldable as F (toList,all)
 import Tokens(Token(TkInt  ,TkBool ,TkChar
                    ,TkVoid ,TkFloat,TkStruct
                    ,TkUnion,TkEnum ,TkNull
@@ -125,10 +126,18 @@ enumMatches :: Declare -> String -> Bool
 enumMatches (Enum _ name _ ) str = name == str
 enumMatches _ _                  = False
 
+dataTypeMatches :: String  -> Type -> Bool
+dataTypeMatches  str (TypeStruct name) = name == str
+dataTypeMatches  str (TypeUnion name)  = name == str
+dataTypeMatches _ _ = False
+
+getFieldType :: Type -> Type
+getFieldType (TypeField _ t) = t
+
 dataNameMatches :: Declare -> String -> Bool
 dataNameMatches (Struct _ (TypeStruct name) _ _ ) str = name == str
 dataNameMatches (Union  _ (TypeUnion name)  _ _ ) str = name == str
-dataNameMatches  Empty   _             = True
+dataNameMatches  Empty  _             = True
 dataNameMatches _ _                    = False
 
 isFunc :: Maybe Declare -> Bool
@@ -210,3 +219,7 @@ emptytuple = Data.Sequence.empty
 
 addType :: TypeTuple -> Type -> TypeTuple
 addType = (|>)
+
+isRecursiveData  :: String -> TypeTuple -> Bool
+isRecursiveData s l = F.all (not .isRec) l
+  where isRec item = dataTypeMatches s (getFieldType  item)

@@ -24,7 +24,8 @@ module GrammarMonad(
     insertDeclareInScope,
     checkItsDeclared,
     checkEnumAndInsert,
-    checkBinary
+    checkBinary,
+    checkRecursiveDec
 ) where
 
 import Control.Monad.RWS.Strict
@@ -286,6 +287,8 @@ insertDeclareInScope dcltype  (TkId (l,c) lexeme ) isGlob readonly = do
           generror     = "Error:" ++ show l ++":"++show c ++" redefinition of " ++ lexeme
           whathappened = "Added " ++ lexeme ++" at "++show l++":"++show c ++ " with type " ++ show dcltype
 
+
+
 -- Check if datatype is enum and insert as readonly
 checkEnumAndInsert :: Token -> Token -> OurMonad ()
 checkEnumAndInsert (TkDId (lD,cD) lexemeD) (TkId (l,c) lexeme) = do
@@ -321,4 +324,10 @@ checkBinary expected l r tok = do
       else do tellError error1 >> return TypeError
   where error1 = strError (position tok) "Types in the operator" (toStr tok) "are not equal."
         error2 = strError (position tok) "Types in" (toStr tok) "did't match any of the expected types."
-              
+
+checkRecursiveDec :: Token -> TypeTuple -> OurMonad()
+checkRecursiveDec dataTok typeSec = do 
+    if isRecursiveData (lexeme dataTok) typeSec
+        then tellError error1
+        else return ()
+  where error1 =  strError (position dataTok) "Data type " (lexeme dataTok) " cannot be recursive. (Pssss try to use a pointer)"
