@@ -219,12 +219,10 @@ PrimType : INTDEC           {     makeType $1    }
 -- Global declarations on scope level 0
 Dcls:  {- λ -}                          {% return () }
     | Dcls Reference   ID         ";"   {% insertDeclareInScope $2 $3 True False } -- Always global, GlobDeclare not needed
-    | Dcls FWD STRUCTDEC  DATAID  ";"   {% insertForwardData $3 $4 } -- Forward declarations solo, agregar con Dec Empty
-    | Dcls FWD UNIONDEC   DATAID  ";"   {% insertForwardData $3 $4 } -- Forward declarations solo, agregar con Dec Empty
     | Dcls FWD FUNC Reference ID Ent0 "(" Parameters ")" ";"   {% insertForwardFunc (addType $8 $4) $5 }
     | Dcls ENUMDEC DATAID "{" EnumConsList "}"  {% insertEnum $3 }
-    | Dcls Ent5 "{" FieldsList "}" {% insertData $2 $4  }
-    | Dcls Ent6 "{" FieldsList "}" {% insertData $2 $4  }
+    | Dcls Ent5 "{" FieldsList "}" {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4  }
+    | Dcls Ent6 "{" FieldsList "}" {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4  }
     | Dcls FUNC Reference Ent2 "(" Parameters ")" Ent0  ":"  SmplDcls Ins END -- Ent0 Ent5
     {% insertFunction (addType $6 $3) $4 }
 
@@ -245,7 +243,7 @@ EnumConsList: ENUM                      {% insertEnumCons 1  $1 }
 FieldsList  : ID "::" Reference                  {% (insertDeclareInScope $3 $1 False False) >> 
                                                         return(addType emptytuple (TypeField (lexeme $1) $3))  }
             | FieldsList  "," ID "::" Reference  {% (insertDeclareInScope $5 $3 False False) >> 
-                                                        return(addType $1 (TypeField (lexeme $3) $5)) } --verificar que realmente existe
+                                                        return(addType $1 (TypeField (lexeme $3) $5)) } 
 
 
 
