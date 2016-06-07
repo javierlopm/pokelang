@@ -327,7 +327,7 @@ checkBinary expected l r tok = do
 
 checkRecursiveDec :: Token -> TypeTuple -> OurMonad()
 checkRecursiveDec dataTok typeSec = do 
-    if isRecursiveData (lexeme dataTok) typeSec
-        then tellError error1
-        else return ()
-  where error1 =  strError (position dataTok) "Data type " (lexeme dataTok) " cannot be recursive. (Pssss try to use a pointer)"
+    if isNotRecursiveData (lexeme dataTok) typeSec
+        then return ()
+        else tellError error1
+  where error1 =  strError (position dataTok) "Data type" (lexeme dataTok) "cannot be recursive. (Pssss try to use a pointer)"

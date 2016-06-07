@@ -20,7 +20,7 @@ module Types(
     emptyTypeMatches,
     addType,
     sameData,
-    isRecursiveData
+    isNotRecursiveData
 ) where
 
 import Data.List          (intersperse)
@@ -220,6 +220,6 @@ emptytuple = Data.Sequence.empty
 addType :: TypeTuple -> Type -> TypeTuple
 addType = (|>)
 
-isRecursiveData  :: String -> TypeTuple -> Bool
-isRecursiveData s l = F.all (not .isRec) l
+isNotRecursiveData  :: String -> TypeTuple -> Bool
+isNotRecursiveData s l = F.all (not .isRec) l
   where isRec item = dataTypeMatches s (getFieldType  item)
