@@ -27,7 +27,8 @@ execParser printLex tokens = do
   -- mapM_ print $ toList $ strlog
   let (logs,errors,errorcount) = checkParseError strlog
   if errorcount == 0
-    then do let (strs,scps) =  makeTable state -- $ fromZipper state
+    then do let (strs,enu,scps) =  makeTable state -- $ fromZipper state
+            putStrLn $ "Enums: \n======================="  ++ show enu
             putStrLn $ "Strings: \n======================="  ++ show strs
             putStrLn $ "SymTable:\n========================" ++ show scps
     else do printErrors errorcount id errors

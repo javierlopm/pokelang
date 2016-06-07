@@ -3,7 +3,9 @@ module Types(
     Declare(..),
     Message,
     TypeTuple,
+    nums,
     isEmpty,
+    isError,
     isReadable,
     isLIter,
     isFunc,
@@ -17,13 +19,14 @@ module Types(
     emptytuple,
     emptyTypeMatches,
     addType,
-    sameData
+    sameData,
+    isNotRecursiveData
 ) where
 
-import Data.List(intersperse)
-import TableTree(Scope(..),showScope)
-import Data.Sequence(Seq,(|>),empty)
-import Data.Foldable (toList)
+import Data.List          (intersperse)
+import TableTree          (Scope(..),showScope)
+import Data.Sequence      (Seq,(|>),empty)
+import Data.Foldable as F (toList,all)
 import Tokens(Token(TkInt  ,TkBool ,TkChar
                    ,TkVoid ,TkFloat,TkStruct
                    ,TkUnion,TkEnum ,TkNull
@@ -96,6 +99,7 @@ data Type = TypeInt
           | TypeArray      Type Int
           | TypeFunction   (Seq Type) 
           | TypeUndefined  -- Temporal
+          | TypeError  
           deriving(Eq)
 
 instance Show Type where
@@ -115,14 +119,25 @@ instance Show Type where
   show (TypeFunction    l     ) = "(" ++ (concat . intersperse "->" . (map show) . toList) l ++ ")"
 
 
+-- lists
+nums = [TypeInt,TypeFloat]
+
 enumMatches :: Declare -> String -> Bool
 enumMatches (Enum _ name _ ) str = name == str
 enumMatches _ _                  = False
 
+dataTypeMatches :: String  -> Type -> Bool
+dataTypeMatches  str (TypeStruct name) = name == str
+dataTypeMatches  str (TypeUnion name)  = name == str
+dataTypeMatches _ _ = False
+
+getFieldType :: Type -> Type
+getFieldType (TypeField _ t) = t
+
 dataNameMatches :: Declare -> String -> Bool
 dataNameMatches (Struct _ (TypeStruct name) _ _ ) str = name == str
 dataNameMatches (Union  _ (TypeUnion name)  _ _ ) str = name == str
-dataNameMatches  Empty   _             = True
+dataNameMatches  Empty  _             = True
 dataNameMatches _ _                    = False
 
 isFunc :: Maybe Declare -> Bool
@@ -175,6 +190,9 @@ toArray  :: Declare -> Int -> Declare
 toArray dec dim = dec { storedType = TypeArray oldtype dim }
     where oldtype = storedType dec
 
+isError :: Type -> Bool
+isError TypeError = True 
+isError _         = False 
 
 makeType :: Token -> Type
 makeType (TkInt   _) = TypeInt
@@ -201,3 +219,7 @@ emptytuple = Data.Sequence.empty
 
 addType :: TypeTuple -> Type -> TypeTuple
 addType = (|>)
+
+isNotRecursiveData  :: String -> TypeTuple -> Bool
+isNotRecursiveData s l = F.all (not .isRec) l
+  where isRec item = dataTypeMatches s (getFieldType  item)

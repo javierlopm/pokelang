@@ -23,7 +23,9 @@ module GrammarMonad(
     insertEnumCons,
     insertDeclareInScope,
     checkItsDeclared,
-    checkEnumAndInsert
+    checkEnumAndInsert,
+    checkBinary,
+    checkRecursiveDec
 ) where
 
 import Control.Monad.RWS.Strict
@@ -40,6 +42,7 @@ type TableZipper = Zipper Declare
 
 -- state from monad State
 data ScopeNZip = ScopeNZip { strTbl   :: SymTable
+                           , enuTbl   :: SymTable
                            , scp      :: SymTable
                            , zipp     :: TableZipper} 
                            deriving (Show)
@@ -49,12 +52,12 @@ exec = execRWS
 
 -- Monad initial state: two empty scopes and one zipper for an empty scope
 initialState :: ScopeNZip
-initialState = ScopeNZip emptyScope emptyScope (fromScope emptyScope)
+initialState = ScopeNZip emptyScope emptyScope emptyScope (fromScope emptyScope)
 
 -- Make a tuple with the String Scope and a Scope tree with globals and local
 -- scopes fused. Scopeception
-makeTable :: ScopeNZip -> ( Scope Declare ,Scope Declare)
-makeTable (ScopeNZip str gscp z) = ( str ,fuse gscp z)
+makeTable :: ScopeNZip -> ( Scope Declare , Scope Declare , Scope Declare)
+makeTable (ScopeNZip str enu gscp z) = ( str , enu , fuse gscp z)
 
 -- Aliases for writing to the log
 mkErr = S.singleton . Left
@@ -80,6 +83,11 @@ onStrScope fun = do stringTable <- gets strTbl
                     state       <- get
                     put state { strTbl = fun stringTable }
 
+-- Modify enum symbol table
+onEnuScope :: (SymTable -> SymTable ) -> OurMonad()
+onEnuScope fun = do enumTable   <- gets enuTbl
+                    state       <- get
+                    put state { enuTbl = fun enumTable }
 
 -- Modify global variables table 
 onScope :: (SymTable -> SymTable) -> OurMonad ()
@@ -250,10 +258,10 @@ insertEnum id_ = do
 insertEnumCons :: Int -> Token -> OurMonad(Int)
 insertEnumCons ord (TkEnumCons (l,c) str) = do
     state <- get
-    if isMember (zipp state) str
+    if isInScope (enuTbl state) str
         then tell error1
         else do tell whathappened
-                onZip $ apply $ insert str (EnumCons (l,c) str ord)
+                onEnuScope $ insert str (EnumCons (l,c) str ord)
     return (succ (ord))
   where error1       = mkErr $ "Error:" ++ linecol ++ " enum constant " ++ str ++ " already declared in this scope."
         whathappened = mkLog $ "Enum "  ++ str ++ " add at "    ++ linecol
@@ -279,6 +287,8 @@ insertDeclareInScope dcltype  (TkId (l,c) lexeme ) isGlob readonly = do
           generror     = "Error:" ++ show l ++":"++show c ++" redefinition of " ++ lexeme
           whathappened = "Added " ++ lexeme ++" at "++show l++":"++show c ++ " with type " ++ show dcltype
 
+
+
 -- Check if datatype is enum and insert as readonly
 checkEnumAndInsert :: Token -> Token -> OurMonad ()
 checkEnumAndInsert (TkDId (lD,cD) lexemeD) (TkId (l,c) lexeme) = do
@@ -301,3 +311,23 @@ checkItsDeclared tk = do
         else tellError error1
   where whathappened = ["Variable ",lexeme tk," at ",(show . position) tk," well used."]
         error1       = strError (position tk) " variable or datatype" (lexeme tk) "used but not declared."
+
+
+checkBinary :: [Type] -> Type -> Type -> Token -> OurMonad (Type)
+checkBinary expected TypeError _ _ = return TypeError
+checkBinary expected _ TypeError _ = return TypeError
+checkBinary expected l r tok = do
+    if l == r 
+      then do if (any (==l) expected) 
+                  then return l
+                  else tellError error2 >> return TypeError
+      else do tellError error1 >> return TypeError
+  where error1 = strError (position tok) "Types in the operator" (toStr tok) "are not equal."
+        error2 = strError (position tok) "Types in" (toStr tok) "did't match any of the expected types."
+
+checkRecursiveDec :: Token -> TypeTuple -> OurMonad()
+checkRecursiveDec dataTok typeSec = do 
+    if isNotRecursiveData (lexeme dataTok) typeSec
+        then return ()
+        else tellError error1
+  where error1 =  strError (position dataTok) "Data type" (lexeme dataTok) "cannot be recursive. (Pssss try to use a pointer)"
