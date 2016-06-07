@@ -18,7 +18,7 @@ Rwsgrammar.o: Tokens.o Types.o SymTable.o ErrorHandle.o
 	ghc monads/GrammarMonad.hs -itokens -isymtable -itypes -ierrors
 
 Grammar.hs: Tokens.o 
-	happy parser/Grammar.y -o parser/Grammar.hs  --info=grammarinfo.md
+	happy parser/Grammar.y -o parser/Grammar.hs # --info=grammarinfo.md
 
 
 # Symbol Tables
