@@ -41,6 +41,7 @@ type TableZipper = Zipper Declare
 
 -- state from monad State
 data ScopeNZip = ScopeNZip { strTbl   :: SymTable
+                           , enuTbl   :: SymTable
                            , scp      :: SymTable
                            , zipp     :: TableZipper} 
                            deriving (Show)
@@ -50,12 +51,12 @@ exec = execRWS
 
 -- Monad initial state: two empty scopes and one zipper for an empty scope
 initialState :: ScopeNZip
-initialState = ScopeNZip emptyScope emptyScope (fromScope emptyScope)
+initialState = ScopeNZip emptyScope emptyScope emptyScope (fromScope emptyScope)
 
 -- Make a tuple with the String Scope and a Scope tree with globals and local
 -- scopes fused. Scopeception
-makeTable :: ScopeNZip -> ( Scope Declare ,Scope Declare)
-makeTable (ScopeNZip str gscp z) = ( str ,fuse gscp z)
+makeTable :: ScopeNZip -> ( Scope Declare , Scope Declare , Scope Declare)
+makeTable (ScopeNZip str enu gscp z) = ( str , enu , fuse gscp z)
 
 -- Aliases for writing to the log
 mkErr = S.singleton . Left
@@ -81,6 +82,11 @@ onStrScope fun = do stringTable <- gets strTbl
                     state       <- get
                     put state { strTbl = fun stringTable }
 
+-- Modify enum symbol table
+onEnuScope :: (SymTable -> SymTable ) -> OurMonad()
+onEnuScope fun = do enumTable   <- gets enuTbl
+                    state       <- get
+                    put state { enuTbl = fun enumTable }
 
 -- Modify global variables table 
 onScope :: (SymTable -> SymTable) -> OurMonad ()
@@ -251,10 +257,10 @@ insertEnum id_ = do
 insertEnumCons :: Int -> Token -> OurMonad(Int)
 insertEnumCons ord (TkEnumCons (l,c) str) = do
     state <- get
-    if isMember (zipp state) str
+    if isInScope (enuTbl state) str
         then tell error1
         else do tell whathappened
-                onZip $ apply $ insert str (EnumCons (l,c) str ord)
+                onEnuScope $ insert str (EnumCons (l,c) str ord)
     return (succ (ord))
   where error1       = mkErr $ "Error:" ++ linecol ++ " enum constant " ++ str ++ " already declared in this scope."
         whathappened = mkLog $ "Enum "  ++ str ++ " add at "    ++ linecol

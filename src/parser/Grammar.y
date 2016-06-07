@@ -71,7 +71,6 @@ import GrammarMonad
     "%"       { TkMod    _ }    
     "=="      { TkEq     _ }    
     "="       { TkAssign _ }
-    "&"       { TkAmp    _ }
 
     FUNC      { TkFunc   _ }
 
@@ -131,12 +130,8 @@ import GrammarMonad
 --Llamadas a funciones
 %left CALL
 
-
 --Acceso a apuntadores
 %right POINT
-
---Direccion de variable
-%right AMP
 
 %nonassoc "==" "!="
 %nonassoc "<" "<=" ">" ">="
@@ -151,10 +146,10 @@ import GrammarMonad
 Prog : Dcls  {% return ()}
 
 Ins : {- λ -}                   {% return () }
-    | Ins Exp "="  Exp   ";"    {% return ()} --{% checkLIter $2}
-    | Ins Exp "*=" Exp   ";"    {% return ()} --{% checkLIter $2}
-    | Ins Exp "+=" Exp   ";"    {% return ()} --{% checkLIter $2}
-    | Ins Exp "-=" Exp   ";"    {% return ()} --{% checkLIter $2}
+    | Ins Exp "="  Exp   ";"    {% checkLIter $2}
+    | Ins Exp "*=" Exp   ";"    {% checkLIter $2}
+    | Ins Exp "+=" Exp   ";"    {% checkLIter $2}
+    | Ins Exp "-=" Exp   ";"    {% checkLIter $2}
     | Ins BREAK          ";"    {% return ()}
     | Ins CONTINUE       ";"    {% return ()}
     | Ins RETURN   Exp   ";"    {% return ()}
@@ -172,12 +167,6 @@ Ins : {- λ -}                   {% return () }
     | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope  }
     | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope  }
     | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope  }
-    | Ins ID "(" Exp ")"     ";"     {% checkIsFunc $2 }  --Arreglar llamadas gramatica todo
-   
-
-{-Lvalues : ID                    { $1 }  --No usada
-        | Lvalues "*"           { $1 }
-        | Lvalues "[" INT "]"   { $1 } -}
 
 -- Print arguments
 PrntArgs: {- λ -}             {% return ()}
@@ -204,7 +193,6 @@ Reference: PrimType              {            $1           }
          | Reference "*"         { TypePointer    $1       }
          | Reference "[" "]"     { TypeEmptyArray $1       }
          | Reference "[" INT "]" { TypeArray $1 (value $3) }
-
 
 PrimType : INTDEC           {     makeType $1    }
          | BOOLDEC          {     makeType $1    }
@@ -252,46 +240,44 @@ FieldsList  : ID "::" Reference                  {% (insertDeclareInScope $3 $1 
 
 Exp : 
     -- Expresiones Aritméticas.
-      Exp "+" Exp       {% checkBinary nums $1 $3 $2 }
-    | Exp "-" Exp       {% checkBinary nums $1 $3 $2 }
-    | Exp "^" Exp       { TypeBool }
-    | Exp "*" Exp       {% checkBinary nums $1 $3 $2 }
-    | Exp "/" Exp       {% checkBinary nums $1 $3 $2 }
-    | Exp "//" Exp      {% checkBinary nums $1 $3 $2 }
-    | Exp "%" Exp       {% checkBinary nums $1 $3 $2 }
-    | "-" Exp %prec NEG { TypeBool }
+      Exp "+" Exp       { $1 }
+    | Exp "-" Exp       { $1 }
+    | Exp "^" Exp       { $1 }
+    | Exp "*" Exp       { $1 }
+    | Exp "/" Exp       { $1 }
+    | Exp "//" Exp      { $1 }
+    | Exp "%" Exp       { $1 }
+    | "-" Exp %prec NEG { $2 }
     -- Expresiones Booleanas.
-    | Exp OR Exp        {% checkBinary [TypeBool] $1 $3 $2 }
-    | Exp "||" Exp      {% checkBinary [TypeBool] $1 $3 $2 }
-    | Exp AND Exp       {% checkBinary [TypeBool] $1 $3 $2 }
-    | Exp "&&" Exp      {% checkBinary [TypeBool] $1 $3 $2 }
-    | "!" Exp           { TypeBool }
+    | Exp OR Exp        { $1 }
+    | Exp "||" Exp      { $1 }
+    | Exp AND Exp       { $1 }
+    | Exp "&&" Exp      { $1 }
+    | "!" Exp           { $2 }
     -- Expresiones relacionales.
-    | Exp "<"  Exp      { TypeBool }
-    | Exp "<=" Exp      { TypeBool }
-    | Exp ">"  Exp      { TypeBool }
-    | Exp ">=" Exp      { TypeBool }
-    | Exp "==" Exp      { TypeBool }
-    | Exp "!=" Exp      { TypeBool }
+    | Exp "<"  Exp      { $1 }
+    | Exp "<=" Exp      { $1 }
+    | Exp ">"  Exp      { $1 }
+    | Exp ">=" Exp      { $1 }
+    | Exp "==" Exp      { $1 }
+    | Exp "!=" Exp      { $1 }
     -- Expresiones sobre lienzo.
-    | Exp "!!" Exp           { TypeBool }
-    | Exp "."  Exp           { TypeBool }
-    | ID "[" Exp "]" %prec ARR { TypeBool }
+    | Exp "!!" Exp           { $1 }
+    | Exp "."  Exp           { $1 }
+    | ID "[" Exp "]" %prec ARR { $1 }
     --Llamadas a funciones
-    | ID "(" Exp ")"         {% checkIsFunc $1 >> return TypeBool }  --Arreglar llamadas gramatica todo
+    | ID "(" Exp ")"         {% checkIsFunc $1 >> return $3 }  --Arreglar llamadas gramatica todo
     --Acceso a apuntadores
-    | "*" Exp %prec POINT  { TypeBool }
-    --Direccion de variable
-    | "&" Exp %prec AMP    { TypeBool }
+    | "*" Exp %prec POINT  { $2 }
     -- Asociatividad.
-    | "(" Exp ")"    { TypeBool }
+    | "(" Exp ")"    { $2 }
     -- Constantes.
-    | Term           { TypeBool }
+    | Term           { $1  }
     -- Llamadas
-    | MALLOC "(" Exp ")"       { TypeBool }
-    | SIZEOF "(" Exp ")"       { TypeBool }
-    | SIZEOF "(" Reference ")" { TypeBool }
-    | GET    "(" ENUM ")"      { TypeBool }
+    | MALLOC "(" Exp ")"       { $3 }
+    | SIZEOF "(" Exp ")"       { $3 }
+    | SIZEOF "(" Reference ")" { $1 }
+    | GET    "(" ENUM ")"      { $3 }
 
 Term: TRUE         {% return($1) }
     | FALSE        {% return($1) }
