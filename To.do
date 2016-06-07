@@ -11,13 +11,24 @@ arreglar parametros de llamadas a funciones
 agregar scopes en uniones y structs
 forward declarations en datos
 Agregar Llamadas a funciones como instruccion
+Agregar Ampersand
 
 In process
 =======
-Actualizar readme debido a los cambios
 
 Missing
 =======
-Agregar Ampersand -- Later
+arreglar el repo                                 - Javier
+Agregar string type a enumcons                   - Nabil
+verificar parametros en llamadas de funciones    - Javier
+agregar funciones de conversion          
+agregar funciones predefinidas                    
+revisar L values en asignaciones                 - Nabil Maybe
+verificar ordinales                               
+revisar R values en asignaciones especiales      - Nabil
+cambiar todo a tuplas (type,token)               
+eliminar print como c                            - Nabil
+revisar checkILiter                              - Nabil
+
+
 Cambiar especificacion README
-Verificacion de forward vacios
