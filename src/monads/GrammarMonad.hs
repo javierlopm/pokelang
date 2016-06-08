@@ -212,8 +212,8 @@ insertFunction tuple ident  = do
         then do if emptyTypeMatches (fromJust (getValS (lexeme ident) (scp state)))
                                     tuple 
                     then insertNclean state
-                    else tellError error1
-                            -- tellError $ "En " ++ lexeme ident ++ show (fromJust (getValS (lexeme ident) (scp state))) ++ " vs " ++ show tuple
+                    else do tellError error1
+                            tellError $ "En " ++ lexeme ident ++ show (fromJust (getValS (lexeme ident) (scp state))) ++ " vs " ++ (show . TypeFunction) tuple
         else insertNclean state
   where error1       = strError (position ident) "type of function" (lexeme ident) " doesn't match with forward declaration."
         whathappened = "Function " ++ lexeme ident ++ " added at "++ linecol
@@ -341,10 +341,13 @@ checkFunctionCall ident calltup = do
     if isNothing res 
         then return TypeError -- Nothing to do, error
         else do let funcSig = (getTuple . storedType . fromJust) res
-                if tuplesMatch calltup funcSig 
-                    then tellLog "Function call types work" >> return (funcReturnType funcSig)
-                    else return TypeError -- agregar aqui el error primero
-
+                if trd $ tuplesMatch calltup funcSig
+                    then do tellLog "Function call types work"
+                            return (funcReturnType funcSig)
+                    else do tellError . error1 $ tuplesMatch calltup funcSig
+                            return TypeError
+  where trd (_,_,a) = a
+        error1 (expected,p,_) = strError (position ident) "Error in the call of" (lexeme ident) ("argument number "++show p++" didn't match with expected" ++ show expected)
 
 checkRecursiveDec :: Token -> TypeTuple -> OurMonad()
 checkRecursiveDec dataTok typeSec = do 

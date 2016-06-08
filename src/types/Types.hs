@@ -31,7 +31,7 @@ module Types(
 
 import Data.List          (intersperse)
 import TableTree          (Scope(..),showScope)
-import Data.Foldable as F (toList,all)
+import qualified Data.Foldable as F (toList,all,foldl)
 import Data.Sequence as S (Seq,(|>),ViewR(..),empty,viewr,zipWith)
 import Tokens(Token(TkInt  ,TkBool ,TkChar
                    ,TkVoid ,TkFloat,TkStruct
@@ -64,7 +64,7 @@ instance Show Declare where
               cons _    = ""
   show (Cons (l,c)) = "Constant value"
   show (EnumCons (l,c) n ord) = "Enum Constant("++show l++","++show c++ ") \'" ++ n ++ "\' with cardinaly " ++ show ord
-  show (EmptyWithType t) = "Forward Declaration of type "++ show t ++", this shouldn't be here" 
+  show (EmptyWithType t) = "(Forward Declaration of type "++ show t ++", this shouldn't be here)" 
   show Empty  = " EMPTY " 
   show (Enum   (l,c) n   scp ) = "Enum("++show l++","++show c++ ") "   
                                   ++ "\nType for variables: Enum "++ n 
@@ -122,7 +122,7 @@ instance Show Type where
   show (TypePointer     t     ) = "Pointer to " ++ show t
   show (TypeEmptyArray  t     ) = "Array to "   ++ show t
   show (TypeArray       t dim ) = "Array size " ++ show dim ++ " of " ++ show t
-  show (TypeFunction    l     ) = "(" ++ (concat . intersperse "->" . (map show) . toList) l ++ ")"
+  show (TypeFunction    l     ) = "(" ++ (concat . intersperse "->" . (map show) . F.toList) l ++ ")"
 
 
 -- lists
@@ -239,10 +239,18 @@ funcReturnType t = (decons . viewr) t
 -- addLeftType :: Type -> TypeTuple -> TypeTuple
 -- addLeftType = (<|)
 
-tuplesMatch :: TypeTuple -> TypeTuple -> Bool
-tuplesMatch t1 t2 = undefined
-    -- where  zipWith (,)
-
+-- Process two tuples, check if any pair of elements are not equal
+-- and return last expected type, # of last argument processed and if it went ok
+tuplesMatch :: TypeTuple -> TypeTuple -> (Type,Int,Bool)
+tuplesMatch t1 t2 = F.foldl process (TypeVoid,1,True) tupSeq
+    where tupSeq  = S.zipWith (,) t1 t2
+          process b@(_,_,False) (_,_) = b
+          process (_,field,ok) (TypeError,o)  = (o,field+1,True) -- Don't bother checking type errors
+          process (_,field,ok) (o,TypeError)  = (o,field+1,True) 
+          process (_,field,ok) (call,signature)  = newBase
+              where newBase = if call == signature 
+                                  then (call,field+1,True)
+                                  else (signature,field,False)
 
 -- singleType :: Type -> TypeTuple
 -- singleType = Data.Sequence.empty |> 
