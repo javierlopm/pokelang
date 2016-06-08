@@ -295,9 +295,8 @@ Exp :
 Ent0 : {- λ -}     {% onZip enterScope }
 Ent1 : {- λ -}     {% exitScope  }
 -- Ent1 : DATAID      {% insertEmpty $1  >> return $1 } 
-Ent2 : Reference ID "(" Parameters ")" {% insertForwardFunc ($4 `addType` $1) $2
-                                            >> onZip enterScope
-                                                >> return($2,($4 `addType` $1)) } 
+Ent2 : Reference ID Ent0 "(" Parameters Ent0 Ent1 ")" {% insertForwardFunc ($5 `addType` $1) $2
+                                                            >> return($2,($5 `addType` $1)) } 
 Ent3 : ID          {%  onZip enterScope >>
                          insertDeclareInScope TypeInt $1 False True >>
                             return $1                             } 
