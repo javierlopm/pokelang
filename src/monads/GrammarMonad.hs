@@ -119,11 +119,16 @@ checkLIter (TkId (l,c) lexeme) = do
     state <- get 
     if isMember (zipp state) lexeme
         then if isLIter $ fromJust $ getVal (zipp state) lexeme
-                then tellError error2 
-                else tellLog whathappened
-        else tellLog error1 -- This check exists already in lower levels
-  where error1 = strError (l,c) "Cannot assign to" lexeme "because it's an iteration variable."
-        error2 = strError (l,c) "Cannot assign to" lexeme "because it's not declared."
+                then tellError error1
+                else 
+                  if isLValue $ fromJust $ getVal (zipp state) lexeme
+                  then tellError error2
+                  else tellLog whathappened
+        else tellLog error3 -- This check exists already in lower levels
+  where 
+        error1 = strError (l,c) "Cannot assign to" lexeme "because it's an iteration variable."
+        error2 = strError (l,c) "Cannot assign to" lexeme "because it's not a valid L-Value."
+        error3 = strError (l,c) "Cannot assign to" lexeme "because it's not declared."
         whathappened = "Variable " ++ lexeme ++ " at " ++ show l++":"++show c ++ " can be assing."
 
 -- Dunno lol

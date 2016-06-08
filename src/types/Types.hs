@@ -8,6 +8,7 @@ module Types(
     isError,
     isReadable,
     isLIter,
+    isLValue,
     isFunc,
     toPointer,
     toEmptyArray,
@@ -147,9 +148,15 @@ isFunc (Just (EmptyWithType _)) = True -- Forward declaration
 isFunc (Just Empty) = True
 isFunc a = False
 
+--Check if a Declaration is an Iteration Variable
 isLIter :: Declare -> Bool
 isLIter (Variable _ _ iterVar) = iterVar
 isLIter _                      = False
+
+--Check if a Declaration is a valid L-value
+isLValue :: Declare -> Bool
+isLValue (Variable _ _ False ) = True
+isLValue _                     = False
 
 --Checks if a declaration is readable
 isReadable :: Maybe Declare -> Bool
