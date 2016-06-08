@@ -307,15 +307,15 @@ checkEnumAndInsert (TkDId (lD,cD) lexemeD) (TkId (l,c) lexeme) = do
         error1    = strError (lD,cD) "datatype" lexemeD "used but not found."
         error2    = strError (lD,cD) "trying to iterate" lexemeD "over non ENUM type."
 
-checkItsDeclared :: Token -> OurMonad (Type)
+checkItsDeclared :: Token -> OurMonad ((Type,Token))
 checkItsDeclared tk = do
     state <- get
     if (not . isNothing) (lookUp (zipp state) (lexeme tk)) 
         then (tellLog . concat) whathappened >>
-                return (typeFound (lookUp (zipp state) (lexeme tk)))
+                return ((typeFound (lookUp (zipp state) (lexeme tk))),tk)
         else if isInScope (scp state) (lexeme tk)
-                then return ( typeFound (getValS (lexeme tk) (scp state)))
-                else tellError error1 >> return TypeError
+                then return (( typeFound (getValS (lexeme tk) (scp state))),tk)
+                else tellError error1 >> return (TypeError,tk)
       
   where whathappened = ["Variable ",lexeme tk," at ",(show . position) tk," well used."]
         error1       = strError (position tk) " variable or datatype" (lexeme tk) "used but not declared."
