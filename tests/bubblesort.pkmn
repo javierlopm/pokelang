@@ -34,7 +34,8 @@ funcball VOIDtorb bubble( pINTachu arr,
     #vamo_a_escribi(bubbles);
 
 
-    0.2 += temp * temp; #falla somehow
+    temp += 1 * temp + 0.5; 
+    temp += 1 * temp + 0.5; 
     
     vamo_a_empeza
     vamo_a_calmano

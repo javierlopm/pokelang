@@ -10,17 +10,18 @@ STRUCTabuzz poketrainer {
     socialSecurityNumber :: pINTachu,
     best_friend          :: STRUCTabuzz poketrainer*,
     mypkmn               :: STRUCTabuzz pokemon,
-    name                 :: CHARmander *
+    name                 :: CHARmander 
 }
 
 funcball pINTachu fibo(pINTachu n):
     STRUCTabuzz poketrainer ash;
+
     n = ash.mypkmn.type;
 
     si n == 0 || n == 1:
         vamo_a_retorna 1;
     si_no:
-        vamo_a_retorna fibo(n) + fibo(n-2);
+        vamo_a_retorna fibo(0.2) + fibo(n-2);
     vamo_a_calmano
 vamo_a_calmano
 

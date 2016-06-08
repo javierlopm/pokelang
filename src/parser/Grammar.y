@@ -148,28 +148,40 @@ import Data.Sequence
 
 Prog : Dcls  {% return ()}
 
-Ins : {- λ -}                   {% return TypeBool }
-    | Ins Exp "="  Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
-    | Ins Exp "*=" Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
-    | Ins Exp "+=" Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
-    | Ins Exp "-=" Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
-    | Ins BREAK          ";"    {% return TypeBool }
-    | Ins CONTINUE       ";"    {% return TypeBool }
-    | Ins RETURN   Exp   ";"    {% return TypeBool }
-    | Ins RETURN         ";"    {% return TypeBool }
-    | Ins EXIT           ";"    {% return TypeBool } 
+Ins : {- λ -}                   {% return TypeVoid }
+    | Ins Exp "="  Exp   ";"    {% do
+                                     ty    <- checkLValue $2
+                                     check <- checkBinary (TypeBool:TypeChar:nums) ty (fst $4) $3 (snd $2)
+                                     return (fst check)} --Falta caso particular para checkAssing
+    | Ins Exp "*=" Exp   ";"    {% do
+                                     ty    <- checkLValue $2
+                                     check <- checkBinary nums ty (fst $4) $3 (snd $2)
+                                     return (fst check)} --Falta caso particular para checkAssing
+    | Ins Exp "+=" Exp   ";"    {% do
+                                     ty    <- checkLValue $2
+                                     check <- checkBinary nums ty (fst $4) $3 (snd $2)
+                                     return (fst check)} --Falta caso particular para checkAssing
+    | Ins Exp "-=" Exp   ";"    {% do
+                                     ty    <- checkLValue $2
+                                     check <- checkBinary nums ty (fst $4) $3 (snd $2)
+                                     return (fst check)} --Falta caso particular para checkAssing
+    | Ins BREAK          ";"    {% return TypeVoid }
+    | Ins CONTINUE       ";"    {% return TypeVoid }
+    | Ins RETURN   Exp   ";"    {% return TypeVoid }
+    | Ins RETURN         ";"    {% return TypeVoid }
+    | Ins EXIT           ";"    {% return TypeVoid } 
 --    | Ins PRINT "(" STRING PrntArgs ")" ";" {% onStrScope $ insert (content $4) Types.Empty  }
-    | Ins READ  "("       ID        ")" ";" {% checkReadable $4 True  >> return TypeBool} --revisar
-    | Ins WRITE "("       ID        ")" ";" {% checkReadable $4 False >> return TypeBool}
-    | Ins FREE  "("       ID        ")" ";" {% return TypeBool}
-    | Ins FREE  "("     DATAID      ")" ";" {% return TypeBool}
-    | Ins READ  "("     DATAID      ")" ";" {% return TypeBool}
-    | Ins BEGIN Ent0 SmplDcls Ins END       {% exitScope   >> return TypeBool} -- No debe aceptar funciones
-    | Ins IF Exp    ":" Ent0 SmplDcls Ins Ent1 NextIf Else END    {% return TypeBool  }
-    | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                {% return TypeBool  }
-    | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope   >> return TypeBool}
-    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope   >> return TypeBool}
-    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope   >> return TypeBool}
+    | Ins READ  "("       ID        ")" ";" {% checkReadable $4 True  >> return TypeVoid} --revisar
+    | Ins WRITE "("       ID        ")" ";" {% checkReadable $4 False >> return TypeVoid}
+    | Ins FREE  "("       ID        ")" ";" {% return TypeVoid}
+    | Ins FREE  "("     DATAID      ")" ";" {% return TypeVoid}
+    | Ins READ  "("     DATAID      ")" ";" {% return TypeVoid}
+    | Ins BEGIN Ent0 SmplDcls Ins END       {% exitScope   >> return TypeVoid} -- No debe aceptar funciones
+    | Ins IF Exp    ":" Ent0 SmplDcls Ins Ent1 NextIf Else END    {% return TypeVoid  }
+    | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                {% return TypeVoid  }
+    | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope   >> return TypeVoid}
+    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope   >> return TypeVoid}
+    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope   >> return TypeVoid}
 
 -- Print arguments
 --PrntArgs: {- λ -}             {% return ()}
@@ -266,7 +278,7 @@ Exp :
     | Exp "==" Exp      {% return (TypeBool,(snd $1)) }
     | Exp "!=" Exp      {% return (TypeBool,(snd $1)) }
     -- Expresiones sobre lienzo.
-    | Exp "!!" Exp             {% return (TypeBool,(snd $1)) }
+    | Exp "!!" Exp            {% return (TypeBool,(snd $1)) }
     | Exp "."  ID             {% checkFieldAccess $1 $3 }
     | ID "[" Exp "]" %prec ARR {% return (TypeBool,$1) }
     --Llamadas a funciones

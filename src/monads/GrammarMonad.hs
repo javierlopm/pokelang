@@ -116,6 +116,19 @@ checkIsFunc (TkId (r,c) lex1) = do
   where error1   = strError (r,c) "" lex1 " it's not a callable function or procedure."
         whathpnd = lex1 ++ "\' at " ++ show r++":"++show c ++ " it's a callable function or procedure."
 
+{-checkRValue :: Token -> Type -> (Type,Token) -> OurMonad(Type)
+checkRValue _ TypeError _                =  return TypeError
+checkRValue _ _ (TypeError,_)            =  return TypeError 
+checkRValue (TkAssign _) myT1 (myT2,tok) =  if myT1 == myT2 
+                                              then return myT1
+                                              else return TypeError
+checkRValue (TkTEQ _) myT1 (myT2,tok) =  
+  if (myT1 == TypeFloat || myT1 == TypeInt) && 
+     (myT2 == TypeFloat || myT2 == TypeInt)
+       then return myT1
+checkRValue (TkPEQ _) myT1 (myT2,tok) =  if myT1 == myT2 then return myT1
+checkRValue (TkMEQ _) myT1 (myT2,tok) =  if myT1 == myT2 then return myT1-}
+
 -- Check if variable it's an iteration varible (could it be used in assignment?)
 checkLValue :: (Type,Token) -> OurMonad(Type)
 checkLValue (TypeError,_)               = return TypeError
