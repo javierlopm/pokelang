@@ -137,14 +137,15 @@ checkLValue (myType ,myToken) = do
                     if (isLValue myType $ fromJust $ getValS myLex (scp state) )
                     then tellLog whathappened >> return myType  --REVISAR
                     else tellError error2     >> return TypeError
-          else tellLog error3  >> return TypeError -- This check exists already in lower levels
-    else tellLog error2 >> return TypeError
+          else return TypeError -- This check exists already in lower levels
+    else tellError error4 >> return TypeError
    where 
         (l,c)  = position myToken
         myLex  = lexeme myToken
         error1 = strError (l,c) "Cannot assign to" myLex "because it's an iteration variable."
         error2 = strError (l,c) "Cannot assign to" myLex "because it's not a valid L-Value."
         error3 = strError (l,c) "Cannot assign to" myLex "because it's not declared."
+        error4 = strError (l,c) "Cannot assign to" (show (toConstr myToken)) "because it's not a valid L-Value."
         whathappened = "Variable " ++ myLex ++ " at " ++ show l++":"++show c ++ " can be assing."
 
 -- Dunno lol
