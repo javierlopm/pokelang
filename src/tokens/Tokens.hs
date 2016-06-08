@@ -79,7 +79,7 @@ data Token =  TkLBracket  { position :: Pos }
             | TkExit      { position :: Pos }
             | TkRead      { position :: Pos }
             | TkWrite     { position :: Pos }
-            | TkPrint     { position :: Pos }
+--            | TkPrint     { position :: Pos }
             | TkAlloc     { position :: Pos }
             | TkFree      { position :: Pos }
             | TkSizeOf    { position :: Pos }

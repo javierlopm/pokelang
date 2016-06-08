@@ -90,7 +90,7 @@ import Data.Sequence
     -- Built-in functions/Instructions
     READ      { TkRead   _ }
     WRITE     { TkWrite  _ }
-    PRINT     { TkPrint  _ }
+--    PRINT     { TkPrint  _ }
     MALLOC    { TkAlloc  _ }
     FREE      { TkFree   _ }
     SIZEOF    { TkSizeOf _ }
@@ -158,7 +158,7 @@ Ins : {- λ -}                   {% return () }
     | Ins RETURN   Exp   ";"    {% return () }
     | Ins RETURN         ";"    {% return () }
     | Ins EXIT           ";"    {% return () } 
-    | Ins PRINT "(" STRING PrntArgs ")" ";" {% onStrScope $ insert (content $4) Types.Empty  }
+--    | Ins PRINT "(" STRING PrntArgs ")" ";" {% onStrScope $ insert (content $4) Types.Empty  }
     | Ins READ  "("       ID        ")" ";" {% checkReadable $4 True}
     | Ins WRITE "("       ID        ")" ";" {% checkReadable $4 False}
     | Ins FREE  "("       ID        ")" ";" {% return ()}
