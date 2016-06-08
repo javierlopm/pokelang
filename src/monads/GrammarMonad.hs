@@ -25,7 +25,6 @@ module GrammarMonad(
     checkItsDeclared,
     checkEnumAndInsert,
     checkBinary,
-    
     checkRecursiveDec
 ) where
 
