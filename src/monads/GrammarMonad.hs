@@ -205,15 +205,14 @@ insertForwardData typ tk = do
         typeFound state =  fromJust $ getValS (lexeme tk) (scp state)
 
 -- Adding function to global scope and cleaning actual zipper
-insertFunction :: TypeTuple -> Token -> OurMonad ()
-insertFunction tuple ident  = do 
+insertFunction :: TypeTuple -> Token -> Bool -> OurMonad ()
+insertFunction tuple ident clean = do 
     state <- get
     if isInGlobals state ident
         then do if emptyTypeMatches (fromJust (getValS (lexeme ident) (scp state)))
                                     tuple 
                     then insertNclean state
-                    else do tellError error1
-                            tellError $ "En " ++ lexeme ident ++ show (fromJust (getValS (lexeme ident) (scp state))) ++ " vs " ++ (show . TypeFunction) tuple
+                    else tellError error1 -- tellError $ "En " ++ lexeme ident ++ show (fromJust (getValS (lexeme ident) (scp state))) ++ " vs " ++ (show . TypeFunction) tuple
         else insertNclean state
   where error1       = strError (position ident) "type of function" (lexeme ident) " doesn't match with forward declaration."
         whathappened = "Function " ++ lexeme ident ++ " added at "++ linecol
@@ -223,7 +222,9 @@ insertFunction tuple ident  = do
                                              (Function (position ident) 
                                                        (TypeFunction tuple) 
                                                        (fromZipper (zipp state)))
-                                onZip (const (fromScope emptyScope)) -- Clean zipper
+                                if clean
+                                    then onZip (const (fromScope emptyScope)) -- Clean zipper
+                                    else onZip enterScope
 
 
 -- Check,add, log for structs and union

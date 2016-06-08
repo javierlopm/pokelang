@@ -183,6 +183,7 @@ isEmpty _     = False
 -- Check if forward declaration matches
 emptyTypeMatches :: Declare -> TypeTuple -> Bool
 emptyTypeMatches (EmptyWithType (TypeFunction t1)) t2 = t1 == t2
+emptyTypeMatches (Function _ (TypeFunction t1) _)  t2 = t1 == t2
 emptyTypeMatches Empty _ = True
 emptyTypeMatches _ _     = False
 
