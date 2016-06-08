@@ -244,44 +244,44 @@ ExpFirsts : {- λ -}         { emptytuple }
 
 Exp : 
     -- Expresiones Aritméticas.
-      Exp "+"  Exp      {% return (checkBinary nums $1 $3 $2,$1) }
-    | Exp "-"  Exp      {% return (checkBinary nums $1 $3 $2,$1) }
-    | Exp "^"  Exp      {% return (TypeBool,$1)                 }
-    | Exp "*"  Exp      {% return (checkBinary nums $1 $3 $2,$1) }   -- Float/Int and Int
-    | Exp "/"  Exp      {% return (checkBinary nums $1 $3 $2,$1) }   -- Both Float
-    | Exp "//" Exp      {% return (checkBinary nums $1 $3 $2,$1) }   -- last one integer
-    | Exp "%"  Exp      {% return (checkBinary nums $1 $3 $2,$1) }   -- Both Integer
-    | "-" Exp %prec NEG {% return (TypeBool,$2) }
+      Exp "+"  Exp      {% checkBinary nums (fst $1) (fst $3) $2 (snd $1) }
+    | Exp "-"  Exp      {% checkBinary nums (fst $1) (fst $3) $2 (snd $1) }
+    | Exp "^"  Exp      {% return (TypeBool,(snd $1))                 }
+    | Exp "*"  Exp      {% checkBinary nums (fst $1) (fst $3) $2 (snd $1) }   -- Float/Int and Int
+    | Exp "/"  Exp      {% checkBinary nums (fst $1) (fst $3) $2 (snd $1) }   -- Both Float
+    | Exp "//" Exp      {% checkBinary nums (fst $1) (fst $3) $2 (snd $1) }   -- last one integer
+    | Exp "%"  Exp      {% checkBinary nums (fst $1) (fst $3) $2 (snd $1) }   -- Both Integer
+    | "-" Exp %prec NEG {% return (TypeBool,(snd $2)) }
     -- Expresiones Booleanas.
-    | Exp OR Exp        {% return (checkBinary [TypeBool] $1 $3 $2,$1) }
-    | Exp "||" Exp      {% return (checkBinary [TypeBool] $1 $3 $2,$1) }
-    | Exp AND Exp       {% return (checkBinary [TypeBool] $1 $3 $2,$1) }
-    | Exp "&&" Exp      {% return (checkBinary [TypeBool] $1 $3 $2,$1) }
-    | "!" Exp           {% return (TypeBool,$2) }
+    | Exp OR Exp        {% checkBinary [TypeBool] (fst $1) (fst $3) $2 (snd $1)  }
+    | Exp "||" Exp      {% checkBinary [TypeBool] (fst $1) (fst $3) $2 (snd $1)  }
+    | Exp AND Exp       {% checkBinary [TypeBool] (fst $1) (fst $3) $2 (snd $1)  }
+    | Exp "&&" Exp      {% checkBinary [TypeBool] (fst $1) (fst $3) $2 (snd $1)  }
+    | "!" Exp           {% return (TypeBool,(snd $2)) }
     -- Expresiones relacionales.
-    | Exp "<"  Exp      {% return (TypeBool,$1) }
-    | Exp "<=" Exp      {% return (TypeBool,$1) }
-    | Exp ">"  Exp      {% return (TypeBool,$1) }
-    | Exp ">=" Exp      {% return (TypeBool,$1) }
-    | Exp "==" Exp      {% return (TypeBool,$1) }
-    | Exp "!=" Exp      {% return (TypeBool,$1) }
+    | Exp "<"  Exp      {% return (TypeBool,(snd $1)) }
+    | Exp "<=" Exp      {% return (TypeBool,(snd $1)) }
+    | Exp ">"  Exp      {% return (TypeBool,(snd $1)) }
+    | Exp ">=" Exp      {% return (TypeBool,(snd $1)) }
+    | Exp "==" Exp      {% return (TypeBool,(snd $1)) }
+    | Exp "!=" Exp      {% return (TypeBool,(snd $1)) }
     -- Expresiones sobre lienzo.
-    | Exp "!!" Exp             {% return (TypeBool,$1) }
-    | Exp "."  Exp             {% return (TypeBool,$1) }
+    | Exp "!!" Exp             {% return (TypeBool,(snd $1)) }
+    | Exp "."  Exp             {% return (TypeBool,(snd $1)) }
     | ID "[" Exp "]" %prec ARR {% return (TypeBool,$1) }
     --Llamadas a funciones
-    | ID "(" ExpList ")"   {% checkIsFunc $1 >> return (TypeBool,$1) }  --Arreglar llamadas gramatica todo
+    --| ID "(" ExpList ")"   {% checkIsFunc $1 >> return (TypeBool,$1) }  --Arreglar llamadas gramatica todo {% checkIsFunc $1 >> return (TypeBool,$1) } FALLA
     --Acceso a apuntadores
-    | "*" Exp %prec POINT  {% return (TypeBool,$2) }
+    | "*" Exp %prec POINT  {% return (TypeBool,(snd $2)) }
     --Direccion de variable
-    | "&" Exp %prec AMP    {% return (TypeBool,$2) }
+    | "&" Exp %prec AMP    {% return (TypeBool,(snd $2)) }
     -- Asociatividad.
-    | "(" Exp ")"    {% return (TypeBool,$2) }
+    | "(" Exp ")"    {% return (TypeBool,(snd $2)) }
     -- Constantes.
     --| Term           { TypeBool }
     -- Llamadas
-    | MALLOC "(" Exp ")"       {% return (TypeBool,$3) }
-    | SIZEOF "(" Exp ")"       {% return (TypeBool,$3) }
+    | MALLOC "(" Exp ")"       {% return (TypeBool,(snd $3)) }
+    | SIZEOF "(" Exp ")"       {% return (TypeBool,(snd $3)) }
     | SIZEOF "(" Reference ")" {% return (TypeBool,$1) }
     | GET    "(" ENUM ")"      {% return (TypeBool,$3) }
     | TRUE      {% return (TypeBool,$1) }   

@@ -323,15 +323,15 @@ checkItsDeclared tk = do
 
 
 
-checkBinary :: [Type] -> Type -> Type -> Token -> OurMonad (Type)
-checkBinary expected TypeError _ _ = return TypeError
-checkBinary expected _ TypeError _ = return TypeError
-checkBinary expected l r tok = do
+checkBinary :: [Type] -> Type -> Type -> Token -> Token -> OurMonad ((Type,Token))
+checkBinary expected TypeError _ _ tok = return (TypeError,tok)
+checkBinary expected _ TypeError _ tok = return (TypeError,tok)
+checkBinary expected l r tok tok2      = do
     if l == r 
       then do if (any (==l) expected) 
-                  then return l
-                  else tellError error2 >> return TypeError
-      else do tellError error1 >> return TypeError
+                  then return (l,tok2)
+                  else tellError error2 >> return (TypeError,tok2)
+      else do tellError error1 >> return (TypeError,tok2)
   where error1 = strError (position tok) "Types in the operator" (toStr tok) ("are not equal (" ++ show l ++ " and " ++ show r ++ ")")
         error2 = strError (position tok) "Operands in" (toStr tok) ("have type" ++ show l ++ " but did't match any of the expected types." ++ show expected)
 
