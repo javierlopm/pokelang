@@ -214,8 +214,8 @@ Dcls:  {- λ -}                          {% return () }
     | Dcls ENUMDEC DATAID "{" EnumConsList "}"  {% insertEnum $3 }
     | Dcls Ent5 "{" FieldsList "}" {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4  }
     | Dcls Ent6 "{" FieldsList "}" {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4  }
-    | Dcls FUNC Reference Ent2 "(" Parameters ")" Ent0  ":"  SmplDcls Ins END -- Ent0 Ent5
-    {% insertFunction (addType $6 $3) $4 }
+    | Dcls FUNC  Ent2  ":" SmplDcls Ins END -- Ent0 Ent5
+    {% insertFunction (snd $3) (fst $3) }
 
 
 -- Parameter: ListParam Reference ID  {% insertDeclareInScope $2 $3 False False }    -- Falta Hacer la lista de tipos
@@ -295,7 +295,9 @@ Exp :
 Ent0 : {- λ -}     {% onZip enterScope }
 Ent1 : {- λ -}     {% exitScope  }
 -- Ent1 : DATAID      {% insertEmpty $1  >> return $1 } 
-Ent2 : ID          {% insertEmpty $1  >> return $1 } 
+Ent2 : Reference ID "(" Parameters ")" {% insertForwardFunc ($4 `addType` $1) $2
+                                            >> onZip enterScope
+                                                >> return($2,($4 `addType` $1)) } 
 Ent3 : ID          {%  onZip enterScope >>
                          insertDeclareInScope TypeInt $1 False True >>
                             return $1                             } 

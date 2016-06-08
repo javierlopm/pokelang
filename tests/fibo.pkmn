@@ -3,7 +3,7 @@
 --
 
 
-STRUCTabuzz pokeAux meeeeh;
+#STRUCTabuzz pokeAux meeeeh;
 
 funcball pINTachu fibo(pINTachu n):
     si n == 0 || n == 1:

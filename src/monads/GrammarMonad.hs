@@ -212,8 +212,8 @@ insertFunction tuple ident  = do
         then do if emptyTypeMatches (fromJust (getValS (lexeme ident) (scp state)))
                                     tuple 
                     then insertNclean state
-                    else tellError error1
-                            -- tellError $ "En " ++ lexeme ident ++ show (fromJust (getValS (lexeme ident) (scp state))) ++ " vs " ++ show tuple
+                    else do tellError error1
+                            tellError $ "En " ++ lexeme ident ++ show (fromJust (getValS (lexeme ident) (scp state))) ++ " vs " ++ (show . TypeFunction) tuple
         else insertNclean state
   where error1       = strError (position ident) "type of function" (lexeme ident) " doesn't match with forward declaration."
         whathappened = "Function " ++ lexeme ident ++ " added at "++ linecol

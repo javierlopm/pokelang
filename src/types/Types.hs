@@ -64,7 +64,7 @@ instance Show Declare where
               cons _    = ""
   show (Cons (l,c)) = "Constant value"
   show (EnumCons (l,c) n ord) = "Enum Constant("++show l++","++show c++ ") \'" ++ n ++ "\' with cardinaly " ++ show ord
-  show (EmptyWithType t) = "Forward Declaration of type "++ show t ++", this shouldn't be here" 
+  show (EmptyWithType t) = "(Forward Declaration of type "++ show t ++", this shouldn't be here)" 
   show Empty  = " EMPTY " 
   show (Enum   (l,c) n   scp ) = "Enum("++show l++","++show c++ ") "   
                                   ++ "\nType for variables: Enum "++ n 
