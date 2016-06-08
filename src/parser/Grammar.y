@@ -241,13 +241,13 @@ FieldsList  : ID "::" Reference                  {% (insertDeclareInScope $3 $1 
 
 Exp : 
     -- Expresiones Aritméticas.
-      Exp "+" Exp       {% checkBinary nums $1 $3 $2 }
-    | Exp "-" Exp       {% checkBinary nums $1 $3 $2 }
-    | Exp "^" Exp       { TypeBool }
-    | Exp "*" Exp       {% checkBinary nums $1 $3 $2 }
-    | Exp "/" Exp       {% checkBinary nums $1 $3 $2 }
+      Exp "+"  Exp      {% checkBinary nums $1 $3 $2 }
+    | Exp "-"  Exp      {% checkBinary nums $1 $3 $2 }
+    | Exp "^"  Exp      { TypeBool }
+    | Exp "*"  Exp      {% checkBinary nums $1 $3 $2 }
+    | Exp "/"  Exp      {% checkBinary nums $1 $3 $2 }
     | Exp "//" Exp      {% checkBinary nums $1 $3 $2 }
-    | Exp "%" Exp       {% checkBinary nums $1 $3 $2 }
+    | Exp "%"  Exp      {% checkBinary nums $1 $3 $2 }
     | "-" Exp %prec NEG { TypeBool }
     -- Expresiones Booleanas.
     | Exp OR Exp        {% checkBinary [TypeBool] $1 $3 $2 }
@@ -283,7 +283,7 @@ Exp :
     | GET    "(" ENUM ")"      { TypeBool }
     | TRUE      { TypeBool  }   
     | FALSE     { TypeBool  }   
-    | ID        { checkItsDeclared $1  }   -- {% checkItsDeclared $1 >> return $1 }
+    | ID        {% checkItsDeclared $1  }   -- {% checkItsDeclared $1 >> return $1 }
     | DATAID    { TypeError }   -- {  $1  } ???? check its declared
     | FLOAT     { TypeFloat }   
     | INT       { TypeInt   }   
