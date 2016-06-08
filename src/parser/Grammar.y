@@ -275,20 +275,19 @@ Exp :
     -- Asociatividad.
     | "(" Exp ")"    { TypeBool }
     -- Constantes.
-    | Term           { TypeBool }
+    --| Term           { TypeBool }
     -- Llamadas
     | MALLOC "(" Exp ")"       { TypeBool }
     | SIZEOF "(" Exp ")"       { TypeBool }
     | SIZEOF "(" Reference ")" { TypeBool }
     | GET    "(" ENUM ")"      { TypeBool }
-
-Term: TRUE         {% return($1) }
-    | FALSE        {% return($1) }
-    | ID           {% checkItsDeclared $1 >> return $1 }
-    | DATAID       {  $1  }
-    | FLOAT        {% return($1) }
-    | INT          {% return($1) }
-    | CHAR         {% return($1) }
+    | TRUE      { TypeBool  }   
+    | FALSE     { TypeBool  }   
+    | ID        { checkItsDeclared $1  }   -- {% checkItsDeclared $1 >> return $1 }
+    | DATAID    { TypeError }   -- {  $1  } ???? check its declared
+    | FLOAT     { TypeFloat }   
+    | INT       { TypeInt   }   
+    | CHAR      { TypeChar  }   
 
 Ent0 : {- λ -}     {% onZip enterScope }
 Ent1 : {- λ -}     {% exitScope  }

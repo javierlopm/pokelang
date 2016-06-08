@@ -303,14 +303,20 @@ checkEnumAndInsert (TkDId (lD,cD) lexemeD) (TkId (l,c) lexeme) = do
         error1    = strError (lD,cD) "datatype" lexemeD "used but not found."
         error2    = strError (lD,cD) "trying to iterate" lexemeD "over non ENUM type."
 
-checkItsDeclared :: Token -> OurMonad ()
+checkItsDeclared :: Token -> OurMonad (Type)
 checkItsDeclared tk = do
     state <- get
-    if (not . isNothing) (lookUp (zipp state) (lexeme tk)) || isInScope (scp state) (lexeme tk)
-        then (tellLog . concat) whathappened
-        else tellError error1
+    if (not . isNothing) (lookUp (zipp state) (lexeme tk)) 
+        then (tellLog . concat) whathappened >>
+                return (typeFound (lookUp (zipp state) (lexeme tk)))
+        else if isInScope (scp state) (lexeme tk)
+                then return ( typeFound (getValS (lexeme tk) (scp state)))
+                else tellError error1 >> return TypeError
+      
   where whathappened = ["Variable ",lexeme tk," at ",(show . position) tk," well used."]
         error1       = strError (position tk) " variable or datatype" (lexeme tk) "used but not declared."
+        typeFound    = storedType . fromJust
+
 
 
 checkBinary :: [Type] -> Type -> Type -> Token -> OurMonad (Type)
@@ -322,7 +328,7 @@ checkBinary expected l r tok = do
                   then return l
                   else tellError error2 >> return TypeError
       else do tellError error1 >> return TypeError
-  where error1 = strError (position tok) "Types in the operator" (toStr tok) "are not equal."
+  where error1 = strError (position tok) "Types in the operator" (toStr tok) ("are not equal (" ++ show l ++ " and " ++ show r ++ ")")
         error2 = strError (position tok) "Types in" (toStr tok) "did't match any of the expected types."
 
 checkRecursiveDec :: Token -> TypeTuple -> OurMonad()
