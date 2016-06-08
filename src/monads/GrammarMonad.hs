@@ -104,12 +104,13 @@ exitScope = onZip (fromJust.goUp)
 -}
 
 -- Check if given token is a valid function/procedure that can be called
-checkIsFunc :: Token -> OurMonad()
+checkIsFunc :: Token -> OurMonad(Maybe(Declare))
 checkIsFunc (TkId (r,c) lex1) = do
     state <- get
-    if isFunc (getValS lex1 (scp state)) -- Just checking in global scope,
-        then tellLog   whathpnd          -- cause functions are global
+    if isFunc (getValS lex1 (scp state)) -- Functions are in global scope
+        then tellLog whathpnd
         else tellError error1
+    return(getValS lex1 (scp state))
   where error1   = strError (r,c) "" lex1 " it's not a callable function or procedure."
         whathpnd = lex1 ++ "\' at " ++ show r++":"++show c ++ " it's a callable function or procedure."
 
@@ -287,8 +288,6 @@ insertDeclareInScope dcltype  (TkId (l,c) lexeme ) isGlob readonly = do
           generror     = "Error:" ++ show l ++":"++show c ++" redefinition of " ++ lexeme
           whathappened = "Added " ++ lexeme ++" at "++show l++":"++show c ++ " with type " ++ show dcltype
 
-
-
 -- Check if datatype is enum and insert as readonly
 checkEnumAndInsert :: Token -> Token -> OurMonad ()
 checkEnumAndInsert (TkDId (lD,cD) lexemeD) (TkId (l,c) lexeme) = do
@@ -329,7 +328,18 @@ checkBinary expected l r tok = do
                   else tellError error2 >> return TypeError
       else do tellError error1 >> return TypeError
   where error1 = strError (position tok) "Types in the operator" (toStr tok) ("are not equal (" ++ show l ++ " and " ++ show r ++ ")")
-        error2 = strError (position tok) "Types in" (toStr tok) "did't match any of the expected types."
+        error2 = strError (position tok) "Operands in" (toStr tok) ("have type" ++ show l ++ " but did't match any of the expected types." ++ show expected)
+
+checkFunctionCall :: Token -> TypeTuple -> OurMonad(Type)
+checkFunctionCall ident calltup = do
+    res <- checkIsFunc ident
+    if isNothing res 
+        then return TypeError -- Nothing to do, error
+        else do let funcSig = (getTuple . storedType . fromJust) res
+                if tuplesMatch calltup funcSig 
+                    then tellLog "Function call types work" >> return (funcReturnType funcSig)
+                    else return TypeError -- agregar aqui el error primero
+
 
 checkRecursiveDec :: Token -> TypeTuple -> OurMonad()
 checkRecursiveDec dataTok typeSec = do 

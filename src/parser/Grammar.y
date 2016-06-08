@@ -236,8 +236,11 @@ FieldsList  : ID "::" Reference                  {% (insertDeclareInScope $3 $1 
             | FieldsList  "," ID "::" Reference  {% (insertDeclareInScope $5 $3 False False) >> 
                                                         return(addType $1 (TypeField (lexeme $3) $5)) } 
 
+ExpList: {- λ -}        { emptytuple }
+       | ExpFirsts Exp  { $1 `addType` $2 }
 
-
+ExpFirsts : {- λ -}         { emptytuple }
+          | ExpFirsts Exp "," { $1 `addType` $2 }
 
 Exp : 
     -- Expresiones Aritméticas.
@@ -267,7 +270,7 @@ Exp :
     | Exp "."  Exp           { TypeBool }
     | ID "[" Exp "]" %prec ARR { TypeBool }
     --Llamadas a funciones
-    | ID "(" Exp ")"         {% checkIsFunc $1 >> return TypeBool }  --Arreglar llamadas gramatica todo
+    | ID "(" ExpList ")"   {% checkIsFunc $1 >> return TypeBool }  --Arreglar llamadas gramatica todo
     --Acceso a apuntadores
     | "*" Exp %prec POINT  { TypeBool }
     --Direccion de variable
