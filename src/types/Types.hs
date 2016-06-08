@@ -17,17 +17,22 @@ module Types(
     enumMatches,
     dataNameMatches,
     makeDataType,
-    emptytuple,
     emptyTypeMatches,
-    addType,
     sameData,
-    isNotRecursiveData
+    isNotRecursiveData,
+    -- Type Tuple Functions
+    emptytuple,
+    addType,
+    funcReturnType,
+    tuplesMatch
+    -- addLeftType,
+    -- singleType,
 ) where
 
 import Data.List          (intersperse)
 import TableTree          (Scope(..),showScope)
-import Data.Sequence      (Seq,(|>),empty)
 import Data.Foldable as F (toList,all)
+import Data.Sequence as S (Seq,(|>),ViewR(..),empty,viewr,zipWith)
 import Tokens(Token(TkInt  ,TkBool ,TkChar
                    ,TkVoid ,TkFloat,TkStruct
                    ,TkUnion,TkEnum ,TkNull
@@ -98,7 +103,7 @@ data Type = TypeInt
           | TypePointer    Type
           | TypeEmptyArray Type
           | TypeArray      Type Int
-          | TypeFunction   (Seq Type) 
+          | TypeFunction   { getTuple :: (Seq Type)} 
           | TypeUndefined  -- Temporal
           | TypeError  
           deriving(Eq)
@@ -222,10 +227,25 @@ sameData _              _               = False
 type TypeTuple = Seq Type
 
 emptytuple :: TypeTuple 
-emptytuple = Data.Sequence.empty
+emptytuple = empty
 
 addType :: TypeTuple -> Type -> TypeTuple
 addType = (|>)
+
+funcReturnType :: TypeTuple -> Type
+funcReturnType t = (decons . viewr) t
+    where decons EmptyR = error "Empty sequence!"
+          decons (others :> l) = l
+-- addLeftType :: Type -> TypeTuple -> TypeTuple
+-- addLeftType = (<|)
+
+tuplesMatch :: TypeTuple -> TypeTuple -> Bool
+tuplesMatch t1 t2 = undefined
+    -- where  zipWith (,)
+
+
+-- singleType :: Type -> TypeTuple
+-- singleType = Data.Sequence.empty |> 
 
 isNotRecursiveData  :: String -> TypeTuple -> Bool
 isNotRecursiveData s l = F.all (not .isRec) l

@@ -71,7 +71,7 @@ import GrammarMonad
     "%"       { TkMod    _ }    
     "=="      { TkEq     _ }    
     "="       { TkAssign _ }
-
+    "&"       { TkAmp    _ }
     FUNC      { TkFunc   _ }
 
     -- Control structures
@@ -133,6 +133,9 @@ import GrammarMonad
 --Acceso a apuntadores
 %right POINT
 
+-- Direccion de variable
+%right AMP
+
 %nonassoc "==" "!="
 %nonassoc "<" "<=" ">" ">="
 
@@ -146,15 +149,15 @@ import GrammarMonad
 Prog : Dcls  {% return ()}
 
 Ins : {- λ -}                   {% return () }
-    | Ins Exp "="  Exp   ";"    {% checkLIter $2}
-    | Ins Exp "*=" Exp   ";"    {% checkLIter $2}
-    | Ins Exp "+=" Exp   ";"    {% checkLIter $2}
-    | Ins Exp "-=" Exp   ";"    {% checkLIter $2}
-    | Ins BREAK          ";"    {% return ()}
-    | Ins CONTINUE       ";"    {% return ()}
-    | Ins RETURN   Exp   ";"    {% return ()}
-    | Ins RETURN         ";"    {% return ()}
-    | Ins EXIT           ";"    {% return ()} 
+    | Ins Exp "="  Exp   ";"    {% return () } -- {% checkLIter $2}
+    | Ins Exp "*=" Exp   ";"    {% return () } -- {% checkLIter $2}
+    | Ins Exp "+=" Exp   ";"    {% return () } -- {% checkLIter $2}
+    | Ins Exp "-=" Exp   ";"    {% return () } -- {% checkLIter $2}
+    | Ins BREAK          ";"    {% return () }
+    | Ins CONTINUE       ";"    {% return () }
+    | Ins RETURN   Exp   ";"    {% return () }
+    | Ins RETURN         ";"    {% return () }
+    | Ins EXIT           ";"    {% return () } 
     | Ins PRINT "(" STRING PrntArgs ")" ";" {% onStrScope $ insert (content $4) Types.Empty  }
     | Ins READ  "("       ID        ")" ";" {% checkReadable $4 True}
     | Ins WRITE "("       ID        ")" ";" {% checkReadable $4 False}
@@ -233,57 +236,61 @@ FieldsList  : ID "::" Reference                  {% (insertDeclareInScope $3 $1 
             | FieldsList  "," ID "::" Reference  {% (insertDeclareInScope $5 $3 False False) >> 
                                                         return(addType $1 (TypeField (lexeme $3) $5)) } 
 
+ExpList: {- λ -}        { emptytuple }
+       | ExpFirsts Exp  { $1 `addType` $2 }
 
-
+ExpFirsts : {- λ -}         { emptytuple }
+          | ExpFirsts Exp "," { $1 `addType` $2 }
 
 Exp : 
     -- Expresiones Aritméticas.
-      Exp "+" Exp       { $1 }
-    | Exp "-" Exp       { $1 }
-    | Exp "^" Exp       { $1 }
-    | Exp "*" Exp       { $1 }
-    | Exp "/" Exp       { $1 }
-    | Exp "//" Exp      { $1 }
-    | Exp "%" Exp       { $1 }
-    | "-" Exp %prec NEG { $2 }
+      Exp "+"  Exp      {% checkBinary nums $1 $3 $2 }
+    | Exp "-"  Exp      {% checkBinary nums $1 $3 $2 }
+    | Exp "^"  Exp      { TypeBool }
+    | Exp "*"  Exp      {% checkBinary nums $1 $3 $2 }
+    | Exp "/"  Exp      {% checkBinary nums $1 $3 $2 }
+    | Exp "//" Exp      {% checkBinary nums $1 $3 $2 }
+    | Exp "%"  Exp      {% checkBinary nums $1 $3 $2 }
+    | "-" Exp %prec NEG { TypeBool }
     -- Expresiones Booleanas.
-    | Exp OR Exp        { $1 }
-    | Exp "||" Exp      { $1 }
-    | Exp AND Exp       { $1 }
-    | Exp "&&" Exp      { $1 }
-    | "!" Exp           { $2 }
+    | Exp OR Exp        {% checkBinary [TypeBool] $1 $3 $2 }
+    | Exp "||" Exp      {% checkBinary [TypeBool] $1 $3 $2 }
+    | Exp AND Exp       {% checkBinary [TypeBool] $1 $3 $2 }
+    | Exp "&&" Exp      {% checkBinary [TypeBool] $1 $3 $2 }
+    | "!" Exp           { TypeBool }
     -- Expresiones relacionales.
-    | Exp "<"  Exp      { $1 }
-    | Exp "<=" Exp      { $1 }
-    | Exp ">"  Exp      { $1 }
-    | Exp ">=" Exp      { $1 }
-    | Exp "==" Exp      { $1 }
-    | Exp "!=" Exp      { $1 }
+    | Exp "<"  Exp      { TypeBool }
+    | Exp "<=" Exp      { TypeBool }
+    | Exp ">"  Exp      { TypeBool }
+    | Exp ">=" Exp      { TypeBool }
+    | Exp "==" Exp      { TypeBool }
+    | Exp "!=" Exp      { TypeBool }
     -- Expresiones sobre lienzo.
-    | Exp "!!" Exp           { $1 }
-    | Exp "."  Exp           { $1 }
-    | ID "[" Exp "]" %prec ARR { $1 }
+    | Exp "!!" Exp           { TypeBool }
+    | Exp "."  Exp           { TypeBool }
+    | ID "[" Exp "]" %prec ARR { TypeBool }
     --Llamadas a funciones
-    | ID "(" Exp ")"         {% checkIsFunc $1 >> return $3 }  --Arreglar llamadas gramatica todo
+    | ID "(" ExpList ")"   {% checkIsFunc $1 >> return TypeBool }  --Arreglar llamadas gramatica todo
     --Acceso a apuntadores
-    | "*" Exp %prec POINT  { $2 }
+    | "*" Exp %prec POINT  { TypeBool }
+    --Direccion de variable
+    | "&" Exp %prec AMP    { TypeBool }
     -- Asociatividad.
-    | "(" Exp ")"    { $2 }
+    | "(" Exp ")"    { TypeBool }
     -- Constantes.
-    | Term           { $1  }
+    --| Term           { TypeBool }
     -- Llamadas
-    | MALLOC "(" Exp ")"       { $3 }
-    | SIZEOF "(" Exp ")"       { $3 }
-    | SIZEOF "(" Reference ")" { $1 }
-    | GET    "(" ENUM ")"      { $3 }
-
-Term: TRUE         {% return($1) }
-    | FALSE        {% return($1) }
-    | ID           {% checkItsDeclared $1 >> return $1 }
-    | DATAID       {  $1  }
-    | FLOAT        {% return($1) }
-    | INT          {% return($1) }
-    | CHAR         {% return($1) }
+    | MALLOC "(" Exp ")"       { TypeBool }
+    | SIZEOF "(" Exp ")"       { TypeBool }
+    | SIZEOF "(" Reference ")" { TypeBool }
+    | GET    "(" ENUM ")"      { TypeBool }
+    | TRUE      { TypeBool  }   
+    | FALSE     { TypeBool  }   
+    | ID        {% checkItsDeclared $1  }   -- {% checkItsDeclared $1 >> return $1 }
+    | DATAID    { TypeError }   -- {  $1  } ???? check its declared
+    | FLOAT     { TypeFloat }   
+    | INT       { TypeInt   }   
+    | CHAR      { TypeChar  }   
 
 Ent0 : {- λ -}     {% onZip enterScope }
 Ent1 : {- λ -}     {% exitScope  }

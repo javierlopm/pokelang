@@ -48,7 +48,7 @@ funcball VOIDtorb bubble( pINTachu arr,
         vamo_a_itera pos = ordenados |size-2|1:
             si arr[pos] < arr[pos+1]:
                 temp       = arr[pos+1];
-                #temp       = nothing(1);
+                #temp      = nothing(1);
                 arr[pos+1] = arr[pos];
                 arr[pos]   = temp;
             vamo_a_calmano
