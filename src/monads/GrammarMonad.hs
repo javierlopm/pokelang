@@ -374,7 +374,7 @@ checkFieldAccess (ty1,tk1) tk2 = do
                                                          (scp state) 
             if isInScope strScope (lexeme tk2)
             then return(((storedType . fromJust) (getValS (lexeme tk2) strScope)),tk2)
-            else tellError $ error2 (getDataName ty1) >> return (TypeError,tk1)
+            else tellError (error2 (getDataName ty1)) >> return (TypeError,tk1)
     else tellError error1  >> return (TypeError,tk1)
   where error1 = strError (position tk1) "Variable" (lexeme tk1) "it's not a valid struct/union, field cannot be accessed"
         error2 dn = strError (position tk1) "Variable" (lexeme tk2) ("not found in struct/union " ++ show dn )
