@@ -341,10 +341,13 @@ checkFunctionCall ident calltup = do
     if isNothing res 
         then return TypeError -- Nothing to do, error
         else do let funcSig = (getTuple . storedType . fromJust) res
-                if tuplesMatch calltup funcSig 
-                    then tellLog "Function call types work" >> return (funcReturnType funcSig)
-                    else return TypeError -- agregar aqui el error primero
-
+                if trd $ tuplesMatch calltup funcSig
+                    then do tellLog "Function call types work"
+                            return (funcReturnType funcSig)
+                    else do tellError . error1 $ tuplesMatch calltup funcSig
+                            return TypeError
+  where trd (_,_,a) = a
+        error1 (expected,p,_) = strError (position ident) "Error in the call of" (lexeme ident) ("argument number "++show p++" didn't match with expected" ++ show expected)
 
 checkRecursiveDec :: Token -> TypeTuple -> OurMonad()
 checkRecursiveDec dataTok typeSec = do 
