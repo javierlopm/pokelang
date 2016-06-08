@@ -4,6 +4,7 @@ module Types(
     Message,
     TypeTuple,
     nums,
+    structured,
     isEmpty,
     isError,
     isReadable,
@@ -97,8 +98,8 @@ data Type = TypeInt
           | TypeFloat  
           | TypeVoid   
           | TypeEnum       String -- Name comparison 
-          | TypeStruct     String 
-          | TypeUnion      String
+          | TypeStruct     { getDataName :: String} 
+          | TypeUnion      { getDataName :: String}
           | TypeField      String Type
           | TypePointer    Type
           | TypeEmptyArray Type
@@ -127,6 +128,11 @@ instance Show Type where
 
 -- lists
 nums = [TypeInt,TypeFloat]
+
+structured :: Type -> Bool
+structured (TypeStruct  _ ) = True
+structured (TypeUnion  _ )  = True
+structured _                = False
 
 enumMatches :: Declare -> String -> Bool
 enumMatches (Enum _ name _ ) str = name == str

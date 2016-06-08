@@ -2,10 +2,21 @@
     Fibonacci inocente
 --
 
+STRUCTabuzz pokemon {
+    type                 :: CHARmander *
+}
 
-#STRUCTabuzz pokeAux meeeeh;
+STRUCTabuzz poketrainer {
+    socialSecurityNumber :: pINTachu,
+    best_friend          :: STRUCTabuzz poketrainer*,
+    mypkmn               :: STRUCTabuzz pokemon,
+    name                 :: CHARmander *
+}
 
 funcball pINTachu fibo(pINTachu n):
+    STRUCTabuzz poketrainer ash;
+    n = ash.mypkmn.type;
+
     si n == 0 || n == 1:
         vamo_a_retorna 1;
     si_no:

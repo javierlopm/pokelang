@@ -267,7 +267,7 @@ Exp :
     | Exp "!=" Exp      {% return (TypeBool,(snd $1)) }
     -- Expresiones sobre lienzo.
     | Exp "!!" Exp             {% return (TypeBool,(snd $1)) }
-    | Exp "."  Exp             {% return (TypeBool,(snd $1)) }
+    | Exp "."  ID             {% checkFieldAccess $1 $3 }
     | ID "[" Exp "]" %prec ARR {% return (TypeBool,$1) }
     --Llamadas a funciones
     | ID "(" ExpList ")"   {% checkFunctionCall $1 $3 } 
