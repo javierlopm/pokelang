@@ -12,15 +12,15 @@ agregar scopes en uniones y structs
 forward declarations en datos
 Agregar Llamadas a funciones como instruccion
 Agregar Ampersand
+arreglar el repo
 
 In process
 =======
+verificar parametros en llamadas de funciones    - Javier
 
 Missing
 =======
-arreglar el repo                                 - Javier
 Agregar string type a enumcons                   - Nabil
-verificar parametros en llamadas de funciones    - Javier
 agregar funciones de conversion          
 agregar funciones predefinidas                    
 revisar L values en asignaciones                 - Nabil Maybe
