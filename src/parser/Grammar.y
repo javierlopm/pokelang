@@ -9,7 +9,7 @@ import Tokens
 import TableTree
 import Types
 import GrammarMonad
-
+import Data.Sequence
 
 }
 
@@ -237,10 +237,10 @@ FieldsList  : ID "::" Reference                  {% (insertDeclareInScope $3 $1 
                                                         return(addType $1 (TypeField (lexeme $3) $5)) } 
 
 ExpList: {- λ -}        { emptytuple }
-       | ExpFirsts Exp  { $1 `addType` (snd $2) }  --Revisar
+       | ExpFirsts Exp  { $1 `addType` (fst $2) }  --Revisar
 
 ExpFirsts : {- λ -}         { emptytuple }
-          | ExpFirsts Exp "," { $1 `addType` (snd $2) }  --Revisar
+          | ExpFirsts Exp "," { $1 `addType` (fst $2) }  --Revisar
 
 Exp : 
     -- Expresiones Aritméticas.
@@ -270,7 +270,7 @@ Exp :
     | Exp "."  Exp             {% return (TypeBool,(snd $1)) }
     | ID "[" Exp "]" %prec ARR {% return (TypeBool,$1) }
     --Llamadas a funciones
-    --| ID "(" ExpList ")"   {% checkIsFunc $1 >> return (TypeBool,$1) }  --Arreglar llamadas gramatica todo {% checkIsFunc $1 >> return (TypeBool,$1) } FALLA
+    | ID "(" ExpList ")"   {% checkIsFunc $1 >> return (TypeBool,$1) } --Arreglar llamadas gramatica todo {% checkIsFunc $1 >> return (TypeBool,$1) } FALLA
     --Acceso a apuntadores
     | "*" Exp %prec POINT  {% return (TypeBool,(snd $2)) }
     --Direccion de variable
