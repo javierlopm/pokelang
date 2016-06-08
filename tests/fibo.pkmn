@@ -9,7 +9,7 @@ funcball pINTachu fibo(pINTachu n):
     si n == 0 || n == 1:
         vamo_a_retorna 1;
     si_no:
-        vamo_a_retorna fibo(n-1) + fibo(n-2);
+        vamo_a_retorna fibo(0.3) + fibo(n-2);
     vamo_a_calmano
 vamo_a_calmano
 
