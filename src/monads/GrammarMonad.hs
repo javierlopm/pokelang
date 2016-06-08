@@ -5,7 +5,7 @@ module GrammarMonad(
     ScopeNZip,
     exec,
     checkIsFunc,
-    checkLIter,
+    checkLValue,
     checkReadable,
     initialState,
     makeTable,
@@ -116,17 +116,18 @@ checkIsFunc (TkId (r,c) lex1) = do
         whathpnd = lex1 ++ "\' at " ++ show r++":"++show c ++ " it's a callable function or procedure."
 
 -- Check if variable it's an iteration varible (could it be used in assignment?)
-checkLIter :: Token -> OurMonad()
-checkLIter (TkId (l,c) lexeme) = do
+checkLValue :: (Type,Token) -> OurMonad(Type)
+checkLValue (TypeError,_)               = return TypeError
+checkLValue (myType ,TkId (l,c) lexeme) = do
     state <- get 
     if isMember (zipp state) lexeme
         then if isLIter $ fromJust $ getVal (zipp state) lexeme
-                then tellError error1
+                then tellError error1       >> return TypeError
                 else 
-                  if isLValue $ fromJust $ getVal (zipp state) lexeme
-                  then tellError error2
-                  else tellLog whathappened
-        else tellLog error3 -- This check exists already in lower levels
+                  if isLValue myType $ fromJust $ getVal (zipp state) lexeme 
+                  then tellError error2     >> return TypeError
+                  else tellLog whathappened >> return myType  --REVISAR
+        else tellLog error3  >> return TypeError -- This check exists already in lower levels
   where 
         error1 = strError (l,c) "Cannot assign to" lexeme "because it's an iteration variable."
         error2 = strError (l,c) "Cannot assign to" lexeme "because it's not a valid L-Value."

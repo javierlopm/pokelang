@@ -33,10 +33,8 @@ funcball VOIDtorb bubble( pINTachu arr,
     vamo_a_lee(holis);
     #vamo_a_escribi(bubbles);
 
-    vamo_a_imprimi("hola mundo");
-    vamo_a_imprimi("hola mundo");
 
-    temp = temp * temp;
+    nothing += temp * temp; #falla somehow
     
     vamo_a_empeza
     vamo_a_calmano

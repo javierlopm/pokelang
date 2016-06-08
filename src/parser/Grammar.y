@@ -148,28 +148,28 @@ import Data.Sequence
 
 Prog : Dcls  {% return ()}
 
-Ins : {- λ -}                   {% return () }
-    | Ins Exp "="  Exp   ";"    {% return () } -- {% checkLIter $2}
-    | Ins Exp "*=" Exp   ";"    {% return () } -- {% checkLIter $2}
-    | Ins Exp "+=" Exp   ";"    {% return () } -- {% checkLIter $2}
-    | Ins Exp "-=" Exp   ";"    {% return () } -- {% checkLIter $2}
-    | Ins BREAK          ";"    {% return () }
-    | Ins CONTINUE       ";"    {% return () }
-    | Ins RETURN   Exp   ";"    {% return () }
-    | Ins RETURN         ";"    {% return () }
-    | Ins EXIT           ";"    {% return () } 
+Ins : {- λ -}                   {% return TypeBool }
+    | Ins Exp "="  Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
+    | Ins Exp "*=" Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
+    | Ins Exp "+=" Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
+    | Ins Exp "-=" Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
+    | Ins BREAK          ";"    {% return TypeBool }
+    | Ins CONTINUE       ";"    {% return TypeBool }
+    | Ins RETURN   Exp   ";"    {% return TypeBool }
+    | Ins RETURN         ";"    {% return TypeBool }
+    | Ins EXIT           ";"    {% return TypeBool } 
 --    | Ins PRINT "(" STRING PrntArgs ")" ";" {% onStrScope $ insert (content $4) Types.Empty  }
-    | Ins READ  "("       ID        ")" ";" {% checkReadable $4 True}
-    | Ins WRITE "("       ID        ")" ";" {% checkReadable $4 False}
-    | Ins FREE  "("       ID        ")" ";" {% return ()}
-    | Ins FREE  "("     DATAID      ")" ";" {% return ()}
-    | Ins READ  "("     DATAID      ")" ";" {% return ()}
-    | Ins BEGIN Ent0 SmplDcls Ins END       {% exitScope  } -- No debe aceptar funciones
-    | Ins IF Exp    ":" Ent0 SmplDcls Ins Ent1 NextIf Else END    {% return ()  }
-    | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                {% return ()  }
-    | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope  }
-    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope  }
-    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope  }
+    | Ins READ  "("       ID        ")" ";" {% checkReadable $4 True  >> return TypeBool} --revisar
+    | Ins WRITE "("       ID        ")" ";" {% checkReadable $4 False >> return TypeBool}
+    | Ins FREE  "("       ID        ")" ";" {% return TypeBool}
+    | Ins FREE  "("     DATAID      ")" ";" {% return TypeBool}
+    | Ins READ  "("     DATAID      ")" ";" {% return TypeBool}
+    | Ins BEGIN Ent0 SmplDcls Ins END       {% exitScope   >> return TypeBool} -- No debe aceptar funciones
+    | Ins IF Exp    ":" Ent0 SmplDcls Ins Ent1 NextIf Else END    {% return TypeBool  }
+    | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                {% return TypeBool  }
+    | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope   >> return TypeBool}
+    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope   >> return TypeBool}
+    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope   >> return TypeBool}
 
 -- Print arguments
 PrntArgs: {- λ -}             {% return ()}
