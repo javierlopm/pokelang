@@ -7,6 +7,7 @@ module Tokens(
     createFloat,
     createChar,
     isStruct,
+    haveLexeme,
     toStr
 ) where
 
@@ -89,8 +90,8 @@ data Token =  TkLBracket  { position :: Pos }
             | TkFwd       { position :: Pos }
             | TkDId       { position :: Pos, lexeme :: String }
             | TkId        { position :: Pos, lexeme :: String }
-            | TkCharVal   { position :: Pos, char   :: Char   }
             | TkEnumCons  { position :: Pos, lexeme :: String }
+            | TkCharVal   { position :: Pos, char   :: Char   }
             | TkString    { position :: Pos, content:: String }
             | TkNum       { position :: Pos, value  :: Int    }
             | TkFloatVal  { position :: Pos, rep    :: Float  }
@@ -100,6 +101,8 @@ data Token =  TkLBracket  { position :: Pos }
 -- floating points missing
 -- number size check missing
 -- function to check if there is any error missing
+
+
 
 instance Show Token where
   show (TkId  pos con) = "Identifier\n" ++
@@ -173,6 +176,12 @@ createChar p str
 isStruct :: Token -> Bool
 isStruct (TkStruct _) = True
 isStruct _        = False
+
+haveLexeme :: Token -> Bool
+haveLexeme (TkDId      myPosition myLexeme) = True
+haveLexeme (TkId       myPosition myLexeme) = True
+haveLexeme (TkEnumCons myPosition myLexeme) = True
+haveLexeme _                                = False
 
 toStr :: Token -> String
 toStr (TkLBracket _ )    = "["            

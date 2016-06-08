@@ -172,8 +172,8 @@ Ins : {- λ -}                   {% return TypeBool }
     | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope   >> return TypeBool}
 
 -- Print arguments
-PrntArgs: {- λ -}             {% return ()}
-        | PrntArgs "," Exp    {% return ()} 
+--PrntArgs: {- λ -}             {% return ()}
+--        | PrntArgs "," Exp    {% return ()} 
 
 -- List of elseif
 NextIf: {- λ -}                                {% return ()}

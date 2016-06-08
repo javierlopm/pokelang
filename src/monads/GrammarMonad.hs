@@ -108,7 +108,7 @@ exitScope = onZip (fromJust.goUp)
 checkIsFunc :: Token -> OurMonad(Maybe(Declare))
 checkIsFunc (TkId (r,c) lex1) = do
     state <- get
-    if isFunc (getValS lex1 (scp state)) -- Functions are in global scope
+    if isFunc (getValS lex1 (scp state)) --Type- Functions are in global scope
         then tellLog whathpnd
         else tellError error1
     return(getValS lex1 (scp state))
@@ -118,21 +118,33 @@ checkIsFunc (TkId (r,c) lex1) = do
 -- Check if variable it's an iteration varible (could it be used in assignment?)
 checkLValue :: (Type,Token) -> OurMonad(Type)
 checkLValue (TypeError,_)               = return TypeError
-checkLValue (myType ,TkId (l,c) lexeme) = do
+checkLValue (myType ,myToken) = do
     state <- get 
-    if isMember (zipp state) lexeme
-        then if isLIter $ fromJust $ getVal (zipp state) lexeme
-                then tellError error1       >> return TypeError
-                else 
-                  if isLValue myType $ fromJust $ getVal (zipp state) lexeme 
-                  then tellError error2     >> return TypeError
-                  else tellLog whathappened >> return myType  --REVISAR
-        else tellLog error3  >> return TypeError -- This check exists already in lower levels
-  where 
-        error1 = strError (l,c) "Cannot assign to" lexeme "because it's an iteration variable."
-        error2 = strError (l,c) "Cannot assign to" lexeme "because it's not a valid L-Value."
-        error3 = strError (l,c) "Cannot assign to" lexeme "because it's not declared."
-        whathappened = "Variable " ++ lexeme ++ " at " ++ show l++":"++show c ++ " can be assing."
+    if haveLexeme myToken
+     then
+      if isMember (zipp state) myLex
+          then if (isLIter $ fromJust $ getVal (zipp state) myLex)
+                  then tellError error1       >> return TypeError
+                  else 
+                    if (isLValue myType $ fromJust $ getVal (zipp state) myLex)
+                    then tellLog whathappened >> return myType  --REVISAR
+                    else tellError error2     >> return TypeError
+      else if isInScope (scp state) myLex 
+          then if (isLIter $ fromJust $ getValS myLex (scp state))  
+                  then tellError error1       >> return TypeError
+                  else 
+                    if (isLValue myType $ fromJust $ getValS myLex (scp state) )
+                    then tellLog whathappened >> return myType  --REVISAR
+                    else tellError error2     >> return TypeError
+          else tellLog error3  >> return TypeError -- This check exists already in lower levels
+    else tellLog error2 >> return TypeError
+   where 
+        (l,c)  = position myToken
+        myLex  = lexeme myToken
+        error1 = strError (l,c) "Cannot assign to" myLex "because it's an iteration variable."
+        error2 = strError (l,c) "Cannot assign to" myLex "because it's not a valid L-Value."
+        error3 = strError (l,c) "Cannot assign to" myLex "because it's not declared."
+        whathappened = "Variable " ++ myLex ++ " at " ++ show l++":"++show c ++ " can be assing."
 
 -- Dunno lol
 checkReadable :: Token -> Bool -> OurMonad ()

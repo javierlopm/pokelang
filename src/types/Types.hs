@@ -165,16 +165,28 @@ isLValue _ (Variable _ TypeInt   False ) = True
 isLValue _ (Variable _ TypeBool  False ) = True
 isLValue _ (Variable _ TypeChar  False ) = True
 isLValue _ (Variable _ TypeFloat False ) = True
---isLValue _ (Variable _ TypePointer  False ) = True --¿Apuntadores infinitos?
+--TypeArray      Type Int
+isLValue myT (Variable _ (TypePointer    varT)  False ) = isLValue myT (Variable (0,0) varT  False )
+isLValue myT (Variable _ (TypeEmptyArray varT)  False ) = isLValue myT (Variable (0,0) varT  False )
+isLValue myT (Variable _ (TypeArray    varT _)  False ) = isLValue myT (Variable (0,0) varT  False )
+
 isLValue (TypeField _ TypeInt)   _       = True
 isLValue (TypeField _ TypeBool)  _       = True
 isLValue (TypeField _ TypeChar)  _       = True
 isLValue (TypeField _ TypeFloat) _       = True
---isLValue (TypeField _ TypePointer) --Mismo caso
-isLValue (TypeEmptyArray TypeInt)   _       = True
-isLValue (TypeEmptyArray TypeBool)  _       = True
-isLValue (TypeEmptyArray TypeChar)  _       = True
-isLValue (TypeEmptyArray TypeFloat) _       = True
+isLValue (TypeField _ (TypeField s myT)) rest =  isLValue (TypeField s myT) rest--Mismo caso
+isLValue (TypeField _ (TypePointer myT)) rest =  isLValue (TypeField "s" myT) rest--Mismo caso
+isLValue (TypeField _ (TypeEmptyArray myT)) rest =  isLValue (TypeEmptyArray myT) rest--Mismo caso
+isLValue (TypeField _ (TypeArray myT i)) rest =  isLValue (TypeArray myT i) rest--Mismo caso
+isLValue (TypeEmptyArray TypeBool)  _                  = True
+isLValue (TypeEmptyArray TypeChar)  _                  = True
+isLValue (TypeEmptyArray TypeFloat) _                  = True
+isLValue (TypeEmptyArray (TypePointer myT))   rest     = isLValue (TypePointer myT) rest
+isLValue (TypeEmptyArray (TypeEmptyArray myT))   rest  = isLValue (TypeEmptyArray myT) rest
+isLValue (TypeEmptyArray (TypeArray myT i))   rest       = isLValue (TypeArray myT i) rest
+--isLValue (TypeEmptyArray TypeBool)  _       = True
+--isLValue (TypeEmptyArray TypeChar)  _       = True
+--isLValue (TypeEmptyArray TypeFloat) _       = True
 --isLValue (TypeField _ TypePointer) --Mismo caso
 isLValue _ _                                = False
   
