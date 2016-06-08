@@ -25,6 +25,7 @@ module GrammarMonad(
     checkItsDeclared,
     checkEnumAndInsert,
     checkBinary,
+    checkFunctionCall,
     checkRecursiveDec
 ) where
 
@@ -336,19 +337,19 @@ checkBinary expected l r tok tok2      = do
   where error1 = strError (position tok) "Types in the operator" (toStr tok) ("are not equal (" ++ show l ++ " and " ++ show r ++ ")")
         error2 = strError (position tok) "Operands in" (toStr tok) ("have type" ++ show l ++ " but did't match any of the expected types." ++ show expected)
 
-checkFunctionCall :: Token -> TypeTuple -> OurMonad(Type)
+checkFunctionCall :: Token -> TypeTuple -> OurMonad((Type,Token))
 checkFunctionCall ident calltup = do
     res <- checkIsFunc ident
     if isNothing res 
-        then return TypeError -- Nothing to do, error
+        then return (TypeError,ident)-- Nothing to do, error
         else do let funcSig = (getTuple . storedType . fromJust) res
                 if trd $ tuplesMatch calltup funcSig
                     then do tellLog "Function call types work"
-                            return (funcReturnType funcSig)
+                            return (funcReturnType funcSig,ident)
                     else do tellError . error1 $ tuplesMatch calltup funcSig
-                            return TypeError
+                            return (TypeError,ident)
   where trd (_,_,a) = a
-        error1 (expected,p,_) = strError (position ident) "Error in the call of" (lexeme ident) ("argument number "++show p++" didn't match with expected" ++ show expected)
+        error1 (expected,p,_) = strError (position ident) "Error in the call of" (lexeme ident) ("argument number "++show p++" didn't match with expected " ++ show expected)
 
 checkRecursiveDec :: Token -> TypeTuple -> OurMonad()
 checkRecursiveDec dataTok typeSec = do 
