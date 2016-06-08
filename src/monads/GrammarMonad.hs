@@ -26,7 +26,8 @@ module GrammarMonad(
     checkEnumAndInsert,
     checkBinary,
     checkFunctionCall,
-    checkRecursiveDec
+    checkRecursiveDec,
+    checkFieldAccess
 ) where
 
 import Control.Monad.RWS.Strict
@@ -351,6 +352,22 @@ checkFunctionCall ident calltup = do
                             return (TypeError,ident)
   where trd (_,_,a) = a
         error1 (expected,p,_) = strError (position ident) "Error in the call of" (lexeme ident) ("argument number "++show p++" didn't match with expected " ++ show expected)
+
+checkFieldAccess :: (Type,Token) -> (Type,Token) -> OurMonad((Type,Token))
+checkFieldAccess (TypeError,tk1) (_,_) = return (TypeError,tk1)
+checkFieldAccess (_,tk1) (TypeError,_) = return (TypeError,tk1)
+checkFieldAccess (ty1,tk1) (ty2,tk2) = do
+    state <- get
+    if structured ty1 
+    then do let strScope = (fields . fromJust) $ getValS (getDataName ty1) 
+                                                         (scp state) 
+            if isInScope strScope (lexeme tk2)
+            then return(((storedType . fromJust) (getValS (lexeme tk2) strScope)),tk2)
+            else tellError error2  >> return (TypeError,tk1)
+    else tellError error1 >> return (TypeError,tk1)
+  where error1 = strError (position tk1) "Variable" (lexeme tk1) "it's not a valid struct/union, field cannot be accessed"
+        error2 = strError (position tk1) "Variable" (lexeme tk2) "not found in struct/union"
+        l      = lexeme tk1
 
 checkRecursiveDec :: Token -> TypeTuple -> OurMonad()
 checkRecursiveDec dataTok typeSec = do 
