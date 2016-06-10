@@ -110,6 +110,7 @@ import Data.Sequence
 --%nonassoc '<' <\=' '>' '>\=' '=' '\/=' '..'
 
 -- Para los booleanos.
+
 %left  OR
 %left  AND
 %left  "||"
@@ -146,7 +147,7 @@ import Data.Sequence
 
 %%
 
-Prog : Dcls  {% return ()}
+Prog : Dcls  {% checkMain }
 
 Ins : {- λ -}                   {% return TypeBool }
     | Ins Exp "="  Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
@@ -194,8 +195,8 @@ GlobDeclare : Reference          { ( $1 ,False) }
 -- Randomly nested Pointer-Array-Empty_Arrray references (or not)
 Reference: PrimType              {            $1           }
          | Reference "*"         { TypePointer    $1       }
-         | Reference "[" "]"     { TypeEmptyArray $1       }
          | Reference "[" INT "]" { TypeArray $1 (value $3) }
+         -- | Reference "[" "]"     { TypeEmptyArray $1       }
 
 PrimType : INTDEC           {     makeType $1    }
          | BOOLDEC          {     makeType $1    }
@@ -259,12 +260,12 @@ Exp :
     | Exp "&&" Exp      {% checkBinary [TypeBool] (fst $1) (fst $3) $2 (snd $1)  }
     | "!" Exp           {% return (TypeBool,(snd $2)) }
     -- Expresiones relacionales.
-    | Exp "<"  Exp      {% return (TypeBool,(snd $1)) }
-    | Exp "<=" Exp      {% return (TypeBool,(snd $1)) }
-    | Exp ">"  Exp      {% return (TypeBool,(snd $1)) }
-    | Exp ">=" Exp      {% return (TypeBool,(snd $1)) }
-    | Exp "==" Exp      {% return (TypeBool,(snd $1)) }
-    | Exp "!=" Exp      {% return (TypeBool,(snd $1)) }
+    | Exp "<"  Exp      {% checkComp (fst $1) (fst $3) $2 (snd $1) }
+    | Exp "<=" Exp      {% checkComp (fst $1) (fst $3) $2 (snd $1) }
+    | Exp ">"  Exp      {% checkComp (fst $1) (fst $3) $2 (snd $1) }
+    | Exp ">=" Exp      {% checkComp (fst $1) (fst $3) $2 (snd $1) }
+    | Exp "==" Exp      {% checkComp (fst $1) (fst $3) $2 (snd $1) }
+    | Exp "!=" Exp      {% checkComp (fst $1) (fst $3) $2 (snd $1) }
     -- Expresiones sobre lienzo.
     | Exp "!!" Exp             {% return (TypeBool,(snd $1)) }
     | Exp "."  ID             {% checkFieldAccess $1 $3 }
@@ -304,8 +305,13 @@ Ent4 : DATAID ID   {% onZip enterScope >> checkEnumAndInsert $1 $2 >> return $1 
 Ent5 : STRUCTDEC  DATAID {% insertForwardData $1 $2 >> return ($1,$2)}
 Ent6 : UNIONDEC   DATAID {% insertForwardData $1 $2 >> return ($1,$2)}
 
+
 {
-  
+
+checkComp a b c d = do 
+    res <- checkBinary nums a b c d
+    return (transformType (fst res) TypeBool , snd res)
+
 parseError [] = error $ "EOF unexpected"
 parseError l  = error $ "Parsing error at: \n" ++ show (head l)
 

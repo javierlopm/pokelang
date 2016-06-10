@@ -22,10 +22,12 @@ module Types(
     sameData,
     isNotRecursiveData,
     -- Type Tuple Functions
+    transformType,
     emptytuple,
     addType,
     funcReturnType,
-    tuplesMatch
+    tuplesMatch,
+    lengthMatches
     -- addLeftType,
     -- singleType,
 ) where
@@ -33,7 +35,7 @@ module Types(
 import Data.List          (intersperse)
 import TableTree          (Scope(..),showScope)
 import qualified Data.Foldable as F (toList,all,foldl)
-import Data.Sequence as S (Seq,(|>),ViewR(..),empty,viewr,zipWith)
+import Data.Sequence as S (Seq,(|>),ViewR(..),empty,viewr,zipWith,length)
 import Tokens(Token(TkInt  ,TkBool ,TkChar
                    ,TkVoid ,TkFloat,TkStruct
                    ,TkUnion,TkEnum ,TkNull
@@ -110,6 +112,7 @@ data Type = TypeInt
           deriving(Eq)
 
 instance Show Type where
+  show (TypeError    ) = "ERROR"
   show (TypeInt      ) = "Integer"
   show (TypeUndefined) = "NILL"
   show (TypeBool     ) = "Boolean"
@@ -260,6 +263,10 @@ sameData _              _               = False
 
 type TypeTuple = Seq Type
 
+transformType :: Type -> Type -> Type
+transformType _ TypeError = TypeError
+transformType _ a         = a
+
 emptytuple :: TypeTuple 
 emptytuple = empty
 
@@ -276,7 +283,7 @@ funcReturnType t = (decons . viewr) t
 -- Process two tuples, check if any pair of elements are not equal
 -- and return last expected type, # of last argument processed and if it went ok
 tuplesMatch :: TypeTuple -> TypeTuple -> (Type,Int,Bool)
-tuplesMatch t1 t2 = F.foldl process (TypeVoid,1,True) tupSeq
+tuplesMatch t1 t2  = F.foldl process (TypeVoid,1,True) tupSeq
     where tupSeq  = S.zipWith (,) t1 t2
           process b@(_,_,False) (_,_) = b
           process (_,field,ok) (TypeError,o)  = (o,field+1,True) -- Don't bother checking type errors
@@ -285,6 +292,9 @@ tuplesMatch t1 t2 = F.foldl process (TypeVoid,1,True) tupSeq
               where newBase = if call == signature 
                                   then (call,field+1,True)
                                   else (signature,field,False)
+
+lengthMatches :: TypeTuple -> TypeTuple -> Bool
+lengthMatches t1 t2 = (S.length t1) == ((S.length t2) - 1)
 
 -- singleType :: Type -> TypeTuple
 -- singleType = Data.Sequence.empty |> 
