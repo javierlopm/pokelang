@@ -89,8 +89,8 @@ import Data.Sequence
 
     -- Built-in functions/Instructions
     READ      { TkRead   _ }
-    WRITE     { TkWrite  _ }
---    PRINT     { TkPrint  _ }
+    -- WRITE     { TkWrite  _ }
+    -- PRINT     { TkPrint  _ }
     MALLOC    { TkAlloc  _ }
     FREE      { TkFree   _ }
     SIZEOF    { TkSizeOf _ }
@@ -159,29 +159,27 @@ Ins : {- λ -}                   {% return TypeBool }
     | Ins RETURN   Exp   ";"    {% return TypeBool }
     | Ins RETURN         ";"    {% return TypeBool }
     | Ins EXIT           ";"    {% return TypeBool } 
---    | Ins PRINT "(" STRING PrntArgs ")" ";" {% onStrScope $ insert (content $4) Types.Empty  }
-    | Ins READ  "("       ID        ")" ";" {% checkReadable $4 True  >> return TypeBool} --revisar
-    | Ins WRITE "("       ID        ")" ";" {% checkReadable $4 False >> return TypeBool}
-    | Ins FREE  "("       ID        ")" ";" {% return TypeBool}
-    | Ins FREE  "("     DATAID      ")" ";" {% return TypeBool}
-    | Ins READ  "("     DATAID      ")" ";" {% return TypeBool}
+    | Ins READ  "(" ID      ")" ";" {% checkReadable $4 True  >> return TypeVoid} --revisar
     | Ins BEGIN Ent0 SmplDcls Ins END       {% exitScope   >> return TypeBool} -- No debe aceptar funciones
     | Ins IF Exp    ":" Ent0 SmplDcls Ins Ent1 NextIf Else END    {% return TypeBool  }
     | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                {% return TypeBool  }
     | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope   >> return TypeBool}
     | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope   >> return TypeBool}
     | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope   >> return TypeBool}
+    -- | Ins PRINT "(" Exp     ")" ";" {% checkReadable $4 False >> return TypeBool}
+    -- | Ins PRINT "(" STRING  ")" ";" {% onStrScope $ insert (content $4) Types.Empty  }
+    -- | Ins READ  "("     DATAID      ")" ";" {% return TypeBool}
+    -- | Ins FREE  "("     DATAID      ")" ";" {% return TypeBool}
+    -- | Ins FREE  "("       ID        ")" ";" {% return TypeBool}
+    -- | MALLOC "(" Exp ","   ")"       {% return (TypeBool,(snd $3)) }
 
--- Print arguments
---PrntArgs: {- λ -}             {% return ()}
---        | PrntArgs "," Exp    {% return ()} 
 
 -- List of elseif
 NextIf: {- λ -}                                {% return ()}
       | NextIf ELIF  Exp ":" Ent0 SmplDcls Ins Ent1 {% return ()  }
 
 -- Else list
-Else: {- λ -}                    {% return ()  }
+Else: {- λ -}                         {% return ()  }
     | ELSE ":" Ent0 SmplDcls Ins Ent1 {% return ()  }
 
 -- Declarations that could be global.
@@ -243,6 +241,8 @@ ExpList: {- λ -}        { emptytuple }
 ExpFirsts : {- λ -}         { emptytuple }
           | ExpFirsts Exp "," { $1 `addType` (fst $2) } 
 
+
+
 Exp : 
     -- Expresiones Aritméticas.
       Exp "+"  Exp      {% checkBinary nums (fst $1) (fst $3) $2 (snd $1) }
@@ -279,15 +279,13 @@ Exp :
     -- Asociatividad.
     | "(" Exp ")"    {% return (TypeBool,(snd $2)) }
     -- Constantes.
-    --| Term           { TypeBool }
     -- Llamadas
-    | MALLOC "(" Exp ")"       {% return (TypeBool,(snd $3)) }
-    | SIZEOF "(" Exp ")"       {% return (TypeBool,(snd $3)) }
-    | SIZEOF "(" Reference ")" {% return (TypeBool,$1) }
+    | SIZEOF "(" Reference ")" {% return (TypeInt,$1)  } -- Can be known at compile time
+    -- | GET    "(" ENUM ")"      {% return (TypeBool,$3) } -- Si no lo hacemos por gramatica, mejor error pero no se puede conocer a tiempo de compilacion
     | GET    "(" ENUM ")"      {% return (TypeBool,$3) }
     | TRUE      {% return (TypeBool,$1) }   
     | FALSE     {% return (TypeBool,$1) }   
-    | ID        {% checkItsDeclared $1  }   -- {% checkItsDeclared $1 >> return $1 }
+    | ID        {% checkItsDeclared $1  } 
     | DATAID    {% return (TypeError,$1)}   -- {  $1  } ???? check its declared
     | FLOAT     {% return (TypeFloat,$1)}   
     | INT       {% return (TypeInt,$1)  }   
@@ -295,7 +293,6 @@ Exp :
 
 Ent0 : {- λ -}     {% onZip enterScope }
 Ent1 : {- λ -}     {% exitScope  }
--- Ent1 : DATAID      {% insertEmpty $1  >> return $1 } 
 Ent2 : Reference ID "(" Parameters  ")" {% insertFunction ($4 `addType` $1) $2 False
                                                >> return($2,($4 `addType` $1)) } 
 Ent3 : ID          {%  onZip enterScope >>

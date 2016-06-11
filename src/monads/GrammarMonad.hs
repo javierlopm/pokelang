@@ -56,7 +56,7 @@ exec = execRWS
 
 -- Monad initial state: two empty scopes and one zipper for an empty scope
 initialState :: ScopeNZip
-initialState = ScopeNZip emptyScope emptyScope emptyScope (fromScope emptyScope)
+initialState = ScopeNZip emptyScope emptyScope builtinFunctions (fromScope emptyScope)
 
 -- Make a tuple with the String Scope and a Scope tree with globals and local
 -- scopes fused. Scopeception
@@ -398,3 +398,21 @@ checkRecursiveDec dataTok typeSec = do
         then return ()
         else tellError error1
   where error1 =  strError (position dataTok) "Data type" (lexeme dataTok) "cannot be recursive. (Pssss try to use a pointer)"
+
+builtinFunctions :: SymTable
+builtinFunctions = foldl insertFunc emptyScope declarations
+  where insertFunc scp (str,dec) = insert str dec scp
+        printable t    = or $ map ($t) [(==TypeString),isPointer,isBasic,(==TypeEnumCons)]          
+        makeFunc types = (Function (0,0) (makeTypeTuple types) emptyScope)
+        declarations = [
+          ("liberar"       , makeFunc [TypeSatisfies isPointer, TypeVoid] ),
+          ("vamo_a_imprimi", makeFunc [TypeSatisfies printable, TypeVoid] ),
+          ("atrapar"       , makeFunc [TypeInt      , TypeVoid  ] ),
+          ("intToFLoat"    , makeFunc [TypeInt      , TypeFloat ] ),
+          ("floor"         , makeFunc [TypeFloat    , TypeInt   ] ),
+          ("celing"        , makeFunc [TypeFloat    , TypeInt   ] ),
+          ("succ"          , makeFunc [TypeEnumCons , TypeInt   ] ),
+          ("pred"          , makeFunc [TypeEnumCons , TypeInt   ] ),
+          ("pidGET"        , makeFunc [TypeEnumCons , TypeInt   ] )
+          ]
+-- ("SIZEther",       (Function (0,0) (makeTypeTuple [TypeSatisfies isBasic, TypeInt]) emptyScope)),
