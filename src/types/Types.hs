@@ -12,6 +12,8 @@ module Types(
     isLValue,
     isFunc,
     toPointer,
+    isPointer,
+    isBasic,
     toEmptyArray,
     toArray,
     makeType,
@@ -22,10 +24,14 @@ module Types(
     sameData,
     isNotRecursiveData,
     -- Type Tuple Functions
+    transformType,
     emptytuple,
     addType,
     funcReturnType,
-    tuplesMatch
+    tuplesMatch,
+    lengthMatches,
+    makeTypeTuple
+
     -- addLeftType,
     -- singleType,
 ) where
@@ -33,7 +39,7 @@ module Types(
 import Data.List          (intersperse)
 import TableTree          (Scope(..),showScope)
 import qualified Data.Foldable as F (toList,all,foldl)
-import Data.Sequence as S (Seq,(|>),ViewR(..),empty,viewr,zipWith)
+import Data.Sequence as S (Seq,(|>),ViewR(..),empty,viewr,zipWith,length,fromList)
 import Tokens(Token(TkInt  ,TkBool ,TkChar
                    ,TkVoid ,TkFloat,TkStruct
                    ,TkUnion,TkEnum ,TkNull
@@ -95,8 +101,10 @@ data PrimType = PrimInt        Int
 data Type = TypeInt  
           | TypeBool   
           | TypeChar   
+          | TypeString   
           | TypeFloat  
           | TypeVoid   
+          | TypeEnumCons   
           | TypeEnum       String -- Name comparison 
           | TypeStruct     { getDataName :: String} 
           | TypeUnion      { getDataName :: String}
@@ -104,12 +112,37 @@ data Type = TypeInt
           | TypePointer    Type
           | TypeEmptyArray Type
           | TypeArray      Type Int
-          | TypeFunction   { getTuple :: (Seq Type)} 
+          | TypeFunction   { getTuple :: (Seq Type)}
+          -- Helpers
+          | TypeSatisfies  (Type -> Bool) 
           | TypeUndefined  -- Temporal
           | TypeError  
-          deriving(Eq)
+
+instance Eq Type where
+  TypeString       ==   TypeString        = True
+  TypeInt          ==   TypeInt           = True
+  TypeEnumCons     ==   TypeEnumCons      = True
+  TypeBool         ==   TypeBool          = True
+  TypeChar         ==   TypeChar          = True
+  TypeFloat        ==   TypeFloat         = True
+  TypeVoid         ==   TypeVoid          = True
+  TypeUndefined    ==   TypeUndefined     = True
+  TypeError        ==   TypeError         = True
+  TypeEnum       a ==   TypeEnum       b  = a==b
+  TypeStruct     a ==   TypeStruct     b  = a==b
+  TypeUnion      a ==   TypeUnion      b  = a==b
+  TypePointer    a ==   TypePointer    b  = a==b
+  TypeEmptyArray a ==   TypeEmptyArray b  = a==b
+  TypeFunction   a ==   TypeFunction   b  = a==b
+  TypeArray t1 d1  ==   TypeArray   t2 d2 = t1 == t2 && d1 == d2
+  TypeSatisfies f  ==   TypeSatisfies g   = error "Cannot compare two TypeSatisfies, wtf is wrong with you?"
+  TypeSatisfies f  ==   a                 = f a 
+  a                ==   TypeSatisfies f   = f a 
+  _  == _     = False
+
 
 instance Show Type where
+  show (TypeError    ) = "ERROR"
   show (TypeInt      ) = "Integer"
   show (TypeUndefined) = "NILL"
   show (TypeBool     ) = "Boolean"
@@ -221,8 +254,26 @@ emptyTypeMatches Empty _ = True
 emptyTypeMatches _ _     = False
 
 {-
+  TypeChecks
+-}
+
+isPointer :: Type -> Bool
+isPointer (TypePointer _ ) = True
+isPointer _                = False
+
+
+isBasic :: Type -> Bool 
+isBasic TypeInt    = True
+isBasic TypeBool   = True
+isBasic TypeChar   = True
+isBasic TypeFloat  = True
+isBasic _          = False
+
+{-
     Declare type transformation functions
 -}
+
+
 
 toPointer :: Declare -> Declare
 toPointer dec = dec { storedType = TypePointer oldtype }
@@ -260,6 +311,10 @@ sameData _              _               = False
 
 type TypeTuple = Seq Type
 
+transformType :: Type -> Type -> Type
+transformType _ TypeError = TypeError
+transformType _ a         = a
+
 emptytuple :: TypeTuple 
 emptytuple = empty
 
@@ -270,13 +325,17 @@ funcReturnType :: TypeTuple -> Type
 funcReturnType t = (decons . viewr) t
     where decons EmptyR = error "Empty sequence!"
           decons (others :> l) = l
+
 -- addLeftType :: Type -> TypeTuple -> TypeTuple
 -- addLeftType = (<|)
+
+makeTypeTuple :: [Type] -> Type
+makeTypeTuple = TypeFunction . fromList
 
 -- Process two tuples, check if any pair of elements are not equal
 -- and return last expected type, # of last argument processed and if it went ok
 tuplesMatch :: TypeTuple -> TypeTuple -> (Type,Int,Bool)
-tuplesMatch t1 t2 = F.foldl process (TypeVoid,1,True) tupSeq
+tuplesMatch t1 t2  = F.foldl process (TypeVoid,1,True) tupSeq
     where tupSeq  = S.zipWith (,) t1 t2
           process b@(_,_,False) (_,_) = b
           process (_,field,ok) (TypeError,o)  = (o,field+1,True) -- Don't bother checking type errors
@@ -285,6 +344,9 @@ tuplesMatch t1 t2 = F.foldl process (TypeVoid,1,True) tupSeq
               where newBase = if call == signature 
                                   then (call,field+1,True)
                                   else (signature,field,False)
+
+lengthMatches :: TypeTuple -> TypeTuple -> Bool
+lengthMatches t1 t2 = (S.length t1) == ((S.length t2) - 1)
 
 -- singleType :: Type -> TypeTuple
 -- singleType = Data.Sequence.empty |> 

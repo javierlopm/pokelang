@@ -27,7 +27,9 @@ module GrammarMonad(
     checkBinary,
     checkFunctionCall,
     checkRecursiveDec,
-    checkFieldAccess
+    checkFieldAccess,
+    checkMain,
+    tellError
 ) where
 
 import Control.Monad.RWS.Strict
@@ -54,7 +56,7 @@ exec = execRWS
 
 -- Monad initial state: two empty scopes and one zipper for an empty scope
 initialState :: ScopeNZip
-initialState = ScopeNZip emptyScope emptyScope emptyScope (fromScope emptyScope)
+initialState = ScopeNZip emptyScope emptyScope builtinFunctions (fromScope emptyScope)
 
 -- Make a tuple with the String Scope and a Scope tree with globals and local
 -- scopes fused. Scopeception
@@ -371,13 +373,16 @@ checkFunctionCall ident calltup = do
     if isNothing res 
         then return (TypeError,ident)-- Nothing to do, error
         else do let funcSig = (getTuple . storedType . fromJust) res
-                if trd $ tuplesMatch calltup funcSig
-                    then do tellLog "Function call types work"
-                            return (funcReturnType funcSig,ident)
-                    else do tellError . error1 $ tuplesMatch calltup funcSig
-                            return (TypeError,ident)
+                if lengthMatches calltup funcSig 
+                then if trd $ tuplesMatch calltup funcSig
+                     then do tellLog "Function call types work"
+                             return (funcReturnType funcSig,ident)
+                     else do tellError . error1 $ tuplesMatch calltup funcSig
+                             return (TypeError,ident)
+                else tellError error2 >> return (TypeError,ident)
   where trd (_,_,a) = a
         error1 (expected,p,_) = strError (position ident) "Error in the call of" (lexeme ident) ("argument number "++show p++" didn't match with expected " ++ show expected)
+        error2  = strError (position ident) "number of arguments don't match with" (lexeme ident) "declaration."
 
 checkFieldAccess :: (Type,Token) -> Token -> OurMonad((Type,Token))
 checkFieldAccess (TypeError,tk1) _ = return (TypeError,tk1)
@@ -394,9 +399,34 @@ checkFieldAccess (ty1,tk1) tk2 = do
         error2 dn = strError (position tk1) "Variable" (lexeme tk2) ("not found in struct/union " ++ show dn )
         l      = lexeme tk1
 
+checkMain :: OurMonad()
+checkMain = do
+    globals <- gets scp
+    if isInScope globals "hitMAINlee"
+        then return ()
+        else tellError $ strError (0,0) "" "hitMAINlee" "function not found"
+
 checkRecursiveDec :: Token -> TypeTuple -> OurMonad()
 checkRecursiveDec dataTok typeSec = do 
     if isNotRecursiveData (lexeme dataTok) typeSec
         then return ()
         else tellError error1
   where error1 =  strError (position dataTok) "Data type" (lexeme dataTok) "cannot be recursive. (Pssss try to use a pointer)"
+
+builtinFunctions :: SymTable
+builtinFunctions = foldl insertFunc emptyScope declarations
+  where insertFunc scp (str,dec) = insert str dec scp
+        printable t    = or $ map ($t) [(==TypeString),isPointer,isBasic,(==TypeEnumCons)]          
+        makeFunc types = (Function (0,0) (makeTypeTuple types) emptyScope)
+        declarations = [
+          ("liberar"       , makeFunc [TypeSatisfies isPointer, TypeVoid] ),
+          ("vamo_a_imprimi", makeFunc [TypeSatisfies printable, TypeVoid] ),
+          ("atrapar"       , makeFunc [TypeInt      , TypeVoid  ] ),
+          ("intToFLoat"    , makeFunc [TypeInt      , TypeFloat ] ),
+          ("floor"         , makeFunc [TypeFloat    , TypeInt   ] ),
+          ("celing"        , makeFunc [TypeFloat    , TypeInt   ] ),
+          ("succ"          , makeFunc [TypeEnumCons , TypeInt   ] ),
+          ("pred"          , makeFunc [TypeEnumCons , TypeInt   ] ),
+          ("pidGET"        , makeFunc [TypeEnumCons , TypeInt   ] )
+          ]
+-- ("SIZEther",       (Function (0,0) (makeTypeTuple [TypeSatisfies isBasic, TypeInt]) emptyScope)),

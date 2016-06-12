@@ -89,8 +89,8 @@ import Data.Sequence
 
     -- Built-in functions/Instructions
     READ      { TkRead   _ }
-    WRITE     { TkWrite  _ }
---    PRINT     { TkPrint  _ }
+    -- WRITE     { TkWrite  _ }
+    -- PRINT     { TkPrint  _ }
     MALLOC    { TkAlloc  _ }
     FREE      { TkFree   _ }
     SIZEOF    { TkSizeOf _ }
@@ -110,6 +110,7 @@ import Data.Sequence
 --%nonassoc '<' <\=' '>' '>\=' '=' '\/=' '..'
 
 -- Para los booleanos.
+
 %left  OR
 %left  AND
 %left  "||"
@@ -146,53 +147,39 @@ import Data.Sequence
 
 %%
 
-Prog : Dcls  {% return ()}
+Prog : Dcls  {% checkMain }
 
-Ins : {- λ -}                   {% return TypeVoid }
-    | Ins Exp "="  Exp   ";"    {% do
-                                     ty    <- checkLValue $2
-                                     check <- checkBinary (TypeBool:TypeChar:nums) ty (fst $4) $3 (snd $2)
-                                     return (fst check)} --Falta caso particular para checkAssing
-    | Ins Exp "*=" Exp   ";"    {% do
-                                     ty    <- checkLValue $2
-                                     check <- checkBinary nums ty (fst $4) $3 (snd $2)
-                                     return (fst check)} --Falta caso particular para checkAssing
-    | Ins Exp "+=" Exp   ";"    {% do
-                                     ty    <- checkLValue $2
-                                     check <- checkBinary nums ty (fst $4) $3 (snd $2)
-                                     return (fst check)} --Falta caso particular para checkAssing
-    | Ins Exp "-=" Exp   ";"    {% do
-                                     ty    <- checkLValue $2
-                                     check <- checkBinary nums ty (fst $4) $3 (snd $2)
-                                     return (fst check)} --Falta caso particular para checkAssing
-    | Ins BREAK          ";"    {% return TypeVoid }
-    | Ins CONTINUE       ";"    {% return TypeVoid }
-    | Ins RETURN   Exp   ";"    {% return TypeVoid }
-    | Ins RETURN         ";"    {% return TypeVoid }
-    | Ins EXIT           ";"    {% return TypeVoid } 
---    | Ins PRINT "(" STRING PrntArgs ")" ";" {% onStrScope $ insert (content $4) Types.Empty  }
-    | Ins READ  "("       ID        ")" ";" {% checkReadable $4 True  >> return TypeVoid} --revisar
-    | Ins WRITE "("       ID        ")" ";" {% checkReadable $4 False >> return TypeVoid}
-    | Ins FREE  "("       ID        ")" ";" {% return TypeVoid}
-    | Ins FREE  "("     DATAID      ")" ";" {% return TypeVoid}
-    | Ins READ  "("     DATAID      ")" ";" {% return TypeVoid}
-    | Ins BEGIN Ent0 SmplDcls Ins END       {% exitScope   >> return TypeVoid} -- No debe aceptar funciones
-    | Ins IF Exp    ":" Ent0 SmplDcls Ins Ent1 NextIf Else END    {% return TypeVoid  }
-    | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                {% return TypeVoid  }
-    | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope   >> return TypeVoid}
-    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope   >> return TypeVoid}
-    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope   >> return TypeVoid}
+Ins : {- λ -}                   {% return TypeBool }
+    | Ins Exp "="  Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
+    | Ins Exp "*=" Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
+    | Ins Exp "+=" Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
+    | Ins Exp "-=" Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
+    | Ins BREAK          ";"    {% return TypeBool }
+    | Ins CONTINUE       ";"    {% return TypeBool }
+    | Ins RETURN   Exp   ";"    {% return TypeBool }
+    | Ins RETURN         ";"    {% return TypeBool }
+    | Ins EXIT           ";"    {% return TypeBool } 
+    | Ins READ  "(" ID      ")" ";" {% checkReadable $4 True  >> return TypeVoid} --revisar
+    | Ins BEGIN Ent0 SmplDcls Ins END       {% exitScope   >> return TypeBool} -- No debe aceptar funciones
+    | Ins IF Exp    ":" Ent0 SmplDcls Ins Ent1 NextIf Else END    {% return TypeBool  }
+    | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                {% return TypeBool  }
+    | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope   >> return TypeBool}
+    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope   >> return TypeBool}
+    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope   >> return TypeBool}
+    -- | Ins PRINT "(" Exp     ")" ";" {% checkReadable $4 False >> return TypeBool}
+    -- | Ins PRINT "(" STRING  ")" ";" {% onStrScope $ insert (content $4) Types.Empty  }
+    -- | Ins READ  "("     DATAID      ")" ";" {% return TypeBool}
+    -- | Ins FREE  "("     DATAID      ")" ";" {% return TypeBool}
+    -- | Ins FREE  "("       ID        ")" ";" {% return TypeBool}
+    -- | MALLOC "(" Exp ","   ")"       {% return (TypeBool,(snd $3)) }
 
--- Print arguments
---PrntArgs: {- λ -}             {% return ()}
---        | PrntArgs "," Exp    {% return ()} 
 
 -- List of elseif
 NextIf: {- λ -}                                {% return ()}
       | NextIf ELIF  Exp ":" Ent0 SmplDcls Ins Ent1 {% return ()  }
 
 -- Else list
-Else: {- λ -}                    {% return ()  }
+Else: {- λ -}                         {% return ()  }
     | ELSE ":" Ent0 SmplDcls Ins Ent1 {% return ()  }
 
 -- Declarations that could be global.
@@ -206,8 +193,8 @@ GlobDeclare : Reference          { ( $1 ,False) }
 -- Randomly nested Pointer-Array-Empty_Arrray references (or not)
 Reference: PrimType              {            $1           }
          | Reference "*"         { TypePointer    $1       }
-         | Reference "[" "]"     { TypeEmptyArray $1       }
          | Reference "[" INT "]" { TypeArray $1 (value $3) }
+         -- | Reference "[" "]"     { TypeEmptyArray $1       }
 
 PrimType : INTDEC           {     makeType $1    }
          | BOOLDEC          {     makeType $1    }
@@ -254,6 +241,8 @@ ExpList: {- λ -}        { emptytuple }
 ExpFirsts : {- λ -}         { emptytuple }
           | ExpFirsts Exp "," { $1 `addType` (fst $2) } 
 
+
+
 Exp : 
     -- Expresiones Aritméticas.
       Exp "+"  Exp      {% checkBinary nums (fst $1) (fst $3) $2 (snd $1) }
@@ -271,12 +260,12 @@ Exp :
     | Exp "&&" Exp      {% checkBinary [TypeBool] (fst $1) (fst $3) $2 (snd $1)  }
     | "!" Exp           {% return (TypeBool,(snd $2)) }
     -- Expresiones relacionales.
-    | Exp "<"  Exp      {% return (TypeBool,(snd $1)) }
-    | Exp "<=" Exp      {% return (TypeBool,(snd $1)) }
-    | Exp ">"  Exp      {% return (TypeBool,(snd $1)) }
-    | Exp ">=" Exp      {% return (TypeBool,(snd $1)) }
-    | Exp "==" Exp      {% return (TypeBool,(snd $1)) }
-    | Exp "!=" Exp      {% return (TypeBool,(snd $1)) }
+    | Exp "<"  Exp      {% checkComp (fst $1) (fst $3) $2 (snd $1) }
+    | Exp "<=" Exp      {% checkComp (fst $1) (fst $3) $2 (snd $1) }
+    | Exp ">"  Exp      {% checkComp (fst $1) (fst $3) $2 (snd $1) }
+    | Exp ">=" Exp      {% checkComp (fst $1) (fst $3) $2 (snd $1) }
+    | Exp "==" Exp      {% checkComp (fst $1) (fst $3) $2 (snd $1) }
+    | Exp "!=" Exp      {% checkComp (fst $1) (fst $3) $2 (snd $1) }
     -- Expresiones sobre lienzo.
     | Exp "!!" Exp            {% return (TypeBool,(snd $1)) }
     | Exp "."  ID             {% checkFieldAccess $1 $3 }
@@ -290,15 +279,13 @@ Exp :
     -- Asociatividad.
     | "(" Exp ")"    {% return (TypeBool,(snd $2)) }
     -- Constantes.
-    --| Term           { TypeBool }
     -- Llamadas
-    | MALLOC "(" Exp ")"       {% return (TypeBool,(snd $3)) }
-    | SIZEOF "(" Exp ")"       {% return (TypeBool,(snd $3)) }
-    | SIZEOF "(" Reference ")" {% return (TypeBool,$1) }
+    | SIZEOF "(" Reference ")" {% return (TypeInt,$1)  } -- Can be known at compile time
+    -- | GET    "(" ENUM ")"      {% return (TypeBool,$3) } -- Si no lo hacemos por gramatica, mejor error pero no se puede conocer a tiempo de compilacion
     | GET    "(" ENUM ")"      {% return (TypeBool,$3) }
     | TRUE      {% return (TypeBool,$1) }   
     | FALSE     {% return (TypeBool,$1) }   
-    | ID        {% checkItsDeclared $1  }   -- {% checkItsDeclared $1 >> return $1 }
+    | ID        {% checkItsDeclared $1  } 
     | DATAID    {% return (TypeError,$1)}   -- {  $1  } ???? check its declared
     | FLOAT     {% return (TypeFloat,$1)}   
     | INT       {% return (TypeInt,$1)  }   
@@ -306,7 +293,6 @@ Exp :
 
 Ent0 : {- λ -}     {% onZip enterScope }
 Ent1 : {- λ -}     {% exitScope  }
--- Ent1 : DATAID      {% insertEmpty $1  >> return $1 } 
 Ent2 : Reference ID "(" Parameters  ")" {% insertFunction ($4 `addType` $1) $2 False
                                                >> return($2,($4 `addType` $1)) } 
 Ent3 : ID          {%  onZip enterScope >>
@@ -316,8 +302,13 @@ Ent4 : DATAID ID   {% onZip enterScope >> checkEnumAndInsert $1 $2 >> return $1 
 Ent5 : STRUCTDEC  DATAID {% insertForwardData $1 $2 >> return ($1,$2)}
 Ent6 : UNIONDEC   DATAID {% insertForwardData $1 $2 >> return ($1,$2)}
 
+
 {
-  
+
+checkComp a b c d = do 
+    res <- checkBinary nums a b c d
+    return (transformType (fst res) TypeBool , snd res)
+
 parseError [] = error $ "EOF unexpected"
 parseError l  = error $ "Parsing error at: \n" ++ show (head l)
 
