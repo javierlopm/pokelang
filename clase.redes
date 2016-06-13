@@ -1,0 +1,22 @@
+Servidores orientados a conexion y no orientados a conexion
+
+TCP provee toda la confiabilidad necesaria para comincar los datos a traves de internet. Hace las siguientes funciones
+
+* Verifica que un segmento llego y autmaticamente retransmite aquellos que no llegaron
+* Calcula el checksum sobre los datos para asegurar que estos no se corrompieron durante la transmision.
+* Usa un numero de secuencia para asegurar que estos lleguen en orden
+* Automaticamente elimina los paquetes duplicados
+* Provee control de flujo para asegurar que el emisor no transmita datos mas rapido de lo que el receptor puede procesar
+* TCP informa tanto al cliente como al servidor si la red  deja de operar por alguna razon.
+
+Cuando un programador usa UDP no tiene ninguna garantia de que el evio sea confiable. 
+
+* Cuando un cliente envia una informacin esta puede perderse, duplicarse, retrasarse o enviarse fuera de orden. De igual nera le sucede al servidor.
+* Los programas de aplicacion en el caso de qe se use UDP del cliente y del servidor, deben tomar acciones apropiadas para detectar y corregir tales errres.
+* UDP depende del protcolo IP para el envio de paquetes. IP depende del HW de la red y e los conmutadores intermedios.
+* Desde el punto de vista de un programador, la cosecuencia de usar UDP es que este traba bien si la red trabaja bien.
+* UDP trabaja bien en ambientes locales.
+* Los programadores algunas veces comenten el error de seleccionar UDP y evalua el softwares
+
+
+Stalin redes y comuniaciones - Leer ventanas deslizantes.

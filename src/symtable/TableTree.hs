@@ -17,11 +17,12 @@
     fromZipper,
     getVal,
     getValS,
-    showScope,
+    getOfs
+,    showScope,
     fuse
     ) where
 
-import qualified Data.Map.Strict as Map
+import qualigetOfsfied Data.Map.Strict as Map
 import qualified Data.Sequence as DS
 import Data.Foldable(toList)
 import Data.Sequence(empty,viewl,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
@@ -44,14 +45,14 @@ data Action = DownA | RightA | RootA | StChild
           deriving(Eq,Show) 
 
 -- Scope
-data Scope a = Scope { tb:: (SymbolTable a), chs :: (Seq(Scope a))}
+data Scope a = Scope { tb:: (SymbolTable a), offset:: Int , chs :: (Seq(Scope a))}
 
 instance  Show a => Show (Scope a) where
   show = showScope 0
 
 showScope :: Show a => Int -> Scope a -> String
-showScope i (Scope st chld) = "\n" ++ replicate (i*2) ' ' ++ 
-                "Level " ++ show i ++ ":\n" ++ 
+showScope i (Scope st ofs chld) = "\n" ++ replicate (i*2) ' ' ++ 
+                "Level " ++ show i ++ ", Offset"++ofs++":\n" ++ 
                 replicate (i*2) ' ' ++  "—————————\n" ++
                 showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) ((reverse . toList) chld) -- yarrrrr
 
@@ -72,16 +73,19 @@ addEntry = Map.insert
 
 -- Scope
 emptyScope :: Scope a
-emptyScope = Scope newtable empty
+emptyScope = Scope newtable 0 empty 
+
+addSOffset :: Scope a -> Int -> Scope a
+addSOffset (Scope st ofs l) of2 = Scope st (ofs+of2) l
 
 enterScope' :: Scope a -> Scope a
-enterScope' (Scope symtable l)  = Scope symtable (emptyScope <| l)
-
+enterScope' (Scope symtable ofs l)  = Scope symtable ofs ((addSOffset emptyScope ofs) <| l)
+--BEezelbu es mi favorito. Despues de chiabe, ofc
 enterScope'' :: Scope a -> Scope a
-enterScope'' (Scope symtable l)  = Scope symtable ( l |> emptyScope )
+enterScope'' (Scope symtable l)  = Scope symtable ( l |> (addSOffset emptyScope ofs) ) --? Revisar
 
-insert :: String -> a -> Scope a -> Scope a
-insert key val (Scope symtable chl) = Scope (addEntry key val symtable) chl
+insert :: String -> a -> Scope a -> Int -> Scope a
+insert key val (Scope symtable ofs chl) size = Scope (addEntry key val symtable) (ofs+size)  chl
 
 
 -- Zipper
@@ -100,10 +104,11 @@ fromZipper = fst . goTop
 
 -- No funciona -- Revisar si conviene trabajar con ST o con Scopes
 goDown :: Zipper a -> Maybe (Zipper a)
-goDown (Scope symt chls , breadcrumbs) | DS.null chls  = Nothing
-                                       | otherwise  = Just (ch,newBread)
+goDown (Scope symt ofc chls , breadcrumbs) 
+    | DS.null chls  = Nothing
+    | otherwise  = Just (ch,newBread)
     where (ch :< chdrn) = viewl chls
-          newBread = Breadcrumb ( Scope symt empty : left breadcrumbs )
+          newBread = Breadcrumb ( Scope symt ofc empty : left breadcrumbs )
                                 (chdrn >< right breadcrumbs) 
                                 ( replicate (Data.Sequence.length chdrn) (StChild)  ++ (DownA:(action breadcrumbs)))  --Guarda ST sin hijos para luego ponerselos al subir
         --newBread = Breadcrumb (symt:(left breadcrumbs)) (chdrn++(right breadcrumbs)) (DownA:(action breadcrumbs)) 
@@ -143,10 +148,14 @@ allwayRight zi = if isNothing newright
     where newright = goRight zi
 
 getST :: Scope a -> SymbolTable a
-getST (Scope st chld) = st
+getST (Scope st ofs chld) = st
 
 getChld :: Scope a -> Seq (Scope a)
-getChld (Scope st chld) = chld
+getChld (Scope st ofs chld) = chld
+
+getOfs :: Scope a -> Int
+getOfs (Scope st ofs chld) = ofs
+
 
 wentUp :: Zipper a -> Seq(Scope a) -> Zipper a
 wentUp (scp, (Breadcrumb lft rgt (DownA:lact)))   acc = ((Scope (getST (head lft)) (scp<|acc)),(Breadcrumb (tail lft) rgt lact ))
