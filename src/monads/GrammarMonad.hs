@@ -20,7 +20,7 @@ module GrammarMonad(
     insertFunction,
     insertData,
     insertEnum,
-    insertEnumCons,
+    insertLEnumCons,
     insertDeclareInScope,
     checkItsDeclared,
     checkEnumAndInsert,
@@ -276,16 +276,22 @@ insertEnum id_ = do
                                                 (Enum (position id_) 
                                                       (lexeme id_) 
                                                       (fromZipper (zipp state)))
+insertLEnumCons :: [(Int,Token)] -> String -> OurMonad()
+insertLEnumCons [] _ = return()
+insertLEnumCons [(ord,tok)] sdt  = insertEnumCons ord tok sdt >> return ()
+insertLEnumCons ((ord,tok):sl) sdt = do
+  aux <- insertEnumCons ord tok sdt
+  insertLEnumCons ((aux,snd(head sl)):tail sl) sdt
 
-insertEnumCons :: Int -> Token -> OurMonad(Int)
-insertEnumCons ord (TkEnumCons (l,c) str) = do
+insertEnumCons :: Int -> Token -> String -> OurMonad(Int)
+insertEnumCons ord (TkEnumCons (l,c) str) sdt = do
     state <- get
     if isInScope (enuTbl state) str
         then tell error1
         else do tell whathappened
-                onEnuScope $ insert str (EnumCons (l,c) str ord)
+                onEnuScope $ insert str (EnumCons (l,c) sdt str ord)
     return (succ (ord))
-  where error1       = mkErr $ "Error:" ++ linecol ++ " enum constant " ++ str ++ " already declared in this scope."
+  where error1       = mkErr $ "Error:" ++ linecol ++ " enum constant " ++ str ++ " of Datatype"++sdt++", was already declared in this scope."
         whathappened = mkLog $ "Enum "  ++ str ++ " add at "    ++ linecol
         linecol      = show l ++":"++ show c
 

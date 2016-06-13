@@ -51,7 +51,7 @@ data Declare = Function  { pos::Pos, storedType::Type, fields   ::(Scope Declare
              | Struct    { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare)}
              | Union     { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare)} 
              | Enum      { pos::Pos, typeName ::String, fields::(Scope Declare)}
-             | EnumCons  { pos::Pos, name :: String,ord  :: Int} 
+             | EnumCons  { pos::Pos, storedDType:: String, name :: String,ord  :: Int} 
              | EmptyWithType { storedType :: Type } -- Forward declare with type
              | Empty                                -- Empty forward declare
 
@@ -64,7 +64,7 @@ instance Show Declare where
         where cons True = "| Iteration Var"
               cons _    = ""
   show (Cons (l,c)) = "Constant value"
-  show (EnumCons (l,c) n ord) = "Enum Constant("++show l++","++show c++ ") \'" ++ n ++ "\' with cardinaly " ++ show ord
+  show (EnumCons (l,c) sdt n ord) = "Enum "++sdt++" constant ("++show l++","++show c++ ") \'" ++ n ++ "\' with cardinaly " ++ show ord
   show (EmptyWithType t) = "(Forward Declaration of type "++ show t ++", this shouldn't be here)" 
   show Empty  = " EMPTY " 
   show (Enum   (l,c) n   scp ) = "Enum("++show l++","++show c++ ") "   

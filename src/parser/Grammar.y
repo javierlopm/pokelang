@@ -211,7 +211,7 @@ PrimType : INTDEC           {     makeType $1    }
 Dcls:  {- λ -}                          {% return () }
     | Dcls Reference   ID         ";"   {% insertDeclareInScope $2 $3 True False } -- Always global, GlobDeclare not needed
     | Dcls FWD FUNC Reference ID Ent0 "(" Parameters ")" ";"   {% insertForwardFunc (addType $8 $4) $5 }
-    | Dcls ENUMDEC DATAID "{" EnumConsList "}"  {% insertEnum $3 }
+    | Dcls ENUMDEC DATAID "{" EnumConsList "}"  {% insertEnum $3 >> insertLEnumCons $5 (lexeme $3) }
     | Dcls Ent5 "{" FieldsList "}" {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4  }
     | Dcls Ent6 "{" FieldsList "}" {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4  }
     | Dcls FUNC  Ent2  ":" Ent0 SmplDcls Ins END -- Ent0 Ent5
@@ -228,8 +228,8 @@ ListParam: {- λ -}                    {% return emptytuple }
          | ListParam Reference ID "," {% insertDeclareInScope $2 $3 False False >> return(addType $1 $2 ) } -- Falta Hacer la lista de tipos
          
 
-EnumConsList: ENUM                      {% insertEnumCons 1  $1 }
-            | EnumConsList "," ENUM     {% insertEnumCons $1 $3 }
+EnumConsList: ENUM                      {% return([(1,$1)]) }
+            | EnumConsList "," ENUM     {% return((1,$3):$1) }
 
 FieldsList  : ID "::" Reference                  {% (insertDeclareInScope $3 $1 False False) >> 
                                                         return(addType emptytuple (TypeField (lexeme $1) $3))  }
