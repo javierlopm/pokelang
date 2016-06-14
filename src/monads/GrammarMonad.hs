@@ -35,6 +35,7 @@ module GrammarMonad(
 ) where
 
 import Control.Monad.RWS.Strict
+import Control.Monad(foldM)
 import Data.Maybe(fromJust,isNothing)
 import Tokens
 import TableTree
@@ -111,7 +112,7 @@ exitScope :: OurMonad ()
 exitScope = onZip (fromJust.goUp)
 
 -- Toggle union
-toggleUnion :: OurMonad () -> OurMonad
+toggleUnion :: OurMonad () -> OurMonad ()
 toggleUnion = do isInUnion <- gets onUnion
                  state     <- get
                  put state { onUnion = not isInUnion }
@@ -263,20 +264,34 @@ insertData (typ,ident) tt = do
     state <- get
     tell whathappened
     onScope $ insert (lexeme ident) $ if isStruct typ
-                                      then build Struct TypeStruct state False
-                                      else build Union  TypeUnion  state True
+                                      then build Struct 
+                                                 TypeStruct 
+                                                 state 
+                                                 False 
+                                                 ((ofs . fromZipper . zipp) state)
+                                      else build Union 
+                                                 TypeUnion 
+                                                 state 
+                                                 True
+                                                 (maxMapped 
+                                                    ((fromZipper . zipp) state)
+                                                    varSize)
     onZip (const (fromScope emptyScope))
   where whathappened = mkLog $ "Adding struct/union "  ++ lexeme ident ++ " at "++ linecol
         linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident
-        unionSize state = maxMapped varSize state -- REVISAR
-        build cons cons2 state isUnion = cons (position ident) 
+        build cons cons2 state isUnion size = cons (position ident) 
                                               (cons2 (lexeme ident)) 
                                               tt 
                                               (fromZipper (zipp state))
-                                              (if isUnion
-                                               then unionSize (fromZipper (zipp state))  -- applicar cambio de size a unionState
-                                               else offset    (fromZipper (zipp state)))
-        
+                                              size
+Monad m => (a -> b -> m a) -> a -> [b] -> m a
+maxMapped  :: Scope a  -> OurMonad(Int)
+maxMapped s  = foldM searchAndMax 0 (decList s)
+    where searchAndMax lstMax dec = do newSize <- varSize dec
+                                               if newSize >= lastMax
+                                               then return newSize
+                                               else return lastMax
+
 --revisar y obtener tam
 varSize :: Declare -> OurMonad(Int)
 varSize = undefined

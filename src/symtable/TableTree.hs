@@ -21,16 +21,16 @@
     showScope,
     fuse,
     maxMapped,
-    changeSize
+    decList,
+    changeSize,
+    ofs
     ) where
 
 import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as DS
-import Data.Foldable(toList)
 import Data.Sequence(empty,viewl,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
 import Data.Maybe(fromJust,isNothing)
 import Data.List (intercalate)
-
 
 
 -- Tabla de símbolos
@@ -49,6 +49,9 @@ data Action = DownA | RightA | RootA | StChild
 -- Scope
 data Scope a = Scope { tb:: (SymbolTable a), chs :: (Seq(Scope a))}
 
+ofs :: Scope a -> Int
+ofs = undefined
+
 instance  Show a => Show (Scope a) where
   show = showScope 0
 
@@ -56,7 +59,7 @@ showScope :: Show a => Int -> Scope a -> String
 showScope i (Scope st chld) = "\n" ++ replicate (i*2) ' ' ++ 
                 "Level " ++ show i ++ ":\n" ++ 
                 replicate (i*2) ' ' ++  "—————————\n" ++
-                showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) ((reverse . toList) chld) -- yarrrrr
+                showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) ((reverse . Map.toList) chld) -- yarrrrr
 
 data Breadcrumb a = Breadcrumb { left  :: [Scope a]
                                , right :: Seq(Scope a)
@@ -200,8 +203,8 @@ lookUp zip key = if isNothing mySearch
 fuse :: Scope a -> Zipper a -> Scope a
 fuse (Scope smtbl _ ) z =  Scope smtbl  (( chs . fromZipper) z)
 
-maxMapped  :: Scope a -> (a->Int) -> Int
-maxMapped _ _ = undefined
+decList :: Scope a  -> [a]
+decList s = ((map snd) . Map.toList) s
 -- maxMapppend (Scope tb _ _ ) f = (maximum . (map  f)  . toList) tb
 
 -- Swap size for the new one
