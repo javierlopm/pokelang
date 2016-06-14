@@ -10,6 +10,7 @@
     emptyScope,
     enterScope,
     insert,
+    insert0,
     isMember,
     isInScope,
     lookUp,
@@ -18,7 +19,9 @@
     getVal,
     getValS,
     showScope,
-    fuse
+    fuse,
+    maxMapped,
+    changeSize
     ) where
 
 import qualified Data.Map.Strict as Map
@@ -83,6 +86,9 @@ enterScope'' (Scope symtable l)  = Scope symtable ( l |> emptyScope )
 insert :: String -> a -> Scope a -> Scope a
 insert key val (Scope symtable chl) = Scope (addEntry key val symtable) chl
 
+insert0 :: String -> a -> Scope a -> Scope a
+insert0 = undefined
+-- insert0 key val (Scope symtable offset chl) = Scope (addEntry key val symtable) offset chl
 
 -- Zipper
 fromScope :: Scope a -> Zipper a
@@ -193,3 +199,11 @@ lookUp zip key = if isNothing mySearch
 
 fuse :: Scope a -> Zipper a -> Scope a
 fuse (Scope smtbl _ ) z =  Scope smtbl  (( chs . fromZipper) z)
+
+maxMapped  :: Scope a -> (a->Int) -> Int
+maxMapped _ _ = undefined
+-- maxMapppend (Scope tb _ _ ) f = (maximum . (map  f)  . toList) tb
+
+-- Swap size for the new one
+changeSize :: Scope a -> Int -> Scope a 
+changeSize _ _ = undefined

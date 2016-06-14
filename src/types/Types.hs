@@ -30,7 +30,8 @@ module Types(
     funcReturnType,
     tuplesMatch,
     lengthMatches,
-    makeTypeTuple
+    makeTypeTuple,
+    getSize
 
     -- addLeftType,
     -- singleType,
@@ -54,8 +55,8 @@ type Pos = (Int,Int)
 data Declare = Function  { pos::Pos, storedType::Type, fields   ::(Scope Declare)}
              | Variable  { pos::Pos, storedType::Type, readonly :: Bool  } -- , storedTypeV::PrimType -- No se necesaita todavia
              | Cons      { pos::Pos } 
-             | Struct    { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare)}
-             | Union     { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare)} 
+             | Struct    { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare), size ::Int}
+             | Union     { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare), size ::Int} 
              | Enum      { pos::Pos, typeName ::String, fields::(Scope Declare)}
              | EnumCons  { pos::Pos, name :: String,ord  :: Int} 
              | EmptyWithType { storedType :: Type } -- Forward declare with type
@@ -76,13 +77,15 @@ instance Show Declare where
   show (Enum   (l,c) n   scp ) = "Enum("++show l++","++show c++ ") "   
                                   ++ "\nType for variables: Enum "++ n 
                                   ++ "\nScope: " ++ showScope 1 scp ++ "\n"
-  show (Union  (l,c) n t scp ) = "Union("++show l++","++show c++ ") "  
+  show (Union  (l,c) n t scp s ) = "Union("++show l++","++show c++ ") "  
                                   ++ "\nType for variables: " ++ show n
                                   ++ "\nDeclare Type: " ++ show (TypeFunction t) 
+                                  ++ "\nSize: "  ++ show s 
                                   ++ "\nScope: " ++ showScope 1 scp ++ "\n"
-  show (Struct (l,c) n t scp ) = "Struct("++show l++","++show c++ ") " 
+  show (Struct (l,c) n t scp s ) = "Struct("++show l++","++show c++ ") " 
                                   ++ "\nType for variables: " ++ show n
                                   ++ "\nDeclare Type: " ++ show (TypeFunction t) 
+                                  ++ "\nSize: "  ++ show s 
                                   ++ "\nScope: " ++ showScope 1 scp ++ "\n"
 
 -- Polymorphic store type
@@ -180,8 +183,8 @@ getFieldType :: Type -> Type
 getFieldType (TypeField _ t) = t
 
 dataNameMatches :: Declare -> String -> Bool
-dataNameMatches (Struct _ (TypeStruct name) _ _ ) str = name == str
-dataNameMatches (Union  _ (TypeUnion name)  _ _ ) str = name == str
+dataNameMatches (Struct _ (TypeStruct name) _ _ _ ) str = name == str
+dataNameMatches (Union  _ (TypeUnion name)  _ _ _ ) str = name == str
 dataNameMatches  Empty  _             = True
 dataNameMatches _ _                    = False
 
@@ -269,10 +272,31 @@ isBasic TypeChar   = True
 isBasic TypeFloat  = True
 isBasic _          = False
 
+-- Type Sizes
+getSize :: Type -> Int
+getSize TypeInt          = 4  -- Basic types are going to change
+getSize TypeBool         = 1
+getSize TypeChar         = 1
+getSize TypeFloat        = 8
+getSize (TypeEnum _ )    = 4
+getSize (TypePointer  _) = 4
+ 
+getSize (TypeArray  t d) = d * getSize t
+
+getSize (TypeStruct  _ ) = error "Cannot be calculated, get sum of scope" 
+getSize (TypeUnion   _ ) = error "Cannot be calculated, get max of scope" 
+
+getSize (TypeField  _ _) = error "Function as a type cannot be stored"
+getSize TypeEnumCons   = error "Enums are global"
+getSize TypeVoid       = error "This type (void) cannot be stored"
+getSize TypeString     = error "Global variable"
+getSize (TypeSatisfies _ ) = error "wtf? really?"
+-- size TypeEmptyArray = 4
+
+
 {-
     Declare type transformation functions
 -}
-
 
 
 toPointer :: Declare -> Declare

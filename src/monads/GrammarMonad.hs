@@ -29,7 +29,9 @@ module GrammarMonad(
     checkRecursiveDec,
     checkFieldAccess,
     checkMain,
-    tellError
+    tellError,
+    toggleUnion,
+    getDataSize
 ) where
 
 import Control.Monad.RWS.Strict
@@ -48,7 +50,8 @@ type TableZipper = Zipper Declare
 data ScopeNZip = ScopeNZip { strTbl   :: SymTable
                            , enuTbl   :: SymTable
                            , scp      :: SymTable
-                           , zipp     :: TableZipper} 
+                           , zipp     :: TableZipper
+                           , onUnion  :: Bool } 
                            deriving (Show)
 
 -- Alias for executing RWS monad
@@ -56,7 +59,11 @@ exec = execRWS
 
 -- Monad initial state: two empty scopes and one zipper for an empty scope
 initialState :: ScopeNZip
-initialState = ScopeNZip emptyScope emptyScope builtinFunctions (fromScope emptyScope)
+initialState = ScopeNZip emptyScope 
+                         emptyScope 
+                         builtinFunctions 
+                         (fromScope emptyScope) 
+                         False
 
 -- Make a tuple with the String Scope and a Scope tree with globals and local
 -- scopes fused. Scopeception
@@ -103,9 +110,16 @@ onScope fun = do scope <- gets scp
 exitScope :: OurMonad ()
 exitScope = onZip (fromJust.goUp)
 
+-- Toggle union
+toggleUnion :: OurMonad () -> OurMonad
+toggleUnion = do isInUnion <- gets onUnion
+                 state     <- get
+                 put state { onUnion = not isInUnion }
+
 {-
     Check, add to scope, log functions
 -}
+
 
 -- Check if given token is a valid function/procedure that can be called
 checkIsFunc :: Token -> OurMonad(Maybe(Declare))
@@ -189,21 +203,6 @@ insertEmpty tk = do
         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
 
 
--- Adding identifiers as soon as possible for recursion in datatypes
--- insertEmptyData :: Token -> Token -> OurMonad ()
--- insertEmptyData datatk tk = do
---     state <- get
---     if isInGlobals state tk
---         then tell error1
---         else do tell whathappened
---                 tellError $ "wtf im adding "++ show typ
---                 onScope $ insert (lexeme tk) typ
---   where error1       = mkErr  $ "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
---         whathappened = mkLog  $ "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol 
---         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
---         typ  = if isStruct datatk then TypeStruct (lexeme tk)
---                                   else TypeUnion  (lexeme tk)
-
 -- Adding forward declartion to functions
 insertForwardFunc :: TypeTuple -> Token -> OurMonad ()
 insertForwardFunc typ tk = do
@@ -264,15 +263,23 @@ insertData (typ,ident) tt = do
     state <- get
     tell whathappened
     onScope $ insert (lexeme ident) $ if isStruct typ
-                                          then build Struct TypeStruct state
-                                          else build Union  TypeUnion  state
+                                      then build Struct TypeStruct state False
+                                      else build Union  TypeUnion  state True
     onZip (const (fromScope emptyScope))
   where whathappened = mkLog $ "Adding struct/union "  ++ lexeme ident ++ " at "++ linecol
         linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident
-        build cons cons2 state  = cons (position ident) 
-                                       (cons2 (lexeme ident)) 
-                                       tt 
-                                       (fromZipper (zipp state))
+        unionSize state = maxMapped varSize state -- REVISAR
+        build cons cons2 state isUnion = cons (position ident) 
+                                              (cons2 (lexeme ident)) 
+                                              tt 
+                                              (fromZipper (zipp state))
+                                              (if isUnion
+                                               then unionSize (fromZipper (zipp state))  -- applicar cambio de size a unionState
+                                               else offset    (fromZipper (zipp state)))
+        
+--revisar y obtener tam
+varSize :: Declare -> OurMonad(Int)
+varSize = undefined
 
 -- Check,add, log for enums
 insertEnum :: Token -> OurMonad ()
@@ -307,7 +314,7 @@ insertEnumCons ord (TkEnumCons (l,c) str) = do
 
 
 insertDeclareInScope :: Type -> Token -> Bool -> Bool -> OurMonad ()
-insertDeclareInScope  TypeVoid (TkId (l,c) lexeme ) _      _ = (tellError .concat) $ ["Error:",show l,":",show c," ",lexeme ," is VOIDtorb, but it may only be instanced as reference."]
+insertDeclareInScope  TypeVoid (TkId (l,c) lexeme ) _  _ = (tellError .concat) $ ["Error:",show l,":",show c," ",lexeme ," is VOIDtorb, but it may only be instanced as reference."]
 insertDeclareInScope dcltype  (TkId (l,c) lexeme ) isGlob readonly = do 
     state <- get
     if isMember (zipp state) lexeme -- Most recent scope
@@ -315,8 +322,11 @@ insertDeclareInScope dcltype  (TkId (l,c) lexeme ) isGlob readonly = do
       else if isGlob 
             then if isInScope (scp state) lexeme -- global scope enum
                     then tellError error2
-                    else do tellLog whathappened 
-                            onScope $ insert lexeme scopevar    
+                    else do tellLog whathappened
+                            inUnion <- gets onUnion
+                            if inUnion
+                                then onScope $ insert lexeme scopevar  
+                                else onScope $ insert0 lexeme scopevar
             else do tellLog whathappened
                     (onZip . apply) $ insert lexeme scopevar
     where error1       = generror ++ " in actual scope."
