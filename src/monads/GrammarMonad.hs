@@ -22,6 +22,7 @@ module GrammarMonad(
     insertEnum,
     insertLEnumCons,
     insertDeclareInScope,
+    insertParamInScope,
     checkItsDeclared,
     checkEnumAndInsert,
     checkBinary,
@@ -30,7 +31,8 @@ module GrammarMonad(
     checkFieldAccess,
     checkMain,
     tellError,
-    toggleUnion
+    toggleUnion,
+    cleanParams
     -- getDataSize
 ) where
 
@@ -253,29 +255,36 @@ insertFunction tuple ident clean = do
                                 onScope $ insert (lexeme ident) 
                                              (Function (position ident) 
                                                        (TypeFunction tuple) 
-                                                       (fromZipper (zipp state))) 0 --Se debe CAMBIAR
+                                                       ((fromZipper) (zipp state))) 0 --Se debe CAMBIAR
                                 if clean
                                     then onZip (const (fromScope emptyScope)) -- Clean zipper
                                     else return ()
 
+cleanParams :: OurMonad()
+cleanParams = do
+    state <- get
+    let newScope = (cleanOffset . fst . zipp) state
+    put (state { zipp = fromScope newScope})
 
 -- Check,add, log for structs and union
 insertData :: (Token,Token) -> TypeTuple -> OurMonad ()
 insertData (typ,ident) tt = do 
     state <- get
     tell whathappened
-    let size = ((getOfs . fromZipper . zipp) state)
+    let (_,padd) = ((align . getOfs . fromZipper . zipp) state)
+    let newscp  = addSOffset ((fromZipper . zipp) state) padd
     let newData = if isStruct typ
-                  then build Struct TypeStruct state False
-                  else build Union  TypeUnion  state True 
+                  then build Struct TypeStruct newscp False 
+                  else build Union  TypeUnion  newscp True  
     onScope $ insert (lexeme ident) newData 0 --Se debe CAMBIAR
     onZip (const (fromScope emptyScope))
   where whathappened = mkLog $ "Adding struct/union "  ++ lexeme ident ++ " at "++ linecol
         linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident
-        build cons cons2 state isUnion = cons (position ident) 
+        build cons cons2 scp isUnion   = cons (position ident) 
                                               (cons2 (lexeme ident)) 
-                                              tt 
-                                              (fromZipper (zipp state))
+                                              tt
+                                              scp
+                                              
                                               
 
 
@@ -287,7 +296,16 @@ varSize (TypeStruct s) = do
 varSize (TypeUnion  s) = do 
     global <- gets scp
     return $ (getOfs . fields . fromJust) $ getValS s global
-varSize ty = return( getSize ty )
+varSize TypeInt          = return 4  -- Basic types are going to change
+varSize TypeBool         = return 1
+varSize TypeChar         = return 1
+varSize TypeFloat        = return 4
+varSize (TypeEnum _ )    = return 4
+varSize (TypePointer  _) = return 4
+ 
+varSize (TypeArray  t d) = do s <- varSize t
+                              return( d * s)
+
 
 -- Check,add, log for enums
 insertEnum :: Token -> OurMonad ()
@@ -354,6 +372,36 @@ insertDeclareInScope dcltype   (TkId (l,c) lexeme ) isGlob readonly = do
           scopevar  d  = (Variable (l,c) dcltype readonly d)
           generror     = "Error:" ++ show l ++":"++show c ++" redefinition of " ++ lexeme
           whathappened = "Added " ++ lexeme ++" at "++show l++":"++show c ++ " with type " ++ show dcltype
+
+
+insertParamInScope :: Type -> Token -> Bool -> Bool -> OurMonad ()
+insertParamInScope  TypeVoid (TkId (l,c) lexeme ) _  _ = (tellError .concat) $ ["Error:",show l,":",show c," ",lexeme ," is VOIDtorb, but it may only be instanced as reference."]
+insertParamInScope dcltype   (TkId (l,c) lexeme ) isGlob readonly = do 
+    state <- get
+    if isMember (zipp state) lexeme -- Most recent scope
+    then tellError error1
+    else if isGlob 
+         then if isInScope (scp state) lexeme -- global scope enum
+              then tellError error2
+              else do 
+                   tellLog whathappened
+                   onScope  $ insert lexeme (scopevar Label) 0 --Se debe CAMBIAR
+         else do 
+              tellLog whathappened
+              inUnion <- gets onUnion
+              let (newofs,padd) = (align . getOfs . fst) $ zipp state
+              sz <- varSize dcltype
+              --tellError $ "Puse padding de " ++ show (newofs,padd) ++ " en " ++ lexeme
+              if inUnion
+              then (onZip . apply) $ insert0 lexeme (scopevar (Offset 0))            sz 
+              else (onZip . apply) $ insert  lexeme (scopevar (Offset  ((-newofs))))  (padd+sz)  
+
+    where error1       = generror ++ " in actual scope."
+          error2       = generror ++ " in global scope."
+          scopevar  d  = (Variable (l,c) dcltype readonly d)
+          generror     = "Error:" ++ show l ++":"++show c ++" redefinition of " ++ lexeme
+          whathappened = "Added " ++ lexeme ++" at "++show l++":"++show c ++ " with type " ++ show dcltype
+
 
 -- Check if datatype is enum and insert as readonly
 checkEnumAndInsert :: Token -> Token -> OurMonad ()

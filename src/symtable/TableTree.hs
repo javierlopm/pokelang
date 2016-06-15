@@ -21,9 +21,11 @@
     getOfs,
     showScope,
     fuse,
+    cleanOffset,
    -- maxMapped,
     decList,
-    changeSize
+    changeSize,
+    addSOffset
     ) where
 
 import qualified Data.Map.Strict as Map
@@ -81,6 +83,9 @@ emptyScope = Scope newtable 0 empty
 
 addSOffset :: Scope a -> Int -> Scope a
 addSOffset (Scope st ofs l) of2 = Scope st (ofs+of2) l
+
+cleanOffset :: Scope a -> Scope a
+cleanOffset (Scope st _ l) = Scope st 0 l
 
 enterScope' :: Scope a -> Scope a
 enterScope' (Scope symtable ofs l)  = Scope symtable ofs ((addSOffset emptyScope ofs) <| l)

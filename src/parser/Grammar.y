@@ -220,11 +220,11 @@ Dcls:  {- λ -}                          {% return () }
 -- Parameter: ListParam Reference ID  {% insertDeclareInScope $2 $3 False False }    -- Falta Hacer la lista de tipos
         
 Parameters: {- λ -}                 {% return emptytuple } 
-          | ListParam Reference ID  {% insertDeclareInScope $2 $3 False False >> 
+          | ListParam Reference ID  {% insertParamInScope $2 $3 False False >> 
                                          return (addType $1 $2 ) } 
 
 ListParam: {- λ -}                    {% return emptytuple }
-         | ListParam Reference ID "," {% insertDeclareInScope $2 $3 False False >> return(addType $1 $2 ) } -- Falta Hacer la lista de tipos
+         | ListParam Reference ID "," {% insertParamInScope $2 $3 False False >> return(addType $1 $2 ) } -- Falta Hacer la lista de tipos
          
 
 EnumConsList: ENUM                      {% return([(1,$1)]) }
@@ -294,6 +294,7 @@ Exp :
 Ent0 : {- λ -}     {% onZip enterScope }
 Ent1 : {- λ -}     {% exitScope  }
 Ent2 : Reference ID "(" Parameters  ")" {% insertFunction ($4 `addType` $1) $2 False
+                                            >> cleanParams
                                                >> return($2,($4 `addType` $1)) } 
 Ent3 : ID          {%  onZip enterScope >>
                          insertDeclareInScope TypeInt $1 False True >>
