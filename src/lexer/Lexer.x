@@ -68,8 +68,8 @@ tokens :-
   vamo\_a\_segui           { \p _ -> TkContinue  (getPos p) }
   vamo\_a\_retorna         { \p _ -> TkReturn    (getPos p) }
   vamo\_a\_sali            { \p _ -> TkExit      (getPos p) }
-  vamo\_a\_lee             { \p _ -> TkRead      (getPos p) }
-  vamo\_a\_escribi         { \p _ -> TkWrite     (getPos p) }
+  --vamo\_a\_lee             { \p _ -> TkRead      (getPos p) }
+  --vamo\_a\_escribi         { \p _ -> TkWrite     (getPos p) }
   --vamo\_a\_imprimi         { \p _ -> TkPrint     (getPos p) }
 
 
@@ -78,8 +78,8 @@ tokens :-
   si                       { \p _ -> TkIf        (getPos p) }
   y\_si                    { \p _ -> TkElif      (getPos p) }
   si\_no                   { \p _ -> TkElse      (getPos p) }
-  atrapar                  { \p _ -> TkAlloc     (getPos p) }
-  liberar                  { \p _ -> TkFree      (getPos p) }
+  --atrapar                  { \p _ -> TkAlloc     (getPos p) }
+  --liberar                  { \p _ -> TkFree      (getPos p) }
   SIZEther                 { \p _ -> TkSizeOf    (getPos p) }
   pidGET                   { \p _ -> TkGet       (getPos p) }
   FORWARDtortle             { \p _ -> TkFwd       (getPos p) }

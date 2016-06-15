@@ -1,4 +1,5 @@
 module Types(
+    Direction(..),
     Type(..),
     Declare(..),
     Message,
@@ -12,6 +13,8 @@ module Types(
     isLValue,
     isFunc,
     toPointer,
+    isPointer,
+    isBasic,
     toEmptyArray,
     toArray,
     makeType,
@@ -22,10 +25,15 @@ module Types(
     sameData,
     isNotRecursiveData,
     -- Type Tuple Functions
+    transformType,
     emptytuple,
     addType,
     funcReturnType,
-    tuplesMatch
+    tuplesMatch,
+    lengthMatches,
+    makeTypeTuple,
+    getSize,
+    align
     -- addLeftType,
     -- singleType,
 ) where
@@ -33,7 +41,7 @@ module Types(
 import Data.List          (intersperse)
 import TableTree          (Scope(..),showScope)
 import qualified Data.Foldable as F (toList,all,foldl)
-import Data.Sequence as S (Seq,(|>),ViewR(..),empty,viewr,zipWith)
+import Data.Sequence as S (Seq,(|>),ViewR(..),empty,viewr,zipWith,length,fromList)
 import Tokens(Token(TkInt  ,TkBool ,TkChar
                    ,TkVoid ,TkFloat,TkStruct
                    ,TkUnion,TkEnum ,TkNull
@@ -44,9 +52,13 @@ type Pos = (Int,Int)
 
 -- Las constantes enumeradas no deberian estar en un scope grande y universal?
 
+data Direction = Label
+               | Offset { bytes :: Int}
+               deriving(Show)
+
 -- Declarations might be functions,variables or structure types
 data Declare = Function  { pos::Pos, storedType::Type, fields   ::(Scope Declare)}
-             | Variable  { pos::Pos, storedType::Type, readonly :: Bool  } -- , storedTypeV::PrimType -- No se necesaita todavia
+             | Variable  { pos::Pos, storedType::Type, readonly :: Bool, dir :: Direction  } -- , storedTypeV::PrimType -- No se necesaita todavia
              | Cons      { pos::Pos } 
              | Struct    { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare)}
              | Union     { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare)} 
@@ -59,8 +71,8 @@ instance Show Declare where
   show (Function (l,c) t scope ) = 
       "Function ("++show l++","++show c++ ") Type:" ++show t ++ "" ++
         showScope 1 scope ++ "\n"
-  show (Variable (l,c) t readonly ) = 
-      "Variable ("++show l++","++show c++ ") Type:" ++show t++ " " ++ cons readonly
+  show (Variable (l,c) t readonly dir ) = 
+      "Variable ("++show l++","++show c++ ") Type:" ++show t++ " at " ++ show dir ++ " " ++ cons readonly
         where cons True = "| Iteration Var"
               cons _    = ""
   show (Cons (l,c)) = "Constant value"
@@ -73,10 +85,12 @@ instance Show Declare where
   show (Union  (l,c) n t scp ) = "Union("++show l++","++show c++ ") "  
                                   ++ "\nType for variables: " ++ show n
                                   ++ "\nDeclare Type: " ++ show (TypeFunction t) 
+                                  -- ++ "\nSize: "  ++ show s 
                                   ++ "\nScope: " ++ showScope 1 scp ++ "\n"
   show (Struct (l,c) n t scp ) = "Struct("++show l++","++show c++ ") " 
                                   ++ "\nType for variables: " ++ show n
                                   ++ "\nDeclare Type: " ++ show (TypeFunction t) 
+                                  -- ++ "\nSize: "  ++ show s 
                                   ++ "\nScope: " ++ showScope 1 scp ++ "\n"
 
 -- Polymorphic store type
@@ -95,8 +109,10 @@ data PrimType = PrimInt        Int
 data Type = TypeInt  
           | TypeBool   
           | TypeChar   
+          | TypeString   
           | TypeFloat  
           | TypeVoid   
+          | TypeEnumCons   
           | TypeEnum       String -- Name comparison 
           | TypeStruct     { getDataName :: String} 
           | TypeUnion      { getDataName :: String}
@@ -104,12 +120,37 @@ data Type = TypeInt
           | TypePointer    Type
           | TypeEmptyArray Type
           | TypeArray      Type Int
-          | TypeFunction   { getTuple :: (Seq Type)} 
+          | TypeFunction   { getTuple :: (Seq Type)}
+          -- Helpers
+          | TypeSatisfies  (Type -> Bool) 
           | TypeUndefined  -- Temporal
           | TypeError  
-          deriving(Eq)
+
+instance Eq Type where
+  TypeString       ==   TypeString        = True
+  TypeInt          ==   TypeInt           = True
+  TypeEnumCons     ==   TypeEnumCons      = True
+  TypeBool         ==   TypeBool          = True
+  TypeChar         ==   TypeChar          = True
+  TypeFloat        ==   TypeFloat         = True
+  TypeVoid         ==   TypeVoid          = True
+  TypeUndefined    ==   TypeUndefined     = True
+  TypeError        ==   TypeError         = True
+  TypeEnum       a ==   TypeEnum       b  = a==b
+  TypeStruct     a ==   TypeStruct     b  = a==b
+  TypeUnion      a ==   TypeUnion      b  = a==b
+  TypePointer    a ==   TypePointer    b  = a==b
+  TypeEmptyArray a ==   TypeEmptyArray b  = a==b
+  TypeFunction   a ==   TypeFunction   b  = a==b
+  TypeArray t1 d1  ==   TypeArray   t2 d2 = t1 == t2 && d1 == d2
+  TypeSatisfies f  ==   TypeSatisfies g   = error "Cannot compare two TypeSatisfies, wtf is wrong with you?"
+  TypeSatisfies f  ==   a                 = f a 
+  a                ==   TypeSatisfies f   = f a 
+  _  == _     = False
+
 
 instance Show Type where
+  show (TypeError    ) = "ERROR"
   show (TypeInt      ) = "Integer"
   show (TypeUndefined) = "NILL"
   show (TypeBool     ) = "Boolean"
@@ -124,6 +165,7 @@ instance Show Type where
   show (TypeEmptyArray  t     ) = "Array to "   ++ show t
   show (TypeArray       t dim ) = "Array size " ++ show dim ++ " of " ++ show t
   show (TypeFunction    l     ) = "(" ++ (concat . intersperse "->" . (map show) . F.toList) l ++ ")"
+  show blah = "dunno"
 
 
 -- lists
@@ -161,20 +203,20 @@ isFunc a = False
 
 --Check if a Declaration is an Iteration Variable
 isLIter :: Declare -> Bool
-isLIter (Variable _ _ iterVar) = iterVar
-isLIter _                      = False
+isLIter (Variable _ _ iterVar _) = iterVar
+isLIter _                        = False
 
 --Check if a Declaration is a valid L-value
 isLValue :: Type -> Declare -> Bool
 --If it's a primType variable, return True
-isLValue _ (Variable _ TypeInt   False ) = True
-isLValue _ (Variable _ TypeBool  False ) = True
-isLValue _ (Variable _ TypeChar  False ) = True
-isLValue _ (Variable _ TypeFloat False ) = True
+isLValue _ (Variable _ TypeInt   False _ ) = True
+isLValue _ (Variable _ TypeBool  False _ ) = True
+isLValue _ (Variable _ TypeChar  False _ ) = True
+isLValue _ (Variable _ TypeFloat False _ ) = True
 --TypeArray      Type Int
-isLValue myT (Variable _ (TypePointer    varT)  False ) = isLValue myT (Variable (0,0) varT  False )
-isLValue myT (Variable _ (TypeEmptyArray varT)  False ) = isLValue myT (Variable (0,0) varT  False )
-isLValue myT (Variable _ (TypeArray    varT _)  False ) = isLValue myT (Variable (0,0) varT  False )
+isLValue myT (Variable _ (TypePointer    varT)  False d ) = isLValue myT (Variable (0,0) varT  False d )
+isLValue myT (Variable _ (TypeEmptyArray varT)  False d ) = isLValue myT (Variable (0,0) varT  False d )
+isLValue myT (Variable _ (TypeArray    varT _)  False d ) = isLValue myT (Variable (0,0) varT  False d )
 
 isLValue (TypeField _ TypeInt)   _       = True
 isLValue (TypeField _ TypeBool)  _       = True
@@ -198,7 +240,7 @@ isLValue _ _                                = False
   
 --Checks if a declaration is readable
 isReadable :: Maybe Declare -> Bool
-isReadable (Just (Variable _ stType _)) = 
+isReadable (Just (Variable _ stType _ _)) = 
   case (stType) of
     TypeInt       -> True
     TypeBool      -> True
@@ -221,8 +263,53 @@ emptyTypeMatches Empty _ = True
 emptyTypeMatches _ _     = False
 
 {-
+  TypeChecks
+-}
+
+isPointer :: Type -> Bool
+isPointer (TypePointer _ ) = True
+isPointer _                = False
+
+
+isBasic :: Type -> Bool 
+isBasic TypeInt    = True
+isBasic TypeBool   = True
+isBasic TypeChar   = True
+isBasic TypeFloat  = True
+isBasic _          = False
+
+-- Type Sizes
+getSize :: Type -> Int
+getSize TypeInt          = 4  -- Basic types are going to change
+getSize TypeBool         = 1
+getSize TypeChar         = 1
+getSize TypeFloat        = 4
+getSize (TypeEnum _ )    = 4
+getSize (TypePointer  _) = 4
+ 
+getSize (TypeArray  t d) = d * getSize t
+
+getSize (TypeStruct  _ ) = error "Cannot be calculated, get sum of scope" 
+getSize (TypeUnion   _ ) = error "Cannot be calculated, get max of scope" 
+
+getSize (TypeField  _ _) = error "Function as a type cannot be stored"
+getSize TypeEnumCons   = error "Enums are global"
+getSize TypeVoid       = error "This type (void) cannot be stored"
+getSize TypeString     = error "Global variable"
+getSize (TypeSatisfies _ ) = error "wtf? really?"
+-- size TypeEmptyArray = 4
+
+-- Given a position, it returns the padding needed before insert and the new
+-- offset
+align :: Int -> (Int,Int)
+align lastPos = if r == 0 then (lastPos      ,0)
+                          else (lastPos+(4-r),4-r)
+    where r = rem lastPos 4
+
+{-
     Declare type transformation functions
 -}
+
 
 toPointer :: Declare -> Declare
 toPointer dec = dec { storedType = TypePointer oldtype }
@@ -260,6 +347,10 @@ sameData _              _               = False
 
 type TypeTuple = Seq Type
 
+transformType :: Type -> Type -> Type
+transformType _ TypeError = TypeError
+transformType _ a         = a
+
 emptytuple :: TypeTuple 
 emptytuple = empty
 
@@ -270,13 +361,17 @@ funcReturnType :: TypeTuple -> Type
 funcReturnType t = (decons . viewr) t
     where decons EmptyR = error "Empty sequence!"
           decons (others :> l) = l
+
 -- addLeftType :: Type -> TypeTuple -> TypeTuple
 -- addLeftType = (<|)
+
+makeTypeTuple :: [Type] -> Type
+makeTypeTuple = TypeFunction . fromList
 
 -- Process two tuples, check if any pair of elements are not equal
 -- and return last expected type, # of last argument processed and if it went ok
 tuplesMatch :: TypeTuple -> TypeTuple -> (Type,Int,Bool)
-tuplesMatch t1 t2 = F.foldl process (TypeVoid,1,True) tupSeq
+tuplesMatch t1 t2  = F.foldl process (TypeVoid,1,True) tupSeq
     where tupSeq  = S.zipWith (,) t1 t2
           process b@(_,_,False) (_,_) = b
           process (_,field,ok) (TypeError,o)  = (o,field+1,True) -- Don't bother checking type errors
@@ -285,6 +380,9 @@ tuplesMatch t1 t2 = F.foldl process (TypeVoid,1,True) tupSeq
               where newBase = if call == signature 
                                   then (call,field+1,True)
                                   else (signature,field,False)
+
+lengthMatches :: TypeTuple -> TypeTuple -> Bool
+lengthMatches t1 t2 = (S.length t1) == ((S.length t2) - 1)
 
 -- singleType :: Type -> TypeTuple
 -- singleType = Data.Sequence.empty |> 

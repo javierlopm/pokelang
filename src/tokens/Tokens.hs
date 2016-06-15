@@ -8,6 +8,7 @@ module Tokens(
     createChar,
     isStruct,
     haveLexeme,
+    toConstr,
     toStr
 ) where
 
@@ -79,7 +80,7 @@ data Token =  TkLBracket  { position :: Pos }
             | TkReturn    { position :: Pos }
             | TkExit      { position :: Pos }
             | TkRead      { position :: Pos }
-            | TkWrite     { position :: Pos }
+            -- | TkWrite     { position :: Pos }
 --            | TkPrint     { position :: Pos }
             | TkAlloc     { position :: Pos }
             | TkFree      { position :: Pos }
@@ -113,7 +114,7 @@ instance Show Token where
                        "    value:  " ++ show v ++ "\n" ++ 
                        showPos pos
                            
-  show (TkFloatVal pos v) = "Integer\n" ++
+  show (TkFloatVal pos v) = "Float\n" ++
                             "    value:  " ++ show v  ++ "\n" ++
                             showPos pos
 
