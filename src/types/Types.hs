@@ -1,4 +1,5 @@
 module Types(
+    Direction(..),
     Type(..),
     Declare(..),
     Message,
@@ -51,9 +52,13 @@ type Pos = (Int,Int)
 
 -- Las constantes enumeradas no deberian estar en un scope grande y universal?
 
+data Direction = Lable
+               | Offset Int
+               deriving(Show)
+
 -- Declarations might be functions,variables or structure types
 data Declare = Function  { pos::Pos, storedType::Type, fields   ::(Scope Declare)}
-             | Variable  { pos::Pos, storedType::Type, readonly :: Bool  } -- , storedTypeV::PrimType -- No se necesaita todavia
+             | Variable  { pos::Pos, storedType::Type, readonly :: Bool, dir :: Direction  } -- , storedTypeV::PrimType -- No se necesaita todavia
              | Cons      { pos::Pos } 
              | Struct    { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare)}
              | Union     { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare)} 
@@ -66,8 +71,8 @@ instance Show Declare where
   show (Function (l,c) t scope ) = 
       "Function ("++show l++","++show c++ ") Type:" ++show t ++ "" ++
         showScope 1 scope ++ "\n"
-  show (Variable (l,c) t readonly ) = 
-      "Variable ("++show l++","++show c++ ") Type:" ++show t++ " " ++ cons readonly
+  show (Variable (l,c) t readonly dir ) = 
+      "Variable ("++show l++","++show c++ ") Type:" ++show t++ " at " ++ show dir ++ " " ++ cons readonly
         where cons True = "| Iteration Var"
               cons _    = ""
   show (Cons (l,c)) = "Constant value"
@@ -197,20 +202,20 @@ isFunc a = False
 
 --Check if a Declaration is an Iteration Variable
 isLIter :: Declare -> Bool
-isLIter (Variable _ _ iterVar) = iterVar
-isLIter _                      = False
+isLIter (Variable _ _ iterVar _) = iterVar
+isLIter _                        = False
 
 --Check if a Declaration is a valid L-value
 isLValue :: Type -> Declare -> Bool
 --If it's a primType variable, return True
-isLValue _ (Variable _ TypeInt   False ) = True
-isLValue _ (Variable _ TypeBool  False ) = True
-isLValue _ (Variable _ TypeChar  False ) = True
-isLValue _ (Variable _ TypeFloat False ) = True
+isLValue _ (Variable _ TypeInt   False _ ) = True
+isLValue _ (Variable _ TypeBool  False _ ) = True
+isLValue _ (Variable _ TypeChar  False _ ) = True
+isLValue _ (Variable _ TypeFloat False _ ) = True
 --TypeArray      Type Int
-isLValue myT (Variable _ (TypePointer    varT)  False ) = isLValue myT (Variable (0,0) varT  False )
-isLValue myT (Variable _ (TypeEmptyArray varT)  False ) = isLValue myT (Variable (0,0) varT  False )
-isLValue myT (Variable _ (TypeArray    varT _)  False ) = isLValue myT (Variable (0,0) varT  False )
+isLValue myT (Variable _ (TypePointer    varT)  False d ) = isLValue myT (Variable (0,0) varT  False d )
+isLValue myT (Variable _ (TypeEmptyArray varT)  False d ) = isLValue myT (Variable (0,0) varT  False d )
+isLValue myT (Variable _ (TypeArray    varT _)  False d ) = isLValue myT (Variable (0,0) varT  False d )
 
 isLValue (TypeField _ TypeInt)   _       = True
 isLValue (TypeField _ TypeBool)  _       = True
@@ -234,7 +239,7 @@ isLValue _ _                                = False
   
 --Checks if a declaration is readable
 isReadable :: Maybe Declare -> Bool
-isReadable (Just (Variable _ stType _)) = 
+isReadable (Just (Variable _ stType _ _)) = 
   case (stType) of
     TypeInt       -> True
     TypeBool      -> True

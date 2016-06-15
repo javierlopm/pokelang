@@ -282,13 +282,13 @@ insertData (typ,ident) tt = do
 --revisar y obtener tam
 varSize :: Declare -> OurMonad(Int)
 varSize (Function _ _ _) = error "No size for function"
-varSize (Variable _ (TypeStruct s) _) = do 
+varSize (Variable _ (TypeStruct s) _ _) = do 
     global <- gets scp
     return $ (ofs . fields . fromJust) $ getValS s global
-varSize (Variable _ (TypeUnion  s) _) = do 
+varSize (Variable _ (TypeUnion  s) _ _) = do 
     global <- gets scp
     return $ (ofs . fields . fromJust) $ getValS s global
-varSize (Variable _ ty _) = return( getSize ty )
+varSize (Variable _ ty _ _ ) = return( getSize ty )
 
 -- Check,add, log for enums
 insertEnum :: Token -> OurMonad ()
@@ -334,13 +334,13 @@ insertDeclareInScope dcltype  (TkId (l,c) lexeme ) isGlob readonly = do
                     else do tellLog whathappened
                             inUnion <- gets onUnion
                             if inUnion
-                                then onScope $ insert lexeme scopevar  
+                                then onScope $ insert  lexeme scopevar  
                                 else onScope $ insert0 lexeme scopevar
             else do tellLog whathappened
                     (onZip . apply) $ insert lexeme scopevar
     where error1       = generror ++ " in actual scope."
           error2       = generror ++ " in global scope."
-          scopevar     = (Variable (l,c) dcltype readonly)
+          scopevar     = (Variable (l,c) dcltype readonly (Offset 0))
           generror     = "Error:" ++ show l ++":"++show c ++" redefinition of " ++ lexeme
           whathappened = "Added " ++ lexeme ++" at "++show l++":"++show c ++ " with type " ++ show dcltype
 
@@ -351,7 +351,7 @@ checkEnumAndInsert (TkDId (lD,cD) lexemeD) (TkId (l,c) lexeme) = do
     if isInScope (scp state) lexemeD  -- Check in globals for enum
         then if enumMatches (fromJust (getValS lexeme (scp state))) lexemeD -- if its enum and has same name --enumMatches (fromJust (getValS lexeme (scp state))) lexemeD
                 then do tellLog whathappened
-                        onScope $ insert lexeme (Variable (l,c) (TypeEnum lexemeD) True)
+                        onScope $ insert lexeme (Variable (l,c) (TypeEnum lexemeD) True (Offset 0 ))
                 else tellError  $ error2 
         else tellError error1
   where whathappened  = "Iter enum at "++show lD ++":"++show cD++" inserted in scope"
