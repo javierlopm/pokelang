@@ -20,7 +20,7 @@
     getValS,
     showScope,
     fuse,
-    maxMapped,
+   -- maxMapped,
     decList,
     changeSize,
     ofs
@@ -28,6 +28,7 @@
 
 import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as DS
+import Data.Foldable(toList)
 import Data.Sequence(empty,viewl,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
 import Data.Maybe(fromJust,isNothing)
 import Data.List (intercalate)
@@ -59,7 +60,7 @@ showScope :: Show a => Int -> Scope a -> String
 showScope i (Scope st chld) = "\n" ++ replicate (i*2) ' ' ++ 
                 "Level " ++ show i ++ ":\n" ++ 
                 replicate (i*2) ' ' ++  "—————————\n" ++
-                showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) ((reverse . Map.toList) chld) -- yarrrrr
+                showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) ((reverse . toList) chld) -- yarrrrr
 
 data Breadcrumb a = Breadcrumb { left  :: [Scope a]
                                , right :: Seq(Scope a)
@@ -204,7 +205,7 @@ fuse :: Scope a -> Zipper a -> Scope a
 fuse (Scope smtbl _ ) z =  Scope smtbl  (( chs . fromZipper) z)
 
 decList :: Scope a  -> [a]
-decList s = ((map snd) . Map.toList) s
+decList (Scope st _ ) = map snd $ Map.toList st
 -- maxMapppend (Scope tb _ _ ) f = (maximum . (map  f)  . toList) tb
 
 -- Swap size for the new one

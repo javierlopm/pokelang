@@ -69,7 +69,7 @@ initialState = ScopeNZip emptyScope
 -- Make a tuple with the String Scope and a Scope tree with globals and local
 -- scopes fused. Scopeception
 makeTable :: ScopeNZip -> ( Scope Declare , Scope Declare , Scope Declare)
-makeTable (ScopeNZip str enu gscp z) = ( str , enu , fuse gscp z)
+makeTable (ScopeNZip str enu gscp z _) = ( str , enu , fuse gscp z)
 
 -- Aliases for writing to the log
 mkErr = S.singleton . Left
@@ -112,10 +112,10 @@ exitScope :: OurMonad ()
 exitScope = onZip (fromJust.goUp)
 
 -- Toggle union
-toggleUnion :: OurMonad () -> OurMonad ()
+toggleUnion :: OurMonad () 
 toggleUnion = do isInUnion <- gets onUnion
                  state     <- get
-                 put state { onUnion = not isInUnion }
+                 put state { onUnion = (not isInUnion) }
 
 {-
     Check, add to scope, log functions
@@ -231,8 +231,9 @@ insertForwardData typ tk = do
         whathappened = "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
         build cons cons2  = cons (position tk) (cons2 (lexeme tk)) emptytuple emptyScope
-        declare = if isStruct typ then build Struct TypeStruct 
-                                  else build Union  TypeUnion 
+        declare = if isStruct typ 
+                     then build Struct TypeStruct 
+                     else build Union  TypeUnion 
         typeFound state =  fromJust $ getValS (lexeme tk) (scp state)
 
 -- Adding function to global scope and cleaning actual zipper
@@ -263,19 +264,19 @@ insertData :: (Token,Token) -> TypeTuple -> OurMonad ()
 insertData (typ,ident) tt = do 
     state <- get
     tell whathappened
-    onScope $ insert (lexeme ident) $ if isStruct typ
-                                      then build Struct 
-                                                 TypeStruct 
-                                                 state 
-                                                 False 
-                                                 ((ofs . fromZipper . zipp) state)
-                                      else build Union 
-                                                 TypeUnion 
-                                                 state 
-                                                 True
-                                                 (maxMapped 
-                                                    ((fromZipper . zipp) state)
-                                                    varSize)
+    let newData = if isStruct typ
+                  then build Struct 
+                             TypeStruct 
+                             state 
+                             False 
+                             ((ofs . fromZipper . zipp) state)
+                  else do size <- maxMapped ((fromZipper . zipp) state)
+                          build Union 
+                                TypeUnion 
+                                state 
+                                True
+                                size
+    onScope $ insert (lexeme ident) newData
     onZip (const (fromScope emptyScope))
   where whathappened = mkLog $ "Adding struct/union "  ++ lexeme ident ++ " at "++ linecol
         linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident
@@ -284,13 +285,12 @@ insertData (typ,ident) tt = do
                                               tt 
                                               (fromZipper (zipp state))
                                               size
-Monad m => (a -> b -> m a) -> a -> [b] -> m a
-maxMapped  :: Scope a  -> OurMonad(Int)
+maxMapped  :: Scope Declare  -> OurMonad(Int)
 maxMapped s  = foldM searchAndMax 0 (decList s)
     where searchAndMax lstMax dec = do newSize <- varSize dec
-                                               if newSize >= lastMax
-                                               then return newSize
-                                               else return lastMax
+                                       if newSize >= lstMax
+                                       then return newSize
+                                       else return lstMax
 
 --revisar y obtener tam
 varSize :: Declare -> OurMonad(Int)
