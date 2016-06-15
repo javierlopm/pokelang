@@ -336,11 +336,11 @@ insertDeclareInScope dcltype   (TkId (l,c) lexeme ) isGlob readonly = do
                    let newOffset = (Offset . align . getOfs . fst) $ zipp state
                    sz <- varSize dcltype
                    if inUnion
-                   then onScope $ insert  lexeme (scopevar newOffset) 0 --Se debe CAMBIAR -- (newOffset + size )
-                   else onScope $ insert0 lexeme (scopevar newOffset) -- (newOffset + size )
+                   then onScope $ insert  lexeme (scopevar newOffset) (bytes newOffset + sz ) 
+                   else onScope $ insert0 lexeme (scopevar newOffset) sz 
          else do 
               tellLog whathappened
-              (onZip . apply) $ insert lexeme (scopevar Lable) 0 --Se debe CAMBIAR
+              (onZip . apply) $ insert lexeme (scopevar Label) 0 --Se debe CAMBIAR
     where error1       = generror ++ " in actual scope."
           error2       = generror ++ " in global scope."
           scopevar  d  = (Variable (l,c) dcltype readonly d)
@@ -437,7 +437,7 @@ checkRecursiveDec dataTok typeSec = do
 
 builtinFunctions :: SymTable
 builtinFunctions = foldl insertFunc emptyScope declarations  --REVISAR
-  where insertFunc scp (str,dec) = insert str dec scp
+  where insertFunc scp (str,dec) = insert str dec 0 scp 
         printable t    = or $ map ($t) [(==TypeString),isPointer,isBasic,(==TypeEnumCons)]          
         makeFunc types = (Function (0,0) (makeTypeTuple types) emptyScope)
         declarations = [

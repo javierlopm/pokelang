@@ -52,8 +52,8 @@ type Pos = (Int,Int)
 
 -- Las constantes enumeradas no deberian estar en un scope grande y universal?
 
-data Direction = Lable
-               | Offset Int
+data Direction = Label
+               | Offset { bytes :: Int}
                deriving(Show)
 
 -- Declarations might be functions,variables or structure types
@@ -165,6 +165,7 @@ instance Show Type where
   show (TypeEmptyArray  t     ) = "Array to "   ++ show t
   show (TypeArray       t dim ) = "Array size " ++ show dim ++ " of " ++ show t
   show (TypeFunction    l     ) = "(" ++ (concat . intersperse "->" . (map show) . F.toList) l ++ ")"
+  show blah = "dunno"
 
 
 -- lists

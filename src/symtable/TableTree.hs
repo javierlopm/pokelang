@@ -23,7 +23,7 @@
     fuse,
    -- maxMapped,
     decList,
-    changeSize,
+    changeSize
     ) where
 
 import qualified Data.Map.Strict as Map
@@ -48,10 +48,8 @@ data Action = DownA | RightA | RootA | StChild
           deriving(Eq,Show) 
 
 -- Scope
-data Scope a = Scope { tb:: (SymbolTable a), offset:: Int , chs :: (Seq(Scope a))}
+data Scope a = Scope { tb:: (SymbolTable a), ofs:: Int , chs :: (Seq(Scope a))}
 
-ofs :: Scope a -> Int
-ofs = undefined
 
 instance  Show a => Show (Scope a) where
   show = showScope 0
@@ -94,9 +92,9 @@ enterScope'' (Scope symtable ofs l)  = Scope symtable ofs ( l |> (addSOffset emp
 insert :: String -> a -> Int -> Scope a  -> Scope a
 insert key val size (Scope symtable ofs chl)  = Scope (addEntry key val symtable) (ofs+size)  chl
 
-insert0 :: String -> a -> Scope a -> Scope a
-insert0 = undefined
--- insert0 key val (Scope symtable offset chl) = Scope (addEntry key val symtable) offset chl
+insert0 :: String -> a -> Int -> Scope a -> Scope a
+insert0 key val size (Scope symtable ofs chl)  = Scope (addEntry key val symtable) newsize  chl
+    where newsize = max size ofs
 
 -- Zipper
 fromScope :: Scope a -> Zipper a
