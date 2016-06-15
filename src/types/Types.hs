@@ -55,8 +55,8 @@ type Pos = (Int,Int)
 data Declare = Function  { pos::Pos, storedType::Type, fields   ::(Scope Declare)}
              | Variable  { pos::Pos, storedType::Type, readonly :: Bool  } -- , storedTypeV::PrimType -- No se necesaita todavia
              | Cons      { pos::Pos } 
-             | Struct    { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare), size ::Int}
-             | Union     { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare), size ::Int} 
+             | Struct    { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare)}
+             | Union     { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare)} 
              | Enum      { pos::Pos, typeName ::String, fields::(Scope Declare)}
              | EnumCons  { pos::Pos, name :: String,ord  :: Int} 
              | EmptyWithType { storedType :: Type } -- Forward declare with type
@@ -77,15 +77,15 @@ instance Show Declare where
   show (Enum   (l,c) n   scp ) = "Enum("++show l++","++show c++ ") "   
                                   ++ "\nType for variables: Enum "++ n 
                                   ++ "\nScope: " ++ showScope 1 scp ++ "\n"
-  show (Union  (l,c) n t scp s ) = "Union("++show l++","++show c++ ") "  
+  show (Union  (l,c) n t scp ) = "Union("++show l++","++show c++ ") "  
                                   ++ "\nType for variables: " ++ show n
                                   ++ "\nDeclare Type: " ++ show (TypeFunction t) 
-                                  ++ "\nSize: "  ++ show s 
+                                  -- ++ "\nSize: "  ++ show s 
                                   ++ "\nScope: " ++ showScope 1 scp ++ "\n"
-  show (Struct (l,c) n t scp s ) = "Struct("++show l++","++show c++ ") " 
+  show (Struct (l,c) n t scp ) = "Struct("++show l++","++show c++ ") " 
                                   ++ "\nType for variables: " ++ show n
                                   ++ "\nDeclare Type: " ++ show (TypeFunction t) 
-                                  ++ "\nSize: "  ++ show s 
+                                  -- ++ "\nSize: "  ++ show s 
                                   ++ "\nScope: " ++ showScope 1 scp ++ "\n"
 
 -- Polymorphic store type
@@ -183,8 +183,8 @@ getFieldType :: Type -> Type
 getFieldType (TypeField _ t) = t
 
 dataNameMatches :: Declare -> String -> Bool
-dataNameMatches (Struct _ (TypeStruct name) _ _ _ ) str = name == str
-dataNameMatches (Union  _ (TypeUnion name)  _ _ _ ) str = name == str
+dataNameMatches (Struct _ (TypeStruct name) _ _ ) str = name == str
+dataNameMatches (Union  _ (TypeUnion name)  _ _ ) str = name == str
 dataNameMatches  Empty  _             = True
 dataNameMatches _ _                    = False
 
