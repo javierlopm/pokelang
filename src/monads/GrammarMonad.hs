@@ -308,18 +308,24 @@ insertEnum id_ = do
                                                       (lexeme id_) 
                                                       (fromZipper (zipp state))) 0 --Se debe CAMBIAR
 
-insertEnumCons :: Int -> Token -> OurMonad(Int)
-insertEnumCons ord (TkEnumCons (l,c) str) = do
+insertLEnumCons :: [(Int,Token)] -> String -> OurMonad()
+insertLEnumCons [] _ = return()
+insertLEnumCons [(ord,tok)] sdt  = insertEnumCons ord tok sdt >> return ()
+insertLEnumCons ((ord,tok):sl) sdt = do
+  aux <- insertEnumCons ord tok sdt
+  insertLEnumCons ((aux,snd(head sl)):tail sl) sdt
+
+insertEnumCons :: Int -> Token -> String -> OurMonad(Int)
+insertEnumCons ord (TkEnumCons (l,c) str) sdt = do
     state <- get
     if isInScope (enuTbl state) str
         then tell error1
         else do tell whathappened
-                onEnuScope $ insert str (EnumCons (l,c) str ord) 0 --Se debe CAMBIAR
+                onEnuScope $ insert str (EnumCons (l,c) sdt str ord) 0
     return (succ (ord))
   where error1       = mkErr $ "Error:" ++ linecol ++ " enum constant " ++ str ++ " of Datatype"++sdt++", was already declared in this scope."
         whathappened = mkLog $ "Enum "  ++ str ++ " add at "    ++ linecol
         linecol      = show l ++":"++ show c
-
 
 insertDeclareInScope :: Type -> Token -> Bool -> Bool -> OurMonad ()
 insertDeclareInScope  TypeVoid (TkId (l,c) lexeme ) _  _ = (tellError .concat) $ ["Error:",show l,":",show c," ",lexeme ," is VOIDtorb, but it may only be instanced as reference."]

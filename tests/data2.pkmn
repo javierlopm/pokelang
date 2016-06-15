@@ -18,14 +18,14 @@ ENUManyte pokeDaysLaborables {
     Martes}
 
 
-
-funcball VOIDtorb kease(pINTachu g):
-    pINTachu h;
-
-vamo_a_calmano
-
-
 funcball VOIDtorb hitMAINlee(pINTachu g):
     pINTachu h;
-
+    vamo_a_empeza
+        pINTachu h;
+    vamo_a_calmano
+    vamo_a_empeza
+        pINTachu h;
+        STRUCTabuzz pokepanita erNovich;
+        pINTachu g;
+    vamo_a_calmano
 vamo_a_calmano
