@@ -256,7 +256,7 @@ insertFunction tuple ident clean = do
                                                        (fromZipper (zipp state))) 0 --Se debe CAMBIAR
                                 if clean
                                     then onZip (const (fromScope emptyScope)) -- Clean zipper
-                                    else onZip enterScope
+                                    else return ()
 
 
 -- Check,add, log for structs and union
@@ -332,15 +332,17 @@ insertDeclareInScope dcltype   (TkId (l,c) lexeme ) isGlob readonly = do
               then tellError error2
               else do 
                    tellLog whathappened
-                   inUnion <- gets onUnion
-                   let newOffset = (Offset . align . getOfs . fst) $ zipp state
-                   sz <- varSize dcltype
-                   if inUnion
-                   then onScope $ insert  lexeme (scopevar newOffset) (bytes newOffset + sz ) 
-                   else onScope $ insert0 lexeme (scopevar newOffset) sz 
+                   onScope  $ insert lexeme (scopevar Label) 0 --Se debe CAMBIAR
          else do 
               tellLog whathappened
-              (onZip . apply) $ insert lexeme (scopevar Label) 0 --Se debe CAMBIAR
+              inUnion <- gets onUnion
+              let (newofs,padd) = (align . getOfs . fst) $ zipp state
+              sz <- varSize dcltype
+              --tellError $ "Puse padding de " ++ show (newofs,padd) ++ " en " ++ lexeme
+              if inUnion
+              then (onZip . apply) $ insert0 lexeme (scopevar (Offset 0))        sz 
+              else (onZip . apply) $ insert  lexeme (scopevar (Offset newofs))  (padd+sz) 
+
     where error1       = generror ++ " in actual scope."
           error2       = generror ++ " in global scope."
           scopevar  d  = (Variable (l,c) dcltype readonly d)
@@ -436,19 +438,20 @@ checkRecursiveDec dataTok typeSec = do
   where error1 =  strError (position dataTok) "Data type" (lexeme dataTok) "cannot be recursive. (Pssss try to use a pointer)"
 
 builtinFunctions :: SymTable
-builtinFunctions = foldl insertFunc emptyScope declarations  --REVISAR
-  where insertFunc scp (str,dec) = insert str dec 0 scp 
-        printable t    = or $ map ($t) [(==TypeString),isPointer,isBasic,(==TypeEnumCons)]          
-        makeFunc types = (Function (0,0) (makeTypeTuple types) emptyScope)
-        declarations = [
-          ("liberar"       , makeFunc [TypeSatisfies isPointer, TypeVoid] ),
-          ("vamo_a_imprimi", makeFunc [TypeSatisfies printable, TypeVoid] ),
-          ("atrapar"       , makeFunc [TypeInt      , TypeVoid  ] ),
-          ("intToFLoat"    , makeFunc [TypeInt      , TypeFloat ] ),
-          ("floor"         , makeFunc [TypeFloat    , TypeInt   ] ),
-          ("celing"        , makeFunc [TypeFloat    , TypeInt   ] ),
-          ("succ"          , makeFunc [TypeEnumCons , TypeInt   ] ),
-          ("pred"          , makeFunc [TypeEnumCons , TypeInt   ] ),
-          ("pidGET"        , makeFunc [TypeEnumCons , TypeInt   ] )
-          ]
+builtinFunctions = emptyScope
+--builtinFunctions = foldl insertFunc emptyScope declarations  --REVISAR
+--  where insertFunc scp (str,dec) = insert str dec 0 scp 
+--        printable t    = or $ map ($t) [(==TypeString),isPointer,isBasic,(==TypeEnumCons)]          
+--        makeFunc types = (Function (0,0) (makeTypeTuple types) emptyScope)
+--        declarations = [
+--          ("liberar"       , makeFunc [TypeSatisfies isPointer, TypeVoid] ),
+--          ("vamo_a_imprimi", makeFunc [TypeSatisfies printable, TypeVoid] ),
+--          ("atrapar"       , makeFunc [TypeInt      , TypeVoid  ] ),
+--          ("intToFLoat"    , makeFunc [TypeInt      , TypeFloat ] ),
+--          ("floor"         , makeFunc [TypeFloat    , TypeInt   ] ),
+--          ("celing"        , makeFunc [TypeFloat    , TypeInt   ] ),
+--          ("succ"          , makeFunc [TypeEnumCons , TypeInt   ] ),
+--          ("pred"          , makeFunc [TypeEnumCons , TypeInt   ] ),
+--          ("pidGET"        , makeFunc [TypeEnumCons , TypeInt   ] )
+          --]
 -- ("SIZEther",       (Function (0,0) (makeTypeTuple [TypeSatisfies isBasic, TypeInt]) emptyScope)),

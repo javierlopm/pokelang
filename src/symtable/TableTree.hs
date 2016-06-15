@@ -56,7 +56,7 @@ instance  Show a => Show (Scope a) where
 
 showScope :: Show a => Int -> Scope a -> String
 showScope i (Scope st ofs chld) = "\n" ++ replicate (i*2) ' ' ++ 
-                "Level " ++ show i ++ ", Offset"++show ofs++":\n" ++ 
+                "Level " ++ show i ++ ", Offset: "++show ofs++"\n" ++ 
                 replicate (i*2) ' ' ++  "—————————\n" ++
                 showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) ((reverse . toList) chld) -- yarrrrr
 

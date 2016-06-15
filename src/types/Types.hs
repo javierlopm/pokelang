@@ -301,9 +301,9 @@ getSize (TypeSatisfies _ ) = error "wtf? really?"
 
 -- Given a position, it returns the padding needed before insert and the new
 -- offset
-align :: Int -> Int
-align lastPos = if r == 0 then lastPos
-                          else lastPos+r
+align :: Int -> (Int,Int)
+align lastPos = if r == 0 then (lastPos      ,0)
+                          else (lastPos+(4-r),4-r)
     where r = rem lastPos 4
 
 {-
