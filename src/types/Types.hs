@@ -32,8 +32,8 @@ module Types(
     tuplesMatch,
     lengthMatches,
     makeTypeTuple,
-    getSize
-
+    getSize,
+    align
     -- addLeftType,
     -- singleType,
 ) where
@@ -282,7 +282,7 @@ getSize :: Type -> Int
 getSize TypeInt          = 4  -- Basic types are going to change
 getSize TypeBool         = 1
 getSize TypeChar         = 1
-getSize TypeFloat        = 8
+getSize TypeFloat        = 4
 getSize (TypeEnum _ )    = 4
 getSize (TypePointer  _) = 4
  
@@ -298,6 +298,12 @@ getSize TypeString     = error "Global variable"
 getSize (TypeSatisfies _ ) = error "wtf? really?"
 -- size TypeEmptyArray = 4
 
+-- Given a position, it returns the padding needed before insert and the new
+-- offset
+align :: Int -> Int
+align lastPos = if r == 0 then lastPos
+                          else lastPos+r
+    where r = rem lastPos 4
 
 {-
     Declare type transformation functions

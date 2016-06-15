@@ -280,15 +280,14 @@ insertData (typ,ident) tt = do
 
 
 --revisar y obtener tam
-varSize :: Declare -> OurMonad(Int)
-varSize (Function _ _ _) = error "No size for function"
-varSize (Variable _ (TypeStruct s) _ _) = do 
+varSize :: Type -> OurMonad(Int)
+varSize (TypeStruct s) = do 
     global <- gets scp
     return $ (ofs . fields . fromJust) $ getValS s global
-varSize (Variable _ (TypeUnion  s) _ _) = do 
+varSize (TypeUnion  s) = do 
     global <- gets scp
     return $ (ofs . fields . fromJust) $ getValS s global
-varSize (Variable _ ty _ _ ) = return( getSize ty )
+varSize ty = return( getSize ty )
 
 -- Check,add, log for enums
 insertEnum :: Token -> OurMonad ()
@@ -324,23 +323,27 @@ insertEnumCons ord (TkEnumCons (l,c) str) = do
 
 insertDeclareInScope :: Type -> Token -> Bool -> Bool -> OurMonad ()
 insertDeclareInScope  TypeVoid (TkId (l,c) lexeme ) _  _ = (tellError .concat) $ ["Error:",show l,":",show c," ",lexeme ," is VOIDtorb, but it may only be instanced as reference."]
-insertDeclareInScope dcltype  (TkId (l,c) lexeme ) isGlob readonly = do 
+insertDeclareInScope dcltype   (TkId (l,c) lexeme ) isGlob readonly = do 
     state <- get
     if isMember (zipp state) lexeme -- Most recent scope
-      then tellError error1
-      else if isGlob 
-            then if isInScope (scp state) lexeme -- global scope enum
-                    then tellError error2
-                    else do tellLog whathappened
-                            inUnion <- gets onUnion
-                            if inUnion
-                                then onScope $ insert  lexeme scopevar  
-                                else onScope $ insert0 lexeme scopevar
-            else do tellLog whathappened
-                    (onZip . apply) $ insert lexeme scopevar
+    then tellError error1
+    else if isGlob 
+         then if isInScope (scp state) lexeme -- global scope enum
+              then tellError error2
+              else do 
+                   tellLog whathappened
+                   inUnion <- gets onUnion
+                   let newOffset = (Offset . align . ofs . fst) $ zipp state
+                   sz <- varSize dcltype
+                   if inUnion
+                   then onScope $ insert  lexeme (scopevar newOffset) -- (newOffset + size )
+                   else onScope $ insert0 lexeme (scopevar newOffset) -- (newOffset + size )
+         else do 
+              tellLog whathappened
+              (onZip . apply) $ insert lexeme (scopevar Lable)
     where error1       = generror ++ " in actual scope."
           error2       = generror ++ " in global scope."
-          scopevar     = (Variable (l,c) dcltype readonly (Offset 0))
+          scopevar  d  = (Variable (l,c) dcltype readonly d)
           generror     = "Error:" ++ show l ++":"++show c ++" redefinition of " ++ lexeme
           whathappened = "Added " ++ lexeme ++" at "++show l++":"++show c ++ " with type " ++ show dcltype
 
