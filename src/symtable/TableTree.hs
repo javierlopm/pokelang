@@ -10,6 +10,7 @@
     emptyScope,
     enterScope,
     insert,
+    insert0,
     isMember,
     isInScope,
     lookUp,
@@ -17,9 +18,18 @@
     fromZipper,
     getVal,
     getValS,
+<<<<<<< HEAD
     getOfs
 ,    showScope,
     fuse
+=======
+    showScope,
+    fuse,
+   -- maxMapped,
+    decList,
+    changeSize,
+    ofs
+>>>>>>> origin/javier
     ) where
 
 import qualified Data.Map.Strict as Map
@@ -28,7 +38,6 @@ import Data.Foldable(toList)
 import Data.Sequence(empty,viewl,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
 import Data.Maybe(fromJust,isNothing)
 import Data.List (intercalate)
-
 
 
 -- Tabla de símbolos
@@ -46,6 +55,9 @@ data Action = DownA | RightA | RootA | StChild
 
 -- Scope
 data Scope a = Scope { tb:: (SymbolTable a), offset:: Int , chs :: (Seq(Scope a))}
+
+ofs :: Scope a -> Int
+ofs = undefined
 
 instance  Show a => Show (Scope a) where
   show = showScope 0
@@ -88,6 +100,9 @@ enterScope'' (Scope symtable ofs l)  = Scope symtable ofs ( l |> (addSOffset emp
 insert :: String -> a -> Scope a -> Int -> Scope a
 insert key val (Scope symtable ofs chl) size = Scope (addEntry key val symtable) (ofs+size)  chl
 
+insert0 :: String -> a -> Scope a -> Scope a
+insert0 = undefined
+-- insert0 key val (Scope symtable offset chl) = Scope (addEntry key val symtable) offset chl
 
 -- Zipper
 fromScope :: Scope a -> Zipper a
@@ -203,3 +218,11 @@ lookUp zip key = if isNothing mySearch
 
 fuse :: Scope a -> Zipper a -> Scope a
 fuse (Scope smtbl ofs _ ) z =  Scope smtbl ofs (( chs . fromZipper) z)
+
+decList :: Scope a  -> [a]
+decList (Scope st ofs _ ) = map snd $ Map.toList st
+-- maxMapppend (Scope tb _ _ ) f = (maximum . (map  f)  . toList) tb
+
+-- Swap size for the new one
+changeSize :: Scope a -> Int -> Scope a 
+changeSize _ _ = undefined

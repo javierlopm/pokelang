@@ -212,7 +212,7 @@ Dcls:  {- λ -}                          {% return () }
     | Dcls FWD FUNC Reference ID Ent0 "(" Parameters ")" ";"   {% insertForwardFunc (addType $8 $4) $5 }
     | Dcls ENUMDEC DATAID "{" EnumConsList "}"  {% insertEnum $3 }
     | Dcls Ent5 "{" FieldsList "}" {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4  }
-    | Dcls Ent6 "{" FieldsList "}" {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4  }
+    | Dcls Ent6 "{" FieldsList Ent7 "}" {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4  }
     | Dcls FUNC  Ent2  ":" Ent0 SmplDcls Ins END -- Ent0 Ent5
     {% insertFunction (snd $3) (fst $3) True }
 
@@ -298,10 +298,15 @@ Ent2 : Reference ID "(" Parameters  ")" {% insertFunction ($4 `addType` $1) $2 F
 Ent3 : ID          {%  onZip enterScope >>
                          insertDeclareInScope TypeInt $1 False True >>
                             return $1                             } 
-Ent4 : DATAID ID   {% onZip enterScope >> checkEnumAndInsert $1 $2 >> return $1 } 
-Ent5 : STRUCTDEC  DATAID {% insertForwardData $1 $2 >> return ($1,$2)}
-Ent6 : UNIONDEC   DATAID {% insertForwardData $1 $2 >> return ($1,$2)}
-
+Ent4 : DATAID ID   {% onZip enterScope >> 
+                            checkEnumAndInsert $1 $2 >> 
+                                return $1 } 
+Ent5 : STRUCTDEC  DATAID {% insertForwardData $1 $2 >> 
+                                return ($1,$2)}
+Ent6 : UNIONDEC   DATAID {% toggleUnion >> 
+                                insertForwardData $1 $2 >> 
+                                    return ($1,$2)}
+Ent7 : {- λ -}    {% toggleUnion }
 
 {
 
