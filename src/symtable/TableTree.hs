@@ -18,18 +18,12 @@
     fromZipper,
     getVal,
     getValS,
-<<<<<<< HEAD
-    getOfs
-,    showScope,
-    fuse
-=======
+    getOfs,
     showScope,
     fuse,
    -- maxMapped,
     decList,
     changeSize,
-    ofs
->>>>>>> origin/javier
     ) where
 
 import qualified Data.Map.Strict as Map

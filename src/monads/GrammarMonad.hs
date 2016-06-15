@@ -211,7 +211,7 @@ insertForwardFunc typ tk = do
     if isInGlobals state tk
         then tellError error1
         else do tellLog whathappened
-                onScope $ insert (lexeme tk) (EmptyWithType (TypeFunction typ))
+                onScope $ insert (lexeme tk) (EmptyWithType (TypeFunction typ)) 
     onZip (const (fromScope emptyScope)) -- Cleaning scope bc of parameters
   where error1       = "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
         whathappened = "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
@@ -264,7 +264,7 @@ insertData :: (Token,Token) -> TypeTuple -> OurMonad ()
 insertData (typ,ident) tt = do 
     state <- get
     tell whathappened
-    let size = ((ofs . fromZipper . zipp) state)
+    let size = ((getOfs . fromZipper . zipp) state)
     let newData = if isStruct typ
                   then build Struct TypeStruct state False
                   else build Union  TypeUnion  state True 
@@ -283,10 +283,10 @@ insertData (typ,ident) tt = do
 varSize :: Type -> OurMonad(Int)
 varSize (TypeStruct s) = do 
     global <- gets scp
-    return $ (ofs . fields . fromJust) $ getValS s global
+    return $ (getOfs . fields . fromJust) $ getValS s global
 varSize (TypeUnion  s) = do 
     global <- gets scp
-    return $ (ofs . fields . fromJust) $ getValS s global
+    return $ (getOfs . fields . fromJust) $ getValS s global
 varSize ty = return( getSize ty )
 
 -- Check,add, log for enums
@@ -333,7 +333,7 @@ insertDeclareInScope dcltype   (TkId (l,c) lexeme ) isGlob readonly = do
               else do 
                    tellLog whathappened
                    inUnion <- gets onUnion
-                   let newOffset = (Offset . align . ofs . fst) $ zipp state
+                   let newOffset = (Offset . align . getOfs . fst) $ zipp state
                    sz <- varSize dcltype
                    if inUnion
                    then onScope $ insert  lexeme (scopevar newOffset) -- (newOffset + size )
