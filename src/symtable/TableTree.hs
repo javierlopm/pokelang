@@ -22,7 +22,7 @@
     fuse
     ) where
 
-import qualigetOfsfied Data.Map.Strict as Map
+import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as DS
 import Data.Foldable(toList)
 import Data.Sequence(empty,viewl,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
@@ -52,7 +52,7 @@ instance  Show a => Show (Scope a) where
 
 showScope :: Show a => Int -> Scope a -> String
 showScope i (Scope st ofs chld) = "\n" ++ replicate (i*2) ' ' ++ 
-                "Level " ++ show i ++ ", Offset"++ofs++":\n" ++ 
+                "Level " ++ show i ++ ", Offset"++show ofs++":\n" ++ 
                 replicate (i*2) ' ' ++  "—————————\n" ++
                 showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) ((reverse . toList) chld) -- yarrrrr
 
@@ -82,7 +82,8 @@ enterScope' :: Scope a -> Scope a
 enterScope' (Scope symtable ofs l)  = Scope symtable ofs ((addSOffset emptyScope ofs) <| l)
 --BEezelbu es mi favorito. Despues de chiabe, ofc
 enterScope'' :: Scope a -> Scope a
-enterScope'' (Scope symtable l)  = Scope symtable ( l |> (addSOffset emptyScope ofs) ) --? Revisar
+enterScope'' (Scope symtable ofs l)  = Scope symtable ofs ( l |> (addSOffset emptyScope ofs) ) 
+-- Revisar
 
 insert :: String -> a -> Scope a -> Int -> Scope a
 insert key val (Scope symtable ofs chl) size = Scope (addEntry key val symtable) (ofs+size)  chl
@@ -158,7 +159,7 @@ getOfs (Scope st ofs chld) = ofs
 
 
 wentUp :: Zipper a -> Seq(Scope a) -> Zipper a
-wentUp (scp, (Breadcrumb lft rgt (DownA:lact)))   acc = ((Scope (getST (head lft)) (scp<|acc)),(Breadcrumb (tail lft) rgt lact ))
+wentUp (scp, (Breadcrumb lft rgt (DownA:lact)))   acc = ((Scope (getST (head lft)) (getOfs (head lft)) (scp<|acc)),(Breadcrumb (tail lft) rgt lact ))
 wentUp (scp, (Breadcrumb lft rgt (StChild:lact))) acc = wentUp (scp, (Breadcrumb lft lrBr (lact))) (acc|>hrBr)
               where 
                 (hrBr :< lrBr) = viewl rgt
@@ -180,16 +181,16 @@ goTop inp@(scp, (Breadcrumb lft rgt act)) = if (act==[RootA] || act==[]) then in
                          else  goTop $ fromJust $ goUp inp
 
 isMember :: Zipper a -> String -> Bool
-isMember ((Scope st chld),brc) key = Map.member key st
+isMember ((Scope st _ _),brc) key = Map.member key st
 
 isInScope :: Scope a -> String -> Bool
-isInScope (Scope st _ ) key = Map.member key st
+isInScope (Scope st _ _ ) key = Map.member key st
 
 getValS :: String -> Scope a -> Maybe a
-getValS key (Scope st chld)= Map.lookup key st
+getValS key (Scope st _ _)= Map.lookup key st
 
 getVal :: Zipper a -> String -> Maybe a
-getVal ((Scope st chld),brc) key = Map.lookup key st
+getVal ((Scope st _ _),brc) key = Map.lookup key st
 
 lookUp  :: Zipper a -> String -> Maybe a
 lookUp zip key = if isNothing mySearch
@@ -201,4 +202,4 @@ lookUp zip key = if isNothing mySearch
           mayUp    = (goUp zip)
 
 fuse :: Scope a -> Zipper a -> Scope a
-fuse (Scope smtbl _ ) z =  Scope smtbl  (( chs . fromZipper) z)
+fuse (Scope smtbl ofs _ ) z =  Scope smtbl ofs (( chs . fromZipper) z)
