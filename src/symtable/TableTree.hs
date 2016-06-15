@@ -91,8 +91,8 @@ enterScope'' :: Scope a -> Scope a
 enterScope'' (Scope symtable ofs l)  = Scope symtable ofs ( l |> (addSOffset emptyScope ofs) ) 
 -- Revisar
 
-insert :: String -> a -> Scope a -> Int -> Scope a
-insert key val (Scope symtable ofs chl) size = Scope (addEntry key val symtable) (ofs+size)  chl
+insert :: String -> a -> Int -> Scope a  -> Scope a
+insert key val size (Scope symtable ofs chl)  = Scope (addEntry key val symtable) (ofs+size)  chl
 
 insert0 :: String -> a -> Scope a -> Scope a
 insert0 = undefined

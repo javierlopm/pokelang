@@ -198,7 +198,7 @@ insertEmpty tk = do
                   then tellLog "Nothing happened. Tryng to insert empty when forward declaration found"
                   else tellLog error1
         else do tellLog whathappened
-                onScope $ insert (lexeme tk) Empty
+                onScope $ insert (lexeme tk) Empty 0 --Se debe CAMBIAR
   where error1       = "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
         whathappened = "Adding " ++ lexeme tk ++ " as soon as possible at " ++ linecol ++ "with type Empty" 
         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
@@ -211,7 +211,7 @@ insertForwardFunc typ tk = do
     if isInGlobals state tk
         then tellError error1
         else do tellLog whathappened
-                onScope $ insert (lexeme tk) (EmptyWithType (TypeFunction typ)) 
+                onScope $ insert (lexeme tk) (EmptyWithType (TypeFunction typ)) 0 --Se debe CAMBIAR
     onZip (const (fromScope emptyScope)) -- Cleaning scope bc of parameters
   where error1       = "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
         whathappened = "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
@@ -223,10 +223,10 @@ insertForwardData typ tk = do
     if isInGlobals state tk
         then if storedType (typeFound state) == storedType declare
                 then do tellLog whathappened
-                        onScope $ insert (lexeme tk)  declare
+                        onScope $ insert (lexeme tk)  declare 0 --Se debe CAMBIAR
                 else tellError error1
         else do tellLog whathappened
-                onScope $ insert (lexeme tk)  declare
+                onScope $ insert (lexeme tk)  declare 0 --Se debe CAMBIAR
   where error1       = "Error:" ++ linecol ++" type of " ++ lexeme tk ++ " doesn't match."
         whathappened = "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
@@ -253,7 +253,7 @@ insertFunction tuple ident clean = do
                                 onScope $ insert (lexeme ident) 
                                              (Function (position ident) 
                                                        (TypeFunction tuple) 
-                                                       (fromZipper (zipp state)))
+                                                       (fromZipper (zipp state))) 0 --Se debe CAMBIAR
                                 if clean
                                     then onZip (const (fromScope emptyScope)) -- Clean zipper
                                     else onZip enterScope
@@ -268,7 +268,7 @@ insertData (typ,ident) tt = do
     let newData = if isStruct typ
                   then build Struct TypeStruct state False
                   else build Union  TypeUnion  state True 
-    onScope $ insert (lexeme ident) newData
+    onScope $ insert (lexeme ident) newData 0 --Se debe CAMBIAR
     onZip (const (fromScope emptyScope))
   where whathappened = mkLog $ "Adding struct/union "  ++ lexeme ident ++ " at "++ linecol
         linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident
@@ -306,7 +306,7 @@ insertEnum id_ = do
                                onScope $ insert (lexeme id_) 
                                                 (Enum (position id_) 
                                                       (lexeme id_) 
-                                                      (fromZipper (zipp state)))
+                                                      (fromZipper (zipp state))) 0 --Se debe CAMBIAR
 
 insertEnumCons :: Int -> Token -> OurMonad(Int)
 insertEnumCons ord (TkEnumCons (l,c) str) = do
@@ -314,7 +314,7 @@ insertEnumCons ord (TkEnumCons (l,c) str) = do
     if isInScope (enuTbl state) str
         then tell error1
         else do tell whathappened
-                onEnuScope $ insert str (EnumCons (l,c) str ord)
+                onEnuScope $ insert str (EnumCons (l,c) str ord) 0 --Se debe CAMBIAR
     return (succ (ord))
   where error1       = mkErr $ "Error:" ++ linecol ++ " enum constant " ++ str ++ " already declared in this scope."
         whathappened = mkLog $ "Enum "  ++ str ++ " add at "    ++ linecol
@@ -336,11 +336,11 @@ insertDeclareInScope dcltype   (TkId (l,c) lexeme ) isGlob readonly = do
                    let newOffset = (Offset . align . getOfs . fst) $ zipp state
                    sz <- varSize dcltype
                    if inUnion
-                   then onScope $ insert  lexeme (scopevar newOffset) -- (newOffset + size )
+                   then onScope $ insert  lexeme (scopevar newOffset) 0 --Se debe CAMBIAR -- (newOffset + size )
                    else onScope $ insert0 lexeme (scopevar newOffset) -- (newOffset + size )
          else do 
               tellLog whathappened
-              (onZip . apply) $ insert lexeme (scopevar Lable)
+              (onZip . apply) $ insert lexeme (scopevar Lable) 0 --Se debe CAMBIAR
     where error1       = generror ++ " in actual scope."
           error2       = generror ++ " in global scope."
           scopevar  d  = (Variable (l,c) dcltype readonly d)
@@ -354,7 +354,7 @@ checkEnumAndInsert (TkDId (lD,cD) lexemeD) (TkId (l,c) lexeme) = do
     if isInScope (scp state) lexemeD  -- Check in globals for enum
         then if enumMatches (fromJust (getValS lexeme (scp state))) lexemeD -- if its enum and has same name --enumMatches (fromJust (getValS lexeme (scp state))) lexemeD
                 then do tellLog whathappened
-                        onScope $ insert lexeme (Variable (l,c) (TypeEnum lexemeD) True (Offset 0 ))
+                        onScope $ insert lexeme (Variable (l,c) (TypeEnum lexemeD) True (Offset 0 )) 0 --Se debe CAMBIAR
                 else tellError  $ error2 
         else tellError error1
   where whathappened  = "Iter enum at "++show lD ++":"++show cD++" inserted in scope"
@@ -436,7 +436,7 @@ checkRecursiveDec dataTok typeSec = do
   where error1 =  strError (position dataTok) "Data type" (lexeme dataTok) "cannot be recursive. (Pssss try to use a pointer)"
 
 builtinFunctions :: SymTable
-builtinFunctions = foldl insertFunc emptyScope declarations
+builtinFunctions = foldl insertFunc emptyScope declarations  --REVISAR
   where insertFunc scp (str,dec) = insert str dec scp
         printable t    = or $ map ($t) [(==TypeString),isPointer,isBasic,(==TypeEnumCons)]          
         makeFunc types = (Function (0,0) (makeTypeTuple types) emptyScope)
