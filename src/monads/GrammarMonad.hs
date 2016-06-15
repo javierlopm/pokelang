@@ -30,8 +30,8 @@ module GrammarMonad(
     checkFieldAccess,
     checkMain,
     tellError,
-    toggleUnion,
-    getDataSize
+    toggleUnion
+    -- getDataSize
 ) where
 
 import Control.Monad.RWS.Strict
@@ -230,7 +230,7 @@ insertForwardData typ tk = do
   where error1       = "Error:" ++ linecol ++" type of " ++ lexeme tk ++ " doesn't match."
         whathappened = "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
-        build cons cons2  = cons (position tk) (cons2 (lexeme tk)) emptytuple emptyScope
+        build cons cons2  = cons (position tk) (cons2 (lexeme tk)) emptytuple emptyScope 0
         declare = if isStruct typ 
                      then build Struct TypeStruct 
                      else build Union  TypeUnion 
@@ -264,33 +264,20 @@ insertData :: (Token,Token) -> TypeTuple -> OurMonad ()
 insertData (typ,ident) tt = do 
     state <- get
     tell whathappened
+    let size = ((ofs . fromZipper . zipp) state)
     let newData = if isStruct typ
-                  then build Struct 
-                             TypeStruct 
-                             state 
-                             False 
-                             ((ofs . fromZipper . zipp) state)
-                  else do size <- maxMapped ((fromZipper . zipp) state)
-                          build Union 
-                                TypeUnion 
-                                state 
-                                True
-                                size
+                  then build Struct TypeStruct state False size
+                  else build Union  TypeUnion  state True  size
     onScope $ insert (lexeme ident) newData
     onZip (const (fromScope emptyScope))
   where whathappened = mkLog $ "Adding struct/union "  ++ lexeme ident ++ " at "++ linecol
         linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident
-        build cons cons2 state isUnion size = cons (position ident) 
+        build cons cons2 state isUnion s = cons (position ident) 
                                               (cons2 (lexeme ident)) 
                                               tt 
                                               (fromZipper (zipp state))
-                                              size
-maxMapped  :: Scope Declare  -> OurMonad(Int)
-maxMapped s  = foldM searchAndMax 0 (decList s)
-    where searchAndMax lstMax dec = do newSize <- varSize dec
-                                       if newSize >= lstMax
-                                       then return newSize
-                                       else return lstMax
+                                              s
+
 
 --revisar y obtener tam
 varSize :: Declare -> OurMonad(Int)
