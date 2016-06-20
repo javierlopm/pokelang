@@ -3,7 +3,7 @@ nolex:   PokelangNoLex
 noparse: PokelangNoParser
 grammar: Grammar.hs
 
-alldirs = -ilexer -itokens -iparser -isymtable -itypes -imonads -ierrors
+alldirs = -ilexer -itokens -iparser -isymtable -itypes -imonads -ierrors -iinstructions
 
 Tokens.o: 
 	ghc  tokens/Tokens.hs
@@ -55,3 +55,4 @@ clean:
 	-rm -f monads/*.o monads/*.hi
 	-rm -f errors/*.o errors/*.hi
 	-rm -f types/*.o types/*.hi
+	-rm -f instructions/*.o instructions/*.hi
