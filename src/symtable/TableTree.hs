@@ -31,7 +31,7 @@ module TableTree(
 import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as DS
 import Data.Foldable(toList)
-import Data.Sequence(empty,viewl,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
+import Data.Sequence(empty,viewl,viewr,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
 import Data.Maybe(fromJust,isNothing)
 import Data.List (intercalate)
 
@@ -60,7 +60,7 @@ showScope :: Show a => Int -> Scope a -> String
 showScope i (Scope st ofs chld) = "\n" ++ replicate (i*2) ' ' ++ 
                 "Level " ++ show i ++ ", Offset: "++show ofs++"\n" ++ 
                 replicate (i*2) ' ' ++  "—————————\n" ++
-                showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) ((reverse . toList) chld) -- yarrrrr
+                showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) ((toList) chld) -- yarrrrr
 
 data Breadcrumb a = Breadcrumb { left  :: [Scope a]
                                , right :: Seq(Scope a)
@@ -120,7 +120,7 @@ goDown :: Zipper a -> Maybe (Zipper a)
 goDown (Scope symt ofc chls , breadcrumbs) 
     | DS.null chls  = Nothing
     | otherwise  = Just (ch,newBread)
-    where (ch :< chdrn) = viewl chls
+    where (chdrn :> ch) = viewr chls
           newBread = Breadcrumb ( Scope symt ofc empty : left breadcrumbs )
                                 (chdrn >< right breadcrumbs) 
                                 ( replicate (Data.Sequence.length chdrn) (StChild)  ++ (DownA:(action breadcrumbs)))  --Guarda ST sin hijos para luego ponerselos al subir
@@ -171,7 +171,7 @@ getOfs (Scope st ofs chld) = ofs
 
 
 wentUp :: Zipper a -> Seq(Scope a) -> Zipper a
-wentUp (scp, (Breadcrumb lft rgt (DownA:lact)))   acc = ((Scope (getST (head lft)) (getOfs (head lft)) (scp<|acc)),(Breadcrumb (tail lft) rgt lact ))
+wentUp (scp, (Breadcrumb lft rgt (DownA:lact)))   acc = ((Scope (getST (head lft)) (getOfs (head lft)) (acc|>scp)),(Breadcrumb (tail lft) rgt lact ))
 wentUp (scp, (Breadcrumb lft rgt (StChild:lact))) acc = wentUp (scp, (Breadcrumb lft lrBr (lact))) (acc|>hrBr)
               where 
                 (hrBr :< lrBr) = viewl rgt
