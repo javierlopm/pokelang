@@ -159,7 +159,7 @@ Ins : {- λ -}                   {% return TypeBool }
     | Ins RETURN   Exp   ";"    {% return TypeBool }
     | Ins RETURN         ";"    {% return TypeBool }
     | Ins EXIT           ";"    {% return TypeBool } 
-    | Ins READ  "(" ID      ")" ";" {% checkReadable $4 True  >> return TypeVoid} --revisar
+    | Ins READ  "("  ID   ")" ";" {% checkReadable $4 True  >> return TypeVoid} --revisar
     | Ins BEGIN Ent0 SmplDcls Ins END       {% exitScope   >> return TypeBool} -- No debe aceptar funciones
     | Ins IF Exp    ":" Ent0 SmplDcls Ins Ent1 NextIf Else END    {% return TypeBool  }
     | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                {% return TypeBool  }
@@ -269,7 +269,7 @@ Exp :
     -- Expresiones sobre lienzo.
     | Exp "!!" Exp            {% return (TypeBool,(snd $1)) }
     | Exp "."  ID             {% checkFieldAccess $1 $3 }
-    | ID "[" Exp "]" %prec ARR {% return (TypeBool,$1) }
+    | ID SquareList %prec ARR {% return (TypeBool,$1) }
     --Llamadas a funciones
     | ID "(" ExpList ")"   {% checkFunctionCall $1 $3 } 
     --Acceso a apuntadores
@@ -290,6 +290,9 @@ Exp :
     | FLOAT     {% return (TypeFloat,$1)}   
     | INT       {% return (TypeInt,$1)  }   
     | CHAR      {% return (TypeChar,$1) }   
+
+SquareList: "[" Exp "]"            { $1 } -- Check it's int and acc number of nesting
+          | SquareList "[" Exp "]" { $2 } -- Check it's int and acc number of nesting
 
 Ent0 : {- λ -}     {% onZip enterScope }
 Ent1 : {- λ -}     {% exitScope  }

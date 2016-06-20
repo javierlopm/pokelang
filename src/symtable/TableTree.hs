@@ -1,4 +1,4 @@
-  module TableTree(
+module TableTree(
     Scope  (..),
     Zipper ,
     goDown,
@@ -26,7 +26,7 @@
     decList,
     changeSize,
     addSOffset
-    ) where
+  ) where
 
 import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as DS
