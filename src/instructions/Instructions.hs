@@ -1,32 +1,39 @@
 module Instructions(
-
+    Ins(..),
+    Operator(..),
+    Exp(..),
+    insertIns,
+    newBlock
 ) where
 
 -- import Data.Sequence(empty,viewl,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
 import Data.Sequence(empty,Seq,(|>))
 
-data Ins = Store    String Exp
-         | StoreSum String Exp
-         | StoreMin String Exp
-         | StoreMUl String Exp
+data Ins = Assign    String Exp
+         | AssignSum String Exp
+         | AssignMin String Exp
+         | AssignMUl String Exp
          | Call  String (Seq(Exp))
          | If      { guards::Seq(Ins) }  -- Guards and else sequences
          | Guard   { cond  :: Exp} --, block:: Ins } Los bloques vienen dados por el anidamiento de scopes
-         | Else    { block :: Ins }
+         | Else    
          | While   { cond  :: Exp} --, block:: Ins} scope
          | ForStep { low:: Exp, high::Exp, step :: Exp} --, block:: Ins} scope
          | For     { low:: Exp, high::Exp} --, block:: Ins} scope
+         | EnterFor
          | Read    { var::Exp} --, block:: Ins} scope
          | Return  (Maybe Exp)
          | Continue
          | Break
          | Exit
+         | Error
          | Block (Seq(Ins))
     deriving (Show)
 
 insertIns :: Ins -> Ins -> Ins
 insertIns (Block s) ins = (Block (s |> ins) )
-ins bleh _  = error "Must insert in Block but " ++ show bleh ++ " found "
+insertIns Error     _   = Error
+ins       bleh      _   = error "Must insert in Block but " ++ show bleh ++ " found "
 
 newBlock :: Ins
 newBlock = Block empty
@@ -50,7 +57,7 @@ data Operator = And -- Binary
               | GreaterEql
               | NotEql
               -- Unary
-              | Location -- Ampersand
+              | Address -- Ampersand
               | Access  -- Arrays and structs
               | UNeg 
               | Not
@@ -74,18 +81,18 @@ instance Show Operator where
     show LessEql       = "<="
     show GreaterEql    = ">="
     show NotEql        = "!="
-    show Location      = "&"
+    show Address      = "&"
     show Access        = "*"
     show UNeg          = "u-"
     show Not           = "!"
 
-data Position = Label  String
-              | Offset Int
-              deriving(Show)
+--data Position = Label  String
+--              | Offset Int
+--              deriving(Show)
 
 data Exp = Binary  Operator Exp Exp
          | Unary   Operator Exp
-         | Value   Position        -- Get Variable value
+         | Value   String        -- Get Variable value
          | ExpTrue
          | ExpFalse
          | ExpFloat Float

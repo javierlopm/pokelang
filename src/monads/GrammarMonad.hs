@@ -44,6 +44,7 @@ import TableTree
 import Types
 import ErrorHandle(strError)
 import qualified Data.Sequence as S
+import Instructions
 
 type OurMonad    = RWS String (S.Seq(Message)) ScopeNZip
 type SymTable    = Scope Declare  

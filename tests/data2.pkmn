@@ -17,11 +17,28 @@ ENUManyte pokeDaysLaborables {
     Lunes, 
     Martes}
 
-
+--
 funcball VOIDtorb hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
     STRUCTabuzz pokepanita [2][3] erNovich;
     vamo_a_empeza
+        STRUCTabuzz pokepanita [2][3] erNovich2;
+    vamo_a_calmano
+    vamo_a_empeza
+        STRUCTabuzz pokepanita [2][3] erNovich3;
+    vamo_a_calmano
+    vamo_a_empeza
+        STRUCTabuzz pokepanita [2][3] erNovich4;
+    vamo_a_calmano
+    
+vamo_a_calmano
+--
+
+funcball VOIDtorb hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
     STRUCTabuzz pokepanita [2][3] erNovich;
+    si squirtrue:
+        STRUCTabuzz pokepanita [2][3] erNovich2;
+    si_no:
+        STRUCTabuzz pokepanita [2][3] erNovich3;
     vamo_a_calmano
     
 vamo_a_calmano

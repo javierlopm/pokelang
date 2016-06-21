@@ -15,7 +15,7 @@ Lexer.hs: Tokens.o
 
 # Parser
 Rwsgrammar.o: Tokens.o Types.o SymTable.o ErrorHandle.o
-	ghc monads/GrammarMonad.hs -itokens -isymtable -itypes -ierrors
+	ghc monads/GrammarMonad.hs -itokens -isymtable -itypes -ierrors -iinstructions
 
 Grammar.hs: Tokens.o 
 	happy parser/Grammar.y -o parser/Grammar.hs  --info=grammarinfo.md
@@ -23,11 +23,11 @@ Grammar.hs: Tokens.o
 
 # Symbol Tables
 SymTable.o: 
-	ghc symtable/TableTree.hs
+	ghc symtable/TableTree.hs -iinstructions
 
 # Types definition
 Types.o: SymTable.o Tokens.o
-	ghc types/Types.hs -isymtable -itokens
+	ghc types/Types.hs -isymtable -itokens -iinstructions
 
 # Errors
 ErrorHandle.o: Tokens.o
