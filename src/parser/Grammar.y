@@ -92,8 +92,8 @@ import Instructions
     READ      { TkRead   _ }
     -- WRITE     { TkWrite  _ }
     -- PRINT     { TkPrint  _ }
-    MALLOC    { TkAlloc  _ }
-    FREE      { TkFree   _ }
+    -- MALLOC    { TkAlloc  _ }
+    -- FREE      { TkFree   _ }
     SIZEOF    { TkSizeOf _ }
     GET       { TkGet    _ }
     -- Primitive types
@@ -150,29 +150,24 @@ import Instructions
 
 Prog : Dcls  {% checkMain }
 
-Ins : {- λ -}                   {% return TypeVoid }
-    | Ins Exp "="  Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
-    | Ins Exp "*=" Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
-    | Ins Exp "+=" Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
-    | Ins Exp "-=" Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
-    | Ins BREAK          ";"    {% checkOkIns $1 (addToBlock Break   )  }
-    | Ins CONTINUE       ";"    {% checkOkIns $1 (addToBlock Continue)  }
-    | Ins EXIT           ";"    {% checkOkIns $1 (addToBlock Exit    )  }
-    | Ins RETURN   Exp   ";"    {% checkOkIns $1 (addToBlock (Return Nothing ))  } -- Cambiar para exp
-    | Ins RETURN         ";"    {% checkOkIns $1 (addToBlock (Return Nothing ))  }
+Ins : {- λ -}                 {% return TypeVoid }
+    | Ins Exp "="  Exp   ";"  {% checkLValue $2 >>= checkOkIns (addToBlock (Assign    ExpTrue ExpTrue) ) } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
+    | Ins Exp "*=" Exp   ";"  {% checkLValue $2 >>= checkOkIns (addToBlock (AssignMul ExpTrue ExpTrue) ) } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
+    | Ins Exp "+=" Exp   ";"  {% checkLValue $2 >>= checkOkIns (addToBlock (AssignSum ExpTrue ExpTrue) ) } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
+    | Ins Exp "-=" Exp   ";"  {% checkLValue $2 >>= checkOkIns (addToBlock (AssignMin ExpTrue ExpTrue) ) } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
+    | Ins BREAK          ";"  {% checkOkIns (addToBlock Break   )    $1  }
+    | Ins CONTINUE       ";"  {% checkOkIns (addToBlock Continue)    $1  }
+    | Ins EXIT           ";"  {% checkOkIns (addToBlock Exit    )    $1  }
+    | Ins RETURN   Exp   ";"  {% checkOkIns (addToBlock (Return Nothing )) $1 } -- Cambiar para exp
+    | Ins RETURN         ";"  {% checkOkIns (addToBlock (Return Nothing )) $1 }
     | Ins READ  "("  ID   ")" ";" {% checkReadable $4 True  >> return TypeVoid} --revisar
-    | Ins BEGIN Ent0 SmplDcls Ins END       {% exitScope   >> return TypeVoid} -- No debe aceptar funciones
+    | Ins BEGIN Ent0 SmplDcls Ins END       {% exitScope    >> return TypeVoid} -- No debe aceptar funciones
     | Ins IF Exp    ":" Ent0 SmplDcls Ins Ent1 NextIf Else END    {% return TypeVoid  }
     | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                {% return TypeVoid  }
     | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope   >> return TypeVoid}
     | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope   >> return TypeVoid}
     | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope   >> return TypeVoid}
-    -- | Ins PRINT "(" Exp     ")" ";" {% checkReadable $4 False >> return TypeBool}
-    -- | Ins PRINT "(" STRING  ")" ";" {% onStrScope $ insert (content $4) Types.Empty  }
-    -- | Ins READ  "("     DATAID      ")" ";" {% return TypeBool}
-    -- | Ins FREE  "("     DATAID      ")" ";" {% return TypeBool}
-    -- | Ins FREE  "("       ID        ")" ";" {% return TypeBool}
-    -- | MALLOC "(" Exp ","   ")"       {% return (TypeBool,(snd $3)) }
+
 
 
 -- List of elseif
@@ -314,6 +309,7 @@ Ent6 : UNIONDEC   DATAID {% toggleUnion >>
 Ent7 : {- λ -}    {% toggleUnion }
 
 {
+
 
 checkComp a b c d = do 
     res <- checkBinary nums a b c d

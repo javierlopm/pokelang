@@ -9,7 +9,8 @@ articUNION poketrainer {
 
 ENUManyte pokeDaysLaborables { 
     Lunes, 
-    Martes}
+    Martes
+}
 
 
 --

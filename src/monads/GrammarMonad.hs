@@ -184,14 +184,16 @@ checkLValue (myType ,myToken) = do
         whathappened = "Variable " ++ myLex ++ " at " ++ show l++":"++show c ++ " can be assing."
 
 -- Dunno lol
-checkReadable :: Token -> Bool -> OurMonad ()
+checkReadable :: Token -> Bool -> OurMonad (Type)
 checkReadable (TkId (l,c) lexeme) bit = do
      state <- get
      let word = if bit then "readable."
                        else "writeable."
      if (isReadable (lookUp (zipp state) lexeme)) || (isReadable $ getValS lexeme (scp state))
-         then tellLog   $ "Variable " ++ lexeme ++ " at " ++ show l++":"++show c ++ " is "++ word
-         else tellError $ strError (l,c) " variable " lexeme (" is not " ++ word )
+         then tellLog   (logm word)    >> return TypeVoid
+         else tellError (error1 word)  >> return TypeError
+  where logm   word = "Variable " ++ lexeme ++ " at " ++ show l++":"++show c ++ " is "++ word
+        error1 word = strError (l,c) " variable " lexeme (" is not " ++ word )
 
 
 -- Adding identifier as soon as possible for recursion in functions
@@ -494,8 +496,8 @@ checkRecursiveDec dataTok typeSec = do
         else tellError error1
   where error1 =  strError (position dataTok) "Data type" (lexeme dataTok) "cannot be recursive. (Pssss try to use a pointer)"
 
-checkOkIns :: Type -> OurMonad () -> OurMonad (Type)
-checkOkIns t action = if t /= TypeError
+checkOkIns :: OurMonad () -> Type -> OurMonad (Type)
+checkOkIns action t = if t /= TypeError
                       then do action
                               return TypeVoid
                       else return TypeError

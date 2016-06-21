@@ -62,7 +62,10 @@ showScope :: Show a => Int -> Scope a -> String
 showScope i (Scope st inst ofs chld) = "\n" ++ replicate (i*2) ' ' ++ 
                 "Level " ++ show i ++ ", Offset: "++show ofs++"\n" ++ 
                 replicate (i*2) ' ' ++  "—————————\n" ++
-                showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) ((toList) chld) -- yarrrrr
+                showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) ((toList) chld)
+
+-- showInst :: Int -> Scope a -> String
+-- showInst i (Scope st inst ofs chld) = 
 
 data Breadcrumb a = Breadcrumb { left  :: [Scope a]
                                , right :: Seq(Scope a)

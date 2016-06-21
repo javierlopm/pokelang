@@ -3,40 +3,71 @@ module Instructions(
     Operator(..),
     Exp(..),
     insertIns,
-    newBlock
+    newBlock,
+    showIndented,
+    goDipah
 ) where
 
 -- import Data.Sequence(empty,viewl,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
 import Data.Sequence(empty,Seq,(|>))
+import Data.Foldable(toList)
+import Data.List(intersperse)
 
-data Ins = Assign    String Exp
-         | AssignSum String Exp
-         | AssignMin String Exp
-         | AssignMUl String Exp
+data Ins = Assign    Exp Exp
+         | AssignSum Exp Exp
+         | AssignMin Exp Exp
+         | AssignMul Exp Exp
          | Call  String (Seq(Exp))
          | If      { guards::Seq(Ins) }  -- Guards and else sequences
-         | Guard   { cond  :: Exp} --, block:: Ins } Los bloques vienen dados por el anidamiento de scopes
+         | Guard   { cond  :: Exp } --, block:: Ins } Los bloques vienen dados por el anidamiento de scopes
          | Else    
-         | While   { cond  :: Exp} --, block:: Ins} scope
-         | ForStep { low:: Exp, high::Exp, step :: Exp} --, block:: Ins} scope
-         | For     { low:: Exp, high::Exp} --, block:: Ins} scope
+         | While   { cond  :: Exp } 
+         | ForStep { low:: Exp, high::Exp, step :: Exp }
+         | For     { low:: Exp, high::Exp }
          | EnterFor
-         | Read    { var::Exp} --, block:: Ins} scope
+         | Read    { var::Exp }
          | Return  (Maybe Exp)
          | Continue
          | Break
          | Exit
          | Error
          | Block (Seq(Ins))
-    deriving (Show)
+
+instance Show Ins where
+  show (Assign    e1 e2 ) = show e1 ++ " = " ++ show e2
+  show (AssignSum e1 e2 ) = show e1 ++ " += " ++ show e2
+  show (AssignMul e1 e2 ) = show e1 ++ " *= " ++ show e2
+  show (AssignMin e1 e2 ) = show e1 ++ " *= " ++ show e2
+  show (Call   s expSeq ) = show s ++ "(" ++ (( concat . (intersperse ",") . (map show) . toList) expSeq) ++ ")"
+  show (Guard     bexp  ) = "If/Elif(" ++ show bexp ++ ")"
+  show (Read      sexp  ) = "Read:" ++ show sexp
+  show Else     = "Else:"
+  show Continue = "Read:"
+  show Break    = "Break"
+  show Exit     = "Exit"
+  show Error    = "Error"
+  show _ = ""
+
+showIndented :: Ins -> Int -> String
+showIndented _ _  = undefined -- If, Block, for ... nested
+
 
 insertIns :: Ins -> Ins -> Ins
 insertIns ins (Block s)  = (Block (s |> ins) )
 insertIns _   Error      = Error
-ins       _   bleh       = error "Must insert in Block but " ++ show bleh ++ " found "
+insertIns _   bleh       = error ("Must insert in Block but " ++ show bleh ++ " found ")
 
 newBlock :: Ins
 newBlock = Block empty
+
+goDipah :: Ins -> Bool
+goDipah (Else          ) = True
+goDipah (EnterFor      ) = True
+goDipah (Guard _       ) = True 
+goDipah (While _       ) = True
+goDipah (For     _ _   ) = True
+goDipah (ForStep _ _ _ ) = True
+goDipah _ = False
 
 data Operator = And -- Binary
               | Or 
@@ -86,9 +117,6 @@ instance Show Operator where
     show UNeg          = "u-"
     show Not           = "!"
 
---data Position = Label  String
---              | Offset Int
---              deriving(Show)
 
 data Exp = Binary  Operator Exp Exp
          | Unary   Operator Exp
