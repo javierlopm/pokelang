@@ -121,9 +121,9 @@ goDown :: Zipper a -> Maybe (Zipper a)
 goDown (Scope symt ins ofc chls , breadcrumbs) 
     | DS.null chls  = Nothing
     | otherwise  = Just (ch,newBread)
-    where (chdrn :> ch) = viewr chls -- Aqui se quedo NABIL
+    where ( ch :< chdrn) = viewl chls -- Aqui se quedo NABIL
           newBread = Breadcrumb ( Scope symt ins ofc empty : left breadcrumbs )
-                                (chdrn >< right breadcrumbs) 
+                                (right breadcrumbs >< chdrn) 
                                 ( replicate (Data.Sequence.length chdrn) (StChild)  ++ (DownA:(action breadcrumbs)))  --Guarda ST sin hijos para luego ponerselos al subir
         --newBread = Breadcrumb (symt:(left breadcrumbs)) (chdrn++(right breadcrumbs)) (DownA:(action breadcrumbs)) 
 
