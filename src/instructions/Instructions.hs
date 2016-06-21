@@ -31,9 +31,9 @@ data Ins = Assign    String Exp
     deriving (Show)
 
 insertIns :: Ins -> Ins -> Ins
-insertIns (Block s) ins = (Block (s |> ins) )
-insertIns Error     _   = Error
-ins       bleh      _   = error "Must insert in Block but " ++ show bleh ++ " found "
+insertIns ins (Block s)  = (Block (s |> ins) )
+insertIns _   Error      = Error
+ins       _   bleh       = error "Must insert in Block but " ++ show bleh ++ " found "
 
 newBlock :: Ins
 newBlock = Block empty
@@ -99,4 +99,5 @@ data Exp = Binary  Operator Exp Exp
          | ExpInt   Int
          | ExpEnum  String
          | CallVal  String (Seq(Exp)) -- Function call
+         | NoExp
          deriving (Show)

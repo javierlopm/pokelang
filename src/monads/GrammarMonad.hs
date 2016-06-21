@@ -32,7 +32,9 @@ module GrammarMonad(
     checkMain,
     tellError,
     toggleUnion,
-    cleanParams
+    cleanParams,
+    checkOkIns,
+    addToBlock
     -- getDataSize
 ) where
 
@@ -491,6 +493,15 @@ checkRecursiveDec dataTok typeSec = do
         then return ()
         else tellError error1
   where error1 =  strError (position dataTok) "Data type" (lexeme dataTok) "cannot be recursive. (Pssss try to use a pointer)"
+
+checkOkIns :: Type -> OurMonad () -> OurMonad (Type)
+checkOkIns t action = if t /= TypeError
+                      then do action
+                              return TypeVoid
+                      else return TypeError
+
+addToBlock :: Ins -> OurMonad()
+addToBlock i =  onZip (applyIns (insertIns i))
 
 builtinFunctions :: SymTable
 builtinFunctions = emptyScope

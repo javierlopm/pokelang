@@ -10,6 +10,7 @@ import TableTree
 import Types
 import GrammarMonad
 import Data.Sequence
+import Instructions
 
 }
 
@@ -149,23 +150,23 @@ import Data.Sequence
 
 Prog : Dcls  {% checkMain }
 
-Ins : {- λ -}                   {% return TypeBool }
+Ins : {- λ -}                   {% return TypeVoid }
     | Ins Exp "="  Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
     | Ins Exp "*=" Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
     | Ins Exp "+=" Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
     | Ins Exp "-=" Exp   ";"    {% checkLValue $2} --Falta caso particular para checkAssing
-    | Ins BREAK          ";"    {% return TypeBool }
-    | Ins CONTINUE       ";"    {% return TypeBool }
-    | Ins RETURN   Exp   ";"    {% return TypeBool }
-    | Ins RETURN         ";"    {% return TypeBool }
-    | Ins EXIT           ";"    {% return TypeBool } 
+    | Ins BREAK          ";"    {% checkOkIns $1 (addToBlock Break   )  }
+    | Ins CONTINUE       ";"    {% checkOkIns $1 (addToBlock Continue)  }
+    | Ins EXIT           ";"    {% checkOkIns $1 (addToBlock Exit    )  }
+    | Ins RETURN   Exp   ";"    {% checkOkIns $1 (addToBlock (Return Nothing ))  } -- Cambiar para exp
+    | Ins RETURN         ";"    {% checkOkIns $1 (addToBlock (Return Nothing ))  }
     | Ins READ  "("  ID   ")" ";" {% checkReadable $4 True  >> return TypeVoid} --revisar
-    | Ins BEGIN Ent0 SmplDcls Ins END       {% exitScope   >> return TypeBool} -- No debe aceptar funciones
-    | Ins IF Exp    ":" Ent0 SmplDcls Ins Ent1 NextIf Else END    {% return TypeBool  }
-    | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                {% return TypeBool  }
-    | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope   >> return TypeBool}
-    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope   >> return TypeBool}
-    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope   >> return TypeBool}
+    | Ins BEGIN Ent0 SmplDcls Ins END       {% exitScope   >> return TypeVoid} -- No debe aceptar funciones
+    | Ins IF Exp    ":" Ent0 SmplDcls Ins Ent1 NextIf Else END    {% return TypeVoid  }
+    | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                {% return TypeVoid  }
+    | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope   >> return TypeVoid}
+    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope   >> return TypeVoid}
+    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope   >> return TypeVoid}
     -- | Ins PRINT "(" Exp     ")" ";" {% checkReadable $4 False >> return TypeBool}
     -- | Ins PRINT "(" STRING  ")" ";" {% onStrScope $ insert (content $4) Types.Empty  }
     -- | Ins READ  "("     DATAID      ")" ";" {% return TypeBool}

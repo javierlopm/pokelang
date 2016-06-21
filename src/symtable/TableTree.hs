@@ -7,6 +7,7 @@ module TableTree(
     goRight,
     goTop,
     apply,
+    applyIns,
     emptyScope,
     enterScope,
     insert,
@@ -129,6 +130,9 @@ goDown (Scope symt ins ofc chls , breadcrumbs)
 
 apply :: (Scope a -> Scope a) -> Zipper a -> Zipper a
 apply f (scope,breadcrumbs) = (f scope,breadcrumbs)
+
+applyIns :: (Ins -> Ins) -> Zipper a  -> Zipper a
+applyIns f ((Scope st ins ofs l),breadcrumbs) = ((Scope st (f ins) ofs l),breadcrumbs)
 
 goRight :: Zipper a -> Maybe (Zipper a)
 goRight (scp, breadcrumbs) = case snd brk2 of
