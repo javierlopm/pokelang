@@ -244,43 +244,43 @@ ExpFirsts : {- λ -}         { emptytuple }
 Exp :  -- Cambiar los NoExp por las Exp
     -- Expresiones Aritméticas.
       Exp "+"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Plus (sel3 $1) (sel3 $3)) } --Crear funcion reciba operador y args
-    | Exp "-"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }
-    | Exp "^"  Exp      {% return (TypeBool,(sel2 $1),NoExp)                  }
-    | Exp "*"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }   -- Float/Int and Int
-    | Exp "/"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }   -- Both Float
-    | Exp "//" Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }   -- last one integer
-    | Exp "%"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }   -- Both Integer
-    | "-" Exp %prec NEG {% return (TypeBool,(sel2 $2),NoExp)  }
+    | Exp "-"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Neg (sel3 $1) (sel3 $3)) }
+    | Exp "^"  Exp      {% return (TypeBool,(sel2 $1),(Binary Power (sel3 $1) (sel3 $3)))                  }
+    | Exp "*"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Multiply (sel3 $1) (sel3 $3)) }   -- Float/Int and Int
+    | Exp "/"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Div (sel3 $1) (sel3 $3)) }   -- Both Float
+    | Exp "//" Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary FloatDiv (sel3 $1) (sel3 $3)) }   -- last one integer
+    | Exp "%"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Mod (sel3 $1) (sel3 $3)) }   -- Both Integer
+    | "-" Exp %prec NEG {% return (TypeBool,(sel2 $2),(Unary Neg (sel3 $2)))  }
     -- Expresiones Booleanas.
-    | Exp OR Exp        {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns NoExp }
-    | Exp "||" Exp      {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns NoExp }
-    | Exp AND Exp       {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns NoExp }
-    | Exp "&&" Exp      {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns NoExp }
-    | "!" Exp           {% return (TypeBool,(sel2 $2),NoExp)  }
+    | Exp OR Exp        {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns (Binary SOr (sel3 $1) (sel3 $3)) }
+    | Exp "||" Exp      {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns (Binary Or (sel3 $1) (sel3 $3)) }
+    | Exp AND Exp       {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns (Binary SAnd (sel3 $1) (sel3 $3)) }
+    | Exp "&&" Exp      {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns (Binary And (sel3 $1) (sel3 $3)) }
+    | "!" Exp           {% return (TypeBool,(sel2 $2),(Unary Not (sel3 $2)))  }
     -- Expresiones relacionales.
-    | Exp "<"  Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }
-    | Exp "<=" Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }
-    | Exp ">"  Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }
-    | Exp ">=" Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }
-    | Exp "==" Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }
-    | Exp "!=" Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }
+    | Exp "<"  Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Less       (sel3 $1) (sel3 $3)) }
+    | Exp "<=" Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary LessEql    (sel3 $1) (sel3 $3)) }
+    | Exp ">"  Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Greater    (sel3 $1) (sel3 $3)) }
+    | Exp ">=" Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary GreaterEql (sel3 $1) (sel3 $3)) }
+    | Exp "==" Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Eql        (sel3 $1) (sel3 $3)) }
+    | Exp "!=" Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary NotEql     (sel3 $1) (sel3 $3)) }
     -- Expresiones sobre lienzo.
-    | Exp "!!" Exp            {% return (TypeBool,(sel2 $1),NoExp) }
-    | Exp "."  ID             {% checkFieldAccess $1 $3  >>= expIns NoExp } 
+    | Exp "!!" Exp            {% return (TypeBool,(sel2 $1),(Binary Access     (sel3 $1) (sel3 $3))) }
+    | Exp "."  ID             {% checkFieldAccess $1 $3  >>= expIns (NoExp) } -- Binary Access (sel3 $1) (sel3 $3)
     | ID SquareList %prec ARR {% return (TypeBool,$1,NoExp)  }
     --Llamadas a funciones
     | ID "(" ExpList ")"   {% checkFunctionCall $1 $3  >>= expIns NoExp } 
     --Acceso a apuntadores
-    | "*" Exp %prec POINT  {% return (TypeBool,(sel2 $2),NoExp) }
+    | "*" Exp %prec POINT  {% return (TypeBool,(sel2 $2),Unary Access (sel3 $2)) }
     --Direccion de variable
-    | "&" Exp %prec AMP    {% return (TypeBool,(sel2 $2),NoExp)  }
+    | "&" Exp %prec AMP    {% return (TypeBool,(sel2 $2),Unary Address (sel3 $2))  }
     -- Asociatividad.
-    | "(" Exp ")"    {% return (TypeBool,(sel2 $2),NoExp) }
+    | "(" Exp ")"    {% return $2 }
     -- Constantes.
     -- Llamadas
     | SIZEOF "(" Reference ")" {% return (TypeInt,$1,NoExp) } -- Can be known at compile time
     -- | GET    "(" ENUM ")"      {% return (TypeBool,(sel2 $2),NoExp) } -- Si no lo hacemos por gramatica, mejor error pero no se puede conocer a tiempo de compilacion
-    | GET    "(" ENUM ")"      {% return (TypeBool,$3,NoExp) }
+    | GET    "(" ENUM ")"      {% return (TypeBool,$3,ExpEnum  (lexeme $3)) }
     | TRUE      {% return (TypeBool,$1,ExpTrue) }   
     | FALSE     {% return (TypeBool,$1,ExpFalse) }   
     | ID        {% checkItsDeclared $1  >>= expIns (ExpVar (lexeme $1))  } 
