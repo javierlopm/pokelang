@@ -269,7 +269,7 @@ Exp :  -- Cambiar los NoExp por las Exp
     | Exp "."  ID             {% checkFieldAccess $1 $3  >>= expIns (NoExp) } -- Binary Access (sel3 $1) (sel3 $3)
     | ID SquareList %prec ARR {% return (TypeBool,$1,NoExp)  }
     --Llamadas a funciones
-    | ID "(" ExpList ")"   {% checkFunctionCall $1 (fst $3)  >>= expIns NoExp } 
+    | ID "(" ExpList ")"   {% checkFunctionCall $1 (fst $3)  >>= expIns (CallVal (lexeme $1) (snd $3)) } 
     --Acceso a apuntadores
     | "*" Exp %prec POINT  {% return (TypeBool,(sel2 $2),Unary Access (sel3 $2)) }
     --Direccion de variable
