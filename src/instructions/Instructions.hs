@@ -5,7 +5,6 @@ module Instructions(
     insertIns,
     newBlock,
     newIf,
-    showIndented,
     goDipah,
     mergeIf,
     insertIf,
@@ -60,8 +59,27 @@ instance Show Ins where
   show Error    = "Error"
   show _ = "DefaultIns"
 
-showIndented :: Ins -> Int -> String
-showIndented _ _  = undefined -- If, Block, for ... nested
+--showIndented :: Int -> Ins -> String
+--showIndented n  (Assign    e1 e2 ) = showIndExp (n+1) e1 ++ " = "  ++ show (n+1) e2
+--showIndented n  (AssignSum e1 e2 ) = showIndExp (n+1) e1 ++ " += " ++ show (n+1) e2
+--showIndented n  (AssignMul e1 e2 ) = showIndExp (n+1) e1 ++ " *= " ++ show (n+1) e2
+--showIndented n  (AssignMin e1 e2 ) = showIndExp (n+1) e1 ++ " *= " ++ show (n+1) e2
+--showIndented n  (Call   s expSeq ) = show s ++ "(" ++ (( concat . (intersperse ",\n") . (map (showIndented n)) . toList) expSeq) ++ ")"
+--showIndented n  (Guard     bexp  ) = "If/Elif(" ++ showIndExp (n+1) bexp ++ "):"
+--showIndented n  (While     bexp  ) = "While("   ++ showIndExp (n+1) bexp ++ "):"
+--showIndented n  (For     low high )   = "For" ++ showIndExp (n+1) low ++ " to " ++  showIndExp (n+1) high ++ ":"
+--showIndented n  (ForStep low high w ) = "For" ++ showIndExp (n+1) low ++ " to " ++  showIndExp (n+1) high ++ " with  " ++ showIndExp (n+1) w ++ ":"
+--showIndented n  (Read      sexp  ) = "Read:"     ++ showIndExp (n+1) sexp
+--showIndented n  (Return  Nothing ) = "Return Void"
+--showIndented n  (Return  (Just exp)) = "Return " ++ showIndExp (n+1) exp
+--showIndented n  EnterBlock = "Block:"
+--showIndented n  Else     = "Else:"
+--showIndented n  Continue = "Read:"
+--showIndented n  Break    = "Break"
+--showIndented n  Exit     = "Exit"
+--showIndented n  Error    = "Error"
+--showIndented n  _ = "DefaultIns"
+
 
 
 insertIns :: Ins -> Ins -> Ins
@@ -147,16 +165,30 @@ instance Show Operator where
 
 data Exp = Binary  Operator Exp Exp
          | Unary   Operator Exp
-         | ExpVar  String        -- Get Variable value
+         | ExpVar  String        
          | ExpTrue
          | ExpFalse
          | ExpFloat Float
          | ExpInt   Int
          | ExpChar  Char
          | ExpEnum  String
-         | CallVal  String (Seq(Exp)) -- Function call
+         | CallVal  String (Seq(Exp)) 
          | NoExp
          deriving (Show)
+
+--showIndExp :: Int -> Exp -> String
+--showIndExp n (Binary  op e1 e2)      =  show op 
+--showIndExp n (Unary   op e1   )      =
+--showIndExp n (ExpVar  String)              =
+--showIndExp n (ExpTrue)                     =
+--showIndExp n (ExpFalse)                    =
+--showIndExp n (ExpFloat Float)              =
+--showIndExp n (ExpInt   Int)                =
+--showIndExp n (ExpChar  Char)               =
+--showIndExp n (ExpEnum  String)             =
+--showIndExp n (CallVal  String (Seq(Exp)) ) =
+--showIndExp n (NoExp)                       =
+
 
 emptyExpList :: (Seq(Exp))
 emptyExpList = empty
