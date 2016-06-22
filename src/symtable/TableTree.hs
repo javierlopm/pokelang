@@ -30,11 +30,13 @@ module TableTree(
     showInst
   ) where
 
+import Prelude hiding (drop)
+
 import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as DS
 import Data.Foldable as F(toList,foldl)
 import Data.Sequence(Seq,(|>),(<|),ViewL(..),ViewR((:>)),(><),
-                     empty,viewl,viewr,length)
+                     empty,viewl,viewr,length,drop,index)
 import Data.Maybe(fromJust,isNothing)
 import Data.List (intercalate)
 import Instructions
@@ -67,26 +69,28 @@ showScope i (Scope st inst ofs chld) = "\n" ++ replicate (i*2) ' ' ++
                 showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) ((toList) chld)
 
 showInst :: Int -> Scope a -> String -- revisar si es un if
-showInst i (Scope _ (Block ins) _ chs) = thrd $ F.foldl toStr  ("",i,viewl chs)  ins
-    where toStr (str,nesting,c@(1stCh:< chs)) k = case k of 
-            (If s)   -> (,,) (str ++ (fst (moveTroughIf nesting (s,c))))
-                             nesting
-                             (snd (moveTroughIf nesting (s,c))))
-            ins      -> if goDipah 
-                        then (,,) (str ++ indent i ++ show ins ++ showInst (nesting+1))
-                                  nesting
-                                  chs
-                        else (,,) (str ++ indent i ++ show ins)
-                                  nesting
-                                  c
-          toStr (str,nesting,EmptyL) k = ""
-          moveTroughIf i (g:<gs,b:<bs) = (indent i ++ show g ++ 
-                                            indent (i+1) ++ showInst (i+1) b ++ 
-                                          fst (moveTroughIf (i+1) gs bs), 
-                                          snd (moveTroughIf (i+1) gs bs))
-          moveTroughIf i (EmptyL,chs ) =  ("",chs)
-          indent i     = replicate (i*2) ' '
-          thrd (_,_,c) = c
+showInst i (Scope _ (Block ins) _ chs)  = fst1 $ F.foldl toStr  ("",i,chs)  ins
+    where 
+    toStr (str,nesting,chs) k = case k of 
+      (If s)   -> (,,) (str ++ (fst (moveTroughIf nesting (viewl s,chs))))
+                       nesting
+                       (snd         (moveTroughIf nesting (viewl s,chs)))
+      ins      -> if goDipah ins
+                  then (,,) (str ++ indent i ++ show ins ++ showInst (nesting+1) (index chs 0))
+                            nesting
+                            (drop 1 chs)
+                  else (,,) (str ++ indent i ++ show ins)
+                            nesting
+                            chs
+    moveTroughIf i (g:<gs,bs) = (,)   (indent i ++ show g ++ 
+                                          indent (i+1) ++ showInst (i+1) (index bs 0) ++ 
+                                          fst (moveTroughIf (i+1) (viewl gs,drop 1 bs)))
+                                      (drop 1 bs)
+    moveTroughIf i (EmptyL,chs) =  ("",chs)
+    indent i     = replicate (i*2) ' '
+    fst1   (a,_,_) = a
+    snd1   (_,b,_) = b
+    third  (_,_,c) = c
 
 data Breadcrumb a = Breadcrumb { left  :: [Scope a]
                                , right :: Seq(Scope a)
