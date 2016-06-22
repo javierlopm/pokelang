@@ -266,8 +266,8 @@ Exp :  -- Cambiar los NoExp por las Exp
     | Exp "!=" Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary NotEql     (sel3 $1) (sel3 $3)) }
     -- Expresiones sobre lienzo.
     | Exp "!!" Exp            {% return (TypeBool,(sel2 $1),(Binary Access     (sel3 $1) (sel3 $3))) }
-    | Exp "."  ID             {% checkFieldAccess $1 $3  >>= expIns (NoExp) } -- Binary Access (sel3 $1) (sel3 $3)
-    | ID SquareList %prec ARR {% return (TypeBool,$1,NoExp)  }
+    | Exp "."  ID             {% checkFieldAccess $1 $3  >>= expIns (Binary Access (sel3 $1) (ExpVar (lexeme $3))) } -- Binary Access (sel3 $1) (sel3 $3)
+    | ID SquareList %prec ARR {% return (TypeBool,$1,(arrayParser (ExpVar (lexeme $1)) (snd $2))) }
     --Llamadas a funciones
     | ID "(" ExpList ")"   {% checkFunctionCall $1 (fst $3)  >>= expIns (CallVal (lexeme $1) (snd $3)) } 
     --Acceso a apuntadores
@@ -291,8 +291,8 @@ Exp :  -- Cambiar los NoExp por las Exp
 
  
 
-SquareList: "[" Exp "]"            { (sel1 $2,sel2 $2) } -- Check it's int and acc number of nesting
-          | SquareList "[" Exp "]" { (sel1 $3,sel2 $3) } -- Check it's int and acc number of nesting
+SquareList: "[" Exp "]"            { ([sel1 $2],[sel3 $2]) } -- Check it's int and acc number of nesting
+          | SquareList "[" Exp "]" { (sel1 $3 : (fst $1),sel3 $3 : (snd $1)) } -- Check it's int and acc number of nesting
 
 
 Ent0 : {- λ -}     {% onZip enterScope }

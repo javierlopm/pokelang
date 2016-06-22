@@ -33,10 +33,13 @@ vamo_a_calmano
 funcball pINTachu fibo_iterativo(pINTachu n):
     pINTachu n1;
     pINTachu n2;
+    pINTachu [2][3][4]arr;
     pINTachu iter;
     pINTachu aux;
 
-    n1 += 2;
+    # n1 += 2;
+
+    n1 = arr[n2][0][2+2];
 
     si n == 0:
         vamo_a_retorna 0;

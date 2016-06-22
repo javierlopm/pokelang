@@ -141,7 +141,7 @@ instance Show Operator where
     show NotEql        = "!="
     show Eql           = "=="
     show Address       = "&"
-    show Access        = "*"
+    show Access        = "->"
     show Not           = "!"
 
 
