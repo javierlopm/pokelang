@@ -161,7 +161,7 @@ Ins : {- λ -}                 {% return TypeVoid }
     | Ins RETURN   Exp   ";"  {% checkOkIns (addToBlock (Return (Just (sel3 $3)) )) $1 } -- Cambiar para exp
     | Ins RETURN         ";"  {% checkOkIns (addToBlock (Return Nothing )) $1 }
     | Ins READ  "("  ID   ")" ";" {% checkReadable $4 True  >> return TypeVoid} --revisar
-    | Ins ID    "("ExpList")" ";" {% checkOkIns (addToBlock (Call (lexeme $2) (emptyExpList `addExpList` ExpTrue) ))  $1 } -- Function call
+    | Ins ID    "("ExpList")" ";" {% checkOkIns (addToBlock (Call (lexeme $2) (snd $4) ))  $1 } -- Function call
     | Ins BEGIN Ent0 SmplDcls Ins END                              {% exitScope >> checkOkIns (addToBlock EnterBlock ) $1 } -- Verificar que el tipo de ins es Void y $1 
     | Ins IF Exp    ":" Ent0 SmplDcls Ins Ent1 NextIf Else END     {% checkOkIns (addToBlock (mergeIf (Guard ExpTrue) $9 $10 )) $1 } -- verificar que $3 es bool, $9 y $10 son void
     | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                 {% checkOkIns (addToBlock (While ExpTrue) ) $1  }
@@ -233,11 +233,11 @@ FieldsList  : ID "::" Reference                  {% (insertDeclareInScope $3 $1 
             | FieldsList  "," ID "::" Reference  {% (insertDeclareInScope $5 $3 False False) >> 
                                                         return(addType $1 (TypeField (lexeme $3) $5)) } 
 
-ExpList: {- λ -}        { emptytuple             }
-       | ExpFirsts Exp  { $1 `addType` (sel1 $2) } 
+ExpList: {- λ -}        { (emptytuple            , emptyExpList ) }
+       | ExpFirsts Exp  { ((fst $1) `addType` (sel1 $2), (snd $1) `addExpList` (sel3 $2) ) } 
 
-ExpFirsts : {- λ -}         { emptytuple }
-          | ExpFirsts Exp "," { $1 `addType` (sel1 $2) } 
+ExpFirsts : {- λ -}           { (emptytuple            , emptyExpList ) }
+          | ExpFirsts Exp "," { ((fst $1) `addType` (sel1 $2), (snd $1) `addExpList` (sel3 $2) ) } 
 
 
 
@@ -269,7 +269,7 @@ Exp :  -- Cambiar los NoExp por las Exp
     | Exp "."  ID             {% checkFieldAccess $1 $3  >>= expIns NoExp } 
     | ID SquareList %prec ARR {% return (TypeBool,$1,NoExp)  }
     --Llamadas a funciones
-    | ID "(" ExpList ")"   {% checkFunctionCall $1 $3  >>= expIns NoExp } 
+    | ID "(" ExpList ")"   {% checkFunctionCall $1 (fst $3)  >>= expIns NoExp } 
     --Acceso a apuntadores
     | "*" Exp %prec POINT  {% return (TypeBool,(sel2 $2),NoExp) }
     --Direccion de variable
