@@ -33,7 +33,8 @@ module Types(
     lengthMatches,
     makeTypeTuple,
     getSize,
-    align
+    align,
+    isAFunction
     -- addLeftType,
     -- singleType,
 ) where
@@ -201,6 +202,10 @@ isFunc (Just (Function _ _ _))  = True
 isFunc (Just (EmptyWithType _)) = True -- Forward declaration
 isFunc (Just Empty) = True
 isFunc a = False
+
+isAFunction :: Declare -> Bool
+isAFunction (Function _ _ _)  = True
+isAFunction _ = False
 
 --Check if a Declaration is an Iteration Variable
 isLIter :: Declare -> Bool

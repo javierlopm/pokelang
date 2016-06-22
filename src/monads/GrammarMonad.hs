@@ -76,6 +76,7 @@ initialState = ScopeNZip emptyScope
 makeTable :: ScopeNZip -> ( Scope Declare , Scope Declare , Scope Declare)
 makeTable (ScopeNZip str enu gscp z _) = ( str , enu , fuse gscp z)
 
+
 -- Aliases for writing to the log
 mkErr = S.singleton . Left
 mkLog = S.singleton . Right

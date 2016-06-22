@@ -23,11 +23,11 @@ module TableTree(
     showScope,
     fuse,
     cleanOffset,
-   -- maxMapped,
     decList,
     changeSize,
     addSOffset,
-    showInst
+    showInst,
+    getAll
   ) where
 
 import Prelude hiding (drop)
@@ -68,22 +68,25 @@ showScope i (Scope st inst ofs chld) = "\n" ++ replicate (i*2) ' ' ++
                 replicate (i*2) ' ' ++  "—————————\n" ++
                 showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) ((toList) chld)
 
-showInst :: Int -> Scope a -> String -- revisar si es un if
-showInst i (Scope _ (Block ins) _ chs)  = fst1 $ F.foldl toStr  ("",i,chs)  ins
+showInst :: Scope a -> String
+showInst = showInstAux 0 
+
+showInstAux :: Int -> Scope a -> String -- revisar si es un if
+showInstAux i (Scope _ (Block ins) _ chs)  = fst1 $ F.foldl toStr  ("",i,chs)  ins
     where 
     toStr (str,nesting,chs) k = case k of 
       (If s)   -> (,,) (str ++ (fst (moveTroughIf nesting (viewl s,chs))))
                        nesting
                        (snd         (moveTroughIf nesting (viewl s,chs)))
       ins      -> if goDipah ins
-                  then (,,) (str ++ indent i ++ show ins ++ showInst (nesting+1) (index chs 0))
+                  then (,,) (str ++ indent i ++ show ins ++ showInstAux (nesting+1) (index chs 0))
                             nesting
                             (drop 1 chs)
                   else (,,) (str ++ indent i ++ show ins)
                             nesting
                             chs
     moveTroughIf i (g:<gs,bs) = (,)   (indent i ++ show g ++ 
-                                          indent (i+1) ++ showInst (i+1) (index bs 0) ++ 
+                                          indent (i+1) ++ showInstAux (i+1) (index bs 0) ++ 
                                           fst (moveTroughIf (i+1) (viewl gs,drop 1 bs)))
                                       (drop 1 bs)
     moveTroughIf i (EmptyL,chs) =  ("",chs)
@@ -256,6 +259,9 @@ fuse (Scope smtbl ins ofs _ ) z =  Scope smtbl ins ofs (( chs . fromZipper) z)
 decList :: Scope a  -> [a]
 decList (Scope st _ ofs _ ) = map snd $ Map.toList st
 -- maxMapppend (Scope tb _ _ ) f = (maximum . (map  f)  . toList) tb
+
+getAll :: (a -> Bool) -> Scope a -> [(String,a)]
+getAll f scp = Map.toList $ Map.filter f (tb scp)
 
 -- Swap size for the new one
 changeSize :: Scope a -> Int -> Scope a 

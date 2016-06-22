@@ -8,12 +8,12 @@ import Lexer
 import TableTree
 import Types
 import GrammarMonad
+import Instructions
 import Data.Foldable(toList)
 
 
-
 myF :: String -> String -> (String,String)
-myF arg1 arg2 = if arg1 /= "-l" && arg1/="-p" && arg1/="-a" 
+myF arg1 arg2 = if and [arg1 /= "-l",arg1/="-p",arg1/="-i",arg1/="-a"] 
                     then (arg1,arg2)
                     else (arg2,arg1)
 
@@ -33,6 +33,15 @@ execParser printLex tokens = do
             putStrLn $ "SymTable:\n========================" ++ show scps
     else do printErrors errorcount id errors
 
+getIns :: [Token] -> IO()
+getIns tokens = do
+  let (state,strlog) = exec (parser tokens) "" initialState
+  let (logs,errors,errorcount) = checkParseError strlog
+  if errorcount == 0
+    then do let (_,_,scps) =  makeTable state -- $ fromZipper state
+            putStrLn $ concatMap showFuncIns $ getAll isAFunction scps
+    else do printErrors errorcount id errors
+  where showFuncIns (strs,scps) = strs ++ "\n" ++ (showInst . fields)  scps -- showInst . inst
 main = do
   arg1:arg2:_ <- getArgs
   let (fileToRead,runargs)=myF arg1 arg2
@@ -44,6 +53,7 @@ main = do
                 "-l"      -> mapM_ print goods
                 "-p"      -> execParser False goods
                 "-a"      -> execParser True  goods
+                "-i"      -> getIns  goods
                 otherwise -> print $ "Unrecognized argument" ++ runargs
       else do mapM_ print errors
               putStrLn $ "--pkcc: "++ show errorcount ++ " errors found."
