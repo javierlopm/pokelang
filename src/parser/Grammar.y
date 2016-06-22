@@ -119,7 +119,7 @@ import Instructions
 %right "!"
 
 %left "!!"
-   
+
 -- Para los enteros.
 %left "+" "-"
 %left "*" "/" "//" "%"
@@ -246,7 +246,7 @@ Exp :  -- Cambiar los NoExp por las Exp
     -- Expresiones Aritméticas.
       Exp "+"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Plus (sel3 $1) (sel3 $3)) } --Crear funcion reciba operador y args
     | Exp "-"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Neg (sel3 $1) (sel3 $3)) }
-    | Exp "^"  Exp      {% return (TypeBool,(sel2 $1),(Binary Power (sel3 $1) (sel3 $3)))                  }
+    | Exp "^"  Exp      {% return ((sel1 $1),(sel2 $1),(Binary Power (sel3 $1) (sel3 $3)))                  }
     | Exp "*"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Multiply (sel3 $1) (sel3 $3)) }   -- Float/Int and Int
     | Exp "/"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Div (sel3 $1) (sel3 $3)) }   -- Both Float
     | Exp "//" Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary FloatDiv (sel3 $1) (sel3 $3)) }   -- last one integer
