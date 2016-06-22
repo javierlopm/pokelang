@@ -26,13 +26,15 @@ module TableTree(
    -- maxMapped,
     decList,
     changeSize,
-    addSOffset
+    addSOffset,
+    showInst
   ) where
 
 import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as DS
-import Data.Foldable(toList)
-import Data.Sequence(empty,viewl,viewr,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
+import Data.Foldable as F(toList,foldl)
+import Data.Sequence(Seq,(|>),(<|),ViewL(..),ViewR((:>)),(><),
+                     empty,viewl,viewr,length)
 import Data.Maybe(fromJust,isNothing)
 import Data.List (intercalate)
 import Instructions
@@ -64,8 +66,27 @@ showScope i (Scope st inst ofs chld) = "\n" ++ replicate (i*2) ' ' ++
                 replicate (i*2) ' ' ++  "—————————\n" ++
                 showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) ((toList) chld)
 
--- showInst :: Int -> Scope a -> String
--- showInst i (Scope st inst ofs chld) = 
+showInst :: Int -> Scope a -> String -- revisar si es un if
+showInst i (Scope _ (Block ins) _ chs) = thrd $ F.foldl toStr  ("",i,viewl chs)  ins
+    where toStr (str,nesting,c@(1stCh:< chs)) k = case k of 
+            (If s)   -> (,,) (str ++ (fst (moveTroughIf nesting (s,c))))
+                             nesting
+                             (snd (moveTroughIf nesting (s,c))))
+            ins      -> if goDipah 
+                        then (,,) (str ++ indent i ++ show ins ++ showInst (nesting+1))
+                                  nesting
+                                  chs
+                        else (,,) (str ++ indent i ++ show ins)
+                                  nesting
+                                  c
+          toStr (str,nesting,EmptyL) k = ""
+          moveTroughIf i (g:<gs,b:<bs) = (indent i ++ show g ++ 
+                                            indent (i+1) ++ showInst (i+1) b ++ 
+                                          fst (moveTroughIf (i+1) gs bs), 
+                                          snd (moveTroughIf (i+1) gs bs))
+          moveTroughIf i (EmptyL,chs ) =  ("",chs)
+          indent i     = replicate (i*2) ' '
+          thrd (_,_,c) = c
 
 data Breadcrumb a = Breadcrumb { left  :: [Scope a]
                                , right :: Seq(Scope a)

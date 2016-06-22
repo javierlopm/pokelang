@@ -34,12 +34,13 @@ data Ins = Assign    Exp Exp
          | Block (Seq(Ins))
 
 instance Show Ins where
-  show (Assign    e1 e2 ) = show e1 ++ " = " ++ show e2
+  show (Assign    e1 e2 ) = show e1 ++ " = "  ++ show e2
   show (AssignSum e1 e2 ) = show e1 ++ " += " ++ show e2
   show (AssignMul e1 e2 ) = show e1 ++ " *= " ++ show e2
   show (AssignMin e1 e2 ) = show e1 ++ " *= " ++ show e2
   show (Call   s expSeq ) = show s ++ "(" ++ (( concat . (intersperse ",") . (map show) . toList) expSeq) ++ ")"
   show (Guard     bexp  ) = "If/Elif(" ++ show bexp ++ ")"
+  -- Agregar while, for forStep
   show (Read      sexp  ) = "Read:" ++ show sexp
   show Else     = "Else:"
   show Continue = "Read:"
