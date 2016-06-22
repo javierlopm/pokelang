@@ -151,16 +151,16 @@ import Instructions
 Prog : Dcls  {% checkMain }
 
 Ins : {- λ -}                 {% return TypeVoid }
-    | Ins Exp "="  Exp   ";"  {% checkLValue $2 >>= checkOkIns (addToBlock (Assign    ExpTrue ExpTrue) ) } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
-    | Ins Exp "*=" Exp   ";"  {% checkLValue $2 >>= checkOkIns (addToBlock (AssignMul ExpTrue ExpTrue) ) } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
-    | Ins Exp "+=" Exp   ";"  {% checkLValue $2 >>= checkOkIns (addToBlock (AssignSum ExpTrue ExpTrue) ) } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
-    | Ins Exp "-=" Exp   ";"  {% checkLValue $2 >>= checkOkIns (addToBlock (AssignMin ExpTrue ExpTrue) ) } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
-    | Ins BREAK          ";"  {% checkOkIns (addToBlock Break   )    $1  }
-    | Ins CONTINUE       ";"  {% checkOkIns (addToBlock Continue)    $1  }
-    | Ins EXIT           ";"  {% checkOkIns (addToBlock Exit    )    $1  }
-    | Ins RETURN   Exp   ";"  {% checkOkIns (addToBlock (Return Nothing )) $1 } -- Cambiar para exp
-    | Ins RETURN         ";"  {% checkOkIns (addToBlock (Return Nothing )) $1 }
-    | Ins READ  "("  ID   ")" ";" {% checkReadable $4 True  >> return TypeVoid} --revisar
+    | Ins Exp "="  Exp   ";"  {% checkLValue (sel1 $2,sel2 $2) >>= checkOkIns (addToBlock (Assign    ExpTrue ExpTrue) ) True } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
+    | Ins Exp "*=" Exp   ";"  {% checkLValue (sel1 $2,sel2 $2) >>= checkOkIns (addToBlock (AssignMul ExpTrue ExpTrue) ) True } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
+    | Ins Exp "+=" Exp   ";"  {% checkLValue (sel1 $2,sel2 $2) >>= checkOkIns (addToBlock (AssignSum ExpTrue ExpTrue) ) True } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
+    | Ins Exp "-=" Exp   ";"  {% checkLValue (sel1 $2,sel2 $2) >>= checkOkIns (addToBlock (AssignMin ExpTrue ExpTrue) ) True } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
+    | Ins BREAK          ";"  {% checkOkIns (addToBlock Break   )   True $1 }
+    | Ins CONTINUE       ";"  {% checkOkIns (addToBlock Continue)   True $1 }
+    | Ins EXIT           ";"  {% checkOkIns (addToBlock Exit    )   True $1 }
+    | Ins RETURN   Exp   ";"  {% checkOkIns (addToBlock (Return Nothing )) True $1 } -- Cambiar para exp
+    | Ins RETURN         ";"  {% checkOkIns (addToBlock (Return Nothing )) True $1 }
+    | Ins READ  "("  ID   ")" ";" {% checkReadable $4 True  >>= checkOkIns (addToBlock (Return Nothing )) True } --Camiar Nothing por (Read $4)
     | Ins BEGIN Ent0 SmplDcls Ins END       {% exitScope    >> return TypeVoid} -- No debe aceptar funciones
     | Ins IF Exp    ":" Ent0 SmplDcls Ins Ent1 NextIf Else END    {% return TypeVoid  }
     | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                {% return TypeVoid  }
@@ -232,63 +232,65 @@ FieldsList  : ID "::" Reference                  {% (insertDeclareInScope $3 $1 
                                                         return(addType $1 (TypeField (lexeme $3) $5)) } 
 
 ExpList: {- λ -}        { emptytuple }
-       | ExpFirsts Exp  { $1 `addType` (fst $2) } 
+       | ExpFirsts Exp  { $1 `addType` (sel1 $2) } 
 
 ExpFirsts : {- λ -}         { emptytuple }
-          | ExpFirsts Exp "," { $1 `addType` (fst $2) } 
+          | ExpFirsts Exp "," { $1 `addType` (sel1 $2) } 
 
 
 
 Exp : 
     -- Expresiones Aritméticas.
-      Exp "+"  Exp      {% checkBinary nums (fst $1) (fst $3) $2 (snd $1) }
-    | Exp "-"  Exp      {% checkBinary nums (fst $1) (fst $3) $2 (snd $1) }
-    | Exp "^"  Exp      {% return (TypeBool,(snd $1))                 }
-    | Exp "*"  Exp      {% checkBinary nums (fst $1) (fst $3) $2 (snd $1) }   -- Float/Int and Int
-    | Exp "/"  Exp      {% checkBinary nums (fst $1) (fst $3) $2 (snd $1) }   -- Both Float
-    | Exp "//" Exp      {% checkBinary nums (fst $1) (fst $3) $2 (snd $1) }   -- last one integer
-    | Exp "%"  Exp      {% checkBinary nums (fst $1) (fst $3) $2 (snd $1) }   -- Both Integer
-    | "-" Exp %prec NEG {% return (TypeBool,(snd $2)) }
+      Exp "+"  Exp      {% return (TypeBool,TkNum,Continue) }
+    | Exp "-"  Exp      {% return (TypeBool,TkNum,Continue) }
+    | Exp "^"  Exp      {% return (TypeBool,TkNum,Continue) }
+    | Exp "*"  Exp      {% return (TypeBool,TkNum,Continue) }   -- Float/Int and Int
+    | Exp "/"  Exp      {% return (TypeBool,TkNum,Continue) }   -- Both Float
+    | Exp "//" Exp      {% return (TypeBool,TkNum,Continue) }   -- last one integer
+    | Exp "%"  Exp      {% return (TypeBool,TkNum,Continue) }   -- Both Integer
+    | "-" Exp %prec NEG {% return (TypeBool,TkNum,Continue) }
     -- Expresiones Booleanas.
-    | Exp OR Exp        {% checkBinary [TypeBool] (fst $1) (fst $3) $2 (snd $1)  }
-    | Exp "||" Exp      {% checkBinary [TypeBool] (fst $1) (fst $3) $2 (snd $1)  }
-    | Exp AND Exp       {% checkBinary [TypeBool] (fst $1) (fst $3) $2 (snd $1)  }
-    | Exp "&&" Exp      {% checkBinary [TypeBool] (fst $1) (fst $3) $2 (snd $1)  }
-    | "!" Exp           {% return (TypeBool,(snd $2)) }
+    | Exp OR Exp        {% return (TypeBool,TkNum,Continue) }
+    | Exp "||" Exp      {% return (TypeBool,TkNum,Continue) }
+    | Exp AND Exp       {% return (TypeBool,TkNum,Continue) }
+    | Exp "&&" Exp      {% return (TypeBool,TkNum,Continue) }
+    | "!" Exp           {% return (TypeBool,TkNum,Continue) }
     -- Expresiones relacionales.
-    | Exp "<"  Exp      {% checkComp (fst $1) (fst $3) $2 (snd $1) }
-    | Exp "<=" Exp      {% checkComp (fst $1) (fst $3) $2 (snd $1) }
-    | Exp ">"  Exp      {% checkComp (fst $1) (fst $3) $2 (snd $1) }
-    | Exp ">=" Exp      {% checkComp (fst $1) (fst $3) $2 (snd $1) }
-    | Exp "==" Exp      {% checkComp (fst $1) (fst $3) $2 (snd $1) }
-    | Exp "!=" Exp      {% checkComp (fst $1) (fst $3) $2 (snd $1) }
+    | Exp "<"  Exp      {% return (TypeBool,TkNum,Continue) }
+    | Exp "<=" Exp      {% return (TypeBool,TkNum,Continue) }
+    | Exp ">"  Exp      {% return (TypeBool,TkNum,Continue) }
+    | Exp ">=" Exp      {% return (TypeBool,TkNum,Continue) }
+    | Exp "==" Exp      {% return (TypeBool,TkNum,Continue) }
+    | Exp "!=" Exp      {% return (TypeBool,TkNum,Continue) }
     -- Expresiones sobre lienzo.
-    | Exp "!!" Exp            {% return (TypeBool,(snd $1)) }
-    | Exp "."  ID             {% checkFieldAccess $1 $3 }
-    | ID SquareList %prec ARR {% return (TypeBool,$1) }
+    | Exp "!!" Exp            {% return (TypeBool,TkNum,Continue) }
+    | Exp "."  ID             {% return (TypeBool,TkNum,Continue) }
+    | ID SquareList %prec ARR {% return (TypeBool,TkNum,Continue) }
     --Llamadas a funciones
-    | ID "(" ExpList ")"   {% checkFunctionCall $1 $3 } 
+    | ID "(" ExpList ")"   {% return (TypeBool,TkNum,Continue) } 
     --Acceso a apuntadores
-    | "*" Exp %prec POINT  {% return (TypeBool,(snd $2)) }
+    | "*" Exp %prec POINT  {% return (TypeBool,TkNum,Continue) }
     --Direccion de variable
-    | "&" Exp %prec AMP    {% return (TypeBool,(snd $2)) }
+    | "&" Exp %prec AMP    {% return (TypeBool,TkNum,Continue) }
     -- Asociatividad.
-    | "(" Exp ")"    {% return (TypeBool,(snd $2)) }
+    | "(" Exp ")"    {% return (TypeBool,TkNum,Continue) }
     -- Constantes.
     -- Llamadas
-    | SIZEOF "(" Reference ")" {% return (TypeInt,$1)  } -- Can be known at compile time
-    -- | GET    "(" ENUM ")"      {% return (TypeBool,$3) } -- Si no lo hacemos por gramatica, mejor error pero no se puede conocer a tiempo de compilacion
-    | GET    "(" ENUM ")"      {% return (TypeBool,$3) }
-    | TRUE      {% return (TypeBool,$1) }   
-    | FALSE     {% return (TypeBool,$1) }   
-    | ID        {% checkItsDeclared $1  } 
-    | DATAID    {% return (TypeError,$1)}   -- {  $1  } ???? check its declared
-    | FLOAT     {% return (TypeFloat,$1)}   
-    | INT       {% return (TypeInt,$1)  }   
-    | CHAR      {% return (TypeChar,$1) }   
+    | SIZEOF "(" Reference ")" {% return (TypeBool,TkNum,Continue) } -- Can be known at compile time
+    -- | GET    "(" ENUM ")"      {% return (TypeBool,(sel2 $2),Continue) } -- Si no lo hacemos por gramatica, mejor error pero no se puede conocer a tiempo de compilacion
+    | GET    "(" ENUM ")"      {% return (TypeBool,TkNum,Continue) }
+    | TRUE      {% return (TypeBool,TkNum,Continue) }   
+    | FALSE     {% return (TypeBool,TkNum,Continue) }   
+    | ID        {% return (TypeBool,TkNum,Continue) } 
+    | DATAID    {% return (TypeBool,TkNum,Continue) } -- check its declared
+    | FLOAT     {% return (TypeBool,TkNum,Continue) }   
+    | INT       {% return (TypeBool,TkNum,Continue) }   
+    | CHAR      {% return (TypeBool,TkNum,Continue) }   
 
-SquareList: "[" Exp "]"            { $1 } -- Check it's int and acc number of nesting
-          | SquareList "[" Exp "]" { $2 } -- Check it's int and acc number of nesting
+ 
+
+SquareList: "[" Exp "]"            { (sel1 $2,sel2 $2) } -- Check it's int and acc number of nesting
+          | SquareList "[" Exp "]" { (sel1 $2,sel2 $2) } -- Check it's int and acc number of nesting
 
 Ent0 : {- λ -}     {% onZip enterScope }
 Ent1 : {- λ -}     {% exitScope  }

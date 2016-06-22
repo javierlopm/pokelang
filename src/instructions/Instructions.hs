@@ -46,7 +46,7 @@ instance Show Ins where
   show Break    = "Break"
   show Exit     = "Exit"
   show Error    = "Error"
-  show _ = ""
+  show _ = "DefaultIns"
 
 showIndented :: Ins -> Int -> String
 showIndented _ _  = undefined -- If, Block, for ... nested
