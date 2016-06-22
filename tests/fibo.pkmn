@@ -39,7 +39,8 @@ funcball pINTachu fibo_iterativo(pINTachu n):
 
     # n1 += 2;
 
-    n1 = arr[n2][0][2+2];
+    # n1 = arr[n2][0][2+2];
+    n1 = arr !! n2 !! 0 !! 2+2;
 
     si n == 0:
         vamo_a_retorna 0;

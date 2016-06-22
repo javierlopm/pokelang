@@ -118,6 +118,8 @@ import Instructions
 %left  "&&"
 %right "!"
 
+%left "!!"
+   
 -- Para los enteros.
 %left "+" "-"
 %left "*" "/" "//" "%"
@@ -125,7 +127,6 @@ import Instructions
 %right NEG      -- Para el - unario.
 
 --Strucs Union y Arreglos
-%left "!!"   
 %left "."  
 %left ARR
 
@@ -265,7 +266,7 @@ Exp :  -- Cambiar los NoExp por las Exp
     | Exp "==" Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Eql        (sel3 $1) (sel3 $3)) }
     | Exp "!=" Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary NotEql     (sel3 $1) (sel3 $3)) }
     -- Expresiones sobre lienzo.
-    | Exp "!!" Exp            {% return (TypeBool,(sel2 $1),(Binary Access     (sel3 $1) (sel3 $3))) }
+    | Exp "!!" Exp            {% return (TypeBool,(sel2 $1),(Binary Access     (sel3 $3) (sel3 $1))) }
     | Exp "."  ID             {% checkFieldAccess $1 $3  >>= expIns (Binary Access (sel3 $1) (ExpVar (lexeme $3))) } -- Binary Access (sel3 $1) (sel3 $3)
     | ID SquareList %prec ARR {% return (TypeBool,$1,(arrayParser (ExpVar (lexeme $1)) (snd $2))) }
     --Llamadas a funciones
