@@ -239,53 +239,53 @@ ExpFirsts : {- λ -}         { emptytuple }
 
 
 
-Exp : 
+Exp :  -- Cambiar los NoExp por las Exp
     -- Expresiones Aritméticas.
-      Exp "+"  Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
-    | Exp "-"  Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
-    | Exp "^"  Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
-    | Exp "*"  Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }   -- Float/Int and Int
-    | Exp "/"  Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }   -- Both Float
-    | Exp "//" Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }   -- last one integer
-    | Exp "%"  Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }   -- Both Integer
-    | "-" Exp %prec NEG {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+      Exp "+"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Plus (sel3 $1) (sel3 $3)) } --Crear funcion reciba operador y args
+    | Exp "-"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }
+    | Exp "^"  Exp      {% return (TypeBool,(sel2 $1),NoExp)                  }
+    | Exp "*"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }   -- Float/Int and Int
+    | Exp "/"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }   -- Both Float
+    | Exp "//" Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }   -- last one integer
+    | Exp "%"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }   -- Both Integer
+    | "-" Exp %prec NEG {% return (TypeBool,(sel2 $2),NoExp)  }
     -- Expresiones Booleanas.
-    | Exp OR Exp        {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
-    | Exp "||" Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
-    | Exp AND Exp       {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
-    | Exp "&&" Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
-    | "!" Exp           {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | Exp OR Exp        {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns NoExp }
+    | Exp "||" Exp      {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns NoExp }
+    | Exp AND Exp       {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns NoExp }
+    | Exp "&&" Exp      {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns NoExp }
+    | "!" Exp           {% return (TypeBool,(sel2 $2),NoExp)  }
     -- Expresiones relacionales.
-    | Exp "<"  Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
-    | Exp "<=" Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
-    | Exp ">"  Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
-    | Exp ">=" Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
-    | Exp "==" Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
-    | Exp "!=" Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | Exp "<"  Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }
+    | Exp "<=" Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }
+    | Exp ">"  Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }
+    | Exp ">=" Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }
+    | Exp "==" Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }
+    | Exp "!=" Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns NoExp }
     -- Expresiones sobre lienzo.
-    | Exp "!!" Exp            {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
-    | Exp "."  ID             {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
-    | ID SquareList %prec ARR {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | Exp "!!" Exp            {% return (TypeBool,(sel2 $1),NoExp) }
+    | Exp "."  ID             {% checkFieldAccess $1 $3  >>= expIns NoExp } 
+    | ID SquareList %prec ARR {% return (TypeBool,$1,NoExp)  }
     --Llamadas a funciones
-    | ID "(" ExpList ")"   {% return (TypeBool,(TkNum (0,0) 0),NoExp) } 
+    | ID "(" ExpList ")"   {% checkFunctionCall $1 $3  >>= expIns NoExp } 
     --Acceso a apuntadores
-    | "*" Exp %prec POINT  {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | "*" Exp %prec POINT  {% return (TypeBool,(sel2 $2),NoExp) }
     --Direccion de variable
-    | "&" Exp %prec AMP    {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | "&" Exp %prec AMP    {% return (TypeBool,(sel2 $2),NoExp)  }
     -- Asociatividad.
-    | "(" Exp ")"    {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | "(" Exp ")"    {% return (TypeBool,(sel2 $2),NoExp) }
     -- Constantes.
     -- Llamadas
-    | SIZEOF "(" Reference ")" {% return (TypeBool,(TkNum (0,0) 0),NoExp) } -- Can be known at compile time
+    | SIZEOF "(" Reference ")" {% return (TypeInt,$1,NoExp) } -- Can be known at compile time
     -- | GET    "(" ENUM ")"      {% return (TypeBool,(sel2 $2),NoExp) } -- Si no lo hacemos por gramatica, mejor error pero no se puede conocer a tiempo de compilacion
-    | GET    "(" ENUM ")"      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
-    | TRUE      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }   
-    | FALSE     {% return (TypeBool,(TkNum (0,0) 0),NoExp) }   
-    | ID        {% return (TypeBool,(TkNum (0,0) 0),NoExp) } 
-    | DATAID    {% return (TypeBool,(TkNum (0,0) 0),NoExp) } -- check its declared
-    | FLOAT     {% return (TypeBool,(TkNum (0,0) 0),NoExp) }   
-    | INT       {% return (TypeBool,(TkNum (0,0) 0),NoExp) }   
-    | CHAR      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }   
+    | GET    "(" ENUM ")"      {% return (TypeBool,$3,NoExp) }
+    | TRUE      {% return (TypeBool,$1,ExpTrue) }   
+    | FALSE     {% return (TypeBool,$1,ExpFalse) }   
+    | ID        {% checkItsDeclared $1  >>= expIns (ExpVar (lexeme $1))  } 
+    | DATAID    {% return (TypeError,$1,ExpVar (lexeme $1)) } -- check its declared
+    | FLOAT     {% return (TypeFloat,$1,ExpFloat (rep $1)) }   
+    | INT       {% return (TypeInt,$1,ExpInt (value $1)) }   
+    | CHAR      {% return (TypeChar,$1,ExpChar (char $1)) }  
 
  
 

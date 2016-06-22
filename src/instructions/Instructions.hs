@@ -120,11 +120,12 @@ instance Show Operator where
 
 data Exp = Binary  Operator Exp Exp
          | Unary   Operator Exp
-         | Value   String        -- Get Variable value
+         | ExpVar  String        -- Get Variable value
          | ExpTrue
          | ExpFalse
          | ExpFloat Float
          | ExpInt   Int
+         | ExpChar  Char
          | ExpEnum  String
          | CallVal  String (Seq(Exp)) -- Function call
          | NoExp
