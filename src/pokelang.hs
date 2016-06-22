@@ -41,7 +41,7 @@ getIns tokens = do
     then do let (_,_,scps) =  makeTable state -- $ fromZipper state
             putStrLn $ concatMap showFuncIns $ getAll isAFunction scps
     else do printErrors errorcount id errors
-  where showFuncIns (strs,scps) = strs ++ "\n" ++ (showInst . fields)  scps -- showInst . inst
+  where showFuncIns (strs,scps) = strs ++ "\n" ++ (showInst . fields)  scps ++ "\n"
 main = do
   arg1:arg2:_ <- getArgs
   let (fileToRead,runargs)=myF arg1 arg2

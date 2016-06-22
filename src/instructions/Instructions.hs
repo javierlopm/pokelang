@@ -39,8 +39,10 @@ instance Show Ins where
   show (AssignMul e1 e2 ) = show e1 ++ " *= " ++ show e2
   show (AssignMin e1 e2 ) = show e1 ++ " *= " ++ show e2
   show (Call   s expSeq ) = show s ++ "(" ++ (( concat . (intersperse ",") . (map show) . toList) expSeq) ++ ")"
-  show (Guard     bexp  ) = "If/Elif(" ++ show bexp ++ ")"
-  -- Agregar while, for forStep
+  show (Guard     bexp  ) = "If/Elif(" ++ show bexp ++ "):"
+  show (While     bexp  ) = "While(" ++ show bexp ++ "):"
+  show (For     low high ) = "For" ++ show low ++ " to " ++  show high ++ ":"
+  show (ForStep low high w ) = "For" ++ show low ++ " to " ++  show high ++ " with  " ++ show w ++ ":"
   show (Read      sexp  ) = "Read:" ++ show sexp
   show Else     = "Else:"
   show Continue = "Read:"

@@ -32,6 +32,8 @@ module TableTree(
 
 import Prelude hiding (drop)
 
+import Debug.Trace(trace)
+
 import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as DS
 import Data.Foldable as F(toList,foldl)
@@ -69,20 +71,24 @@ showScope i (Scope st inst ofs chld) = "\n" ++ replicate (i*2) ' ' ++
                 showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) ((toList) chld)
 
 showInst :: Scope a -> String
-showInst = showInstAux 0 
+showInst = showInstAux 0
 
 showInstAux :: Int -> Scope a -> String -- revisar si es un if
-showInstAux i (Scope _ (Block ins) _ chs)  = fst1 $ F.foldl toStr  ("",i,chs)  ins
+showInstAux i (Scope _ (Block ins) _ chs)  = if DS.null ins
+                                             then if DS.null chs 
+                                                  then "EmptyBlock\n"
+                                                  else "Block:\n"++ showInstAux (i+1) (index chs 0)
+                                             else fst1 $ F.foldl toStr  ("",i,chs)  ins
     where 
     toStr (str,nesting,chs) k = case k of 
       (If s)   -> (,,) (str ++ (fst (moveTroughIf nesting (viewl s,chs))))
                        nesting
                        (snd         (moveTroughIf nesting (viewl s,chs)))
       ins      -> if goDipah ins
-                  then (,,) (str ++ indent i ++ show ins ++ showInstAux (nesting+1) (index chs 0))
+                  then (,,) (str ++ indent i ++ show ins ++ "\n" ++ showInstAux (nesting+1) (index chs 0))
                             nesting
                             (drop 1 chs)
-                  else (,,) (str ++ indent i ++ show ins)
+                  else (,,) (str ++ indent i ++ show ins ++ "\n")
                             nesting
                             chs
     moveTroughIf i (g:<gs,bs) = (,)   (indent i ++ show g ++ 
@@ -94,6 +100,7 @@ showInstAux i (Scope _ (Block ins) _ chs)  = fst1 $ F.foldl toStr  ("",i,chs)  i
     fst1   (a,_,_) = a
     snd1   (_,b,_) = b
     third  (_,_,c) = c
+showInstAux _ _  = error "que hiciste papaito?"
 
 data Breadcrumb a = Breadcrumb { left  :: [Scope a]
                                , right :: Seq(Scope a)
