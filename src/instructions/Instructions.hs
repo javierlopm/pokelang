@@ -132,10 +132,10 @@ data Operator = And -- Binary
               | LessEql
               | GreaterEql
               | NotEql
+              | Eql
               -- Unary
               | Address -- Ampersand
               | Access  -- Arrays and structs
-              | UNeg 
               | Not
 
 instance Show Operator where
@@ -157,9 +157,9 @@ instance Show Operator where
     show LessEql       = "<="
     show GreaterEql    = ">="
     show NotEql        = "!="
-    show Address      = "&"
+    show Eql           = "=="
+    show Address       = "&"
     show Access        = "*"
-    show UNeg          = "u-"
     show Not           = "!"
 
 
