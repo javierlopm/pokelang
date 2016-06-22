@@ -151,23 +151,23 @@ import Instructions
 Prog : Dcls  {% checkMain }
 
 Ins : {- λ -}                 {% return TypeVoid }
-    | Ins Exp "="  Exp   ";"  {% checkLValue (sel1 $2, sel2 $2) >> addToBlock (Assign    ExpTrue ExpTrue) >> return TypeVoid } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
-    | Ins Exp "*=" Exp   ";"  {% checkLValue (sel1 $2, sel2 $2) >> addToBlock (AssignMul ExpTrue ExpTrue) >> return TypeVoid } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
-    | Ins Exp "+=" Exp   ";"  {% checkLValue (sel1 $2, sel2 $2) >> addToBlock (AssignSum ExpTrue ExpTrue) >> return TypeVoid } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
-    | Ins Exp "-=" Exp   ";"  {% checkLValue (sel1 $2, sel2 $2) >> addToBlock (AssignMin ExpTrue ExpTrue) >> return TypeVoid } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
+    | Ins Exp "="  Exp   ";"  {% checkLValue (sel1 $2, sel2 $2) >> addToBlock (Assign    (sel3 $2) (sel3 $4)) >> return TypeVoid } 
+    | Ins Exp "*=" Exp   ";"  {% checkLValue (sel1 $2, sel2 $2) >> addToBlock (AssignMul (sel3 $2) (sel3 $4)) >> return TypeVoid } 
+    | Ins Exp "+=" Exp   ";"  {% checkLValue (sel1 $2, sel2 $2) >> addToBlock (AssignSum (sel3 $2) (sel3 $4)) >> return TypeVoid } 
+    | Ins Exp "-=" Exp   ";"  {% checkLValue (sel1 $2, sel2 $2) >> addToBlock (AssignMin (sel3 $2) (sel3 $4)) >> return TypeVoid } 
     | Ins BREAK          ";"  {% checkOkIns (addToBlock Break   )    $1  }
     | Ins CONTINUE       ";"  {% checkOkIns (addToBlock Continue)    $1  }
     | Ins EXIT           ";"  {% checkOkIns (addToBlock Exit    )    $1  }
-    | Ins RETURN   Exp   ";"  {% checkOkIns (addToBlock (Return Nothing )) $1 } -- Cambiar para exp
+    | Ins RETURN   Exp   ";"  {% checkOkIns (addToBlock (Return (Just (sel3 $3)) )) $1 } -- Cambiar para exp
     | Ins RETURN         ";"  {% checkOkIns (addToBlock (Return Nothing )) $1 }
     | Ins READ  "("  ID   ")" ";" {% checkReadable $4 True  >> return TypeVoid} --revisar
-    | Ins ID    "("ExpList")" ";" {% return TypeVoid } 
+    | Ins ID    "("ExpList")" ";" {% checkOkIns (addToBlock (Call (lexeme $2) (snd $4) ))  $1 } -- Function call
     | Ins BEGIN Ent0 SmplDcls Ins END                              {% exitScope >> checkOkIns (addToBlock EnterBlock ) $1 } -- Verificar que el tipo de ins es Void y $1 
     | Ins IF Exp    ":" Ent0 SmplDcls Ins Ent1 NextIf Else END     {% checkOkIns (addToBlock (mergeIf (Guard ExpTrue) $9 $10 )) $1 } -- verificar que $3 es bool, $9 y $10 son void
     | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                 {% checkOkIns (addToBlock (While ExpTrue) ) $1  }
-    | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope >> checkOkIns (addToBlock (ForStep (ExpInt 1) (ExpInt 2) (ExpInt 1))) $1 }
-    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope >> checkOkIns (addToBlock (For (ExpInt 1) (ExpInt 2))) $1 }
-    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope >> checkOkIns (addToBlock (For (ExpInt 1) (ExpInt 2))) $1 }
+    | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope >> checkOkIns (addToBlock (ForStep (sel3 $5) (sel3 $7) (sel3 $9))) $1 }
+    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope >> checkOkIns (addToBlock (For     (sel3 $5) (sel3 $7))) $1 }
+    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope >> checkOkIns (addToBlock (For     ExpTrue ExpTrue)) $1 }
 
 
 
@@ -233,11 +233,11 @@ FieldsList  : ID "::" Reference                  {% (insertDeclareInScope $3 $1 
             | FieldsList  "," ID "::" Reference  {% (insertDeclareInScope $5 $3 False False) >> 
                                                         return(addType $1 (TypeField (lexeme $3) $5)) } 
 
-ExpList: {- λ -}        { emptytuple }
-       | ExpFirsts Exp  { $1 `addType` (sel1 $2) } 
+ExpList: {- λ -}        { (emptytuple            , emptyExpList ) }
+       | ExpFirsts Exp  { ((fst $1) `addType` (sel1 $2), (snd $1) `addExpList` (sel3 $2) ) } 
 
-ExpFirsts : {- λ -}         { emptytuple }
-          | ExpFirsts Exp "," { $1 `addType` (sel1 $2) } 
+ExpFirsts : {- λ -}           { (emptytuple            , emptyExpList ) }
+          | ExpFirsts Exp "," { ((fst $1) `addType` (sel1 $2), (snd $1) `addExpList` (sel3 $2) ) } 
 
 
 
@@ -269,7 +269,7 @@ Exp :  -- Cambiar los NoExp por las Exp
     | Exp "."  ID             {% checkFieldAccess $1 $3  >>= expIns (NoExp) } -- Binary Access (sel3 $1) (sel3 $3)
     | ID SquareList %prec ARR {% return (TypeBool,$1,NoExp)  }
     --Llamadas a funciones
-    | ID "(" ExpList ")"   {% checkFunctionCall $1 $3  >>= expIns NoExp } 
+    | ID "(" ExpList ")"   {% checkFunctionCall $1 (fst $3)  >>= expIns NoExp } 
     --Acceso a apuntadores
     | "*" Exp %prec POINT  {% return (TypeBool,(sel2 $2),Unary Access (sel3 $2)) }
     --Direccion de variable

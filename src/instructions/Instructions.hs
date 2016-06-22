@@ -8,7 +8,9 @@ module Instructions(
     showIndented,
     goDipah,
     mergeIf,
-    insertIf
+    insertIf,
+    emptyExpList,
+    addExpList
 ) where
 
 -- import Data.Sequence(empty,viewl,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
@@ -155,3 +157,9 @@ data Exp = Binary  Operator Exp Exp
          | CallVal  String (Seq(Exp)) -- Function call
          | NoExp
          deriving (Show)
+
+emptyExpList :: (Seq(Exp))
+emptyExpList = empty
+
+addExpList :: (Seq(Exp)) -> Exp -> (Seq(Exp))
+addExpList = (|>)
