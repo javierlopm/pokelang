@@ -34,6 +34,7 @@ data Ins = Assign    Exp Exp
          | Break
          | Exit
          | Error
+         | EnterBlock
          | Block (Seq(Ins))
 
 instance Show Ins where
@@ -49,6 +50,7 @@ instance Show Ins where
   show (Read      sexp  ) = "Read:" ++ show sexp
   show (Return  Nothing ) = "Return Void"
   show (Return  (Just exp)) = "Return " ++ show exp
+  show EnterBlock = "Block:"
   show Else     = "Else:"
   show Continue = "Read:"
   show Break    = "Break"
@@ -85,6 +87,7 @@ insertIf (If ifs) guard = (If (ifs |> guard))
 goDipah :: Ins -> Bool
 goDipah (Else          ) = True
 goDipah (EnterFor      ) = True
+goDipah (EnterBlock    ) = True
 goDipah (Guard _       ) = True 
 goDipah (While _       ) = True
 goDipah (For     _ _   ) = True

@@ -162,12 +162,12 @@ Ins : {- λ -}                 {% return TypeVoid }
     | Ins RETURN         ";"  {% checkOkIns (addToBlock (Return Nothing )) $1 }
     | Ins READ  "("  ID   ")" ";" {% checkReadable $4 True  >> return TypeVoid} --revisar
     | Ins ID    "("ExpList")" ";" {% return TypeVoid } 
-    | Ins BEGIN Ent0 SmplDcls Ins END       {% exitScope    >> return TypeVoid} -- No debe aceptar funciones
+    | Ins BEGIN Ent0 SmplDcls Ins END                              {% exitScope >> checkOkIns (addToBlock EnterBlock ) $1 } -- Verificar que el tipo de ins es Void y $1 
     | Ins IF Exp    ":" Ent0 SmplDcls Ins Ent1 NextIf Else END     {% checkOkIns (addToBlock (mergeIf (Guard ExpTrue) $9 $10 )) $1 } -- verificar que $3 es bool, $9 y $10 son void
-    | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                 {% return TypeVoid  }
-    | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope >> (addToBlock (ForStep (ExpInt 1) (ExpInt 2) (ExpInt 1)))   >> return TypeVoid}
-    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope >> (addToBlock (For (ExpInt 1) (ExpInt 2)) )   >> return TypeVoid}
-    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope >> (addToBlock (For (ExpInt 1) (ExpInt 2)) )   >> return TypeVoid}
+    | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                 {% checkOkIns (addToBlock (While ExpTrue) ) $1  }
+    | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope >> checkOkIns (addToBlock (ForStep (ExpInt 1) (ExpInt 2) (ExpInt 1))) $1 }
+    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope >> checkOkIns (addToBlock (For (ExpInt 1) (ExpInt 2))) $1 }
+    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope >> checkOkIns (addToBlock (For (ExpInt 1) (ExpInt 2))) $1 }
 
 
 
