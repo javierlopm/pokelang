@@ -31,7 +31,7 @@ funcball VOIDtorb bubble( pINTachu arr,
     #pINTachu ordenados;
     VOIDtorb *voidtype;
     pINTachu holis;
-    #vamo_a_lee(holis);
+    vamo_a_lee(holis);
     #vamo_a_escribi(bubbles);
 
 

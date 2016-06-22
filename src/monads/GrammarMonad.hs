@@ -38,6 +38,8 @@ module GrammarMonad(
     -- getDataSize
 ) where
 
+import Debug.Trace(trace)
+
 import Control.Monad.RWS.Strict
 import Control.Monad(foldM)
 import Data.Maybe(fromJust,isNothing)
@@ -164,14 +166,14 @@ checkLValue (myType ,myToken) = do
                   then tellError error1       >> return TypeError
                   else 
                     if (isLValue myType $ fromJust $ getVal (zipp state) myLex)
-                    then tellLog whathappened >> return myType  --REVISAR
+                    then tellLog whathappened >> return TypeVoid  --REVISAR
                     else tellError error2     >> return TypeError
       else if isInScope (scp state) myLex 
           then if (isLIter $ fromJust $ getValS myLex (scp state))  
                   then tellError error1       >> return TypeError
                   else 
                     if (isLValue myType $ fromJust $ getValS myLex (scp state) )
-                    then tellLog whathappened >> return myType  --REVISAR
+                    then tellLog whathappened >> return TypeVoid  --REVISAR
                     else tellError error2     >> return TypeError
           else return TypeError -- This check exists already in lower levels
     else tellError error4 >> return TypeError

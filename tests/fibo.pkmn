@@ -17,6 +17,8 @@ funcball pINTachu fibo(pINTachu n):
     STRUCTabuzz poketrainer ash;
 
     n = ash.mypkmn.type;
+    n *= 4;
+    n *= 4;
 
     si n == 0 || n == 1:
         vamo_a_retorna 1;
@@ -34,6 +36,7 @@ funcball pINTachu fibo_iterativo(pINTachu n):
     pINTachu iter;
     pINTachu aux;
 
+    n1 += 2;
 
     si n == 0:
         vamo_a_retorna 0;
@@ -49,5 +52,9 @@ funcball pINTachu fibo_iterativo(pINTachu n):
         vamo_a_retorna n1;
     vamo_a_calmano
 
+
+vamo_a_calmano
+
+funcball VOIDtorb hitMAINlee():
 
 vamo_a_calmano

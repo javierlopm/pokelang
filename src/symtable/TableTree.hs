@@ -91,16 +91,16 @@ showInstAux i (Scope _ (Block ins) _ chs)  = if DS.null ins
                   else (,,) (str ++ indent i ++ show ins ++ "\n")
                             nesting
                             chs
-    moveTroughIf i (g:<gs,bs) = (,)   (indent i ++ show g ++ 
-                                          indent (i+1) ++ showInstAux (i+1) (index bs 0) ++ 
-                                          fst (moveTroughIf (i+1) (viewl gs,drop 1 bs)))
+    moveTroughIf i (g:<gs,bs) = (,)   (indent i ++ show g ++ "\n" ++
+                                          showInstAux (i+1) (index bs 0) ++ 
+                                          fst (moveTroughIf i (viewl gs,drop 1 bs)))
                                       (drop 1 bs)
     moveTroughIf i (EmptyL,chs) =  ("",chs)
     indent i     = replicate (i*2) ' '
     fst1   (a,_,_) = a
     snd1   (_,b,_) = b
     third  (_,_,c) = c
-showInstAux _ _  = error "que hiciste papaito?"
+
 
 data Breadcrumb a = Breadcrumb { left  :: [Scope a]
                                , right :: Seq(Scope a)

@@ -151,32 +151,33 @@ import Instructions
 Prog : Dcls  {% checkMain }
 
 Ins : {- λ -}                 {% return TypeVoid }
-    | Ins Exp "="  Exp   ";"  {% checkLValue $2 >>= checkOkIns (addToBlock (Assign    ExpTrue ExpTrue) ) } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
-    | Ins Exp "*=" Exp   ";"  {% checkLValue $2 >>= checkOkIns (addToBlock (AssignMul ExpTrue ExpTrue) ) } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
-    | Ins Exp "+=" Exp   ";"  {% checkLValue $2 >>= checkOkIns (addToBlock (AssignSum ExpTrue ExpTrue) ) } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
-    | Ins Exp "-=" Exp   ";"  {% checkLValue $2 >>= checkOkIns (addToBlock (AssignMin ExpTrue ExpTrue) ) } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
+    | Ins Exp "="  Exp   ";"  {% checkLValue $2 >> addToBlock (Assign    ExpTrue ExpTrue) >> return TypeVoid } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
+    | Ins Exp "*=" Exp   ";"  {% checkLValue $2 >> addToBlock (AssignMul ExpTrue ExpTrue) >> return TypeVoid } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
+    | Ins Exp "+=" Exp   ";"  {% checkLValue $2 >> addToBlock (AssignSum ExpTrue ExpTrue) >> return TypeVoid } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
+    | Ins Exp "-=" Exp   ";"  {% checkLValue $2 >> addToBlock (AssignMin ExpTrue ExpTrue) >> return TypeVoid } --(trd $2) (trd $4)) ) } --Falta caso particular para checkAssing
     | Ins BREAK          ";"  {% checkOkIns (addToBlock Break   )    $1  }
     | Ins CONTINUE       ";"  {% checkOkIns (addToBlock Continue)    $1  }
     | Ins EXIT           ";"  {% checkOkIns (addToBlock Exit    )    $1  }
     | Ins RETURN   Exp   ";"  {% checkOkIns (addToBlock (Return Nothing )) $1 } -- Cambiar para exp
     | Ins RETURN         ";"  {% checkOkIns (addToBlock (Return Nothing )) $1 }
     | Ins READ  "("  ID   ")" ";" {% checkReadable $4 True  >> return TypeVoid} --revisar
+    | Ins ID    "("ExpList")" ";" {% return TypeVoid } 
     | Ins BEGIN Ent0 SmplDcls Ins END       {% exitScope    >> return TypeVoid} -- No debe aceptar funciones
-    | Ins IF Exp    ":" Ent0 SmplDcls Ins Ent1 NextIf Else END    {% return TypeVoid  }
-    | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                {% return TypeVoid  }
-    | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope   >> return TypeVoid}
-    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope   >> return TypeVoid}
-    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope   >> return TypeVoid}
+    | Ins IF Exp    ":" Ent0 SmplDcls Ins Ent1 NextIf Else END     {% checkOkIns (addToBlock (mergeIf (Guard ExpTrue) $9 $10 )) $1 } -- verificar que $3 es bool, $9 y $10 son void
+    | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                 {% return TypeVoid  }
+    | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope >> (addToBlock (ForStep (ExpInt 1) (ExpInt 2) (ExpInt 1)))   >> return TypeVoid}
+    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope >> (addToBlock (For (ExpInt 1) (ExpInt 2)) )   >> return TypeVoid}
+    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope >> (addToBlock (For (ExpInt 1) (ExpInt 2)) )   >> return TypeVoid}
 
 
 
 -- List of elseif
-NextIf: {- λ -}                                {% return ()}
-      | NextIf ELIF  Exp ":" Ent0 SmplDcls Ins Ent1 {% return ()  }
+NextIf: {- λ -}                                     { newIf  }
+      | NextIf ELIF  Exp ":" Ent0 SmplDcls Ins Ent1 { insertIf $1 (Guard ExpTrue)  } -- Propagar Error si los tipos no cuadran
 
 -- Else list
-Else: {- λ -}                         {% return ()  }
-    | ELSE ":" Ent0 SmplDcls Ins Ent1 {% return ()  }
+Else: {- λ -}                         {  Nothing     }
+    | ELSE ":" Ent0 SmplDcls Ins Ent1 { (Just Else)  }
 
 -- Declarations that could be global.
 SmplDcls: {- λ -}                       {% return ()}        
@@ -286,6 +287,7 @@ Exp :
     | FLOAT     {% return (TypeFloat,$1)}   
     | INT       {% return (TypeInt,$1)  }   
     | CHAR      {% return (TypeChar,$1) }   
+    | STRING    {% return (TypeChar,$1) }  -- Check Later, for print
 
 SquareList: "[" Exp "]"            { $1 } -- Check it's int and acc number of nesting
           | SquareList "[" Exp "]" { $2 } -- Check it's int and acc number of nesting

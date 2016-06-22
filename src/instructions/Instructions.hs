@@ -4,12 +4,15 @@ module Instructions(
     Exp(..),
     insertIns,
     newBlock,
+    newIf,
     showIndented,
-    goDipah
+    goDipah,
+    mergeIf,
+    insertIf
 ) where
 
 -- import Data.Sequence(empty,viewl,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
-import Data.Sequence(empty,Seq,(|>))
+import Data.Sequence(empty,Seq,(|>),(<|))
 import Data.Foldable(toList)
 import Data.List(intersperse)
 
@@ -44,6 +47,8 @@ instance Show Ins where
   show (For     low high ) = "For" ++ show low ++ " to " ++  show high ++ ":"
   show (ForStep low high w ) = "For" ++ show low ++ " to " ++  show high ++ " with  " ++ show w ++ ":"
   show (Read      sexp  ) = "Read:" ++ show sexp
+  show (Return  Nothing ) = "Return Void"
+  show (Return  (Just exp)) = "Return " ++ show exp
   show Else     = "Else:"
   show Continue = "Read:"
   show Break    = "Break"
@@ -60,8 +65,22 @@ insertIns ins (Block s)  = (Block (s |> ins) )
 insertIns _   Error      = Error
 insertIns _   bleh       = error ("Must insert in Block but " ++ show bleh ++ " found ")
 
+mergeIf :: Ins -> Ins -> Maybe Ins -> Ins
+mergeIf Error _ _ = Error
+mergeIf _ Error _ = Error
+mergeIf _ _ (Just Error) = Error
+mergeIf iif (If elifs) elsei = If $ maybe headIns (headIns |> ) elsei
+    where headIns = (iif <| elifs)
+
+
 newBlock :: Ins
 newBlock = Block empty
+
+newIf :: Ins
+newIf = If empty
+
+insertIf :: Ins -> Ins -> Ins 
+insertIf (If ifs) guard = (If (ifs |> guard))
 
 goDipah :: Ins -> Bool
 goDipah (Else          ) = True
