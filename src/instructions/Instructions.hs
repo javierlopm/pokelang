@@ -56,7 +56,7 @@ instance Show Ins where
   show Break    = "Break"
   show Exit     = "Exit"
   show Error    = "Error"
-  show _ = ""
+  show _ = "DefaultIns"
 
 showIndented :: Ins -> Int -> String
 showIndented _ _  = undefined -- If, Block, for ... nested
@@ -145,11 +145,12 @@ instance Show Operator where
 
 data Exp = Binary  Operator Exp Exp
          | Unary   Operator Exp
-         | Value   String        -- Get Variable value
+         | ExpVar  String        -- Get Variable value
          | ExpTrue
          | ExpFalse
          | ExpFloat Float
          | ExpInt   Int
+         | ExpChar  Char
          | ExpEnum  String
          | CallVal  String (Seq(Exp)) -- Function call
          | NoExp

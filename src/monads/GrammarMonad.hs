@@ -34,7 +34,11 @@ module GrammarMonad(
     toggleUnion,
     cleanParams,
     checkOkIns,
-    addToBlock
+    addToBlock,
+    expIns,
+    sel1,
+    sel2,
+    sel3
     -- getDataSize
 ) where
 
@@ -470,9 +474,9 @@ checkFunctionCall ident calltup = do
         error1 (expected,p,_) = strError (position ident) "Error in the call of" (lexeme ident) ("argument number "++show p++" didn't match with expected " ++ show expected)
         error2  = strError (position ident) "number of arguments don't match with" (lexeme ident) "declaration."
 
-checkFieldAccess :: (Type,Token) -> Token -> OurMonad((Type,Token))
-checkFieldAccess (TypeError,tk1) _ = return (TypeError,tk1)
-checkFieldAccess (ty1,tk1) tk2 = do
+checkFieldAccess :: (Type,Token,Exp) -> Token -> OurMonad((Type,Token))
+checkFieldAccess (TypeError,tk1,_) _ = return (TypeError,tk1)
+checkFieldAccess (ty1,tk1,_) tk2 = do
     state <- get
     if structured ty1 
     then do let strScope = (fields . fromJust) $ getValS (getDataName ty1) 
@@ -504,6 +508,19 @@ checkOkIns action t = if t /= TypeError
                       then do action
                               return TypeVoid
                       else return TypeError
+
+expIns :: Exp -> (Type,Token) -> OurMonad((Type,Token,Exp))
+expIns ins (TypeError,to) = return (TypeError,to,NoExp)
+expIns ins (ty,to)        = return (ty,to,ins)
+
+sel1 :: (Type,Token,Exp) -> Type
+sel1 (a,_,_) = a
+
+sel2 :: (Type,Token,Exp) -> Token
+sel2 (_,b,_) = b
+
+sel3 :: (Type,Token,Exp) -> Exp
+sel3 (_,_,c) = c
 
 addToBlock :: Ins -> OurMonad()
 addToBlock i =  onZip (applyIns (insertIns i))
