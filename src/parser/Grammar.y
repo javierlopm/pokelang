@@ -241,56 +241,56 @@ ExpFirsts : {- λ -}         { emptytuple }
 
 Exp : 
     -- Expresiones Aritméticas.
-      Exp "+"  Exp      {% return (TypeBool,TkNum,Continue) }
-    | Exp "-"  Exp      {% return (TypeBool,TkNum,Continue) }
-    | Exp "^"  Exp      {% return (TypeBool,TkNum,Continue) }
-    | Exp "*"  Exp      {% return (TypeBool,TkNum,Continue) }   -- Float/Int and Int
-    | Exp "/"  Exp      {% return (TypeBool,TkNum,Continue) }   -- Both Float
-    | Exp "//" Exp      {% return (TypeBool,TkNum,Continue) }   -- last one integer
-    | Exp "%"  Exp      {% return (TypeBool,TkNum,Continue) }   -- Both Integer
-    | "-" Exp %prec NEG {% return (TypeBool,TkNum,Continue) }
+      Exp "+"  Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | Exp "-"  Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | Exp "^"  Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | Exp "*"  Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }   -- Float/Int and Int
+    | Exp "/"  Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }   -- Both Float
+    | Exp "//" Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }   -- last one integer
+    | Exp "%"  Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }   -- Both Integer
+    | "-" Exp %prec NEG {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
     -- Expresiones Booleanas.
-    | Exp OR Exp        {% return (TypeBool,TkNum,Continue) }
-    | Exp "||" Exp      {% return (TypeBool,TkNum,Continue) }
-    | Exp AND Exp       {% return (TypeBool,TkNum,Continue) }
-    | Exp "&&" Exp      {% return (TypeBool,TkNum,Continue) }
-    | "!" Exp           {% return (TypeBool,TkNum,Continue) }
+    | Exp OR Exp        {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | Exp "||" Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | Exp AND Exp       {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | Exp "&&" Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | "!" Exp           {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
     -- Expresiones relacionales.
-    | Exp "<"  Exp      {% return (TypeBool,TkNum,Continue) }
-    | Exp "<=" Exp      {% return (TypeBool,TkNum,Continue) }
-    | Exp ">"  Exp      {% return (TypeBool,TkNum,Continue) }
-    | Exp ">=" Exp      {% return (TypeBool,TkNum,Continue) }
-    | Exp "==" Exp      {% return (TypeBool,TkNum,Continue) }
-    | Exp "!=" Exp      {% return (TypeBool,TkNum,Continue) }
+    | Exp "<"  Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | Exp "<=" Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | Exp ">"  Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | Exp ">=" Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | Exp "==" Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | Exp "!=" Exp      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
     -- Expresiones sobre lienzo.
-    | Exp "!!" Exp            {% return (TypeBool,TkNum,Continue) }
-    | Exp "."  ID             {% return (TypeBool,TkNum,Continue) }
-    | ID SquareList %prec ARR {% return (TypeBool,TkNum,Continue) }
+    | Exp "!!" Exp            {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | Exp "."  ID             {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | ID SquareList %prec ARR {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
     --Llamadas a funciones
-    | ID "(" ExpList ")"   {% return (TypeBool,TkNum,Continue) } 
+    | ID "(" ExpList ")"   {% return (TypeBool,(TkNum (0,0) 0),NoExp) } 
     --Acceso a apuntadores
-    | "*" Exp %prec POINT  {% return (TypeBool,TkNum,Continue) }
+    | "*" Exp %prec POINT  {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
     --Direccion de variable
-    | "&" Exp %prec AMP    {% return (TypeBool,TkNum,Continue) }
+    | "&" Exp %prec AMP    {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
     -- Asociatividad.
-    | "(" Exp ")"    {% return (TypeBool,TkNum,Continue) }
+    | "(" Exp ")"    {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
     -- Constantes.
     -- Llamadas
-    | SIZEOF "(" Reference ")" {% return (TypeBool,TkNum,Continue) } -- Can be known at compile time
-    -- | GET    "(" ENUM ")"      {% return (TypeBool,(sel2 $2),Continue) } -- Si no lo hacemos por gramatica, mejor error pero no se puede conocer a tiempo de compilacion
-    | GET    "(" ENUM ")"      {% return (TypeBool,TkNum,Continue) }
-    | TRUE      {% return (TypeBool,TkNum,Continue) }   
-    | FALSE     {% return (TypeBool,TkNum,Continue) }   
-    | ID        {% return (TypeBool,TkNum,Continue) } 
-    | DATAID    {% return (TypeBool,TkNum,Continue) } -- check its declared
-    | FLOAT     {% return (TypeBool,TkNum,Continue) }   
-    | INT       {% return (TypeBool,TkNum,Continue) }   
-    | CHAR      {% return (TypeBool,TkNum,Continue) }   
+    | SIZEOF "(" Reference ")" {% return (TypeBool,(TkNum (0,0) 0),NoExp) } -- Can be known at compile time
+    -- | GET    "(" ENUM ")"      {% return (TypeBool,(sel2 $2),NoExp) } -- Si no lo hacemos por gramatica, mejor error pero no se puede conocer a tiempo de compilacion
+    | GET    "(" ENUM ")"      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }
+    | TRUE      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }   
+    | FALSE     {% return (TypeBool,(TkNum (0,0) 0),NoExp) }   
+    | ID        {% return (TypeBool,(TkNum (0,0) 0),NoExp) } 
+    | DATAID    {% return (TypeBool,(TkNum (0,0) 0),NoExp) } -- check its declared
+    | FLOAT     {% return (TypeBool,(TkNum (0,0) 0),NoExp) }   
+    | INT       {% return (TypeBool,(TkNum (0,0) 0),NoExp) }   
+    | CHAR      {% return (TypeBool,(TkNum (0,0) 0),NoExp) }   
 
  
 
 SquareList: "[" Exp "]"            { (sel1 $2,sel2 $2) } -- Check it's int and acc number of nesting
-          | SquareList "[" Exp "]" { (sel1 $2,sel2 $2) } -- Check it's int and acc number of nesting
+          | SquareList "[" Exp "]" { (sel1 $3,sel2 $3) } -- Check it's int and acc number of nesting
 
 Ent0 : {- λ -}     {% onZip enterScope }
 Ent1 : {- λ -}     {% exitScope  }

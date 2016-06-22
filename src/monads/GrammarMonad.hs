@@ -507,17 +507,17 @@ checkOkIns action isV t =  do action
                                 then return t
                                 else return TypeVoid
 
-expIns :: Ins -> (Type,Token) -> OurMonad((Type,Token,Ins))
-expIns ins (TypeError,to) = return (TypeError,to,Error)
+expIns :: Exp -> (Type,Token) -> OurMonad((Type,Token,Exp))
+expIns ins (TypeError,to) = return (TypeError,to,NoExp)
 expIns ins (ty,to)        = return (ty,to,ins)
 
-sel1 :: (Type,Token,Ins) -> Type
+sel1 :: (Type,Token,Exp) -> Type
 sel1 (a,_,_) = a
 
-sel2 :: (Type,Token,Ins) -> Token
+sel2 :: (Type,Token,Exp) -> Token
 sel2 (_,b,_) = b
 
-sel3 :: (Type,Token,Ins) -> Ins
+sel3 :: (Type,Token,Exp) -> Exp
 sel3 (_,_,c) = c
 
 addToBlock :: Ins -> OurMonad()
