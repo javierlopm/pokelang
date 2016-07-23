@@ -3,7 +3,7 @@
 --
 
 STRUCTabuzz pokemon {
-    type                 :: CHARmander *
+    type                 :: CHARmander 
 }
 
 STRUCTabuzz poketrainer {
@@ -33,10 +33,18 @@ vamo_a_calmano
 funcball pINTachu fibo_iterativo(pINTachu n):
     pINTachu n1;
     pINTachu n2;
+    pINTachu [2][3][4]arr;
     pINTachu iter;
     pINTachu aux;
+    STRUCTabuzz poketrainer ash;
 
-    n1 += 2;
+    # n1 += 2;
+    # n1 = arr[n2][0][2+2];
+    # n1 = arr !! n2 !! 0 !! 2+2;
+    # ash.socialSecurityNumber = 1994;
+    # ash.name = 'A';
+    # ash.mypkmn.type = 'c';
+
 
     si n == 0:
         vamo_a_retorna 0;
@@ -44,7 +52,7 @@ funcball pINTachu fibo_iterativo(pINTachu n):
         n2 = 0;
         n1 = 1;
         vamo_a_itera iter = 0|n|1: 
-            aux = n1 + n2;
+            aux = n1 + n2 ^ 2;
             n2  = n1;
             n1  = aux; 
         vamo_a_calmano

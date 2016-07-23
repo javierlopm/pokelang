@@ -36,6 +36,7 @@ module GrammarMonad(
     checkOkIns,
     addToBlock,
     expIns,
+    arrayParser,
     sel1,
     sel2,
     sel3
@@ -521,6 +522,12 @@ sel2 (_,b,_) = b
 
 sel3 :: (Type,Token,Exp) -> Exp
 sel3 (_,_,c) = c
+
+arrayParser :: Exp -> [Exp] -> Exp
+arrayParser var = foldr nest var
+                where
+                  nest nLevel var = (Binary Access nLevel var)
+
 
 addToBlock :: Ins -> OurMonad()
 addToBlock i =  onZip (applyIns (insertIns i))

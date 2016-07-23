@@ -118,6 +118,8 @@ import Instructions
 %left  "&&"
 %right "!"
 
+%left "!!"
+
 -- Para los enteros.
 %left "+" "-"
 %left "*" "/" "//" "%"
@@ -125,7 +127,6 @@ import Instructions
 %right NEG      -- Para el - unario.
 
 --Strucs Union y Arreglos
-%left "!!"   
 %left "."  
 %left ARR
 
@@ -245,7 +246,7 @@ Exp :  -- Cambiar los NoExp por las Exp
     -- Expresiones Aritméticas.
       Exp "+"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Plus (sel3 $1) (sel3 $3)) } --Crear funcion reciba operador y args
     | Exp "-"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Neg (sel3 $1) (sel3 $3)) }
-    | Exp "^"  Exp      {% return (TypeBool,(sel2 $1),(Binary Power (sel3 $1) (sel3 $3)))                  }
+    | Exp "^"  Exp      {% return ((sel1 $1),(sel2 $1),(Binary Power (sel3 $1) (sel3 $3)))                  }
     | Exp "*"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Multiply (sel3 $1) (sel3 $3)) }   -- Float/Int and Int
     | Exp "/"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Div (sel3 $1) (sel3 $3)) }   -- Both Float
     | Exp "//" Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary FloatDiv (sel3 $1) (sel3 $3)) }   -- last one integer
@@ -265,9 +266,9 @@ Exp :  -- Cambiar los NoExp por las Exp
     | Exp "==" Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Eql        (sel3 $1) (sel3 $3)) }
     | Exp "!=" Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary NotEql     (sel3 $1) (sel3 $3)) }
     -- Expresiones sobre lienzo.
-    | Exp "!!" Exp            {% return (TypeBool,(sel2 $1),(Binary Access     (sel3 $1) (sel3 $3))) }
-    | Exp "."  ID             {% checkFieldAccess $1 $3  >>= expIns (NoExp) } -- Binary Access (sel3 $1) (sel3 $3)
-    | ID SquareList %prec ARR {% return (TypeBool,$1,NoExp)  }
+    | Exp "!!" Exp            {% return (TypeBool,(sel2 $1),(Binary Access     (sel3 $3) (sel3 $1))) }
+    | Exp "."  ID             {% checkFieldAccess $1 $3  >>= expIns (Binary Access (sel3 $1) (ExpVar (lexeme $3))) } -- Binary Access (sel3 $1) (sel3 $3)
+    | ID SquareList %prec ARR {% return (TypeBool,$1,(arrayParser (ExpVar (lexeme $1)) (snd $2))) }
     --Llamadas a funciones
     | ID "(" ExpList ")"   {% checkFunctionCall $1 (fst $3)  >>= expIns (CallVal (lexeme $1) (snd $3)) } 
     --Acceso a apuntadores
@@ -291,8 +292,8 @@ Exp :  -- Cambiar los NoExp por las Exp
 
  
 
-SquareList: "[" Exp "]"            { (sel1 $2,sel2 $2) } -- Check it's int and acc number of nesting
-          | SquareList "[" Exp "]" { (sel1 $3,sel2 $3) } -- Check it's int and acc number of nesting
+SquareList: "[" Exp "]"            { ([sel1 $2],[sel3 $2]) } -- Check it's int and acc number of nesting
+          | SquareList "[" Exp "]" { (sel1 $3 : (fst $1),sel3 $3 : (snd $1)) } -- Check it's int and acc number of nesting
 
 
 Ent0 : {- λ -}     {% onZip enterScope }
