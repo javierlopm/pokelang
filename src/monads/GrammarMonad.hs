@@ -39,14 +39,16 @@ module GrammarMonad(
     arrayParser,
     sel1,
     sel2,
-    sel3
+    sel3,
+    checkGuarded,
+    checkAllOk
     -- getDataSize
 ) where
 
 import Debug.Trace(trace)
 
 import Control.Monad.RWS.Strict
-import Control.Monad(foldM)
+import Control.Monad(foldM,sequence)
 import Data.Maybe(fromJust,isNothing)
 import Tokens
 import TableTree
@@ -509,6 +511,53 @@ checkOkIns action t = if t /= TypeError
                       then do action
                               return TypeVoid
                       else return TypeError
+
+--checkOK :: OurMonad (Type) -> Type -> OurMonad (Type)
+checkOk action t = if t /= TypeError
+                      then action
+                      else return TypeError
+
+checkAllOk :: [OurMonad(Type)] -> OurMonad(Type)
+checkAllOk l =  do typeL <- (sequence l)
+                   if all (/= TypeError) typeL
+                        then return TypeVoid
+                        else return TypeError
+
+checkOkType :: OurMonad ()  -- Action to execute
+                 -> Type      -- Type obtained
+                   -> Type      -- Expected Type
+                     -> Token     -- If error found, report with token info
+                       -> Type      -- Returning Type
+                         -> OurMonad (Type)
+checkOkType _ TypeError _ _ _ = return TypeError
+checkOkType ac t expectedT tok rt
+    | t == expectedT = ac >> return rt
+    | otherwise      = tellError err >> return TypeError
+    where err = strError (position tok) 
+                         ("Expected " ++ (show expectedT) ++ "on") (lexeme tok) ("but " ++ (show t) ++ "found")
+
+checkGuarded :: Token                  -- If token
+                 -> (Type,Token,Exp)    -- Bool Exp
+                   -> Type                -- Instruction inside if
+                       -> OurMonad(Type)      -- Returning Type
+checkGuarded tok (t,expTk,_) tins = do
+    t1 <- checkOkType (return ()) t TypeBool tok TypeVoid
+    t2 <- checkOkIns  (return ()) tins
+    if (t1 == TypeVoid) && (t2 == TypeVoid) 
+        then return TypeVoid
+        else return TypeError
+
+--checkAll :: Token -> [Type] -> [Type] -> OurMonad (Type)
+--checkAll t obtained expected = if all (not isError) obtained
+--                               then process $ foldl findErrors [] (zip obtained expected)
+--                               else return TypeError
+--  where findErrors errs (o,e) =  if (o /= e)
+--                                 then "" : errs
+--                                 else errs
+--        process []   = return TypeVoid
+--        process errs = 
+
+
 
 expIns :: Exp -> (Type,Token) -> OurMonad((Type,Token,Exp))
 expIns ins (TypeError,to) = return (TypeError,to,NoExp)
