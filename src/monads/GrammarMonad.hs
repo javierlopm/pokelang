@@ -553,7 +553,7 @@ checkGuarded tok (t,expTk,_) tins = do
         else return TypeError
 
 checkFor :: Token                  -- For Token
-              -> (Type,Token,Exp)     -- Int Exp
+              -> [(Type,Token,Exp)]   -- Int Exp
                 -> OurMonad(Type)
 checkFor tok expList = do
     typeList <- mapM checkIsInt expList
@@ -563,13 +563,13 @@ checkFor tok expList = do
   where checkIsInt (ty,token,_) = checkOkType (return ()) ty TypeInt token TypeVoid
 
 checkEnumFor :: Token                  -- For Token
-              -> String                 -- Variable to insert as enum
+              -> Token                 -- Variable to insert as enum
                 -> Token -> Token        -- Enum constants
                     -> OurMonad(Type)
 checkEnumFor tok newVar enum1 enum2 = do
     state <- get
-    let type1 = findEnum enum1 state 
-    let type2 = findEnum enum2 state
+    type1 <- findEnum enum1 state 
+    type2 <- findEnum enum2 state
     if (type1 /= TypeError) && (type1 /= TypeError)
         then if type1 == type2 
                 then return TypeVoid   -- insertar newVar ya que se conoce la variable, o meh
