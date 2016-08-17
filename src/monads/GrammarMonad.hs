@@ -41,7 +41,8 @@ module GrammarMonad(
     sel2,
     sel3,
     checkGuarded,
-    checkAllOk
+    checkAllOk,
+    checkIntFor
     -- getDataSize
 ) where
 
@@ -517,6 +518,7 @@ checkOk action t = if t /= TypeError
                       then action
                       else return TypeError
 
+{- Checking all the returns from monad types aren't errors -}
 checkAllOk :: [OurMonad(Type)] -> OurMonad(Type)
 checkAllOk l =  do typeL <- (sequence l)
                    if all (/= TypeError) typeL
@@ -546,6 +548,17 @@ checkGuarded tok (t,expTk,_) tins = do
     if (t1 == TypeVoid) && (t2 == TypeVoid) 
         then return TypeVoid
         else return TypeError
+
+checkIntFor :: Token                  -- For Token
+                ->[(Type,Token,Exp)]    -- Int Exp
+                    -> OurMonad(Type)
+checkIntFor tok expList = do
+    typeList <- mapM checkIsInt expList
+    if (all (== TypeInt) typeList)
+        then return TypeVoid
+        else return TypeError
+  where checkIsInt (ty,token,_) = checkOkType (return ()) ty TypeInt token TypeVoid
+
 
 --checkAll :: Token -> [Type] -> [Type] -> OurMonad (Type)
 --checkAll t obtained expected = if all (not isError) obtained

@@ -166,9 +166,11 @@ Ins : {- λ -}                 {% return TypeVoid }
     | Ins BEGIN Ent0 SmplDcls Ins END                              {% exitScope >> checkOkIns (addToBlock EnterBlock ) $1 } -- Verificar que el tipo de ins es Void y $1 
     | Ins IF    Exp ":" Ent0 SmplDcls Ins Ent1 NextIf Else END     {% checkAllOk [(checkGuarded $2 $3 $7), (return $10), (return $1)] } --{% checkOkIns (addToBlock (mergeIf (Guard ExpTrue) $9 $10 )) $1 } -- verificar que $3 es bool, $9 y $10 son void
     | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                 {% checkAllOk [(checkGuarded $2 $3 $7), (return $1)] }               --{% checkOkIns (addToBlock (While ExpTrue) ) $1  }
-    | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope >> checkOkIns (addToBlock (ForStep (sel3 $5) (sel3 $7) (sel3 $9))) $1 }
-    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope >> checkOkIns (addToBlock (For     (sel3 $5) (sel3 $7))) $1 }
-    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope >> checkOkIns (addToBlock (For     ExpTrue ExpTrue)) $1 }
+    | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope >>  (checkAllOk [ checkIntFor $2 [$5,$7,$9] , return $12, return $1 ])  } -- FALTA CONSTRUCCION DEL ARBOL
+    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope >>  (checkAllOk [ checkIntFor $2 [$5,$7]    , return $10, return $1 ])  } -- FALTA CONSTRUCCION DEL ARBOL
+    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope >>  (return TypeVoid )  }
+    -- | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope >> checkOkIns (addToBlock (ForStep (sel3 $5) (sel3 $7) (sel3 $9))) $1 }
+    -- | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope >> checkOkIns (addToBlock (For     (sel3 $5) (sel3 $7))) $1 }
 
 
 
