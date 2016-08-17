@@ -34,7 +34,8 @@ module Types(
     makeTypeTuple,
     getSize,
     align,
-    isAFunction
+    isAFunction,
+    isEnumCons
     -- addLeftType,
     -- singleType,
 ) where
@@ -64,7 +65,7 @@ data Declare = Function  { pos::Pos, storedType::Type, fields   ::(Scope Declare
              | Cons      { pos::Pos } 
              | Struct    { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare)}
              | Union     { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare)} 
-             | Enum      { pos::Pos, typeName ::String, fields::(Scope Declare)}
+             | Enum      { pos::Pos, typeName   :: String, fields::(Scope Declare)}
              | EnumCons  { pos::Pos, storedDType:: String, name :: String,ord  :: Int} 
              | EmptyWithType { storedType :: Type } -- Forward declare with type
              | Empty                                -- Empty forward declare
@@ -202,6 +203,10 @@ isFunc (Just (Function _ _ _))  = True
 isFunc (Just (EmptyWithType _)) = True -- Forward declaration
 isFunc (Just Empty) = True
 isFunc a = False
+
+isEnumCons :: Declare -> Bool
+isEnumCons (EnumCons  _ _ _ _) = True
+isEnumCons _                     = False
 
 isAFunction :: Declare -> Bool
 isAFunction (Function _ _ _)  = True

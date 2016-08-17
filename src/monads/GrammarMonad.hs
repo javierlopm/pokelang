@@ -42,7 +42,8 @@ module GrammarMonad(
     sel3,
     checkGuarded,
     checkAllOk,
-    checkIntFor
+    checkFor,
+    checkEnumFor
     -- getDataSize
 ) where
 
@@ -357,9 +358,11 @@ insertEnumCons ord (TkEnumCons (l,c) str) sdt = do
         else do tell whathappened
                 onEnuScope $ insert str (EnumCons (l,c) sdt str ord) 0
     return (succ (ord))
-  where error1       = mkErr $ "Error:" ++ linecol ++ " enum constant " ++ str ++ " of Datatype"++sdt++", was already declared in this scope."
+  where error1       = mkErr $ "Error:" ++ linecol ++ " enum constant " ++ str ++ " of datatype"++sdt++", was already declared in this scope."
         whathappened = mkLog $ "Enum "  ++ str ++ " add at "    ++ linecol
         linecol      = show l ++":"++ show c
+
+
 
 insertDeclareInScope :: Type -> Token -> Bool -> Bool -> OurMonad ()
 insertDeclareInScope  TypeVoid (TkId (l,c) lexeme ) _  _ = (tellError .concat) $ ["Error:",show l,":",show c," ",lexeme ," is VOIDtorb, but it may only be instanced as reference."]
@@ -427,7 +430,7 @@ checkEnumAndInsert (TkDId (lD,cD) lexemeD) (TkId (l,c) lexeme) = do
         then if enumMatches (fromJust (getValS lexeme (scp state))) lexemeD -- if its enum and has same name --enumMatches (fromJust (getValS lexeme (scp state))) lexemeD
                 then do tellLog whathappened
                         onScope $ insert lexeme (Variable (l,c) (TypeEnum lexemeD) True (Offset 0 )) 0 --Se debe CAMBIAR
-                else tellError  $ error2 
+                else tellError error2
         else tellError error1
   where whathappened  = "Iter enum at "++show lD ++":"++show cD++" inserted in scope"
         error1    = strError (lD,cD) "datatype" lexemeD "used but not found."
@@ -549,15 +552,37 @@ checkGuarded tok (t,expTk,_) tins = do
         then return TypeVoid
         else return TypeError
 
-checkIntFor :: Token                  -- For Token
-                ->[(Type,Token,Exp)]    -- Int Exp
-                    -> OurMonad(Type)
-checkIntFor tok expList = do
+checkFor :: Token                  -- For Token
+              -> (Type,Token,Exp)     -- Int Exp
+                -> OurMonad(Type)
+checkFor tok expList = do
     typeList <- mapM checkIsInt expList
-    if (all (== TypeInt) typeList)
+    if (all (== TypeVoid) typeList)
         then return TypeVoid
         else return TypeError
   where checkIsInt (ty,token,_) = checkOkType (return ()) ty TypeInt token TypeVoid
+
+checkEnumFor :: Token                  -- For Token
+              -> String                 -- Variable to insert as enum
+                -> Token -> Token        -- Enum constants
+                    -> OurMonad(Type)
+checkEnumFor tok newVar enum1 enum2 = do
+    state <- get
+    let type1 = findEnum enum1 state 
+    let type2 = findEnum enum2 state
+    if (type1 /= TypeError) && (type1 /= TypeError)
+        then if type1 == type2 
+                then return TypeVoid   -- insertar newVar ya que se conoce la variable, o meh
+                else return TypeError
+        else return TypeError
+  where findEnum t state = maybe (tellError err1 >> return TypeError)
+                                 (\dec-> if isEnumCons dec 
+                                         then return (TypeEnum (storedDType dec))
+                                         else do tellError ("something happened over for/enum" ++ show (position t))
+                                                 return TypeError)
+                                 (getValS (lexeme t) (enuTbl state))
+            where err1 = strError (position t) "Undeclared enum constant" (lexeme t) " on iteration limit."
+
 
 
 --checkAll :: Token -> [Type] -> [Type] -> OurMonad (Type)
