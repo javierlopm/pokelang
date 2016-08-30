@@ -531,7 +531,7 @@ checkAllOk l =  do typeL <- (sequence l)
 checkOkType :: OurMonad ()  -- Action to execute
                  -> Type      -- Type obtained
                    -> Type      -- Expected Type
-                     -> Token     -- If error found, report with token info
+                     -> Token     -- If error found, report with string
                        -> Type      -- Returning Type
                          -> OurMonad (Type)
 checkOkType _ TypeError _ _ _ = return TypeError
@@ -539,7 +539,7 @@ checkOkType ac t expectedT tok rt
     | t == expectedT = ac >> return rt
     | otherwise      = tellError err >> return TypeError
     where err = strError (position tok) 
-                         ("Expected " ++ (show expectedT) ++ "on") (lexeme tok) ("but " ++ (show t) ++ "found")
+                         ("Expected " ++ (show expectedT) ++ " on") (simpleShow tok) ("but " ++ (show t) ++ " found")
 
 checkGuarded :: Token                  -- If token
                  -> (Type,Token,Exp)    -- Bool Exp

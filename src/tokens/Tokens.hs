@@ -9,7 +9,8 @@ module Tokens(
     isStruct,
     haveLexeme,
     toConstr,
-    toStr
+    toStr,
+    simpleShow
 ) where
 
 import Data.Data(toConstr,Data,Typeable)
@@ -221,4 +222,11 @@ toStr (TkMod      _ )    = "%"
 toStr (TkEq       _ )    = "=="          
 toStr (TkAssign   _ )    = "="       
 toStr (TkAmp      _ )    = "&"       
-toStr tok                = show (toConstr tok )       
+toStr tok                = show (toConstr tok )
+
+simpleShow :: Token -> String
+simpleShow (TkIf    _ ) = "If"
+simpleShow (TkElif  _ ) = "Elseif"
+simpleShow (TkFor   _ ) = "For"
+simpleShow (TkWhile _ ) = "While"
+simpleShow wacala = toStr wacala
