@@ -12,6 +12,10 @@ ENUManyte pokeDaysLaborables {
     Martes
 }
 
+ENUManyte pokeCositas { 
+    Chocobo
+}
+
 
 --
     Implementacio'n de bubblesort en pokelang
@@ -54,6 +58,13 @@ funcball VOIDtorb bubble( pINTachu arr,
             vamo_a_calmano
         vamo_a_calmano
     vamo_a_calmano
+
+    vamo_a_itera pokeDaysLaborables dias = Lunes | Martes: 
+        temp = 1;
+    vamo_a_calmano
+
+
+
 vamo_a_calmano
 
 funcball VOIDtorb hitMAINlee():

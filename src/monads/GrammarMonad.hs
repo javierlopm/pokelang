@@ -1,3 +1,4 @@
+
 module GrammarMonad(
     OurMonad,
     SymTable,
@@ -58,6 +59,8 @@ import Types
 import ErrorHandle(strError)
 import qualified Data.Sequence as S
 import Instructions
+
+
 
 type OurMonad    = RWS String (S.Seq(Message)) ScopeNZip
 type SymTable    = Scope Declare  
@@ -427,7 +430,7 @@ checkEnumAndInsert :: Token -> Token -> OurMonad ()
 checkEnumAndInsert (TkDId (lD,cD) lexemeD) (TkId (l,c) lexeme) = do
     state <- get
     if isInScope (scp state) lexemeD  -- Check in globals for enum
-        then if enumMatches (fromJust (getValS lexeme (scp state))) lexemeD -- if its enum and has same name --enumMatches (fromJust (getValS lexeme (scp state))) lexemeD
+        then if enumMatches (fromJust (getValS lexemeD (scp state))) lexemeD -- if its enum and has same name --enumMatches (fromJust (getValS lexeme (scp state))) lexemeD
                 then do tellLog whathappened
                         onScope $ insert lexeme (Variable (l,c) (TypeEnum lexemeD) True (Offset 0 )) 0 --Se debe CAMBIAR
                 else tellError error2
@@ -562,6 +565,7 @@ checkFor tok expList = do
         else return TypeError
   where checkIsInt (ty,token,_) = checkOkType (return ()) ty TypeInt token TypeVoid
 
+-- Check if upper limit and lower limits match over ENUM for iteration
 checkEnumFor :: Token                  -- For Token
               -> Token                 -- Variable to insert as enum
                 -> Token -> Token        -- Enum constants
@@ -570,10 +574,11 @@ checkEnumFor tok newVar enum1 enum2 = do
     state <- get
     type1 <- findEnum enum1 state 
     type2 <- findEnum enum2 state
-    if (type1 /= TypeError) && (type1 /= TypeError)
-        then if type1 == type2 
+    if (type1 /= TypeError) && (type2 /= TypeError)
+        --then if trace ("Comparando " ++ (show type1) ++ " y " ++ (show type2) ++ " y " ++ (show (type1 == type2)) ) (type1 == type2)
+        then if (type1 == type2)
                 then return TypeVoid   -- insertar newVar ya que se conoce la variable, o meh
-                else return TypeError
+                else do (tellError (err2 type1 type2)) >>return TypeError
         else return TypeError
   where findEnum t state = maybe (tellError err1 >> return TypeError)
                                  (\dec-> if isEnumCons dec 
@@ -581,7 +586,14 @@ checkEnumFor tok newVar enum1 enum2 = do
                                          else do tellError ("something happened over for/enum" ++ show (position t))
                                                  return TypeError)
                                  (getValS (lexeme t) (enuTbl state))
-            where err1 = strError (position t) "Undeclared enum constant" (lexeme t) " on iteration limit."
+          where err1       =  strError (position t) 
+                              "Undeclared enum constant" 
+                              (lexeme t) 
+                              " on iteration limit."
+        err2 t1 t2 = strError (position tok) 
+                              "Types do not match over" 
+                              (toStr tok) 
+                              ("upper limit is " ++ (show t1) ++ " and lower limit is " ++ (show t2) )
 
 
 
