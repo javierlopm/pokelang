@@ -169,10 +169,6 @@ Ins : {- λ -}                 {% return TypeVoid }
     | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkFor     $2   [$5,$7,$9] , return $12, return $1 ]  } -- FALTA CONSTRUCCION DEL ARBOL
     | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkFor     $2   [$5,$7]    , return $10, return $1 ]  } -- FALTA CONSTRUCCION DEL ARBOL
     | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkEnumFor $2 $3 $5 $7     , return $10, return $1 ]  }
-    -- | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope >> checkOkIns (addToBlock (ForStep (sel3 $5) (sel3 $7) (sel3 $9))) $1 }
-    -- | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope >> checkOkIns (addToBlock (For     (sel3 $5) (sel3 $7))) $1 }
-
-
 
 
 -- List of elseif
