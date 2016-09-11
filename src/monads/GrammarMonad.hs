@@ -631,8 +631,8 @@ arrayParser var = foldr nest var
 addToBlock :: Ins -> OurMonad()
 addToBlock i =  onZip (applyIns (insertIns i))
 
--- builtinFunctions :: SymTable
--- builtinFunctions = emptyScope
+builtinFunctions :: SymTable
+builtinFunctions = emptyScope
 -- builtinFunctions = foldl insertFunc emptyScope declarations  --REVISAR
 --  where insertFunc scp (str,dec) = insert str dec 0 scp 
 --        printable t    = or $ map ($t) [(==TypeString),isPointer,isBasic,(==TypeEnumCons)]          
