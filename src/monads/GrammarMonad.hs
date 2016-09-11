@@ -477,12 +477,15 @@ checkFunctionCall ident calltup = do
                 then if trd $ tuplesMatch calltup funcSig
                      then do tellLog "Function call types work"
                              return (funcReturnType funcSig,ident)
-                     else do tellError . error1 $ tuplesMatch calltup funcSig
+                     else do tellError . (error1 (calltup)) $ tuplesMatch calltup funcSig
                              return (TypeError,ident)
                 else tellError error2 >> return (TypeError,ident)
-  where trd (_,_,a) = a
-        error1 (expected,p,_) = strError (position ident) "Error in the call of" (lexeme ident) ("argument number "++show p++" didn't match with expected " ++ show expected)
+  where trd  (_,_,a) = a
+        fst' (a,_,_) = a
+        error1 typegot (expected,p,_) = strError (position ident) "Error in the call of" (lexeme ident) ("argument number "++show p++" didn't match with expected " ++ show expected ++ " but " ++ show typegot ++ " found.")
         error2  = strError (position ident) "number of arguments don't match with" (lexeme ident) "declaration."
+
+
 
 checkFieldAccess :: (Type,Token,Exp) -> Token -> OurMonad((Type,Token))
 checkFieldAccess (TypeError,tk1,_) _ = return (TypeError,tk1)

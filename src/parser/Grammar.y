@@ -162,7 +162,7 @@ Ins : {- λ -}                 {% return TypeVoid }
     | Ins RETURN   Exp   ";"  {% checkOkIns (addToBlock (Return (Just (sel3 $3)) )) $1 } -- Cambiar para exp
     | Ins RETURN         ";"  {% checkOkIns (addToBlock (Return Nothing )) $1 }
     | Ins READ  "("  ID   ")" ";" {% checkReadable $4 True  >> return TypeVoid} --revisar
-    | Ins ID    "("ExpList")" ";" {% checkOkIns (addToBlock (Call (lexeme $2) (snd $4) ))  $1 } -- Function call
+    | Ins ID    "("ExpList")" ";" {% (checkFunctionCall $2 (fst $4)) >>=  (checkOkIns (return ())) . fst  } 
     | Ins BEGIN Ent0 SmplDcls Ins END                              {% exitScope >> checkOkIns (addToBlock EnterBlock ) $1 } -- Verificar que el tipo de ins es Void y $1 
     | Ins IF    Exp ":" Ent0 SmplDcls Ins Ent1 NextIf Else END     {% checkAllOk [(checkGuarded $2 $3 $7), (return $10), (return $1)] } --{% checkOkIns (addToBlock (mergeIf (Guard ExpTrue) $9 $10 )) $1 } -- verificar que $3 es bool, $9 y $10 son void
     | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                 {% checkAllOk [(checkGuarded $2 $3 $7), (return $1)] }               --{% checkOkIns (addToBlock (While ExpTrue) ) $1  }
@@ -249,7 +249,7 @@ Exp :  -- Cambiar los NoExp por las Exp
     | Exp "/"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Div (sel3 $1) (sel3 $3)) }   -- Both Float
     | Exp "//" Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary FloatDiv (sel3 $1) (sel3 $3)) }   -- last one integer
     | Exp "%"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Mod (sel3 $1) (sel3 $3)) }   -- Both Integer
-    | "-" Exp %prec NEG {% return (TypeBool,(sel2 $2),(Unary Neg (sel3 $2)))  }
+    | "-" Exp %prec NEG {% return (TypeInt, (sel2 $2),(Unary Neg (sel3 $2)))  }
     -- Expresiones Booleanas.
     | Exp OR Exp        {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns (Binary SOr (sel3 $1) (sel3 $3)) }
     | Exp "||" Exp      {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns (Binary Or (sel3 $1) (sel3 $3)) }
