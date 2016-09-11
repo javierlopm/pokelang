@@ -619,9 +619,9 @@ arrayParser var = foldr nest var
 addToBlock :: Ins -> OurMonad()
 addToBlock i =  onZip (applyIns (insertIns i))
 
-builtinFunctions :: SymTable
-builtinFunctions = emptyScope
---builtinFunctions = foldl insertFunc emptyScope declarations  --REVISAR
+-- builtinFunctions :: SymTable
+-- builtinFunctions = emptyScope
+-- builtinFunctions = foldl insertFunc emptyScope declarations  --REVISAR
 --  where insertFunc scp (str,dec) = insert str dec 0 scp 
 --        printable t    = or $ map ($t) [(==TypeString),isPointer,isBasic,(==TypeEnumCons)]          
 --        makeFunc types = (Function (0,0) (makeTypeTuple types) emptyScope)
@@ -629,11 +629,15 @@ builtinFunctions = emptyScope
 --          ("liberar"       , makeFunc [TypeSatisfies isPointer, TypeVoid] ),
 --          ("vamo_a_imprimi", makeFunc [TypeSatisfies printable, TypeVoid] ),
 --          ("atrapar"       , makeFunc [TypeInt      , TypeVoid  ] ),
---          ("intToFLoat"    , makeFunc [TypeInt      , TypeFloat ] ),
+--          ("intToFloat"    , makeFunc [TypeInt      , TypeFloat ] ),
+--          ("intToChar"     , makeFunc [TypeInt      , TypeChar  ] ),
+--          ("charToInt"     , makeFunc [TypeChar     , TypeInt   ] ),
 --          ("floor"         , makeFunc [TypeFloat    , TypeInt   ] ),
 --          ("celing"        , makeFunc [TypeFloat    , TypeInt   ] ),
---          ("succ"          , makeFunc [TypeEnumCons , TypeInt   ] ),
---          ("pred"          , makeFunc [TypeEnumCons , TypeInt   ] ),
---          ("pidGET"        , makeFunc [TypeEnumCons , TypeInt   ] )
-          --]
--- ("SIZEther",       (Function (0,0) (makeTypeTuple [TypeSatisfies isBasic, TypeInt]) emptyScope)),
+--          ("succ"          , makeFunc [TypeEnumCons , TypeEnumCons ] ),
+--          ("pred"          , makeFunc [TypeEnumCons , TypeEnumCons ] ),
+--          ("pidGET"        , makeFunc [TypeEnumCons , TypeInt   ] ),
+--          ("SIZEther",(Function (0,0) 
+--                                (makeTypeTuple 
+--                                 [TypeSatisfies isBasic, TypeInt]) 
+--                                emptyScope))]
