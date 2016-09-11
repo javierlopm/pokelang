@@ -15,7 +15,7 @@ Lexer.hs: Tokens.o
 
 # Parser
 Rwsgrammar.o: Tokens.o Types.o SymTable.o ErrorHandle.o
-	ghc monads/GrammarMonad.hs -itokens -isymtable -itypes -ierrors -iinstructions
+	ghc monads/GrammarMonad.hs   -itokens -isymtable -itypes -ierrors -iinstructions
 
 Grammar.hs: Tokens.o 
 	happy parser/Grammar.y -o parser/Grammar.hs  --info=grammarinfo.md

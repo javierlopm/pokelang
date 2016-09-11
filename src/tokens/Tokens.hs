@@ -221,4 +221,11 @@ toStr (TkMod      _ )    = "%"
 toStr (TkEq       _ )    = "=="          
 toStr (TkAssign   _ )    = "="       
 toStr (TkAmp      _ )    = "&"       
-toStr tok                = show (toConstr tok )       
+toStr (TkIf       _ )    = "If"
+toStr (TkElif     _ )    = "Elseif"
+toStr (TkFor      _ )    = "For"
+toStr (TkWhile    _ )    = "While"
+toStr tok                = show (toConstr tok )
+
+--simpleShow :: Token -> String
+--simpleShow wacala = toStr wacala
