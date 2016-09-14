@@ -44,7 +44,8 @@ module GrammarMonad(
     checkGuarded,
     checkAllOk,
     checkFor,
-    checkEnumFor
+    checkEnumFor,
+    checkAndBuild
     -- getDataSize
 ) where
 
@@ -521,6 +522,14 @@ checkOkIns action t = if t /= TypeError
                       then do action
                               return TypeVoid
                       else return TypeError
+
+-- Change by a instruction type default
+adefault = undefined
+
+checkAndBuild :: a -> Type -> OurMonad( (Type,a) )
+checkAndBuild instruction t = if t /= TypeError
+                              then return (TypeVoid ,instruction)
+                              else return (TypeError,instruction)
 
 --checkOK :: OurMonad (Type) -> Type -> OurMonad (Type)
 checkOk action t = if t /= TypeError
