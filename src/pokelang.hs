@@ -35,13 +35,11 @@ execParser printLex tokens = do
 
 getIns :: [Token] -> IO()
 getIns tokens = do
-  let (state,strlog) = exec (parser tokens) "" initialState
+  let (ast,state,strlog) = run (parser tokens) "" initialState
   let (logs,errors,errorcount) = checkParseError strlog
   if errorcount == 0
-    then do let (_,_,scps) =  makeTable state -- $ fromZipper state
-            putStrLn $ concatMap showFuncIns $ getAll isAFunction scps
-    else do printErrors errorcount id errors
-  where showFuncIns (strs,scps) = strs ++ "\n" ++ (showInst . fields)  scps ++ "\n"
+    then print ast
+    else printErrors errorcount id errors
 main = do
   arg1:arg2:_ <- getArgs
   let (fileToRead,runargs)=myF arg1 arg2

@@ -48,7 +48,6 @@ import Tokens(Token(TkInt  ,TkBool ,TkChar
                    ,TkVoid ,TkFloat,TkStruct
                    ,TkUnion,TkEnum ,TkNull
                    ,TkDId,TkId,lexeme))
-import Instructions
 
 type Message = Either String String -- Monad writer message unit
 type Pos = (Int,Int)

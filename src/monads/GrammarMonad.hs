@@ -1,10 +1,10 @@
-
 module GrammarMonad(
     OurMonad,
     SymTable,
     TableZipper,
     ScopeNZip,
     exec,
+    run,
     checkIsFunc,
     checkLValue,
     checkReadable,
@@ -60,8 +60,6 @@ import Types
 import ErrorHandle(strError)
 import qualified Data.Sequence as S
 import Instructions
-import qualified Instructions2 as Pi
-
 
 type OurMonad    = RWS String (S.Seq(Message)) ScopeNZip
 type SymTable    = Scope Declare  
@@ -77,6 +75,9 @@ data ScopeNZip = ScopeNZip { strTbl   :: SymTable
 
 -- Alias for executing RWS monad
 exec = execRWS
+
+-- Alias for execute and save result
+run = runRWS
 
 -- Monad initial state: two empty scopes and one zipper for an empty scope
 initialState :: ScopeNZip
@@ -641,7 +642,7 @@ arrayParser var = foldr nest var
 
 
 addToBlock :: Ins -> OurMonad()
-addToBlock i =  onZip (applyIns (insertIns i))
+addToBlock i =  undefined
 
 builtinFunctions :: SymTable
 builtinFunctions = emptyScope
