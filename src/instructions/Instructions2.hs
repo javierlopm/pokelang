@@ -5,7 +5,6 @@ module Instructions2(
     insertIns,
     newBlock,
     newIf,
-    goDipah,
     mergeIf,
     insertIf,
     emptyExpList,
@@ -17,7 +16,7 @@ import Data.Sequence(empty,Seq,(|>),(<|))
 import Data.Foldable(toList)
 import Data.List(intersperse)
 import Data.Tree
-import Types(Declare(..),Direccion(..),Type(..))
+import Types(Declare(..),Direction(..),Type(..))
 
 
 
@@ -44,49 +43,31 @@ data Ins = Assign    Exp Exp
 
 instance Show Ins where
   show ins = showIndented 0 ins
-  -- show (Assign    e1 e2 ) = show e1 ++ " = "  ++ show e2
-  -- show (AssignSum e1 e2 ) = show e1 ++ " += " ++ show e2
-  -- show (AssignMul e1 e2 ) = show e1 ++ " *= " ++ show e2
-  -- show (AssignMin e1 e2 ) = show e1 ++ " *= " ++ show e2
-  -- show (Call   s expSeq ) = show s ++ "(" ++ (( concat . (intersperse ",") . (map show) . toList) expSeq) ++ ")"
-  -- show (Guard     bexp  ) = "If/Elif(" ++ show bexp ++ "):"
-  -- show (While     bexp  ) = "While(" ++ show bexp ++ "):"
-  -- show (For     low high ) = "For" ++ show low ++ " to " ++  show high ++ ":"
-  -- show (ForStep low high w ) = "For" ++ show low ++ " to " ++  show high ++ " with  " ++ show w ++ ":"
-  -- show (Read      sexp  ) = "Read:" ++ show sexp
-  -- show (Return  Nothing ) = "Return Void"
-  -- show (Return  (Just exp)) = "Return " ++ show exp
-  -- show Else     = "Else:"
-  -- show Continue = "Read:"
-  -- show Break    = "Break"
-  -- show Exit     = "Exit"
-  -- show Error    = "Error"
-  -- show _ = "DefaultIns"
-  -- show EnterBlock = "Block:"
 
-showIndented :: Int -> String
-showIndented n  (Assign    e1 e2 ) =  ++ show e1 ++ " = "  ++ show e2
-showIndented n  (AssignSum e1 e2 ) =  ++ show e1 ++ " += " ++ show e2
-showIndented n  (AssignMul e1 e2 ) =  ++ show e1 ++ " *= " ++ show e2
-showIndented n  (AssignMin e1 e2 ) =  ++ show e1 ++ " *= " ++ show e2
-showIndented n  (Call   s expSeq ) = show s ++ "(" ++ (( concat . (intersperse ",\n") . (map (showIndented n)) . toList) expSeq) ++ ")"
-showIndented n  (Guard     bexp ins ) = "If/Elif(" ++ showIndExp (n+1) bexp ++ "):" 
-showIndented n  (While     bexp ins ) = "While("   ++ showIndExp (n+1) bexp ++ "):" 
-showIndented n  (Else      ins   )    = "Else:"
-showIndented n  (For     low high   ins )   = "For" ++ showIndExp (n+1) low ++ " to " ++  showIndExp (n+1) high ++ ":"
-showIndented n  (ForStep low high w ins ) = "For" ++ showIndExp (n+1) low ++ " to " ++  showIndExp (n+1) high ++ " with  " ++ showIndExp (n+1) w ++ ":"
-showIndented n  (Read      sexp  ) = "Read:"     ++ showIndExp (n+1) sexp
-showIndented n  (Return  Nothing ) = "Return Void"
-showIndented n  (Return  (Just exp)) = "Return " ++ showIndExp (n+1) exp
-showIndented n  EnterBlock = "Block:"
-showIndented n  Else     = "Else:"
-showIndented n  Continue = "Read:"
-showIndented n  Break    = "Break"
-showIndented n  Exit     = "Exit"
+showIndented :: Int -> Ins -> String
+showIndented n  (Assign    e1 e2 ) = ind n ++ show e1 ++ " = "  ++ show e2 
+showIndented n  (AssignSum e1 e2 ) = ind n ++ show e1 ++ " += " ++ show e2 
+showIndented n  (AssignMul e1 e2 ) = ind n ++ show e1 ++ " *= " ++ show e2 
+showIndented n  (AssignMin e1 e2 ) = ind n ++ show e1 ++ " *= " ++ show e2 
+showIndented n  (Call   s expSeq ) = ind n ++ show s ++ "(" ++ (( concat . (intersperse ",\n") . (map show) . toList) expSeq) ++ ")"
+showIndented n  (Guard  bexp ins ) = ind n ++ "If/Elif(" ++ show bexp ++ "):\n" ++ showIndented (n+1) ins
+showIndented n  (While  bexp ins ) = ind n ++ "While("   ++ show bexp ++ "):\n" ++ showIndented (n+1) ins
+showIndented n  (Else   ins   )    = ind n ++ "Else:\n" ++ showIndented (n+1) ins
+showIndented n  (For     low high   ins ) = ind n ++  "For" ++ show low ++ " to " ++  show high ++ ":\n" ++ showIndented (n+1) ins
+showIndented n  (ForStep low high w ins ) = ind n ++  "For" ++ show low ++ " to " ++  show high ++ " with  " ++ show w ++ ":\n" ++ showIndented (n+1) ins
+showIndented n  (Read      sexp  ) = ind n ++ "Read:\n"     ++ show sexp
+showIndented n  (Return  Nothing ) = ind n ++ "Return Void\n"
+showIndented n  (Return  (Just exp)) = ind n ++  "Return " ++ show exp
+showIndented n  Continue = ind n ++ "Continue"
+showIndented n  Break    = ind n ++ "Break"
+showIndented n  Exit     = ind n ++ "Exit"
+showIndented n  (Block ins) = ( concat . (intersperse ",\n") . (map (showIndented n) ) . toList) ins
 showIndented n  Error    = "Error"
 showIndented n  _ = "DefaultIns"
 
-
+-- shortcut for indentation
+ind :: Int -> String
+ind n =  replicate (n*4) ' '
 
 insertIns :: Ins -> Ins -> Ins
 insertIns ins (Block s)  = (Block (s |> ins) )
@@ -109,16 +90,6 @@ newIf = If empty
 
 insertIf :: Ins -> Ins -> Ins 
 insertIf (If ifs) guard = (If (ifs |> guard))
-
-goDipah :: Ins -> Bool
-goDipah (Else          ) = True
-goDipah (EnterFor      ) = True
-goDipah (EnterBlock    ) = True
-goDipah (Guard _       ) = True 
-goDipah (While _       ) = True
-goDipah (For     _ _   ) = True
-goDipah (ForStep _ _ _ ) = True
-goDipah _ = False
 
 data Operator = And -- Binary
               | Or 

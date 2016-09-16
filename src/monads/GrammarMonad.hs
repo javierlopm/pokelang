@@ -60,7 +60,7 @@ import Types
 import ErrorHandle(strError)
 import qualified Data.Sequence as S
 import Instructions
-
+import qualified Instructions2 as Pi
 
 
 type OurMonad    = RWS String (S.Seq(Message)) ScopeNZip
