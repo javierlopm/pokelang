@@ -174,7 +174,7 @@ Ins : {- λ -}                 {% return (TypeVoid, newBlock ) }
 
 -- List of elseif
 NextIf: {- λ -}                                     {% return (TypeVoid,newIf)  } 
-      | NextIf ELIF  Exp ":" Ent0 SmplDcls Ins Ent1 {% checkAllOk [(checkGuarded $2 $3 $7),(return $1)] >>= checkOkIns (insertIf (snd $1) (Guard (trd $3) (snd $7)) }
+      | NextIf ELIF  Exp ":" Ent0 SmplDcls Ins Ent1 {% checkAllOk [(checkGuarded $2 $3 $7),(return $1)] >>= checkOkIns (insertIf (snd $1) (Guard (trd $3) (snd $7))) }
 
 -- Else list
 Else: {- λ -}                         {% return (TypeVoid, Nothing) }
