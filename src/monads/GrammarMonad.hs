@@ -488,7 +488,6 @@ checkFunctionCall ident calltup = do
         error2  = strError (position ident) "number of arguments don't match with" (lexeme ident) "declaration."
 
 
-
 checkFieldAccess :: (Type,Token,Exp) -> Token -> OurMonad((Type,Token))
 checkFieldAccess (TypeError,tk1,_) _ = return (TypeError,tk1)
 checkFieldAccess (ty1,tk1,_) tk2 = do
@@ -518,11 +517,10 @@ checkRecursiveDec dataTok typeSec = do
         else tellError error1
   where error1 =  strError (position dataTok) "Data type" (lexeme dataTok) "cannot be recursive. (Pssss try to use a pointer)"
 
-checkOkIns :: OurMonad () -> Type -> OurMonad (Type)
-checkOkIns action t = if t /= TypeError
-                      then do action
-                              return TypeVoid
-                      else return TypeError
+checkOkIns :: Instructions -> Instructions -> Type -> OurMonad (Type)
+checkOkIns ins block t = if t /= TypeError
+                            then return (TypeVoid, ins `insertIns` block )
+                            else return (TypeError,Error)
 
 -- Change by a instruction type default
 adefault = undefined
