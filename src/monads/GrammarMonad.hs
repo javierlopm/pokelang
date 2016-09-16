@@ -517,10 +517,10 @@ checkRecursiveDec dataTok typeSec = do
         else tellError error1
   where error1 =  strError (position dataTok) "Data type" (lexeme dataTok) "cannot be recursive. (Pssss try to use a pointer)"
 
-checkOkIns :: Instructions -> Instructions -> Type -> OurMonad (Type)
+checkOkIns :: Ins -> Ins -> Type -> OurMonad (Type)
 checkOkIns ins block t = if t /= TypeError
                             then return (TypeVoid, ins `insertIns` block )
-                            else return (TypeError,Error)
+                            else return (TypeError, Error )
 
 -- Change by a instruction type default
 adefault = undefined
@@ -561,7 +561,7 @@ checkGuarded :: Token                  -- If token
                        -> OurMonad(Type)      -- Returning Type
 checkGuarded tok (t,expTk,_) tins = do
     t1 <- checkOkType (return ()) t TypeBool tok TypeVoid
-    t2 <- checkOkIns  (return ()) tins
+    t2 <- checkOkIns  (return ()) (snd tins)
     if (t1 == TypeVoid) && (t2 == TypeVoid) 
         then return TypeVoid
         else return TypeError

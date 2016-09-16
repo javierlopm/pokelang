@@ -33,6 +33,7 @@ data Ins = Assign    Exp Exp
          | ForStep { low:: Exp, high::Exp, step :: Exp, ins :: Ins }
          | For     { low:: Exp, high::Exp, ins :: Ins }
          | Read    { var::Exp }
+         | NoOp
          | Return  (Maybe Exp)
          | Continue
          | Break
@@ -74,6 +75,8 @@ insertIns ins (Block s)  = (Block (s |> ins) )
 insertIns _   Error      = Error
 insertIns _   bleh       = error ("Must insert in Block but " ++ show bleh ++ " found ")
 
+-- Given a If instruction, a Elseif sequence and a Else instructions
+-- Merges all instructions in one if
 mergeIf :: Ins -> Ins -> Maybe Ins -> Ins
 mergeIf Error _ _ = Error
 mergeIf _ Error _ = Error
