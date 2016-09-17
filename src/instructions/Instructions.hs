@@ -8,7 +8,8 @@ module Instructions(
     mergeIf,
     insertIf,
     emptyExpList,
-    addExpList
+    addExpList,
+    stripBlock
 ) where
 
 -- import Data.Sequence(empty,viewl,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
@@ -74,6 +75,10 @@ insertIns :: Ins -> Ins -> Ins
 insertIns ins (Block s)  = (Block (s |> ins) )
 insertIns _   Error      = Error
 insertIns _   bleh       = error ("Must insert in Block but " ++ show bleh ++ " found ")
+
+stripBlock :: Ins -> Seq( Ins )
+stripBlock (Block seqins) = seqins
+stripBlock a = error "Compile error. Trying to strip nonBlock instruction"
 
 -- Given a If instruction, a Elseif sequence and a Else instructions
 -- Merges all instructions in one if
