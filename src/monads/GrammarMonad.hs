@@ -171,7 +171,7 @@ checkRValue (TkMEQ _) myT1 (myT2,tok) =  if myT1 == myT2 then return myT1-}
 
 -- Check if variable it's an iteration varible (could it be used in assignment?)
 checkLValue :: (Type,Token) -> OurMonad(Type)
-checkLValue (TypeError,_)               = return TypeError
+checkLValue (TypeError,_)     = return TypeError
 checkLValue (myType ,myToken) = do
     state <- get 
     if haveLexeme myToken
@@ -190,7 +190,8 @@ checkLValue (myType ,myToken) = do
                     if (isLValue myType $ fromJust $ getValS myLex (scp state) )
                     then tellLog whathappened >> return TypeVoid  --REVISAR
                     else tellError error2     >> return TypeError
-          else return TypeError -- This check exists already in lower levels
+          else do tellError "MARICO NO SE"
+                  return TypeError -- This check exists already in lower levels
     else tellError error4 >> return TypeError
    where 
         (l,c)  = position myToken

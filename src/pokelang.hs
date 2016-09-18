@@ -40,6 +40,7 @@ getIns tokens = do
   if errorcount == 0
     then putStrLn $ printAsts ast
     else printErrors errorcount id errors
+    
 main = do
   arg1:arg2:_ <- getArgs
   let (fileToRead,runargs)=myF arg1 arg2
