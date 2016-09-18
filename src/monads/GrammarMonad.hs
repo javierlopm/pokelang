@@ -190,8 +190,7 @@ checkLValue (myType ,myToken) = do
                     if (isLValue myType $ fromJust $ getValS myLex (scp state) )
                     then tellLog whathappened >> return TypeVoid  --REVISAR
                     else tellError error2     >> return TypeError
-          else do tellError "MARICO NO SE"
-                  return TypeError -- This check exists already in lower levels
+          else return TypeVoid 
     else tellError error4 >> return TypeError
    where 
         (l,c)  = position myToken

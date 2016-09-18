@@ -68,18 +68,6 @@ funcball pINTachu fibo_iterativo(pINTachu n):
 vamo_a_calmano
 
 funcball VOIDtorb hitMAINlee(pINTachu n):
-    pINTachu n;
-    STRUCTabuzz poketrainer ash;
-    
-    n = ash.mypkmn.type;
-    n *= 4;
-    n *= 4;
-
-    si n == 0 || n == 1:
-        vamo_a_retorna 1;
-    si_no:
-        vamo_a_retorna fibo(n-1) + fibo(n-2);
-    vamo_a_calmano
 
 
 vamo_a_calmano
