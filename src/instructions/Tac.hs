@@ -6,7 +6,8 @@ module Tac(
 ) where 
 
 import Data.Sequence
-import Data.Binary
+import Data.Binary as B(get)
+import Data.Binary hiding(get)
 import Control.Monad(liftM2,liftM3)
 
 {- Memory access -}
@@ -29,10 +30,10 @@ instance Binary Memory where
 
     get = do key <- getWord8
              case key of
-                0 ->  buildMem MemIndexR     
-                1 ->  buildMem MemIndirIndexR
-                2 ->  buildMem MemIndex      
-                3 ->  buildMem MemIndirIndex 
+                0 ->  build2get MemIndexR     
+                1 ->  build2get MemIndirIndexR
+                2 ->  build2get MemIndex      
+                3 ->  build2get MemIndirIndex 
 
 {- Intermediate machine -}
 data IntIns = -- Dest Src1 Src2  -  Reg,Reg,Reg
@@ -87,17 +88,17 @@ data IntIns = -- Dest Src1 Src2  -  Reg,Reg,Reg
             | Nop 
 
 instance Show      IntIns where
-    show (FlMult   r0 r1 r2)  =  showTAC r0 r1 "f*" r2 
-    show (FlAdd    r0 r1 r2)  =  showTAC r0 r1 "f+" r2 
-    show (FlSub    r0 r1 r2)  =  showTAC r0 r1 "f-" r2 
-    show (FlDiv    r0 r1 r2)  =  showTAC r0 r1 "f/" r2 
-    show (IntMul   r0 r1 r2)  =  showTAC r0 r1 "*"  r2 
-    show (IntAdd   r0 r1 r2)  =  showTAC r0 r1 "+"  r2 
-    show (IntSub   r0 r1 r2)  =  showTAC r0 r1 "-"  r2 
-    show (IntDiv   r0 r1 r2)  =  showTAC r0 r1 "/"  r2 
-    show (And      r0 r1 r2)  =  showTAC r0 r1 "&"  r2 
-    show (Or       r0 r1 r2)  =  showTAC r0 r1 "|"  r2 
-    show (XOr      r0 r1 r2)  =  showTAC r0 r1 "XOr"r2 
+    show (FlMult   r0 r1 r2)  =  showTAC r0 r1 "f*" r2
+    show (FlAdd    r0 r1 r2)  =  showTAC r0 r1 "f+" r2
+    show (FlSub    r0 r1 r2)  =  showTAC r0 r1 "f-" r2
+    show (FlDiv    r0 r1 r2)  =  showTAC r0 r1 "f/" r2
+    show (IntMul   r0 r1 r2)  =  showTAC r0 r1 "*"  r2
+    show (IntAdd   r0 r1 r2)  =  showTAC r0 r1 "+"  r2
+    show (IntSub   r0 r1 r2)  =  showTAC r0 r1 "-"  r2
+    show (IntDiv   r0 r1 r2)  =  showTAC r0 r1 "/"  r2
+    show (And      r0 r1 r2)  =  showTAC r0 r1 "&"  r2
+    show (Or       r0 r1 r2)  =  showTAC r0 r1 "|"  r2
+    show (XOr      r0 r1 r2)  =  showTAC r0 r1 "XOr"r2
     show (Not      r0 r1   )  =  show2AC r0 r1 "~" 
     show (Eql      r0 r1 r2)  =  showTAC r0 r1 "="  r2
     show (NotEql   r0 r1 r2)  =  showTAC r0 r1 "/=" r2
@@ -131,6 +132,7 @@ instance Show      IntIns where
 
 -- Ewwwww, it might be improved with Generics
 instance Binary IntIns where
+    put Nop                  = putWord8 0 
     put (FlMult   r0 r1 r2)  = putWord8 1  >> put r0 >> put r1 >> put r2
     put (FlAdd    r0 r1 r2)  = putWord8 2  >> put r0 >> put r1 >> put r2
     put (FlSub    r0 r1 r2)  = putWord8 3  >> put r0 >> put r1 >> put r2
@@ -150,8 +152,8 @@ instance Binary IntIns where
     put (LEq      r0 r1 r2)  = putWord8 17 >> put r0 >> put r1 >> put r2
     put (GEq      r0 r1 r2)  = putWord8 18 >> put r0 >> put r1 >> put r2
     put (Jump     str    )   = putWord8 19 >> put str
-    put (Jz       r0 str )   = putWord8 20 >> put r0 >> put str
-    put (Jnotz    r0 str )   = putWord8 21 >> put r0 >> put str
+    put (Jz       r0 str )   = putWord8 20 >> put r0 >>  put str
+    put (Jnotz    r0 str )   = putWord8 21 >> put r0 >>  put str
     put (JLt      r0 r1 str) = putWord8 22 >> put r0 >>  put r1 >> put str
     put (JGt      r0 r1 str) = putWord8 23 >> put r0 >>  put r1 >> put str
     put (JLEq     r0 r1 str) = putWord8 24 >> put r0 >>  put r1 >> put str
@@ -171,20 +173,64 @@ instance Binary IntIns where
     put (Call     str )      = putWord8 38 >> put str
     put (Param    par )      = putWord8 39 >> put par
     put (Comment  str )      = putWord8 40 >> put str
-    put Nop                  = putWord8 41 
+
+    get = do 
+    key <- getWord8
+    case key of
+       0  ->  return    Nop
+       1  ->  buildTac  FlMult
+       2  ->  buildTac  FlAdd
+       3  ->  buildTac  FlSub
+       4  ->  buildTac  FlDiv
+       5  ->  buildTac  IntMul
+       6  ->  buildTac  IntAdd
+       7  ->  buildTac  IntSub
+       8  ->  buildTac  IntDiv
+       9  ->  buildTac  And
+       10 ->  buildTac  Or
+       11 ->  buildTac  XOr
+       12 ->  build2get Not
+       13 ->  buildTac  Eql
+       14 ->  buildTac  NotEql
+       15 ->  buildTac  Lt
+       16 ->  buildTac  Gt
+       17 ->  buildTac  LEq
+       18 ->  buildTac  GEq
+       19 ->  B.get >>= return .  Jump
+       20 ->  build2get Jz
+       21 ->  build2get Jnotz
+       22 ->  buildTac  JLt
+       23 ->  buildTac  JGt
+       24 ->  buildTac  JLEq
+       25 ->  buildTac  JGEq
+       26 ->  buildTac  Addi
+       27 ->  buildTac  Subi
+       28 ->  buildTac  Multi
+       29 ->  buildTac  Divi
+       30 ->  buildTac  Addf
+       31 ->  buildTac  Subf
+       32 ->  buildTac  Multf
+       33 ->  buildTac  Divf
+       34 ->  build2get Mv
+       35 ->  build2get Load
+       36 ->  build2get Store
+       37 ->  build2get Loadi
+       38 ->  B.get >>= return . Call
+       39 ->  B.get >>= return . Param
+       40 ->  B.get >>= return . Comment
 
 -- Print auxiliaries
-shwAsgn  int = "R" ++ show int ++ ":="
+shwAsgn  int        = "R" ++ show int ++ ":="
 showTAC  r0 r1 s r2 = 'R' : show r0 ++ " := R" ++ show r1 ++ " " ++ s ++ " R" ++ show r2
 showTACi r0 r1 s i  = 'R' : show r0 ++ " := R" ++ show r1 ++ " " ++ s ++ " #" ++ show i
 show2AC  r0 r1 s    = 'R' : show r0 ++ " := "  ++ s ++" R" ++  show r1
-showIf r0 r1 s label = "if R" ++ show r0 ++ " " ++ s ++ " R" ++ show r1 ++ " goto " ++ show label
+showIf r0 r1 s labl = "if R" ++ show r0 ++ " " ++ s ++ " R" ++ show r1 ++ " goto " ++ show labl
 
 -- Monad auxiliaries for put functions
-buildMem ::(Binary a1, Binary a2) => (a1 -> a2 -> r) -> Get r
-buildMem constructor = liftM2 constructor get get
+build2get :: (Binary a1, Binary a2) => (a1 -> a2 -> r) -> Get r
+build2get  constructor = liftM2 constructor B.get B.get
 
 buildTac::(Binary a1, Binary a2, Binary a3) => (a1 -> a2 -> a3 -> r) -> Get r
-buildTac constructor = liftM3 constructor get get get
+buildTac constructor = liftM3 constructor B.get B.get B.get
 
 type Program = Seq IntIns
