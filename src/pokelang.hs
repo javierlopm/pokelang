@@ -38,7 +38,7 @@ getIns tokens = do
   let (ast,state,strlog) = run (parser tokens) "" initialState
   let (logs,errors,errorcount) = checkParseError strlog
   if errorcount == 0
-    then print ast
+    then putStrLn $ printAsts ast
     else printErrors errorcount id errors
 main = do
   arg1:arg2:_ <- getArgs

@@ -9,7 +9,8 @@ module Instructions(
     insertIf,
     emptyExpList,
     addExpList,
-    stripBlock
+    stripBlock,
+    printAsts
 ) where
 
 -- import Data.Sequence(empty,viewl,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
@@ -52,24 +53,29 @@ showIndented n  (AssignSum e1 e2 ) = ind n ++ show e1 ++ " += " ++ show e2
 showIndented n  (AssignMul e1 e2 ) = ind n ++ show e1 ++ " *= " ++ show e2 
 showIndented n  (AssignMin e1 e2 ) = ind n ++ show e1 ++ " *= " ++ show e2 
 showIndented n  (Call   s expSeq ) = ind n ++ show s ++ "(" ++ (( concat . (intersperse ",\n") . (map show) . toList) expSeq) ++ ")"
-showIndented n  (Guard  bexp ins ) = ind n ++ "If/Elif(" ++ show bexp ++ "):\n" ++ showIndented (n+1) ins
-showIndented n  (While  bexp ins ) = ind n ++ "While("   ++ show bexp ++ "):\n" ++ showIndented (n+1) ins
-showIndented n  (Else   ins   )    = ind n ++ "Else:\n" ++ showIndented (n+1) ins
-showIndented n  (For     low high   ins ) = ind n ++  "For" ++ show low ++ " to " ++  show high ++ ":\n" ++ showIndented (n+1) ins
-showIndented n  (ForStep low high w ins ) = ind n ++  "For" ++ show low ++ " to " ++  show high ++ " with  " ++ show w ++ ":\n" ++ showIndented (n+1) ins
-showIndented n  (Read      sexp  ) = ind n ++ "Read:\n"     ++ show sexp
-showIndented n  (Return  Nothing ) = ind n ++ "Return Void\n"
+showIndented n  (Guard  bexp ins ) = ind n ++ "If/Elif(" ++ show bexp ++ "):" ++ showIndented (n+1) ins
+showIndented n  (While  bexp ins ) = ind n ++ "While("   ++ show bexp ++ "):" ++ showIndented (n+1) ins
+showIndented n  (Else   ins   )    = ind n ++ "Else:" ++ showIndented (n+1) ins
+showIndented n  (For     low high   ins ) = ind n ++  "For" ++ show low ++ " to " ++  show high ++ ":" ++ showIndented (n+1) ins
+showIndented n  (ForStep low high w ins ) = ind n ++  "For" ++ show low ++ " to " ++  show high ++ " with  " ++ show w ++ ":" ++ showIndented (n+1) ins
+showIndented n  (Read      sexp  ) = ind n ++ "Read:"     ++ show sexp
+showIndented n  (Return  Nothing ) = ind n ++ "Return Void"
 showIndented n  (Return  (Just exp)) = ind n ++  "Return " ++ show exp
+showIndented n  (If guardSeq ) = concat $ map (showIndented n) (toList guardSeq)
 showIndented n  Continue = ind n ++ "Continue"
 showIndented n  Break    = ind n ++ "Break"
 showIndented n  Exit     = ind n ++ "Exit"
 showIndented n  (Block ins) = ( concat . (intersperse ",\n") . (map (showIndented n) ) . toList) ins
-showIndented n  Error    = "Error"
+showIndented n  Error    = "\nError"
 showIndented n  _ = "DefaultIns"
+
+printAsts :: [(String,Ins)] -> String
+printAsts = concatMap beautyprint 
+    where beautyprint (str,blck) = str ++ "\n--------------" ++ show blck ++ "\n\n"
 
 -- shortcut for indentation
 ind :: Int -> String
-ind n =  replicate (n*4) ' '
+ind n = "\n" ++ replicate (n*4) ' '
 
 insertIns :: Ins -> Ins -> Ins
 insertIns ins (Block s)  = (Block (s |> ins) )
