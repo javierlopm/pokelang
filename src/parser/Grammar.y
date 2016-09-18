@@ -149,35 +149,36 @@ import Instructions
 
 %%
 
-Prog : Dcls  {% checkMain }
+Prog : Dcls  {% checkMain' $1 }
 
-Ins : {- λ -}                 {% return TypeVoid }
-    | Ins Exp "="  Exp   ";"  {% checkLValue (sel1 $2, sel2 $2) >> addToBlock (Assign    (sel3 $2) (sel3 $4)) >> return TypeVoid } 
-    | Ins Exp "*=" Exp   ";"  {% checkLValue (sel1 $2, sel2 $2) >> addToBlock (AssignMul (sel3 $2) (sel3 $4)) >> return TypeVoid } 
-    | Ins Exp "+=" Exp   ";"  {% checkLValue (sel1 $2, sel2 $2) >> addToBlock (AssignSum (sel3 $2) (sel3 $4)) >> return TypeVoid } 
-    | Ins Exp "-=" Exp   ";"  {% checkLValue (sel1 $2, sel2 $2) >> addToBlock (AssignMin (sel3 $2) (sel3 $4)) >> return TypeVoid } 
-    | Ins BREAK          ";"  {% checkOkIns (addToBlock Break   )    $1  }
-    | Ins CONTINUE       ";"  {% checkOkIns (addToBlock Continue)    $1  }
-    | Ins EXIT           ";"  {% checkOkIns (addToBlock Exit    )    $1  }
-    | Ins RETURN   Exp   ";"  {% checkOkIns (addToBlock (Return (Just (sel3 $3)) )) $1 } -- Cambiar para exp
-    | Ins RETURN         ";"  {% checkOkIns (addToBlock (Return Nothing )) $1 }
-    | Ins READ  "("  ID   ")" ";" {% checkReadable $4 True  >> return TypeVoid} --revisar
-    | Ins ID    "("ExpList")" ";" {% (checkFunctionCall $2 (fst $4)) >>=  (checkOkIns (return ())) . fst  } 
-    | Ins BEGIN Ent0 SmplDcls Ins END                              {% exitScope >> checkOkIns (addToBlock EnterBlock ) $1 } -- Verificar que el tipo de ins es Void y $1 
-    | Ins IF    Exp ":" Ent0 SmplDcls Ins Ent1 NextIf Else END     {% checkAllOk [(checkGuarded $2 $3 $7), (return $10), (return $1)] } --{% checkOkIns (addToBlock (mergeIf (Guard ExpTrue) $9 $10 )) $1 } -- verificar que $3 es bool, $9 y $10 son void
-    | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                 {% checkAllOk [(checkGuarded $2 $3 $7), (return $1)] }               --{% checkOkIns (addToBlock (While ExpTrue) ) $1  }
-    | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkFor     $2   [$5,$7,$9] , return $12, return $1 ]  } -- FALTA CONSTRUCCION DEL ARBOL
-    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkFor     $2   [$5,$7]    , return $10, return $1 ]  } -- FALTA CONSTRUCCION DEL ARBOL
-    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkEnumFor $2 $3 $5 $7     , return $10, return $1 ]  }
+Ins : {- λ -}                 {% return (TypeVoid, newBlock ) }
+    | Ins Exp "="  Exp   ";"  {% checkAllOk [checkLValue (sel1 $2, sel2 $2), (return (fst $1))] >>= checkOkIns (Assign    (sel3 $2) (sel3 $4)) (snd $1)  } 
+    | Ins Exp "*=" Exp   ";"  {% checkAllOk [checkLValue (sel1 $2, sel2 $2), (return (fst $1))] >>= checkOkIns (AssignMul (sel3 $2) (sel3 $4)) (snd $1)  } 
+    | Ins Exp "+=" Exp   ";"  {% checkAllOk [checkLValue (sel1 $2, sel2 $2), (return (fst $1))] >>= checkOkIns (AssignSum (sel3 $2) (sel3 $4)) (snd $1)  } 
+    | Ins Exp "-=" Exp   ";"  {% checkAllOk [checkLValue (sel1 $2, sel2 $2), (return (fst $1))] >>= checkOkIns (AssignMin (sel3 $2) (sel3 $4)) (snd $1)  } 
+    | Ins BREAK          ";"  {% checkOkIns Break    (snd $1) (fst $1)  }
+    | Ins CONTINUE       ";"  {% checkOkIns Continue (snd $1) (fst $1)  }
+    | Ins EXIT           ";"  {% checkOkIns Exit     (snd $1) (fst $1)  }
+    | Ins RETURN   Exp   ";"  {% checkOkIns ((Return (Just (sel3 $3)) )) (snd $1) (fst $1) } -- Cambiar para exp
+    | Ins RETURN         ";"  {% checkOkIns ((Return Nothing )) (snd $1) (fst $1) }
+    --| Ins READ  "("  ID   ")" ";" {% checkReadable $4 True  >> return TypeVoid} --revisar
+    | Ins ID    "("ExpList")" ";" {% (checkFunctionCall $2 (fst $4)) >>=  (checkOkIns (Call (lexeme $2) (snd $4) ) (snd $1)) . (notErrors (fst $1)) . fst   } 
+    | Ins BEGIN Ent0 SmplDcls Ins END   {% exitScope >>   checkOkIns (snd $5) (snd $1) (notErrors (fst $1) (fst $5)) } 
+    | Ins IF    Exp ":" Ent0 SmplDcls Ins Ent1 NextIf Else END     {% checkAllOk [(checkGuarded $2 $3 $7), (return (fst $10)), (return (fst $1))] >>= checkOkIns (mergeIf (Guard (trd $3) (snd $7)) (snd $9) (snd $10) ) (snd $1) } --{% checkOkIns (addToBlock (mergeIf (Guard ExpTrue) $9 $10 )) $1 } -- verificar que $3 es bool, $9 y $10 son void
+    | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                 {% checkAllOk [(checkGuarded $2 $3 $7), (return (fst $1))]               >>= checkOkIns (While (trd $3) (snd $7) ) (snd $1) }               --{% checkOkIns (addToBlock (While ExpTrue) ) $1  }
+    -- left it here
+    | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkFor     $2   [$5,$7,$9] , return (fst $12), return (fst $1) ] >>= checkOkIns Break (snd $1) } -- MISSING INSTRUCTIONS
+    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkFor     $2   [$5,$7]    , return (fst $10), return (fst $1) ] >>= checkOkIns Break (snd $1) } 
+    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkEnumFor $2 $3 $5 $7     , return (fst $10), return (fst $1) ] >>= checkOkIns Break (snd $1) }
 
 
 -- List of elseif
-NextIf: {- λ -}                                     {% return TypeVoid         } -- Ignorando construccion del arbol
-      | NextIf ELIF  Exp ":" Ent0 SmplDcls Ins Ent1 {% checkAllOk [(checkGuarded $2 $3 $7),(return $1)] }
+NextIf: {- λ -}                                     {% return (TypeVoid,newIf)  } 
+      | NextIf ELIF  Exp ":" Ent0 SmplDcls Ins Ent1 {% checkAllOk [(checkGuarded $2 $3 $7),(return (fst $1))] >>= checkAndBuild (insertIf (snd $1) (Guard (trd $3) (snd $7))) }
 
 -- Else list
-Else: {- λ -}                         {% return TypeVoid           }
-    | ELSE ":" Ent0 SmplDcls Ins Ent1 {% checkOkIns (return ()) $5 } 
+Else: {- λ -}                         {% return (TypeVoid, Nothing) }
+    | ELSE ":" Ent0 SmplDcls Ins Ent1 {% checkAndBuild (Just (snd $5) ) (fst $5)  } 
 
 -- Declarations that could be global.
 SmplDcls: {- λ -}                       {% return ()}        
@@ -204,14 +205,13 @@ PrimType : INTDEC           {     makeType $1    }
 
 
 -- Global declarations on scope level 0
-Dcls:  {- λ -}                          {% return () }
-    | Dcls Reference   ID         ";"   {% insertDeclareInScope $2 $3 True False } -- Always global, GlobDeclare not needed
-    | Dcls FWD FUNC Reference ID Ent0 "(" Parameters ")" ";"   {% insertForwardFunc (addType $8 $4) $5 }
-    | Dcls ENUMDEC DATAID "{" EnumConsList "}"  {% insertEnum $3 >> insertLEnumCons $5 (lexeme $3) }
-    | Dcls Ent5 "{" FieldsList "}" {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4  }
-    | Dcls Ent6 "{" FieldsList Ent7 "}" {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4  }
-    | Dcls FUNC  Ent2  ":" Ent0 SmplDcls Ins END -- Ent0 Ent5
-    {% insertFunction (snd $3) (fst $3) True }
+Dcls:  {- λ -}                                                 {% return [] }
+    | Dcls Reference   ID         ";"                          {% insertDeclareInScope $2 $3 True False >> return $1 } -- Always global, GlobDeclare not needed
+    | Dcls FWD FUNC Reference ID Ent0 "(" Parameters ")" ";"   {% insertForwardFunc (addType $8 $4) $5  >> return $1 }
+    | Dcls ENUMDEC DATAID "{" EnumConsList "}"     {% insertEnum $3 >> insertLEnumCons $5 (lexeme $3)   >> return $1 }
+    | Dcls Ent5 "{" FieldsList "}"                 {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4 >> return $1 }
+    | Dcls Ent6 "{" FieldsList Ent7 "}"            {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4 >> return $1 }
+    | Dcls FUNC  Ent2  ":" Ent0 SmplDcls Ins END   {% insertFunction (snd $3) (fst $3) True >> return ( ( lexeme(fst $3),(snd $7)) : $1 ) }
 
 
 -- Parameter: ListParam Reference ID  {% insertDeclareInScope $2 $3 False False }    -- Falta Hacer la lista de tipos
@@ -326,4 +326,5 @@ parseError l  = error $ "Parsing error at: \n" ++ show (head l)
 parse [] = print "Hola"
 parse l = print "Hola"
 
+trd  (_,_,a) = a
 }

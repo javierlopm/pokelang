@@ -35,7 +35,8 @@ module Types(
     getSize,
     align,
     isAFunction,
-    isEnumCons
+    isEnumCons,
+    notErrors
     -- addLeftType,
     -- singleType,
 ) where
@@ -48,7 +49,6 @@ import Tokens(Token(TkInt  ,TkBool ,TkChar
                    ,TkVoid ,TkFloat,TkStruct
                    ,TkUnion,TkEnum ,TkNull
                    ,TkDId,TkId,lexeme))
-import Instructions
 
 type Message = Either String String -- Monad writer message unit
 type Pos = (Int,Int)
@@ -203,6 +203,11 @@ isFunc (Just (Function _ _ _))  = True
 isFunc (Just (EmptyWithType _)) = True -- Forward declaration
 isFunc (Just Empty) = True
 isFunc a = False
+
+notErrors :: Type -> Type -> Type
+notErrors a b = if (a /= TypeError && b /= TypeError) then TypeVoid
+                                                      else TypeError
+
 
 isEnumCons :: Declare -> Bool
 isEnumCons (EnumCons  _ _ _ _) = True

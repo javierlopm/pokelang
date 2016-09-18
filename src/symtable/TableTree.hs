@@ -7,7 +7,6 @@ module TableTree(
     goRight,
     goTop,
     apply,
-    applyIns,
     emptyScope,
     enterScope,
     insert,
@@ -23,25 +22,19 @@ module TableTree(
     showScope,
     fuse,
     cleanOffset,
+   -- maxMapped,
+    getAll,
     decList,
     changeSize,
-    addSOffset,
-    showInst,
-    getAll
+    addSOffset
   ) where
-
-import Prelude hiding (drop)
-
-import Debug.Trace(trace)
 
 import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as DS
-import Data.Foldable as F(toList,foldl)
-import Data.Sequence(Seq,(|>),(<|),ViewL(..),ViewR((:>)),(><),
-                     empty,viewl,viewr,length,drop,index)
+import Data.Foldable(toList)
+import Data.Sequence(empty,viewl,viewr,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
 import Data.Maybe(fromJust,isNothing)
 import Data.List (intercalate)
-import Instructions
 
 
 -- Tabla de símbolos
@@ -58,49 +51,17 @@ data Action = DownA | RightA | RootA | StChild
           deriving(Eq,Show) 
 
 -- Scope
-data Scope a = Scope { tb:: (SymbolTable a), inst:: Ins, ofs:: Int , chs :: (Seq(Scope a))}
+data Scope a = Scope { tb:: (SymbolTable a), ofs:: Int , chs :: (Seq(Scope a))}
 
 
 instance  Show a => Show (Scope a) where
   show = showScope 0
 
 showScope :: Show a => Int -> Scope a -> String
-showScope i (Scope st inst ofs chld) = "\n" ++ replicate (i*2) ' ' ++ 
-                "Level " ++ show i ++ ", Offset: "++show ofs++" --"++show inst++"\n" ++  --ofs++"\n" ++ 
+showScope i (Scope st ofs chld) = "\n" ++ replicate (i*2) ' ' ++ 
+                "Level " ++ show i ++ ", Offset: "++show ofs++"\n" ++ 
                 replicate (i*2) ' ' ++  "—————————\n" ++
-                showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) ((toList) chld)
-
-showInst :: Scope a -> String
-showInst = showInstAux 0
-
-showInstAux :: Int -> Scope a -> String -- revisar si es un if
-showInstAux i (Scope _ (Block ins) _ chs)  = if DS.null ins
-                                             then if DS.null chs 
-                                                  then "EmptyBlock\n"
-                                                  else "Block:\n"++ showInstAux (i+1) (index chs 0)
-                                             else fst1 $ F.foldl toStr  ("",i,chs)  ins
-    where 
-    toStr (str,nesting,chs) k = case k of 
-      (If s)   -> (,,) (str ++ (fst (moveTroughIf nesting (viewl s,chs))))
-                       nesting
-                       (snd         (moveTroughIf nesting (viewl s,chs)))
-      ins      -> if goDipah ins
-                  then (,,) (str ++ indent i ++ show ins ++ "\n" ++ showInstAux (nesting+1) (index chs 0))
-                            nesting
-                            (drop 1 chs)
-                  else (,,) (str ++ indent i ++ show ins ++ "\n")
-                            nesting
-                            chs
-    moveTroughIf i (g:<gs,bs) = (,)   (indent i ++ show g ++ "\n" ++
-                                          showInstAux (i+1) (index bs 0) ++ 
-                                          fst (moveTroughIf i (viewl gs,drop 1 bs)))
-                                      (drop 1 bs)
-    moveTroughIf i (EmptyL,chs) =  ("",chs)
-    indent i     = replicate (i*2) ' '
-    fst1   (a,_,_) = a
-    snd1   (_,b,_) = b
-    third  (_,_,c) = c
-
+                showSTL (Map.toList st) i ++ concatMap (showScope (i+1)) ((toList) chld) -- yarrrrr
 
 data Breadcrumb a = Breadcrumb { left  :: [Scope a]
                                , right :: Seq(Scope a)
@@ -119,26 +80,26 @@ addEntry = Map.insert
 
 -- Scope
 emptyScope :: Scope a
-emptyScope = Scope newtable newBlock 0 empty 
+emptyScope = Scope newtable 0 empty 
 
 addSOffset :: Scope a -> Int -> Scope a
-addSOffset (Scope st ins ofs l) of2 = Scope st ins (ofs+of2) l
+addSOffset (Scope st ofs l) of2 = Scope st (ofs+of2) l
 
 cleanOffset :: Scope a -> Scope a
-cleanOffset (Scope st ins _ l) = Scope st ins 0 l
+cleanOffset (Scope st _ l) = Scope st 0 l
 
 enterScope' :: Scope a -> Scope a
-enterScope' (Scope symtable ins ofs l)  = Scope symtable ins ofs ((addSOffset emptyScope ofs) <| l)
+enterScope' (Scope symtable ofs l)  = Scope symtable ofs ((addSOffset emptyScope ofs) <| l)
 --BEezelbu es mi favorito. Despues de chiabe, ofc
 enterScope'' :: Scope a -> Scope a
-enterScope'' (Scope symtable ins ofs l)  = Scope symtable ins ofs ( l |> (addSOffset emptyScope ofs) ) 
+enterScope'' (Scope symtable ofs l)  = Scope symtable ofs ( l |> (addSOffset emptyScope ofs) ) 
 -- Revisar
 
 insert :: String -> a -> Int -> Scope a  -> Scope a
-insert key val size (Scope symtable ins ofs chl)  = Scope (addEntry key val symtable) ins (ofs+size)  chl
+insert key val size (Scope symtable ofs chl)  = Scope (addEntry key val symtable) (ofs+size)  chl
 
 insert0 :: String -> a -> Int -> Scope a -> Scope a
-insert0 key val size (Scope symtable ins ofs chl)  = Scope (addEntry key val symtable) ins newsize  chl
+insert0 key val size (Scope symtable ofs chl)  = Scope (addEntry key val symtable) newsize  chl
     where newsize = max size ofs
 
 -- Zipper
@@ -157,20 +118,17 @@ fromZipper = fst . goTop
 
 -- No funciona -- Revisar si conviene trabajar con ST o con Scopes
 goDown :: Zipper a -> Maybe (Zipper a)
-goDown (Scope symt ins ofc chls , breadcrumbs) 
+goDown (Scope symt ofc chls , breadcrumbs) 
     | DS.null chls  = Nothing
     | otherwise  = Just (ch,newBread)
-    where ( ch :< chdrn) = viewl chls -- Aqui se quedo NABIL
-          newBread = Breadcrumb ( Scope symt ins ofc empty : left breadcrumbs )
-                                (right breadcrumbs >< chdrn) 
+    where (chdrn :> ch) = viewr chls
+          newBread = Breadcrumb ( Scope symt ofc empty : left breadcrumbs )
+                                (chdrn >< right breadcrumbs) 
                                 ( replicate (Data.Sequence.length chdrn) (StChild)  ++ (DownA:(action breadcrumbs)))  --Guarda ST sin hijos para luego ponerselos al subir
         --newBread = Breadcrumb (symt:(left breadcrumbs)) (chdrn++(right breadcrumbs)) (DownA:(action breadcrumbs)) 
 
 apply :: (Scope a -> Scope a) -> Zipper a -> Zipper a
 apply f (scope,breadcrumbs) = (f scope,breadcrumbs)
-
-applyIns :: (Ins -> Ins) -> Zipper a  -> Zipper a
-applyIns f ((Scope st ins ofs l),breadcrumbs) = ((Scope st (f ins) ofs l),breadcrumbs)
 
 goRight :: Zipper a -> Maybe (Zipper a)
 goRight (scp, breadcrumbs) = case snd brk2 of
@@ -204,21 +162,17 @@ allwayRight zi = if isNothing newright
     where newright = goRight zi
 
 getST :: Scope a -> SymbolTable a
-getST (Scope st _ _ _) = st
+getST (Scope st ofs chld) = st
 
 getChld :: Scope a -> Seq (Scope a)
-getChld (Scope _ _ _ chld) = chld
+getChld (Scope st ofs chld) = chld
 
 getOfs :: Scope a -> Int
-getOfs (Scope _ _ ofs _) = ofs
+getOfs (Scope st ofs chld) = ofs
 
-getIns :: Scope a -> Ins
-getIns (Scope _ ins _ _) = ins
 
 wentUp :: Zipper a -> Seq(Scope a) -> Zipper a
-wentUp (scp, (Breadcrumb lft rgt (DownA:lact)))   acc = ((Scope sst sins sofs (acc|>scp)),(Breadcrumb (tail lft) rgt lact ))
-              where 
-                (Scope sst sins sofs _) = head lft
+wentUp (scp, (Breadcrumb lft rgt (DownA:lact)))   acc = ((Scope (getST (head lft)) (getOfs (head lft)) (acc|>scp)),(Breadcrumb (tail lft) rgt lact ))
 wentUp (scp, (Breadcrumb lft rgt (StChild:lact))) acc = wentUp (scp, (Breadcrumb lft lrBr (lact))) (acc|>hrBr)
               where 
                 (hrBr :< lrBr) = viewl rgt
@@ -240,16 +194,16 @@ goTop inp@(scp, (Breadcrumb lft rgt act)) = if (act==[RootA] || act==[]) then in
                          else  goTop $ fromJust $ goUp inp
 
 isMember :: Zipper a -> String -> Bool
-isMember ((Scope st _ _ _),brc) key = Map.member key st
+isMember ((Scope st _ _),brc) key = Map.member key st
 
 isInScope :: Scope a -> String -> Bool
-isInScope (Scope st _ _ _ ) key = Map.member key st
+isInScope (Scope st _ _ ) key = Map.member key st
 
 getValS :: String -> Scope a -> Maybe a
-getValS key (Scope st _ _ _)= Map.lookup key st
+getValS key (Scope st _ _)= Map.lookup key st
 
 getVal :: Zipper a -> String -> Maybe a
-getVal ((Scope st _ _ _),brc) key = Map.lookup key st
+getVal ((Scope st _ _),brc) key = Map.lookup key st
 
 lookUp  :: Zipper a -> String -> Maybe a
 lookUp zip key = if isNothing mySearch
@@ -261,10 +215,10 @@ lookUp zip key = if isNothing mySearch
           mayUp    = (goUp zip)
 
 fuse :: Scope a -> Zipper a -> Scope a
-fuse (Scope smtbl ins ofs _ ) z =  Scope smtbl ins ofs (( chs . fromZipper) z)
+fuse (Scope smtbl ofs _ ) z =  Scope smtbl ofs (( chs . fromZipper) z)
 
 decList :: Scope a  -> [a]
-decList (Scope st _ ofs _ ) = map snd $ Map.toList st
+decList (Scope st ofs _ ) = map snd $ Map.toList st
 -- maxMapppend (Scope tb _ _ ) f = (maximum . (map  f)  . toList) tb
 
 getAll :: (a -> Bool) -> Scope a -> [(String,a)]

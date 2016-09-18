@@ -1,10 +1,10 @@
-
 module GrammarMonad(
     OurMonad,
     SymTable,
     TableZipper,
     ScopeNZip,
     exec,
+    run,
     checkIsFunc,
     checkLValue,
     checkReadable,
@@ -31,6 +31,7 @@ module GrammarMonad(
     checkRecursiveDec,
     checkFieldAccess,
     checkMain,
+    checkMain',
     tellError,
     toggleUnion,
     cleanParams,
@@ -44,7 +45,8 @@ module GrammarMonad(
     checkGuarded,
     checkAllOk,
     checkFor,
-    checkEnumFor
+    checkEnumFor,
+    checkAndBuild
     -- getDataSize
 ) where
 
@@ -60,8 +62,6 @@ import ErrorHandle(strError)
 import qualified Data.Sequence as S
 import Instructions
 
-
-
 type OurMonad    = RWS String (S.Seq(Message)) ScopeNZip
 type SymTable    = Scope Declare  
 type TableZipper = Zipper Declare 
@@ -76,6 +76,9 @@ data ScopeNZip = ScopeNZip { strTbl   :: SymTable
 
 -- Alias for executing RWS monad
 exec = execRWS
+
+-- Alias for execute and save result
+run = runRWS
 
 -- Monad initial state: two empty scopes and one zipper for an empty scope
 initialState :: ScopeNZip
@@ -168,7 +171,7 @@ checkRValue (TkMEQ _) myT1 (myT2,tok) =  if myT1 == myT2 then return myT1-}
 
 -- Check if variable it's an iteration varible (could it be used in assignment?)
 checkLValue :: (Type,Token) -> OurMonad(Type)
-checkLValue (TypeError,_)               = return TypeError
+checkLValue (TypeError,_)     = return TypeError
 checkLValue (myType ,myToken) = do
     state <- get 
     if haveLexeme myToken
@@ -187,7 +190,7 @@ checkLValue (myType ,myToken) = do
                     if (isLValue myType $ fromJust $ getValS myLex (scp state) )
                     then tellLog whathappened >> return TypeVoid  --REVISAR
                     else tellError error2     >> return TypeError
-          else return TypeError -- This check exists already in lower levels
+          else return TypeVoid 
     else tellError error4 >> return TypeError
    where 
         (l,c)  = position myToken
@@ -486,7 +489,6 @@ checkFunctionCall ident calltup = do
         error2  = strError (position ident) "number of arguments don't match with" (lexeme ident) "declaration."
 
 
-
 checkFieldAccess :: (Type,Token,Exp) -> Token -> OurMonad((Type,Token))
 checkFieldAccess (TypeError,tk1,_) _ = return (TypeError,tk1)
 checkFieldAccess (ty1,tk1,_) tk2 = do
@@ -509,6 +511,13 @@ checkMain = do
         then return ()
         else tellError $ strError (0,0) "" "hitMAINlee" "function not found"
 
+checkMain' :: [(String,Ins)] -> OurMonad( [(String,Ins)] )
+checkMain' functions = do
+    if any ( (=="hitMAINlee")  . fst) functions
+    then return functions
+    else do tellError $ strError (0,0)"" "hitMAINlee" "function not found"
+            return []
+
 checkRecursiveDec :: Token -> TypeTuple -> OurMonad()
 checkRecursiveDec dataTok typeSec = do 
     if isNotRecursiveData (lexeme dataTok) typeSec
@@ -516,11 +525,18 @@ checkRecursiveDec dataTok typeSec = do
         else tellError error1
   where error1 =  strError (position dataTok) "Data type" (lexeme dataTok) "cannot be recursive. (Pssss try to use a pointer)"
 
-checkOkIns :: OurMonad () -> Type -> OurMonad (Type)
-checkOkIns action t = if t /= TypeError
-                      then do action
-                              return TypeVoid
-                      else return TypeError
+checkOkIns :: Ins -> Ins -> Type -> OurMonad ( (Type,Ins) )
+checkOkIns ins block t = if t /= TypeError
+                            then return (TypeVoid, ins `insertIns` block )
+                            else return (TypeError, Error )
+
+-- Change by a instruction type default
+adefault = undefined
+
+checkAndBuild :: a -> Type -> OurMonad( (Type,a) )
+checkAndBuild instruction t = if t /= TypeError
+                              then return (TypeVoid ,instruction)
+                              else return (TypeError,instruction)
 
 --checkOK :: OurMonad (Type) -> Type -> OurMonad (Type)
 checkOk action t = if t /= TypeError
@@ -549,12 +565,11 @@ checkOkType ac t expectedT tok rt
 
 checkGuarded :: Token                  -- If token
                  -> (Type,Token,Exp)    -- Bool Exp
-                   -> Type                -- Instruction inside if
+                   -> (Type,Ins)          -- Instruction inside if
                        -> OurMonad(Type)      -- Returning Type
-checkGuarded tok (t,expTk,_) tins = do
+checkGuarded tok (t,expTk,_) (typeif,_) = do
     t1 <- checkOkType (return ()) t TypeBool tok TypeVoid
-    t2 <- checkOkIns  (return ()) tins
-    if (t1 == TypeVoid) && (t2 == TypeVoid) 
+    if (t1 == TypeVoid) && (typeif == TypeVoid) 
         then return TypeVoid
         else return TypeError
 
@@ -632,7 +647,7 @@ arrayParser var = foldr nest var
 
 
 addToBlock :: Ins -> OurMonad()
-addToBlock i =  onZip (applyIns (insertIns i))
+addToBlock i =  undefined
 
 builtinFunctions :: SymTable
 builtinFunctions = emptyScope
