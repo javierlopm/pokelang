@@ -149,7 +149,7 @@ import Instructions
 
 %%
 
-Prog : Dcls  {% checkMain >> return (snd $1) }
+Prog : Dcls  {% checkMain' $1 }
 
 Ins : {- λ -}                 {% return (TypeVoid, newBlock ) }
     | Ins Exp "="  Exp   ";"  {% checkAllOk [checkLValue (sel1 $2, sel2 $2), (return (fst $1))] >>= checkOkIns (Assign    (sel3 $2) (sel3 $4)) (snd $1)  } 
@@ -161,7 +161,7 @@ Ins : {- λ -}                 {% return (TypeVoid, newBlock ) }
     | Ins EXIT           ";"  {% checkOkIns Exit     (snd $1) (fst $1)  }
     | Ins RETURN   Exp   ";"  {% checkOkIns ((Return (Just (sel3 $3)) )) (snd $1) (fst $1) } -- Cambiar para exp
     | Ins RETURN         ";"  {% checkOkIns ((Return Nothing )) (snd $1) (fst $1) }
-    | Ins READ  "("  ID   ")" ";" {% checkReadable $4 True  >> return TypeVoid} --revisar
+    --| Ins READ  "("  ID   ")" ";" {% checkReadable $4 True  >> return TypeVoid} --revisar
     | Ins ID    "("ExpList")" ";" {% (checkFunctionCall $2 (fst $4)) >>=  (checkOkIns (Call (lexeme $2) (snd $4) ) (snd $1)) . (notErrors (fst $1)) . fst   } 
     | Ins BEGIN Ent0 SmplDcls Ins END   {% exitScope >>   checkOkIns (snd $5) (snd $1) (notErrors (fst $1) (fst $5)) } 
     | Ins IF    Exp ":" Ent0 SmplDcls Ins Ent1 NextIf Else END     {% checkAllOk [(checkGuarded $2 $3 $7), (return (fst $10)), (return (fst $1))] >>= checkOkIns (mergeIf (Guard (trd $3) (snd $7)) (snd $9) (snd $10) ) (snd $1) } --{% checkOkIns (addToBlock (mergeIf (Guard ExpTrue) $9 $10 )) $1 } -- verificar que $3 es bool, $9 y $10 son void
@@ -205,14 +205,13 @@ PrimType : INTDEC           {     makeType $1    }
 
 
 -- Global declarations on scope level 0
-Dcls:  {- λ -}                          {% return () }
-    | Dcls Reference   ID         ";"   {% insertDeclareInScope $2 $3 True False } -- Always global, GlobDeclare not needed
-    | Dcls FWD FUNC Reference ID Ent0 "(" Parameters ")" ";"   {% insertForwardFunc (addType $8 $4) $5 }
-    | Dcls ENUMDEC DATAID "{" EnumConsList "}"  {% insertEnum $3 >> insertLEnumCons $5 (lexeme $3) }
-    | Dcls Ent5 "{" FieldsList "}" {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4  }
-    | Dcls Ent6 "{" FieldsList Ent7 "}" {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4  }
-    | Dcls FUNC  Ent2  ":" Ent0 SmplDcls Ins END -- Ent0 Ent5
-    {% insertFunction (snd $3) (fst $3) True }
+Dcls:  {- λ -}                                                 {% return [] }
+    | Dcls Reference   ID         ";"                          {% insertDeclareInScope $2 $3 True False >> return $1 } -- Always global, GlobDeclare not needed
+    | Dcls FWD FUNC Reference ID Ent0 "(" Parameters ")" ";"   {% insertForwardFunc (addType $8 $4) $5  >> return $1 }
+    | Dcls ENUMDEC DATAID "{" EnumConsList "}"     {% insertEnum $3 >> insertLEnumCons $5 (lexeme $3)   >> return $1 }
+    | Dcls Ent5 "{" FieldsList "}"                 {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4 >> return $1 }
+    | Dcls Ent6 "{" FieldsList Ent7 "}"            {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4 >> return $1 }
+    | Dcls FUNC  Ent2  ":" Ent0 SmplDcls Ins END   {% insertFunction (snd $3) (fst $3) True >> return ( ( lexeme(fst $3),(snd $7)) : $1 ) }
 
 
 -- Parameter: ListParam Reference ID  {% insertDeclareInScope $2 $3 False False }    -- Falta Hacer la lista de tipos

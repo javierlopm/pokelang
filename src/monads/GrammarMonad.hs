@@ -31,6 +31,7 @@ module GrammarMonad(
     checkRecursiveDec,
     checkFieldAccess,
     checkMain,
+    checkMain',
     tellError,
     toggleUnion,
     cleanParams,
@@ -509,6 +510,13 @@ checkMain = do
     if isInScope globals "hitMAINlee"
         then return ()
         else tellError $ strError (0,0) "" "hitMAINlee" "function not found"
+
+checkMain' :: [(String,Ins)] -> OurMonad( [(String,Ins)] )
+checkMain' functions = do
+    if any ( (=="hitMAINlee")  . fst) functions
+    then return functions
+    else do tellError $ strError (0,0)"" "hitMAINlee" "function not found"
+            return []
 
 checkRecursiveDec :: Token -> TypeTuple -> OurMonad()
 checkRecursiveDec dataTok typeSec = do 
