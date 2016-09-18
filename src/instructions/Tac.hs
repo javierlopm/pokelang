@@ -66,8 +66,11 @@ data IntIns = FlMult   Int Int Int  -- Float
             -- Load long value into registers
             | Loadi    Int ConsVal
             -- Function calls
-            | Call  String -- Call function from label
-            | Param Int    -- Push for calling
+            | Call    String -- Call function from label
+            | Param   Int    -- Push for calling
+            -- Extras
+            | Comment String
+            | Nop 
 
 instance Show IntIns where
     show (FlMult   r0 r1 r2)  =  showTAC r0 r1 "f*" r2 
@@ -108,6 +111,8 @@ instance Show IntIns where
     show (Loadi    r0 c) = "LDI $" ++ show r0 ++ show c
     show (Call     str ) = "CALL " ++ str
     show (Param    par ) = "PARAM$" ++ show par
+    show (Comment  str ) = ';': str
+    show Nop  = "NoOp"
 
 shwAsgn int = "$" ++ show int ++ ":="
 
