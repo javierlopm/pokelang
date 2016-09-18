@@ -459,7 +459,10 @@ checkItsDeclared tk = do
         error1       = strError (position tk) " variable or datatype" (lexeme tk) "used but not declared."
         typeFound    = storedType . fromJust
 
---aca checkAssing
+checkAssing :: Type -> Type -> Bool
+checkAssing TypeError _ = False
+checkAssing _ TypeError = False
+checkAssing _ _ = False
 
 checkBinary :: [Type] -> Type -> Type -> Token -> Token -> OurMonad ((Type,Token))
 checkBinary expected TypeError _ _ tok = return (TypeError,tok)
@@ -547,11 +550,16 @@ checkOk action t = if t /= TypeError
                       else return TypeError
 
 {- Checking all the returns from monad types aren't errors -}
-checkAllOk :: [OurMonad(Type)] -> OurMonad(Type)
-checkAllOk l =  do typeL <- (sequence l)
-                   if all (/= TypeError) typeL
-                        then return TypeVoid
-                        else return TypeError
+checkAllOk :: [OurMonad(Type)] -> Type -> Type -> OurMonad(Type)
+checkAllOk l a b 
+    | checkAssing a b = checkAllOk l TypeVoid TypeVoid
+    | otherwise       = return TypeError
+
+checkAllOk l TypeVoid TypeVoid =  
+  do typeL <- (sequence l)
+        if all (/= TypeError) typeL
+        then return TypeVoid
+        else return TypeError
 
 checkOkType :: OurMonad ()  -- Action to execute
                  -> Type      -- Type obtained
