@@ -68,7 +68,7 @@ tokens :-
   vamo\_a\_segui           { \p _ -> TkContinue  (getPos p) }
   vamo\_a\_retorna         { \p _ -> TkReturn    (getPos p) }
   vamo\_a\_sali            { \p _ -> TkExit      (getPos p) }
-  --vamo\_a\_lee             { \p _ -> TkRead      (getPos p) }
+  vamo\_a\_lee             { \p _ -> TkRead      (getPos p) }
   --vamo\_a\_escribi         { \p _ -> TkWrite     (getPos p) }
   --vamo\_a\_imprimi         { \p _ -> TkPrint     (getPos p) }
 
