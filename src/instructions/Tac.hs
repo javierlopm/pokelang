@@ -15,7 +15,7 @@ data Memory = MemIndexR      Int Int    --   0(R0) 0 + contents(R0)
             | MemIndirIndex  String Int -- *lb(R0) contents(lb + contents(R0))
             | MemIndirIndexR Int Int    --  *0(R1) contents( 0 + contents(R1))
 
-instance Show      Memory where
+instance Show Memory where
     show (MemIndexR      o  r0) = show  o ++ "(R" ++ show r0 ++ ")"
     show (MemIndex       lb r0) =       lb ++ "(R" ++ show r0 ++ ")"
     show (MemIndirIndex  lb r0) = '*' :      lb ++ "(R" ++ show r0 ++ ")"
@@ -128,6 +128,50 @@ instance Show      IntIns where
     show (Param    par )      = "PARAM R" ++ show par
     show (Comment  str )      = ';': str
     show Nop                  = "NoOp"
+
+-- Ewwwww, it might be improved with Generics
+instance Binary IntIns where
+    put (FlMult   r0 r1 r2)  = putWord8 1  >> put r0 >> put r1 >> put r2
+    put (FlAdd    r0 r1 r2)  = putWord8 2  >> put r0 >> put r1 >> put r2
+    put (FlSub    r0 r1 r2)  = putWord8 3  >> put r0 >> put r1 >> put r2
+    put (FlDiv    r0 r1 r2)  = putWord8 4  >> put r0 >> put r1 >> put r2
+    put (IntMul   r0 r1 r2)  = putWord8 5  >> put r0 >> put r1 >> put r2
+    put (IntAdd   r0 r1 r2)  = putWord8 6  >> put r0 >> put r1 >> put r2
+    put (IntSub   r0 r1 r2)  = putWord8 7  >> put r0 >> put r1 >> put r2
+    put (IntDiv   r0 r1 r2)  = putWord8 8  >> put r0 >> put r1 >> put r2
+    put (And      r0 r1 r2)  = putWord8 9  >> put r0 >> put r1 >> put r2
+    put (Or       r0 r1 r2)  = putWord8 10 >> put r0 >> put r1 >> put r2
+    put (XOr      r0 r1 r2)  = putWord8 11 >> put r0 >> put r1 >> put r2
+    put (Not      r0 r1   )  = putWord8 12 >> put r0 >> put r1 
+    put (Eql      r0 r1 r2)  = putWord8 13 >> put r0 >> put r1 >> put r2
+    put (NotEql   r0 r1 r2)  = putWord8 14 >> put r0 >> put r1 >> put r2
+    put (Lt       r0 r1 r2)  = putWord8 15 >> put r0 >> put r1 >> put r2
+    put (Gt       r0 r1 r2)  = putWord8 16 >> put r0 >> put r1 >> put r2
+    put (LEq      r0 r1 r2)  = putWord8 17 >> put r0 >> put r1 >> put r2
+    put (GEq      r0 r1 r2)  = putWord8 18 >> put r0 >> put r1 >> put r2
+    put (Jump     str    )   = putWord8 19 >> put str
+    put (Jz       r0 str )   = putWord8 20 >> put r0 >> put str
+    put (Jnotz    r0 str )   = putWord8 21 >> put r0 >> put str
+    put (JLt      r0 r1 str) = putWord8 22 >> put r0 >>  put r1 >> put str
+    put (JGt      r0 r1 str) = putWord8 23 >> put r0 >>  put r1 >> put str
+    put (JLEq     r0 r1 str) = putWord8 24 >> put r0 >>  put r1 >> put str
+    put (JGEq     r0 r1 str) = putWord8 25 >> put r0 >>  put r1 >> put str 
+    put (Addi     r0 r1 i)   = putWord8 26 >> put r0 >>  put r1 >> put i
+    put (Subi     r0 r1 i)   = putWord8 27 >> put r0 >>  put r1 >> put i
+    put (Multi    r0 r1 i)   = putWord8 28 >> put r0 >>  put r1 >> put i
+    put (Divi     r0 r1 i)   = putWord8 29 >> put r0 >>  put r1 >> put i
+    put (Addf     r0 r1 i)   = putWord8 30 >> put r0 >>  put r1 >> put i
+    put (Subf     r0 r1 i)   = putWord8 31 >> put r0 >>  put r1 >> put i
+    put (Multf    r0 r1 i)   = putWord8 32 >> put r0 >>  put r1 >> put i
+    put (Divf     r0 r1 i)   = putWord8 33 >> put r0 >>  put r1 >> put i
+    put (Mv       r0 r1  )   = putWord8 34 >> put r0 >>  put r1 
+    put (Load     r0 m)      = putWord8 35 >> put r0 >>  put m
+    put (Store    m r0)      = putWord8 36 >> put m  >>  put r0
+    put (Loadi    r0 c)      = putWord8 37 >> put r0 >> put c
+    put (Call     str )      = putWord8 38 >> put str
+    put (Param    par )      = putWord8 39 >> put par
+    put (Comment  str )      = putWord8 40 >> put str
+    put Nop                  = putWord8 41 
 
 -- Print auxiliaries
 shwAsgn  int = "R" ++ show int ++ ":="
