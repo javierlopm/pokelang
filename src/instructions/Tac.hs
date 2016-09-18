@@ -2,13 +2,22 @@
 
 module Tac(
     IntIns(..),
-    Memory
+    Memory(..),
+    Program,
+    pComment,
+    showP,
+    saveProgram,
+    loadProgram
 ) where 
 
+import Prelude hiding(foldr)
 import Data.Sequence
+import Data.Foldable(foldr)
 import Data.Binary as B(get)
 import Data.Binary hiding(get)
 import Control.Monad(liftM2,liftM3)
+import Data.ByteString.Lazy as Wf(writeFile)
+--import System.Directory(removeFile)
 
 {- Memory access -}
 data Memory = MemIndexR      Int Int    --   0(R0) 0 + contents(R0)
@@ -85,6 +94,7 @@ data IntIns = -- Dest Src1 Src2  -  Reg,Reg,Reg
             | Param   Int    -- Push for calling
             -- Extras
             | Comment String
+            | Tag  String 
             | Nop 
 
 instance Show      IntIns where
@@ -113,26 +123,27 @@ instance Show      IntIns where
     show (JGt      r0 r1 str) = showIf r0 r1 ">"  str
     show (JLEq     r0 r1 str) = showIf r0 r1 "<=" str
     show (JGEq     r0 r1 str) = showIf r0 r1 ">=" str
-    show (Addi     r0 r1 i)   = showTAC r0 r1 "+ #"  i
-    show (Subi     r0 r1 i)   = showTAC r0 r1 "- #"  i
-    show (Multi    r0 r1 i)   = showTAC r0 r1 "* #"  i
-    show (Divi     r0 r1 i)   = showTAC r0 r1 "/ #"  i
-    show (Addf     r0 r1 f)   = showTAC r0 r1 "f+ #" f
-    show (Subf     r0 r1 f)   = showTAC r0 r1 "f- #" f
-    show (Multf    r0 r1 f)   = showTAC r0 r1 "f* #" f
-    show (Divf     r0 r1 f)   = showTAC r0 r1 "f/ #" f
+    show (Addi     r0 r1 i)   = showTACi r0 r1 "+"  i
+    show (Subi     r0 r1 i)   = showTACi r0 r1 "-"  i
+    show (Multi    r0 r1 i)   = showTACi r0 r1 "*"  i
+    show (Divi     r0 r1 i)   = showTACi r0 r1 "/"  i
+    show (Addf     r0 r1 f)   = showTACi r0 r1 "f+" f
+    show (Subf     r0 r1 f)   = showTACi r0 r1 "f-" f
+    show (Multf    r0 r1 f)   = showTACi r0 r1 "f*" f
+    show (Divf     r0 r1 f)   = showTACi r0 r1 "f/" f
     show (Mv       r0 r1  )   = "MV R" ++ show r0 ++ " R" ++ show r1
     show (Load     r0 m)      = "LD R" ++ show r0 ++ " " ++ show m
     show (Store    m r0)      = "ST "  ++ show m  ++ " R" ++ show r0
     show (Loadi    r0 c)      = "LDI R" ++ show r0 ++ " #" ++show c
     show (Call     str )      = "CALL " ++ str
     show (Param    par )      = "PARAM R" ++ show par
+    show (Tag      str )      = '\n': str ++ ":"
     show (Comment  str )      = ';': str
     show Nop                  = "NoOp"
 
 -- Ewwwww, it might be improved with Generics
 instance Binary IntIns where
-    put Nop                  = putWord8 0 
+    put  Nop                 = putWord8 0 
     put (FlMult   r0 r1 r2)  = putWord8 1  >> put r0 >> put r1 >> put r2
     put (FlAdd    r0 r1 r2)  = putWord8 2  >> put r0 >> put r1 >> put r2
     put (FlSub    r0 r1 r2)  = putWord8 3  >> put r0 >> put r1 >> put r2
@@ -173,6 +184,7 @@ instance Binary IntIns where
     put (Call     str )      = putWord8 38 >> put str
     put (Param    par )      = putWord8 39 >> put par
     put (Comment  str )      = putWord8 40 >> put str
+    put (Tag      str )      = putWord8 41 >> put str
 
     get = do 
     key <- getWord8
@@ -218,6 +230,7 @@ instance Binary IntIns where
        38 ->  B.get >>= return . Call
        39 ->  B.get >>= return . Param
        40 ->  B.get >>= return . Comment
+       41 ->  B.get >>= return . Tag
 
 -- Print auxiliaries
 shwAsgn  int        = "R" ++ show int ++ ":="
@@ -233,4 +246,32 @@ build2get  constructor = liftM2 constructor B.get B.get
 buildTac::(Binary a1, Binary a2, Binary a3) => (a1 -> a2 -> a3 -> r) -> Get r
 buildTac constructor = liftM3 constructor B.get B.get B.get
 
+-- Intermediate Instruction helpers
+pComment :: Int -> String
+pComment l = "Found at line" ++ show l
+
+isTag :: IntIns -> Bool
+isTag (Tag a) = True
+isTag _       = False
+
+-- Program as a sequence of instructions
 type Program = Seq IntIns
+
+-- Prety print
+showP :: Program -> String
+showP = foldr mapCon ""
+    where mapCon ins base= (if isTag ins then""else"    ")++show ins++"\n"++base
+
+programExample :: Program
+programExample = fromList [ Nop ,(FlMult   1 3 0),(FlAdd 2 4  1) ,(FlSub 3  5  2) ,(FlDiv    4  6  3) ,(IntMul   5  7  4) ,(IntAdd   6  8  5) ,(IntSub   7  9  6) ,(IntDiv   8  10 7) ,(And      9  11 8) ,(Or       10 12 9),(Tag "fibo_3") ,(XOr      11 13 9) ,(Not      12 14   ) ,(Eql      13 15 20), (Tag "fibo_3") ,(NotEql   14 16 21) ,(Lt       15 17 22) ,(Gt       16 18 23) ,(LEq      17 19 24) ,(GEq      18 20 25) ,(Jump     "fibo"  )  ,(Jz       50 "A0X5" )  ,(Jnotz    51 "FS0S" )  ,(JLt      52 90 "fibo_0"),(JGt      53 91 "fibo_1"),(JLEq     54 92 "fibo_3"),(JGEq     55 93 "fibo_4"),(Addi     56 94 42)  ,(Subi     57 95 42)  ,(Multi    58 96 45)  ,(Divi     59 97 100)  ,(Addf     60 98 54)  ,(Subf     61 99 0.3)  ,(Multf    62 100 0.5)  ,(Divf     63 101 42.0)  ,(Mv       64 102  )  ,(Load     42 (MemIndex "Tail" 64) )     ,(Store  (MemIndirIndexR 42 30) 20)     ,(Loadi    0 42)     ,(Call     "fibo" )     ,(Param    59 )     ,(Comment  (pComment 59) ) ]
+
+-- Binary store
+saveProgram :: FilePath -> Program -> IO()
+saveProgram = encodeFile
+
+-- Binary load
+loadProgram :: FilePath -> IO(Program)
+loadProgram fp = do res <- decodeFile fp
+                    --removeFile fb
+                    return res
+
