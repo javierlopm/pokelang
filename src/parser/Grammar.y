@@ -287,7 +287,7 @@ Exp :  -- Cambiar los NoExp por las Exp
     | FLOAT     {% return (TypeFloat,$1,ExpFloat (rep $1)) }   
     | INT       {% return (TypeInt,$1,ExpInt (value $1)) }   
     | CHAR      {% return (TypeChar,$1,ExpChar (char $1)) }  
-    | ENUM      {% return (TypeEnum  (lexeme $1),$1,ExpEnum  (lexeme $1)) }
+    | ENUM      {% return (TypeEnumCons,$1,ExpEnum  (lexeme $1)) }
 
  
 

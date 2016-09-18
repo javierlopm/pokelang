@@ -171,6 +171,9 @@ checkRValue (TkMEQ _) myT1 (myT2,tok) =  if myT1 == myT2 then return myT1-}
 
 -- Check if variable it's an iteration varible (could it be used in assignment?)
 checkLValue :: (Type,Token) -> OurMonad(Type)
+checkLValue (_,(TkEnumCons p s))     = do tellError error1 >> return TypeError
+                              where
+                                  error1 = strError p "Cannot assign to" s "because ENUMantye constants are not a valid L-Value."
 checkLValue (TypeError,_)     = return TypeError
 checkLValue (myType ,myToken) = do
     state <- get 
@@ -456,7 +459,7 @@ checkItsDeclared tk = do
         error1       = strError (position tk) " variable or datatype" (lexeme tk) "used but not declared."
         typeFound    = storedType . fromJust
 
-
+--aca checkAssing
 
 checkBinary :: [Type] -> Type -> Type -> Token -> Token -> OurMonad ((Type,Token))
 checkBinary expected TypeError _ _ tok = return (TypeError,tok)
@@ -466,7 +469,7 @@ checkBinary expected l r tok tok2      = do
       then do if (any (==l) expected) 
                   then return (l,tok2)
                   else tellError error2 >> return (TypeError,tok2)
-      else do tellError error1 >> return (TypeError,tok2)
+    else do tellError error1 >> return (TypeError,tok2)
   where error1 = strError (position tok) "Types in the operator" (toStr tok) ("are not equal (" ++ show l ++ " and " ++ show r ++ ")")
         error2 = strError (position tok) "Operands in" (toStr tok) ("have type" ++ show l ++ " but did't match any of the expected types." ++ show expected)
 

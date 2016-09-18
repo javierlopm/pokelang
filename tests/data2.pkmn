@@ -29,7 +29,11 @@ funcball VOIDtorb hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
     vamo_a_empeza
         STRUCTabuzz pokepanita [2][3] erNovich4;
         ENUManyte pokeDaysLaborables menol;
-        menol = Martes;
+#        menol = Martes;
+        CHARmander hola;
+        hola = 4.5;
+        menol = Lunes;
+        Lunes = 4;
     vamo_a_calmano
     
 vamo_a_calmano
