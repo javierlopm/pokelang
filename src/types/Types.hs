@@ -237,14 +237,14 @@ isLValue (TypeField _ (TypeField s myT)) rest =  isLValue (TypeField s myT) rest
 isLValue (TypeField _ (TypePointer myT)) rest =  isLValue (TypeField "s" myT) rest--Mismo caso
 isLValue (TypeField _ (TypeEmptyArray myT)) rest =  isLValue (TypeEmptyArray myT) rest--Mismo caso
 isLValue (TypeField _ (TypeArray myT i)) rest =  isLValue (TypeArray myT i) rest--Mismo caso
-
+{-
 --enums
 isLValue (TypeEnum _) _       = True
 isLValue (TypeEnum _) rest =  isLValue (TypeField s myT) rest--Mismo caso
 isLValue (TypeEnum _) rest =  isLValue (TypeField "s" myT) rest--Mismo caso
 isLValue (TypeEnum _) rest =  isLValue (TypeEmptyArray myT) rest--Mismo caso
 isLValue (TypeEnum _) rest =  isLValue (TypeArray myT i) rest--Mismo caso
-
+-}
 isLValue (TypeEmptyArray TypeBool)  _                  = True
 isLValue (TypeEmptyArray TypeChar)  _                  = True
 isLValue (TypeEmptyArray TypeFloat) _                  = True
