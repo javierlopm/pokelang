@@ -7,12 +7,13 @@ module Tac(
 
 import Data.Sequence
 import Data.Binary
+import Control.Monad(liftM2,liftM3)
 
+{- Memory access -}
 data Memory = MemIndexR      Int Int    --   0(R0) 0 + contents(R0)
             | MemIndex       String Int --  lb(R0) lb + contents(R0)
             | MemIndirIndex  String Int -- *lb(R0) contents(lb + contents(R0))
             | MemIndirIndexR Int Int    --  *0(R1) contents( 0 + contents(R1))
-
 
 instance Show      Memory where
     show (MemIndexR      o  r0) = show  o ++ "(R" ++ show r0 ++ ")"
@@ -20,14 +21,22 @@ instance Show      Memory where
     show (MemIndirIndex  lb r0) = '*' :      lb ++ "(R" ++ show r0 ++ ")"
     show (MemIndirIndexR o  r0) = '*' : show  o ++ "(R" ++ show r0 ++ ")"
 
+instance Binary Memory where
+    put (MemIndexR      o  r0) = putWord8 0 >> put o  >> put r0
+    put (MemIndirIndexR o  r0) = putWord8 1 >> put o  >> put r0 
+    put (MemIndex       lb r0) = putWord8 2 >> put lb >> put r0
+    put (MemIndirIndex  lb r0) = putWord8 3 >> put lb >> put r0
 
-newtype ConsVal = Cons Int
+    get = do key <- getWord8
+             case key of
+                0 ->  buildMem MemIndexR     
+                1 ->  buildMem MemIndirIndexR
+                2 ->  buildMem MemIndex      
+                3 ->  buildMem MemIndirIndex 
 
-instance Show      ConsVal where
-    show (Cons a) = '#' : show a 
-
-            -- Dest Src1 Src2  -  Reg,Reg,Reg
-data IntIns = FlMult   Int Int Int  -- Float
+{- Intermediate machine -}
+data IntIns = -- Dest Src1 Src2  -  Reg,Reg,Reg
+              FlMult   Int Int Int  -- Float
             | FlAdd    Int Int Int
             | FlSub    Int Int Int
             | FlDiv    Int Int Int
@@ -69,7 +78,7 @@ data IntIns = FlMult   Int Int Int  -- Float
             | Store    Memory Int
             | Mv       Int    Int
             -- Load long value into registers
-            | Loadi    Int ConsVal
+            | Loadi    Int Int
             -- Function calls
             | Call    String -- Call function from label
             | Param   Int    -- Push for calling
@@ -103,28 +112,35 @@ instance Show      IntIns where
     show (JGt      r0 r1 str) = showIf r0 r1 ">"  str
     show (JLEq     r0 r1 str) = showIf r0 r1 "<=" str
     show (JGEq     r0 r1 str) = showIf r0 r1 ">=" str
-    show (Addi     r0 r1 i)   = showTAC r0 r1 "+"  i
-    show (Subi     r0 r1 i)   = showTAC r0 r1 "-"  i
-    show (Multi    r0 r1 i)   = showTAC r0 r1 "*"  i
-    show (Divi     r0 r1 i)   = showTAC r0 r1 "/"  i
-    show (Addf     r0 r1 f)   = showTAC r0 r1 "f+" f
-    show (Subf     r0 r1 f)   = showTAC r0 r1 "f-" f
-    show (Multf    r0 r1 f)   = showTAC r0 r1 "f*" f
-    show (Divf     r0 r1 f)   = showTAC r0 r1 "f/" f
+    show (Addi     r0 r1 i)   = showTAC r0 r1 "+ #"  i
+    show (Subi     r0 r1 i)   = showTAC r0 r1 "- #"  i
+    show (Multi    r0 r1 i)   = showTAC r0 r1 "* #"  i
+    show (Divi     r0 r1 i)   = showTAC r0 r1 "/ #"  i
+    show (Addf     r0 r1 f)   = showTAC r0 r1 "f+ #" f
+    show (Subf     r0 r1 f)   = showTAC r0 r1 "f- #" f
+    show (Multf    r0 r1 f)   = showTAC r0 r1 "f* #" f
+    show (Divf     r0 r1 f)   = showTAC r0 r1 "f/ #" f
     show (Mv       r0 r1  )   = "MV R" ++ show r0 ++ " R" ++ show r1
     show (Load     r0 m)      = "LD R" ++ show r0 ++ " " ++ show m
     show (Store    m r0)      = "ST "  ++ show m  ++ " R" ++ show r0
-    show (Loadi    r0 c)      = "LDI R" ++ show r0 ++ show c
+    show (Loadi    r0 c)      = "LDI R" ++ show r0 ++ " #" ++show c
     show (Call     str )      = "CALL " ++ str
     show (Param    par )      = "PARAM R" ++ show par
     show (Comment  str )      = ';': str
     show Nop                  = "NoOp"
 
 -- Print auxiliaries
-shwAsgn int = "R" ++ show int ++ ":="
+shwAsgn  int = "R" ++ show int ++ ":="
 showTAC  r0 r1 s r2 = 'R' : show r0 ++ " := R" ++ show r1 ++ " " ++ s ++ " R" ++ show r2
 showTACi r0 r1 s i  = 'R' : show r0 ++ " := R" ++ show r1 ++ " " ++ s ++ " #" ++ show i
 show2AC  r0 r1 s    = 'R' : show r0 ++ " := "  ++ s ++" R" ++  show r1
 showIf r0 r1 s label = "if R" ++ show r0 ++ " " ++ s ++ " R" ++ show r1 ++ " goto " ++ show label
+
+-- Monad auxiliaries for put functions
+buildMem ::(Binary a1, Binary a2) => (a1 -> a2 -> r) -> Get r
+buildMem constructor = liftM2 constructor get get
+
+buildTac::(Binary a1, Binary a2, Binary a3) => (a1 -> a2 -> a3 -> r) -> Get r
+buildTac constructor = liftM3 constructor get get get
 
 type Program = Seq IntIns
