@@ -562,21 +562,26 @@ checkOk action t = if t /= TypeError
                       else return TypeError
 
 {- Checking all the returns from monad types aren't errors -}
-checkAllOk :: [OurMonad(Type)] -> Type -> Type -> Int -> OurMonad(Type)
-checkAllOk l TypeVoid TypeVoid _ =  
+checkAllOk :: [OurMonad(Type)] -> Type -> Type -> String -> Int -> OurMonad(Type)
+checkAllOk l TypeVoid TypeVoid _ _ =  
   do typeL <- (sequence l)
      if all (/= TypeError) typeL
      then return TypeVoid
      else return TypeError
-checkAllOk l (TypeEnum s1) (TypeEnum s2)     t = if s1==s2 then checkAllOk l TypeVoid TypeVoid 0
+checkAllOk l (TypeEnum s1) (TypeEnum s2)  _  _ = if s1==s2 then checkAllOk l TypeVoid TypeVoid "" 0
                                                  else return TypeError
-checkAllOk l (TypeEnum s1) (TypeEnumCons s2) t = do
-  enums <- gets enuTbl
-  p <- isMember (fromScope.enums) (s1) 
+checkAllOk l (TypeEnum s1) (TypeEnumCons) s2 t = do
+  state <- get
+  p <- (getValS s2 (enuTbl state))
+  --enums <- gets enuTbl
+  --p <- isInScope (fromScope.enums) (s1) 
+  --if isInScope enums s2 then 
+  --  do p <- fromJust $ getValS s2 enums
   tellError $ strError (0,0) "" "hitMAINlee" $ show p
   return TypeError
-checkAllOk l a b t
-    | checkAssign a b t = checkAllOk l TypeVoid TypeVoid 0
+  --else do return TypeError
+checkAllOk l a b s t
+    | checkAssign a b t = checkAllOk l TypeVoid TypeVoid s 0
     | otherwise       = return TypeError
 
 checkOkType :: OurMonad ()  -- Action to execute
