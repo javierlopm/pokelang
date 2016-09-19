@@ -459,10 +459,22 @@ checkItsDeclared tk = do
         error1       = strError (position tk) " variable or datatype" (lexeme tk) "used but not declared."
         typeFound    = storedType . fromJust
 
-checkAssing :: Type -> Type -> Bool
-checkAssing TypeError _ = False
-checkAssing _ TypeError = False
-checkAssing _ _ = False
+checkAssign :: Type -> Type -> Int -> Bool
+checkAssign (TypeField _ TypeInt) TypeInt at = True
+checkAssign (TypeField _ TypeBool) TypeBool 0 = True
+checkAssign (TypeField _ TypeChar) TypeChar 0 = True
+checkAssign (TypeField _ TypeFloat) TypeFloat at = True
+checkAssign TypeFloat TypeInt at = True
+checkAssign TypeFloat TypeFloat at = True
+checkAssign TypeInt TypeInt at = True
+checkAssign TypeBool TypeBool 0 = True
+checkAssign TypeChar TypeChar 0 = True
+--checkAssign TypeEnum TypeEnumCons 0 = True
+--checkAssign TypeEnum TypeEnum 0 = True
+checkAssign (TypePointer t1) t2 0 =  t1 == t2
+checkAssign (TypeEmptyArray t1) t2 0 = t1 == t2
+--checkAssign (TypeArray t) t 0 = True
+checkAssign _ _ _ = False
 
 checkBinary :: [Type] -> Type -> Type -> Token -> Token -> OurMonad ((Type,Token))
 checkBinary expected TypeError _ _ tok = return (TypeError,tok)
@@ -550,16 +562,22 @@ checkOk action t = if t /= TypeError
                       else return TypeError
 
 {- Checking all the returns from monad types aren't errors -}
-checkAllOk :: [OurMonad(Type)] -> Type -> Type -> OurMonad(Type)
-checkAllOk l a b 
-    | checkAssing a b = checkAllOk l TypeVoid TypeVoid
-    | otherwise       = return TypeError
-
-checkAllOk l TypeVoid TypeVoid =  
+checkAllOk :: [OurMonad(Type)] -> Type -> Type -> Int -> OurMonad(Type)
+checkAllOk l TypeVoid TypeVoid _ =  
   do typeL <- (sequence l)
-        if all (/= TypeError) typeL
-        then return TypeVoid
-        else return TypeError
+     if all (/= TypeError) typeL
+     then return TypeVoid
+     else return TypeError
+checkAllOk l (TypeEnum s1) (TypeEnum s2)     t = if s1==s2 then checkAllOk l TypeVoid TypeVoid 0
+                                                 else return TypeError
+checkAllOk l (TypeEnum s1) (TypeEnumCons s2) t = do
+  enums <- gets enuTbl
+  p <- isMember (fromScope.enums) (s1) 
+  tellError $ strError (0,0) "" "hitMAINlee" $ show p
+  return TypeError
+checkAllOk l a b t
+    | checkAssign a b t = checkAllOk l TypeVoid TypeVoid 0
+    | otherwise       = return TypeError
 
 checkOkType :: OurMonad ()  -- Action to execute
                  -> Type      -- Type obtained
