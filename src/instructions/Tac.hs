@@ -96,6 +96,30 @@ data IntIns = -- Dest Src1 Src2  -  Reg,Reg,Reg
             | Comment String
             | Tag  String 
             | Nop 
+            -- Prints
+            | Printic   Int    -- Print Integer constant
+            | Printi    Int    -- Print integer inside register
+            | Printfc   Float  -- Print float constant
+            | Printflr  Int    -- Print float inside register
+            | PrintStr  Int    -- Print string pointed from 
+            | PrintEnum String -- Print enum at label
+
+
+
+            -- PROCEDURES TO BE IMPLEMENTED IN MIPS
+            -- Missing conversionFunctions
+            -- Floor
+            -- Ceil
+            -- IntToChar
+            -- CharToInt
+            -- IntToFloat
+            -- Memory Operations
+            -- Free   
+            -- Malloc 
+            -- Enum operations Src Dest - Reg Reg
+            -- Succ  Int Int --  Stores en r0, sucessor of enum pointed by R1
+            -- Prec  Int Int 
+            
 
 instance Show      IntIns where
     show (FlMult   r0 r1 r2)  =  showTAC r0 r1 "f*" r2
@@ -139,6 +163,12 @@ instance Show      IntIns where
     show (Param    par )      = "PARAM R" ++ show par
     show (Tag      str )      = '\n': str ++ ":"
     show (Comment  str )      = ';': str
+    show (Printic   c  )      = "PRINT INT CONST "   ++ show c
+    show (Printi    r0 )      = "PRINT INT R"        ++ show r0
+    show (Printfc   fc )      = "PRINT FLOAT CONST " ++ show fc
+    show (Printflr  fr )      = "PRINT FLOAT R"      ++ show fr
+    show (PrintStr  r0 )      = "PRINT STR at *R"    ++ show r0
+    show (PrintEnum lb )      = "PRINT ENUM at "     ++ show lb
     show Nop                  = "NoOp"
 
 -- Ewwwww, it might be improved with Generics
@@ -185,6 +215,12 @@ instance Binary IntIns where
     put (Param    par )      = putWord8 39 >> put par
     put (Comment  str )      = putWord8 40 >> put str
     put (Tag      str )      = putWord8 41 >> put str
+    put (Printic   c  )      = putWord8 42 >> put c
+    put (Printi    r0 )      = putWord8 43 >> put r0
+    put (Printfc   fc )      = putWord8 44 >> put fc
+    put (Printflr  fr )      = putWord8 45 >> put fr
+    put (PrintStr  r0 )      = putWord8 46 >> put r0
+    put (PrintEnum lb )      = putWord8 47 >> put lb
 
     get = do 
     key <- getWord8
@@ -231,6 +267,12 @@ instance Binary IntIns where
        39 ->  B.get >>= return . Param
        40 ->  B.get >>= return . Comment
        41 ->  B.get >>= return . Tag
+       42 ->  B.get >>= return . Printic   
+       43 ->  B.get >>= return . Printi    
+       44 ->  B.get >>= return . Printfc   
+       45 ->  B.get >>= return . Printflr  
+       46 ->  B.get >>= return . PrintStr  
+       47 ->  B.get >>= return . PrintEnum 
 
 -- Print auxiliaries
 shwAsgn  int        = "R" ++ show int ++ ":="
