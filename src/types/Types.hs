@@ -115,7 +115,7 @@ data Type = TypeInt
           | TypeString   
           | TypeFloat  
           | TypeVoid   
-          | TypeEnumCons   
+          | TypeEnumCons
           | TypeEnum       String -- Name comparison 
           | TypeStruct     { getDataName :: String} 
           | TypeUnion      { getDataName :: String}
@@ -242,6 +242,10 @@ isLValue (TypeField _ (TypeField s myT)) rest =  isLValue (TypeField s myT) rest
 isLValue (TypeField _ (TypePointer myT)) rest =  isLValue (TypeField "s" myT) rest--Mismo caso
 isLValue (TypeField _ (TypeEmptyArray myT)) rest =  isLValue (TypeEmptyArray myT) rest--Mismo caso
 isLValue (TypeField _ (TypeArray myT i)) rest =  isLValue (TypeArray myT i) rest--Mismo caso
+--enums
+isLValue (TypeEnumCons) _     = False
+isLValue (TypeEnum _) _       = True
+
 isLValue (TypeEmptyArray TypeBool)  _                  = True
 isLValue (TypeEmptyArray TypeChar)  _                  = True
 isLValue (TypeEmptyArray TypeFloat) _                  = True
@@ -309,7 +313,7 @@ getSize (TypeStruct  _ ) = error "Cannot be calculated, get sum of scope"
 getSize (TypeUnion   _ ) = error "Cannot be calculated, get max of scope" 
 
 getSize (TypeField  _ _) = error "Function as a type cannot be stored"
-getSize TypeEnumCons   = error "Enums are global"
+getSize (TypeEnumCons) = error "Enums are global"
 getSize TypeVoid       = error "This type (void) cannot be stored"
 getSize TypeString     = error "Global variable"
 getSize (TypeSatisfies _ ) = error "wtf? really?"

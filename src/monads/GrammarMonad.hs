@@ -171,6 +171,9 @@ checkRValue (TkMEQ _) myT1 (myT2,tok) =  if myT1 == myT2 then return myT1-}
 
 -- Check if variable it's an iteration varible (could it be used in assignment?)
 checkLValue :: (Type,Token) -> OurMonad(Type)
+checkLValue (_,(TkEnumCons p s))     = do tellError error1 >> return TypeError
+                              where
+                                  error1 = strError p "Cannot assign to" s "because ENUMantye constants are not a valid L-Value."
 checkLValue (TypeError,_)     = return TypeError
 checkLValue (myType ,myToken) = do
     state <- get 
@@ -456,7 +459,22 @@ checkItsDeclared tk = do
         error1       = strError (position tk) " variable or datatype" (lexeme tk) "used but not declared."
         typeFound    = storedType . fromJust
 
-
+checkAssign :: Type -> Type -> Int -> Bool
+checkAssign (TypeField _ TypeInt) TypeInt at = True
+checkAssign (TypeField _ TypeBool) TypeBool 0 = True
+checkAssign (TypeField _ TypeChar) TypeChar 0 = True
+checkAssign (TypeField _ TypeFloat) TypeFloat at = True
+checkAssign TypeFloat TypeInt at = True
+checkAssign TypeFloat TypeFloat at = True
+checkAssign TypeInt TypeInt at = True
+checkAssign TypeBool TypeBool 0 = True
+checkAssign TypeChar TypeChar 0 = True
+--checkAssign TypeEnum TypeEnumCons 0 = True
+--checkAssign TypeEnum TypeEnum 0 = True
+checkAssign (TypePointer t1) t2 0 =  t1 == t2
+checkAssign (TypeEmptyArray t1) t2 0 = t1 == t2
+--checkAssign (TypeArray t) t 0 = True
+checkAssign _ _ _ = False
 
 checkBinary :: [Type] -> Type -> Type -> Token -> Token -> OurMonad ((Type,Token))
 checkBinary expected TypeError _ _ tok = return (TypeError,tok)
@@ -466,7 +484,7 @@ checkBinary expected l r tok tok2      = do
       then do if (any (==l) expected) 
                   then return (l,tok2)
                   else tellError error2 >> return (TypeError,tok2)
-      else do tellError error1 >> return (TypeError,tok2)
+    else do tellError error1 >> return (TypeError,tok2)
   where error1 = strError (position tok) "Types in the operator" (toStr tok) ("are not equal (" ++ show l ++ " and " ++ show r ++ ")")
         error2 = strError (position tok) "Operands in" (toStr tok) ("have type" ++ show l ++ " but did't match any of the expected types." ++ show expected)
 
@@ -544,11 +562,27 @@ checkOk action t = if t /= TypeError
                       else return TypeError
 
 {- Checking all the returns from monad types aren't errors -}
-checkAllOk :: [OurMonad(Type)] -> OurMonad(Type)
-checkAllOk l =  do typeL <- (sequence l)
-                   if all (/= TypeError) typeL
-                        then return TypeVoid
-                        else return TypeError
+checkAllOk :: [OurMonad(Type)] -> Type -> Type -> String -> Int -> OurMonad(Type)
+checkAllOk l TypeVoid TypeVoid _ _ =  
+  do typeL <- (sequence l)
+     if all (/= TypeError) typeL
+     then return TypeVoid
+     else return TypeError
+checkAllOk l (TypeEnum s1) (TypeEnum s2)  _  _ = if s1==s2 then checkAllOk l TypeVoid TypeVoid "" 0
+                                                 else return TypeError
+checkAllOk l (TypeEnum s1) (TypeEnumCons) s2 t = do
+  state <- get
+  p <- (getValS s2 (enuTbl state))
+  --enums <- gets enuTbl
+  --p <- isInScope (fromScope.enums) (s1) 
+  --if isInScope enums s2 then 
+  --  do p <- fromJust $ getValS s2 enums
+  tellError $ strError (0,0) "" "hitMAINlee" $ show p
+  return TypeError
+  --else do return TypeError
+checkAllOk l a b s t
+    | checkAssign a b t = checkAllOk l TypeVoid TypeVoid s 0
+    | otherwise       = return TypeError
 
 checkOkType :: OurMonad ()  -- Action to execute
                  -> Type      -- Type obtained
