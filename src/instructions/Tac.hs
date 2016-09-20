@@ -7,7 +7,8 @@ module Tac(
     pComment,
     showP,
     saveProgram,
-    loadProgram
+    loadProgram,
+    backPatch
 ) where 
 
 import Prelude hiding(foldr)
@@ -68,13 +69,13 @@ data IntIns = -- Dest Src1 Src2  -  Reg,Reg,Reg
             | LEq     Int Int Int  -- lower or equal
             | GEq     Int Int Int  -- equal 
             -- Jumps - Registers label
-            | Jump     String
-            | Jz       Int String
-            | Jnotz    Int String
-            | JLt      Int Int String
-            | JGt      Int Int String
-            | JLEq     Int Int String
-            | JGEq     Int Int String
+            | Jump     (Maybe(Int))
+            | Jz       Int (Maybe(Int))
+            | Jnotz    Int (Maybe(Int))
+            | JLt      Int Int (Maybe(Int))
+            | JGt      Int Int (Maybe(Int))
+            | JLEq     Int Int (Maybe(Int))
+            | JGEq     Int Int (Maybe(Int))
             -- Const Int Oper Dest Src Cons
             | Addi     Int Int Int -- Operations between register and  constants
             | Subi     Int Int Int 
@@ -92,11 +93,11 @@ data IntIns = -- Dest Src1 Src2  -  Reg,Reg,Reg
             -- Load long value into registers
             | Loadi    Int Int
             -- Function calls
-            | Call    String -- Call function from label
+            | Call    String -- Call function from label STRING OR MAYBE INT?
             | Param   Int    -- Push for calling
             -- Extras
             | Comment String
-            | Tag     String 
+            | Tag     (Maybe(Int))
             | Nop 
             -- Prints
             | Printic   Int    -- Print Integer constant
@@ -105,9 +106,9 @@ data IntIns = -- Dest Src1 Src2  -  Reg,Reg,Reg
             | Printflr  Int    -- Print float inside register
             | PrintStr  Int    -- Print string pointed from 
             | PrintEnum Memory -- Print enum at label
-
-
-
+            -- Do we need this?
+            -- | AccessArray R0     := R1[R2]
+            -- | StoreArray  R3[R4] := R5
             -- PROCEDURES TO BE IMPLEMENTED IN MIPS
             -- Missing conversionFunctions
             -- Floor
@@ -142,13 +143,13 @@ instance Show      IntIns where
     show (Gt       r0 r1 r2)  =  showTAC r0 r1 ">"  r2
     show (LEq      r0 r1 r2)  =  showTAC r0 r1 "<=" r2
     show (GEq      r0 r1 r2)  =  showTAC r0 r1 ">=" r2
-    show (Jump     str    )   = "goto " ++ str
-    show (Jz       r0 str )   = "if R" ++ show r0 ++ "z  goto" ++ str 
-    show (Jnotz    r0 str )   = "if R" ++ show r0 ++ "nz goto" ++ str 
-    show (JLt      r0 r1 str) = showIf r0 r1 "<"  str
-    show (JGt      r0 r1 str) = showIf r0 r1 ">"  str
-    show (JLEq     r0 r1 str) = showIf r0 r1 "<=" str
-    show (JGEq     r0 r1 str) = showIf r0 r1 ">=" str
+    show (Jump     i    )   = "goto " ++ showJust i
+    show (Jz       r0 i )   = "if R" ++ show r0 ++ "z  goto" ++ showJust i 
+    show (Jnotz    r0 i )   = "if R" ++ show r0 ++ "nz goto" ++ showJust i 
+    show (JLt      r0 r1 i) = showIf r0 r1 "<"   i
+    show (JGt      r0 r1 i) = showIf r0 r1 ">"   i
+    show (JLEq     r0 r1 i) = showIf r0 r1 "<="  i
+    show (JGEq     r0 r1 i) = showIf r0 r1 ">="  i
     show (Addi     r0 r1 i)   = showTACi r0 r1 "+"  i
     show (Subi     r0 r1 i)   = showTACi r0 r1 "-"  i
     show (Multi    r0 r1 i)   = showTACi r0 r1 "*"  i
@@ -163,7 +164,7 @@ instance Show      IntIns where
     show (Loadi    r0 c)      = "LDI R" ++ show r0 ++ " #" ++show c
     show (Call     str )      = "CALL " ++ str
     show (Param    par )      = "PARAM R" ++ show par
-    show (Tag      str )      = '\n': str ++ ":"
+    show (Tag      i   )      = '\n': (showJust i) ++ ":"
     show (Comment  str )      = ';': str
     show (Printic   c  )      = "PRINT INT CONST "   ++ show c
     show (Printi    r0 )      = "PRINT INT R"        ++ show r0
@@ -175,7 +176,7 @@ instance Show      IntIns where
     show (ShiftR r0 r1 i)     = showTACi r0 r1 ">>" i
     show Nop                  = "NoOp"
 
--- Ewwwww, it might be improved with Generics
+-- Ewwwww, it might be improved with Generics?
 instance Binary IntIns where
     put  Nop                 = putWord8 0 
     put (FlMult   r0 r1 r2)  = putWord8 1  >> put r0 >> put r1 >> put r2
@@ -225,8 +226,8 @@ instance Binary IntIns where
     put (Printflr  fr )      = putWord8 45 >> put fr
     put (PrintStr  r0 )      = putWord8 46 >> put r0
     put (PrintEnum lb )      = putWord8 47 >> put lb
-    put (ShiftL r0 r1 i)     = putWord8 48 >> put r0 r1 i
-    put (ShiftR r0 r1 i)     = putWord8 49 >> put r0 r1 i
+    put (ShiftL r0 r1 i)     = putWord8 48 >> put r0 >> put r1 >> put i
+    put (ShiftR r0 r1 i)     = putWord8 49 >> put r0 >> put r1 >> put i
 
     get = do 
     key <- getWord8
@@ -287,7 +288,9 @@ shwAsgn  int        = "R" ++ show int ++ ":="
 showTAC  r0 r1 s r2 = 'R' : show r0 ++ " := R" ++ show r1 ++ " " ++ s ++ " R" ++ show r2
 showTACi r0 r1 s i  = 'R' : show r0 ++ " := R" ++ show r1 ++ " " ++ s ++ " #" ++ show i
 show2AC  r0 r1 s    = 'R' : show r0 ++ " := "  ++ s ++" R" ++  show r1
-showIf r0 r1 s labl = "if R" ++ show r0 ++ " " ++ s ++ " R" ++ show r1 ++ " goto " ++ show labl
+showIf r0 r1 s labl = "if R" ++ show r0 ++ " " ++ s ++ " R" ++ show r1 ++ " goto " ++ showJust labl
+showJust (Just i) = "tag_" ++ show i
+showJust Nothing  = "___"
 
 -- Monad auxiliaries for put functions
 build2get :: (Binary a1, Binary a2) => (a1 -> a2 -> r) -> Get r
@@ -312,11 +315,23 @@ showP :: Program -> String
 showP = foldr mapCon ""
     where mapCon ins base= (if isTag ins then""else"    ")++show ins++"\n"++base
 
-patch :: Program -> Program
-patch = undefined
+
+patchI :: IntIns -> Int -> IntIns
+patchI (Jump   Nothing)       i = (Jump   (Just i))
+patchI (Tag    Nothing)       i = (Tag    (Just i))
+patchI (Jz     r0 Nothing)    i = (Jz    r0 (Just i))
+patchI (Jnotz  r0 Nothing)    i = (Jnotz r0 (Just i))
+patchI (JLt    r0 r1 Nothing) i = (JLt   r0 r1 (Just i))
+patchI (JGt    r0 r1 Nothing) i = (JGt   r0 r1 (Just i))
+patchI (JLEq   r0 r1 Nothing) i = (JLEq  r0 r1 (Just i))
+patchI (JGEq   r0 r1 Nothing) i = (JGEq  r0 r1 (Just i))
+patchI a _ = a
+
+backPatch :: Program -> Int -> Program
+backPatch p lb = fmap (\ ins -> patchI ins lb ) p 
 
 programExample :: Program
-programExample = fromList [ Nop ,(FlMult   1 3 0),(FlAdd 2 4  1) ,(FlSub 3  5  2) ,(FlDiv    4  6  3) ,(IntMul   5  7  4) ,(IntAdd   6  8  5) ,(IntSub   7  9  6) ,(IntDiv   8  10 7) ,(And      9  11 8) ,(Or       10 12 9),(Tag "fibo_3") ,(XOr      11 13 9) ,(Not      12 14   ) ,(Eql      13 15 20), (Tag "fibo_3") ,(NotEql   14 16 21) ,(Lt       15 17 22) ,(Gt       16 18 23) ,(LEq      17 19 24) ,(GEq      18 20 25) ,(Jump     "fibo"  )  ,(Jz       50 "A0X5" )  ,(Jnotz    51 "FS0S" )  ,(JLt      52 90 "fibo_0"),(JGt      53 91 "fibo_1"),(JLEq     54 92 "fibo_3"),(JGEq     55 93 "fibo_4"),(Addi     56 94 42)  ,(Subi     57 95 42)  ,(Multi    58 96 45)  ,(Divi     59 97 100)  ,(Addf     60 98 54)  ,(Subf     61 99 0.3)  ,(Multf    62 100 0.5)  ,(Divf     63 101 42.0)  ,(Mv       64 102  )  ,(Load     42 (MemIndex "Tail" 64) )     ,(Store  (MemIndirIndexR 42 30) 20)     ,(Loadi    0 42)     ,(Call     "fibo" )     ,(Param    59 )     ,(Comment  (pComment 59) ) ]
+programExample = fromList [ Nop ,(FlMult   1 3 0),(FlAdd 2 4  1) ,(FlSub 3  5  2) ,(FlDiv    4  6  3) ,(IntMul   5  7  4) ,(IntAdd   6  8  5) ,(IntSub   7  9  6) ,(IntDiv   8  10 7) ,(And      9  11 8) ,(Or       10 12 9),(Tag Nothing) ,(XOr      11 13 9) ,(Not      12 14   ) ,(Eql      13 15 20), (Tag (Just 5)) ,(NotEql   14 16 21) ,(Lt       15 17 22) ,(Gt       16 18 23) ,(LEq      17 19 24) ,(GEq      18 20 25) ,(Jump     (Just 1)  )  ,(Jz       50 (Just 2) )  ,(Jnotz    51 (Just 3) )  ,(JLt      52 90 (Just 5)),(JGt      53 91 (Just 6)),(JLEq     54 92 Nothing),(JGEq     55 93 Nothing),(Addi     56 94 42)  ,(Subi     57 95 42)  ,(Multi    58 96 45)  ,(Divi     59 97 100)  ,(Addf     60 98 54)  ,(Subf     61 99 0.3)  ,(Multf    62 100 0.5)  ,(Divf     63 101 42.0)  ,(Mv       64 102  )  ,(Load     42 (MemIndex "Tail" 64) )     ,(Store  (MemIndirIndexR 42 30) 20)     ,(Loadi    0 42)     ,(Call     "fibo" )     ,(Param    59 )     ,(Comment  (pComment 59) ) ]
 
 -- Binary store
 saveProgram :: FilePath -> Program -> IO()
