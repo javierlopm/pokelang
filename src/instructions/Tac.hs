@@ -59,7 +59,9 @@ data IntIns = -- Dest Src1 Src2  -  Reg,Reg,Reg
             | XOr      Int Int Int
             | Eql      Int Int Int
             | NotEql   Int Int Int
-            | Not      Int Int 
+            | Not      Int Int
+            | ShiftL   Int Int Int -- Reg - Reg - Int
+            | ShiftR   Int Int Int -- Reg - Reg - Int
             -- Compare integers
             | Lt      Int Int Int  -- lower
             | Gt      Int Int Int  -- greater
@@ -94,7 +96,7 @@ data IntIns = -- Dest Src1 Src2  -  Reg,Reg,Reg
             | Param   Int    -- Push for calling
             -- Extras
             | Comment String
-            | Tag  String 
+            | Tag     String 
             | Nop 
             -- Prints
             | Printic   Int    -- Print Integer constant
@@ -102,7 +104,7 @@ data IntIns = -- Dest Src1 Src2  -  Reg,Reg,Reg
             | Printfc   Float  -- Print float constant
             | Printflr  Int    -- Print float inside register
             | PrintStr  Int    -- Print string pointed from 
-            | PrintEnum String -- Print enum at label
+            | PrintEnum Memory -- Print enum at label
 
 
 
@@ -169,6 +171,8 @@ instance Show      IntIns where
     show (Printflr  fr )      = "PRINT FLOAT R"      ++ show fr
     show (PrintStr  r0 )      = "PRINT STR at *R"    ++ show r0
     show (PrintEnum lb )      = "PRINT ENUM at "     ++ show lb
+    show (ShiftL r0 r1 i)     = showTACi r0 r1 "<<" i
+    show (ShiftR r0 r1 i)     = showTACi r0 r1 ">>" i
     show Nop                  = "NoOp"
 
 -- Ewwwww, it might be improved with Generics
@@ -221,6 +225,8 @@ instance Binary IntIns where
     put (Printflr  fr )      = putWord8 45 >> put fr
     put (PrintStr  r0 )      = putWord8 46 >> put r0
     put (PrintEnum lb )      = putWord8 47 >> put lb
+    put (ShiftL r0 r1 i)     = putWord8 48 >> put r0 r1 i
+    put (ShiftR r0 r1 i)     = putWord8 49 >> put r0 r1 i
 
     get = do 
     key <- getWord8
@@ -273,6 +279,8 @@ instance Binary IntIns where
        45 ->  B.get >>= return . Printflr  
        46 ->  B.get >>= return . PrintStr  
        47 ->  B.get >>= return . PrintEnum 
+       48 ->  buildTac ShiftL 
+       49 ->  buildTac ShiftR 
 
 -- Print auxiliaries
 shwAsgn  int        = "R" ++ show int ++ ":="
@@ -303,6 +311,9 @@ type Program = Seq IntIns
 showP :: Program -> String
 showP = foldr mapCon ""
     where mapCon ins base= (if isTag ins then""else"    ")++show ins++"\n"++base
+
+patch :: Program -> Program
+patch = undefined
 
 programExample :: Program
 programExample = fromList [ Nop ,(FlMult   1 3 0),(FlAdd 2 4  1) ,(FlSub 3  5  2) ,(FlDiv    4  6  3) ,(IntMul   5  7  4) ,(IntAdd   6  8  5) ,(IntSub   7  9  6) ,(IntDiv   8  10 7) ,(And      9  11 8) ,(Or       10 12 9),(Tag "fibo_3") ,(XOr      11 13 9) ,(Not      12 14   ) ,(Eql      13 15 20), (Tag "fibo_3") ,(NotEql   14 16 21) ,(Lt       15 17 22) ,(Gt       16 18 23) ,(LEq      17 19 24) ,(GEq      18 20 25) ,(Jump     "fibo"  )  ,(Jz       50 "A0X5" )  ,(Jnotz    51 "FS0S" )  ,(JLt      52 90 "fibo_0"),(JGt      53 91 "fibo_1"),(JLEq     54 92 "fibo_3"),(JGEq     55 93 "fibo_4"),(Addi     56 94 42)  ,(Subi     57 95 42)  ,(Multi    58 96 45)  ,(Divi     59 97 100)  ,(Addf     60 98 54)  ,(Subf     61 99 0.3)  ,(Multf    62 100 0.5)  ,(Divf     63 101 42.0)  ,(Mv       64 102  )  ,(Load     42 (MemIndex "Tail" 64) )     ,(Store  (MemIndirIndexR 42 30) 20)     ,(Loadi    0 42)     ,(Call     "fibo" )     ,(Param    59 )     ,(Comment  (pComment 59) ) ]
