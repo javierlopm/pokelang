@@ -571,14 +571,13 @@ checkAllOk l TypeVoid TypeVoid _ _ =
 checkAllOk l (TypeEnum s1) (TypeEnum s2)  _  _ = if s1==s2 then checkAllOk l TypeVoid TypeVoid "" 0
                                                  else return TypeError
 checkAllOk l (TypeEnum s1) (TypeEnumCons) s2 t = do
-  state <- get
-  p <- (getValS s2 (enuTbl state))
-  --enums <- gets enuTbl
-  --p <- isInScope (fromScope.enums) (s1) 
-  --if isInScope enums s2 then 
-  --  do p <- fromJust $ getValS s2 enums
-  tellError $ strError (0,0) "" "hitMAINlee" $ show p
-  return TypeError
+  enuTbl <- gets enuTbl
+  if (isNothing (getValS s2 enuTbl)) then 
+    if s1 == ( storedDType $ fromJust $ getValS s2 enuTbl) 
+    then checkAllOk l TypeVoid TypeVoid "" 0
+    else return TypeError
+  else
+    return TypeError
   --else do return TypeError
 checkAllOk l a b s t
     | checkAssign a b t = checkAllOk l TypeVoid TypeVoid s 0
