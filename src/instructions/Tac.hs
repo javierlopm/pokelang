@@ -1,8 +1,6 @@
-{-# LANGUAGE DeriveGeneric #-}
-
 module Tac(
     IntIns(..),
-    Memory(..),
+    Var(..),
     Program,
     pComment,
     showP,
@@ -12,51 +10,26 @@ module Tac(
 ) where 
 
 import Prelude hiding(foldr)
+import Data.Word
 import Data.Sequence
 import Data.Foldable(foldr)
 import Data.Binary as B(get)
 import Data.Binary hiding(get)
 import Control.Monad(liftM2,liftM3)
 import Data.ByteString.Lazy as Wf(writeFile)
---import System.Directory(removeFile)
-
-{- Memory access -}
---data Memory = MemIndexR      Int Int    --   0(R0) 0 + contents(R0)
-            --| MemIndex       String Int --  lb(R0) lb + contents(R0)
-            --| MemIndirIndex  String Int -- *lb(R0) contents(lb + contents(R0))
-            --| MemIndirIndexR Int Int    --  *0(R1) contents( 0 + contents(R1))
-
---instance Show Memory where
-    --show (MemIndexR      o  r0) = show  o ++ "(R" ++ show r0 ++ ")"
-    --show (MemIndex       lb r0) =       lb ++ "(R" ++ show r0 ++ ")"
-    --show (MemIndirIndex  lb r0) = '*' :      lb ++ "(R" ++ show r0 ++ ")"
-    --show (MemIndirIndexR o  r0) = '*' : show  o ++ "(R" ++ show r0 ++ ")"
-
---instance Binary Memory where
-    --put (MemIndexR      o  r0) = putWord8 0 >> put o  >> put r0
-    --put (MemIndirIndexR o  r0) = putWord8 1 >> put o  >> put r0 
-    --put (MemIndex       lb r0) = putWord8 2 >> put lb >> put r0
-    --put (MemIndirIndex  lb r1) = putWord8 3 >> put lb >> put r0
-
-    --get = do key <- getWord8
-             --case key of
-                --0 ->  build2get MemIndexR     
-                --1 ->  build2get MemIndirIndexR
-                --2 ->  build2get MemIndex      
-                --3 ->  build2get MemIndirIndex 
 
 data Var = Int_Cons   Int
          | Float_Cons Float
          | MemAdress  String
-         | Temp       Int 
+         | Temp       Word   -- Non negative: t0, t1 .. 
 
-instance Show Memory where
+instance Show Var where
     show (Int_Cons   i  ) = "#"  ++ show i
     show (Float_Cons f  ) = "f#" ++ show f
     show (MemAdress  lb ) = lb
     show (Temp       t0 ) = "t"  ++ show t0
 
-instance Binary Memory where
+instance Binary Var where
     put (Int_Cons   i  ) = putWord8 0 >> put i 
     put (Float_Cons f  ) = putWord8 1 >> put f 
     put (MemAdress  lb ) = putWord8 2 >> put lb
@@ -69,261 +42,179 @@ instance Binary Memory where
                 2 ->  B.get >>= return . MemAdress      
                 3 ->  B.get >>= return . Temp 
 
+type Src1  = Var 
+type Src2  = Var
+type Dest  = Var
+type Label = Word -- Non-negative tags: tag_0, tag_1, tag_2... 
+
 {- Intermediate machine -}
-data IntIns = -- Dest Src1 Src2  -  Reg,Reg,Reg
-              --FlMult   Int Int Int  -- Float
-            --| FlAdd    Int Int Int
-            --| FlSub    Int Int Int
-            --| FlDiv    Int Int Int
-            --| IntMul   Int Int Int  -- Integers
-            --| IntAdd   Int Int Int
-            --| IntSub   Int Int Int
-            --| IntDiv   Int Int Int
-            | Add      Var Var Var
-            | Sub      Var Var Var
-            | Div      Var Var Var
-            | Mult     Var Var Var
-            | Pot      Var Var Var
-            | And      Var Var Var  -- Generic logic bitwise operations
-            | Or       Var Var Var
-            | XOr      Var Var Var
-            | Eql      Var Var Var
-            | NotEql   Var Var Var
-            | Not      Var Var
-            | ShiftL   Var Var Var -- Reg - Reg - Int
-            | ShiftR   Var Var Var -- Reg - Reg - Int
+data IntIns = Add      Dest Src1 Src2 -- Aritmetic Operations
+            | Sub      Dest Src1 Src2
+            | Div      Dest Src1 Src2
+            | Mult     Dest Src1 Src2
+            | Pot      Dest Src1 Src2
+            -- Logic bitwise operations
+            | And      Dest Src1 Src2  
+            | Or       Dest Src1 Src2
+            | XOr      Dest Src1 Src2
+            | Eql      Dest Src1 Src2
+            | NotEql   Dest Src1 Src2
+            | Not      Dest Src1
+            | ShiftL   Dest Src1 Word -- shifts are always postive constants
+            | ShiftR   Dest Src1 Word 
             -- Compare integers
-            | Lt      Int Int Int  -- lower
-            | Gt      Int Int Int  -- greater
-            | LEq     Int Int Int  -- lower or equal
-            | GEq     Int Int Int  -- equal 
-            -- Jumps - Registers label
-            | Jump     (Maybe(Int))
-            | Jz       Int (Maybe(Int))
-            | Jnotz    Int (Maybe(Int))
-            | JLt      Int Int (Maybe(Int))
-            | JGt      Int Int (Maybe(Int))
-            | JLEq     Int Int (Maybe(Int))
-            | JGEq     Int Int (Maybe(Int))
-            -- Const Int Oper Dest Src Cons
-            | Addi     Int Int Int -- Operations between register and  constants
-            | Subi     Int Int Int 
-            | Multi    Int Int Int
-            | Divi     Int Int Int
-            -- Const Float Oper Dest Src Cons
-            | Addf     Int Int Float -- Operations between register and  constants
-            | Subf     Int Int Float 
-            | Multf    Int Int Float
-            | Divf     Int Int Float
-            -- Src Dest
-            --| Load     Int Memory -- Loading oper
-            --| Store    Memory Int
-            | Mv       Int    Int
-            -- Load long value into registers
-            | Loadi    Int Int
+            | Lt      Dest Src1 Src2
+            | Gt      Dest Src1 Src2
+            | LEq     Dest Src1 Src2  -- lower or equal
+            | GEq     Dest Src1 Src2  -- equal 
+            -- Jumps
+            | Jump     (Maybe(Label))
+            | Jz       Src1 (Maybe(Label))
+            | Jnotz    Src1 (Maybe(Label))
+            | JLt      Src1 Src2 (Maybe(Label))
+            | JGt      Src1 Src2 (Maybe(Label))
+            | JLEq     Src1 Src2 (Maybe(Label))
+            | JGEq     Src1 Src2 (Maybe(Label))
+            -- Copy / Read / Store
+            | Mv           Dest Src1
+            | ReadPointer  Dest Src1
+            | StorePointer Dest Src1
+            | ReadArray    Dest Src1 Src2
+            | StoreArray   Dest Src1 Src2
             -- Function calls
-            | Call    String -- Call function from label STRING OR MAYBE INT?
-            | Param   Int    -- Push for calling
+            | Call    String 
+            | Param   Src1    
             -- Extras
             | Comment String
-            | Tag     (Maybe(Int))
+            | Tag     (Maybe(Label))
             | Nop 
             -- Prints
-            | Printic   Int    -- Print Integer constant
-            | Printi    Int    -- Print integer inside register
-            | Printfc   Float  -- Print float constant
-            | Printflr  Int    -- Print float inside register
-            | PrintStr  Int    -- Print string pointed from 
-            | PrintEnum Memory -- Print enum at label
-            -- Do we need this?
-            | ReadPointer  Int Int Int
-            | StorePointer Int Int Int
-            | ReadArray    Int Int Int
-            | StoreArray   Int Int Int
-            -- PROCEDURES TO BE IMPLEMENTED IN MIPS
-            -- Missing conversionFunctions
-            -- Floor
-            -- Ceil
-            -- IntToChar
-            -- CharToInt
-            -- IntToFloat
-            -- Memory Operations
-            -- Free   
-            -- Malloc 
-            -- Enum operations Src Dest - Reg Reg
-            -- Succ  Int Int --  Stores en r0, sucessor of enum pointed by R1
-            -- Prec  Int Int 
+            | Print     Src1        -- Print Integer constant
+            | PrintEnum String Src1 -- Print enum at label
             
 
 instance Show      IntIns where
-    show (FlMult   r0 r1 r2)  =  showTAC r0 r1 "f*" r2
-    show (FlAdd    r0 r1 r2)  =  showTAC r0 r1 "f+" r2
-    show (FlSub    r0 r1 r2)  =  showTAC r0 r1 "f-" r2
-    show (FlDiv    r0 r1 r2)  =  showTAC r0 r1 "f/" r2
-    show (IntMul   r0 r1 r2)  =  showTAC r0 r1 "*"  r2
-    show (IntAdd   r0 r1 r2)  =  showTAC r0 r1 "+"  r2
-    show (IntSub   r0 r1 r2)  =  showTAC r0 r1 "-"  r2
-    show (IntDiv   r0 r1 r2)  =  showTAC r0 r1 "/"  r2
-    show (And      r0 r1 r2)  =  showTAC r0 r1 "&"  r2
-    show (Or       r0 r1 r2)  =  showTAC r0 r1 "|"  r2
-    show (XOr      r0 r1 r2)  =  showTAC r0 r1 "XOr"r2
-    show (Not      r0 r1   )  =  show2AC r0 r1 "~" 
-    show (Eql      r0 r1 r2)  =  showTAC r0 r1 "="  r2
-    show (NotEql   r0 r1 r2)  =  showTAC r0 r1 "/=" r2
-    show (Lt       r0 r1 r2)  =  showTAC r0 r1 "<"  r2
-    show (Gt       r0 r1 r2)  =  showTAC r0 r1 ">"  r2
-    show (LEq      r0 r1 r2)  =  showTAC r0 r1 "<=" r2
-    show (GEq      r0 r1 r2)  =  showTAC r0 r1 ">=" r2
-    show (Jump     i    )   = "goto " ++ showJust i
-    show (Jz       r0 i )   = "if R" ++ show r0 ++ "z  goto" ++ showJust i 
-    show (Jnotz    r0 i )   = "if R" ++ show r0 ++ "nz goto" ++ showJust i 
-    show (JLt      r0 r1 i) = showIf r0 r1 "<"   i
-    show (JGt      r0 r1 i) = showIf r0 r1 ">"   i
-    show (JLEq     r0 r1 i) = showIf r0 r1 "<="  i
-    show (JGEq     r0 r1 i) = showIf r0 r1 ">="  i
-    show (Addi     r0 r1 i)   = showTACi r0 r1 "+"  i
-    show (Subi     r0 r1 i)   = showTACi r0 r1 "-"  i
-    show (Multi    r0 r1 i)   = showTACi r0 r1 "*"  i
-    show (Divi     r0 r1 i)   = showTACi r0 r1 "/"  i
-    show (Addf     r0 r1 f)   = showTACi r0 r1 "f+" f
-    show (Subf     r0 r1 f)   = showTACi r0 r1 "f-" f
-    show (Multf    r0 r1 f)   = showTACi r0 r1 "f*" f
-    show (Divf     r0 r1 f)   = showTACi r0 r1 "f/" f
-    show (Mv       r0 r1  )   = "MV R" ++ show r0 ++ " R" ++ show r1
-    show (Load     r0 m)      = "LD R" ++ show r0 ++ " " ++ show m
-    show (Store    m r0)      = "ST "  ++ show m  ++ " R" ++ show r0
-    show (Loadi    r0 c)      = "LDI R" ++ show r0 ++ " #" ++show c
-    show (Call     str )      = "CALL " ++ str
-    show (Param    par )      = "PARAM R" ++ show par
+    show (Add    r0 r1 r2)  =  showTAC r0 r1 "f+" r2
+    show (Sub    r0 r1 r2)  =  showTAC r0 r1 "f-" r2
+    show (Div    r0 r1 r2)  =  showTAC r0 r1 "f/" r2
+    show (Mult   r0 r1 r2)  =  showTAC r0 r1 "*"  r2
+    show (Pot    r0 r1 r2)  =  showTAC r0 r1 "^"  r2
+    show (And    r0 r1 r2)  =  showTAC r0 r1 "&"  r2
+    show (Or     r0 r1 r2)  =  showTAC r0 r1 "|"  r2
+    show (XOr    r0 r1 r2)  =  showTAC r0 r1 "XOr"r2
+    show (Not    r0 r1   )  =  show2AC r0 r1 "~" 
+    show (Eql    r0 r1 r2)  =  showTAC r0 r1 "="  r2
+    show (NotEql r0 r1 r2)  =  showTAC r0 r1 "/=" r2
+    show (ShiftL r0 r1 i)   = showTACi r0 r1 "<<" i
+    show (ShiftR r0 r1 i)   = showTACi r0 r1 ">>" i
+    show (Lt     r0 r1 r2)  =  showTAC r0 r1 "<"  r2
+    show (Gt     r0 r1 r2)  =  showTAC r0 r1 ">"  r2
+    show (LEq    r0 r1 r2)  =  showTAC r0 r1 "<=" r2
+    show (GEq    r0 r1 r2)  =  showTAC r0 r1 ">=" r2
+    show (Jump   i    )     = "goto " ++ showJust i
+    show (Jz     r0 i )     = "if " ++ show r0 ++ "is z  goto" ++ showJust i 
+    show (Jnotz  r0 i )     = "if " ++ show r0 ++ "is nz goto" ++ showJust i 
+    show (JLt    r0 r1 i)   = showIf r0 r1 "<"   i
+    show (JGt    r0 r1 i)   = showIf r0 r1 ">"   i
+    show (JLEq   r0 r1 i)   = showIf r0 r1 "<="  i
+    show (JGEq   r0 r1 i)   = showIf r0 r1 ">="  i
+    show (Mv     r0 r1  )   =  show r0 ++ " := " ++ show r1
+    show (ReadPointer  d s1 )   =  show2AC d s1 "*"
+    show (StorePointer d s1 )   = '*' : show d ++ " := " ++ show s1 
+    show (ReadArray    d s1 s2) = show d ++" := "++show s1++'[' : show s2 ++ "]"
+    show (StoreArray   d s1 s2) = show d ++'[':show s1 ++ "] := " ++ show s2
+    show (Call     str )      = "Call " ++ str
+    show (Param    par )      = "Param " ++ show par
     show (Tag      i   )      = '\n': (showJust i) ++ ":"
     show (Comment  str )      = ';': str
-    show (Printic   c  )      = "PRINT INT CONST "   ++ show c
-    show (Printi    r0 )      = "PRINT INT R"        ++ show r0
-    show (Printfc   fc )      = "PRINT FLOAT CONST " ++ show fc
-    show (Printflr  fr )      = "PRINT FLOAT R"      ++ show fr
-    show (PrintStr  r0 )      = "PRINT STR at *R"    ++ show r0
-    show (PrintEnum lb )      = "PRINT ENUM at "     ++ show lb
-    show (ShiftL r0 r1 i)     = showTACi r0 r1 "<<" i
-    show (ShiftR r0 r1 i)     = showTACi r0 r1 ">>" i
-    show Nop                  = "NoOp"
+    show (Print     c  )      = "Print "      ++ show c
+    show (PrintEnum c i)      = "Print enum " ++ show c ++ "[" ++ show i ++"]"
+    show Nop                  = "Nop"
 
 -- Ewwwww, it might be improved with Generics?
 instance Binary IntIns where
     put  Nop                 = putWord8 0 
-    put (FlMult   r0 r1 r2)  = putWord8 1  >> put r0 >> put r1 >> put r2
-    put (FlAdd    r0 r1 r2)  = putWord8 2  >> put r0 >> put r1 >> put r2
-    put (FlSub    r0 r1 r2)  = putWord8 3  >> put r0 >> put r1 >> put r2
-    put (FlDiv    r0 r1 r2)  = putWord8 4  >> put r0 >> put r1 >> put r2
-    put (IntMul   r0 r1 r2)  = putWord8 5  >> put r0 >> put r1 >> put r2
-    put (IntAdd   r0 r1 r2)  = putWord8 6  >> put r0 >> put r1 >> put r2
-    put (IntSub   r0 r1 r2)  = putWord8 7  >> put r0 >> put r1 >> put r2
-    put (IntDiv   r0 r1 r2)  = putWord8 8  >> put r0 >> put r1 >> put r2
-    put (And      r0 r1 r2)  = putWord8 9  >> put r0 >> put r1 >> put r2
-    put (Or       r0 r1 r2)  = putWord8 10 >> put r0 >> put r1 >> put r2
-    put (XOr      r0 r1 r2)  = putWord8 11 >> put r0 >> put r1 >> put r2
-    put (Not      r0 r1   )  = putWord8 12 >> put r0 >> put r1 
-    put (Eql      r0 r1 r2)  = putWord8 13 >> put r0 >> put r1 >> put r2
-    put (NotEql   r0 r1 r2)  = putWord8 14 >> put r0 >> put r1 >> put r2
-    put (Lt       r0 r1 r2)  = putWord8 15 >> put r0 >> put r1 >> put r2
-    put (Gt       r0 r1 r2)  = putWord8 16 >> put r0 >> put r1 >> put r2
-    put (LEq      r0 r1 r2)  = putWord8 17 >> put r0 >> put r1 >> put r2
-    put (GEq      r0 r1 r2)  = putWord8 18 >> put r0 >> put r1 >> put r2
-    put (Jump     str    )   = putWord8 19 >> put str
-    put (Jz       r0 str )   = putWord8 20 >> put r0 >>  put str
-    put (Jnotz    r0 str )   = putWord8 21 >> put r0 >>  put str
-    put (JLt      r0 r1 str) = putWord8 22 >> put r0 >>  put r1 >> put str
-    put (JGt      r0 r1 str) = putWord8 23 >> put r0 >>  put r1 >> put str
-    put (JLEq     r0 r1 str) = putWord8 24 >> put r0 >>  put r1 >> put str
-    put (JGEq     r0 r1 str) = putWord8 25 >> put r0 >>  put r1 >> put str 
-    put (Addi     r0 r1 i)   = putWord8 26 >> put r0 >>  put r1 >> put i
-    put (Subi     r0 r1 i)   = putWord8 27 >> put r0 >>  put r1 >> put i
-    put (Multi    r0 r1 i)   = putWord8 28 >> put r0 >>  put r1 >> put i
-    put (Divi     r0 r1 i)   = putWord8 29 >> put r0 >>  put r1 >> put i
-    put (Addf     r0 r1 i)   = putWord8 30 >> put r0 >>  put r1 >> put i
-    put (Subf     r0 r1 i)   = putWord8 31 >> put r0 >>  put r1 >> put i
-    put (Multf    r0 r1 i)   = putWord8 32 >> put r0 >>  put r1 >> put i
-    put (Divf     r0 r1 i)   = putWord8 33 >> put r0 >>  put r1 >> put i
-    put (Mv       r0 r1  )   = putWord8 34 >> put r0 >>  put r1 
-    put (Load     r0 m)      = putWord8 35 >> put r0 >>  put m
-    put (Store    m r0)      = putWord8 36 >> put m  >>  put r0
-    put (Loadi    r0 c)      = putWord8 37 >> put r0 >> put c
-    put (Call     str )      = putWord8 38 >> put str
-    put (Param    par )      = putWord8 39 >> put par
-    put (Comment  str )      = putWord8 40 >> put str
-    put (Tag      str )      = putWord8 41 >> put str
-    put (Printic   c  )      = putWord8 42 >> put c
-    put (Printi    r0 )      = putWord8 43 >> put r0
-    put (Printfc   fc )      = putWord8 44 >> put fc
-    put (Printflr  fr )      = putWord8 45 >> put fr
-    put (PrintStr  r0 )      = putWord8 46 >> put r0
-    put (PrintEnum lb )      = putWord8 47 >> put lb
-    put (ShiftL r0 r1 i)     = putWord8 48 >> put r0 >> put r1 >> put i
-    put (ShiftR r0 r1 i)     = putWord8 49 >> put r0 >> put r1 >> put i
+    put (Mult     r0 r1 r2)  = putWord8 1  >> put r0 >> put r1 >> put r2
+    put (Add      r0 r1 r2)  = putWord8 2  >> put r0 >> put r1 >> put r2
+    put (Sub      r0 r1 r2)  = putWord8 3  >> put r0 >> put r1 >> put r2
+    put (Div      r0 r1 r2)  = putWord8 4  >> put r0 >> put r1 >> put r2
+    put (Pot      r0 r1 r2)  = putWord8 5  >> put r0 >> put r1 >> put r2
+    put (And      r0 r1 r2)  = putWord8 6  >> put r0 >> put r1 >> put r2
+    put (Or       r0 r1 r2)  = putWord8 7  >> put r0 >> put r1 >> put r2
+    put (XOr      r0 r1 r2)  = putWord8 8  >> put r0 >> put r1 >> put r2
+    put (Not      r0 r1   )  = putWord8 9  >> put r0 >> put r1 
+    put (Eql      r0 r1 r2)  = putWord8 10 >> put r0 >> put r1 >> put r2
+    put (NotEql   r0 r1 r2)  = putWord8 11 >> put r0 >> put r1 >> put r2
+    put (ShiftR r0 r1 i)     = putWord8 12 >> put r0 >> put r1 >> put i
+    put (ShiftL r0 r1 i)     = putWord8 13 >> put r0 >> put r1 >> put i
+    put (Lt       r0 r1 r2)  = putWord8 14 >> put r0 >> put r1 >> put r2
+    put (Gt       r0 r1 r2)  = putWord8 15 >> put r0 >> put r1 >> put r2
+    put (LEq      r0 r1 r2)  = putWord8 16 >> put r0 >> put r1 >> put r2
+    put (GEq      r0 r1 r2)  = putWord8 17 >> put r0 >> put r1 >> put r2
+    put (Jump     str    )   = putWord8 18 >> put str
+    put (Jz       r0 str )   = putWord8 19 >> put r0 >>  put str
+    put (Jnotz    r0 str )   = putWord8 20 >> put r0 >>  put str
+    put (JLt      r0 r1 str) = putWord8 21 >> put r0 >>  put r1 >> put str
+    put (JGt      r0 r1 str) = putWord8 22 >> put r0 >>  put r1 >> put str
+    put (JLEq     r0 r1 str) = putWord8 23 >> put r0 >>  put r1 >> put str
+    put (JGEq     r0 r1 str) = putWord8 24 >> put r0 >>  put r1 >> put str 
+    put (Mv       r0 r1  )   = putWord8 25 >> put r0 >>  put r1 
+    put (ReadPointer  r0 r1) = putWord8 26 >> put r0 >>  put r1 
+    put (StorePointer r0 r1) = putWord8 27 >> put r0 >>  put r1 
+    put (ReadArray  r0 r1 r2)= putWord8 28 >> put r0 >>  put r1 >> put r2 
+    put (StoreArray r0 r1 r2)= putWord8 29 >> put r0 >>  put r1 >> put r2 
+    put (Call     str )      = putWord8 30 >> put str
+    put (Param    par )      = putWord8 31 >> put par
+    put (Comment  str )      = putWord8 32 >> put str
+    put (Tag      str )      = putWord8 33 >> put str
+    put (Print     r0 )      = putWord8 34 >> put r0
+    put (PrintEnum lb i)     = putWord8 35 >> put lb >> put i
 
     get = do 
     key <- getWord8
     case key of
        0  ->  return    Nop
-       1  ->  buildTac  FlMult
-       2  ->  buildTac  FlAdd
-       3  ->  buildTac  FlSub
-       4  ->  buildTac  FlDiv
-       5  ->  buildTac  IntMul
-       6  ->  buildTac  IntAdd
-       7  ->  buildTac  IntSub
-       8  ->  buildTac  IntDiv
-       9  ->  buildTac  And
-       10 ->  buildTac  Or
-       11 ->  buildTac  XOr
-       12 ->  build2get Not
-       13 ->  buildTac  Eql
-       14 ->  buildTac  NotEql
-       15 ->  buildTac  Lt
-       16 ->  buildTac  Gt
-       17 ->  buildTac  LEq
-       18 ->  buildTac  GEq
-       19 ->  B.get >>= return .  Jump
-       20 ->  build2get Jz
-       21 ->  build2get Jnotz
-       22 ->  buildTac  JLt
-       23 ->  buildTac  JGt
-       24 ->  buildTac  JLEq
-       25 ->  buildTac  JGEq
-       26 ->  buildTac  Addi
-       27 ->  buildTac  Subi
-       28 ->  buildTac  Multi
-       29 ->  buildTac  Divi
-       30 ->  buildTac  Addf
-       31 ->  buildTac  Subf
-       32 ->  buildTac  Multf
-       33 ->  buildTac  Divf
-       34 ->  build2get Mv
-       35 ->  build2get Load
-       36 ->  build2get Store
-       37 ->  build2get Loadi
-       38 ->  B.get >>= return . Call
-       39 ->  B.get >>= return . Param
-       40 ->  B.get >>= return . Comment
-       41 ->  B.get >>= return . Tag
-       42 ->  B.get >>= return . Printic   
-       43 ->  B.get >>= return . Printi    
-       44 ->  B.get >>= return . Printfc   
-       45 ->  B.get >>= return . Printflr  
-       46 ->  B.get >>= return . PrintStr  
-       47 ->  B.get >>= return . PrintEnum 
-       48 ->  buildTac ShiftL 
-       49 ->  buildTac ShiftR 
-       50 ->  buildTac ReadPointer
-       51 ->  buildTac StorePointer
-       52 ->  buildTac ReadArray
-       53 ->  buildTac StoreArray
+       1  ->  buildTac  Mult
+       2  ->  buildTac  Add
+       3  ->  buildTac  Sub
+       4  ->  buildTac  Div
+       5  ->  buildTac  Pot
+       6  ->  buildTac  And
+       7  ->  buildTac  Or
+       8  ->  buildTac  XOr
+       9  ->  build2get Not
+       10 ->  buildTac  Eql
+       11 ->  buildTac  NotEql
+       12 ->  buildTac  ShiftL 
+       13 ->  buildTac  ShiftR 
+       14 ->  buildTac  Lt
+       15 ->  buildTac  Gt
+       16 ->  buildTac  LEq
+       17 ->  buildTac  GEq
+       18 ->  B.get >>= return .  Jump
+       19 ->  build2get Jz
+       20 ->  build2get Jnotz
+       21 ->  buildTac  JLt
+       22 ->  buildTac  JGt
+       23 ->  buildTac  JLEq
+       24 ->  buildTac  JGEq
+       25 ->  build2get Mv
+       26 ->  build2get ReadPointer
+       27 ->  build2get StorePointer
+       28 ->  buildTac  ReadArray
+       29 ->  buildTac  StoreArray
+       30 ->  B.get >>= return . Call
+       31 ->  B.get >>= return . Param
+       32 ->  B.get >>= return . Comment
+       33 ->  B.get >>= return . Tag
+       34 ->  B.get >>= return . Print
+       35 ->  build2get PrintEnum 
 
 -- Print auxiliaries
-shwAsgn  int        = "R" ++ show int ++ ":="
-showTAC  r0 r1 s r2 = 'R' : show r0 ++ " := R" ++ show r1 ++ " " ++ s ++ " R" ++ show r2
-showTACi r0 r1 s i  = 'R' : show r0 ++ " := R" ++ show r1 ++ " " ++ s ++ " #" ++ show i
-show2AC  r0 r1 s    = 'R' : show r0 ++ " := "  ++ s ++" R" ++  show r1
-showIf r0 r1 s labl = "if R" ++ show r0 ++ " " ++ s ++ " R" ++ show r1 ++ " goto " ++ showJust labl
+showTAC  d s1 op s2 = show d ++" := "++ show s1 ++" "++ op ++ " " ++ show s2
+showTACi d s1 op i  = show d ++ " := " ++ show s1 ++ " " ++ op ++ " #" ++ show i
+show2AC  d s1 op    = show d ++ " := "  ++ op ++" " ++  show s1
+showIf r0 r1 s labl = "if " ++ show r0 ++ " " ++ s ++ " " ++ show r1 ++ " goto " ++ showJust labl
 showJust (Just i) = "tag_" ++ show i
 showJust Nothing  = "___"
 
@@ -351,7 +242,7 @@ showP = foldr mapCon ""
     where mapCon ins base= (if isTag ins then""else"    ")++show ins++"\n"++base
 
 
-patchI :: IntIns -> Int -> IntIns
+patchI :: IntIns -> Word -> IntIns
 patchI (Jump   Nothing)       i = (Jump   (Just i))
 patchI (Tag    Nothing)       i = (Tag    (Just i))
 patchI (Jz     r0 Nothing)    i = (Jz    r0 (Just i))
@@ -362,11 +253,59 @@ patchI (JLEq   r0 r1 Nothing) i = (JLEq  r0 r1 (Just i))
 patchI (JGEq   r0 r1 Nothing) i = (JGEq  r0 r1 (Just i))
 patchI a _ = a
 
-backPatch :: Program -> Int -> Program
+backPatch :: Program -> Word -> Program
 backPatch p lb = fmap (\ ins -> patchI ins lb ) p 
 
+cu = Int_Cons 42
+pic = Float_Cons 3.14
+a  = MemAdress "a"
+x  = MemAdress "x"
+z  = MemAdress "z"
+t0 = Temp 0
+t1 = Temp 1
+t2 = Temp 2
+
 programExample :: Program
-programExample = fromList [ Nop ,(FlMult   1 3 0),(FlAdd 2 4  1) ,(FlSub 3  5  2) ,(FlDiv    4  6  3) ,(IntMul   5  7  4) ,(IntAdd   6  8  5) ,(IntSub   7  9  6) ,(IntDiv   8  10 7) ,(And      9  11 8) ,(Or       10 12 9),(Tag Nothing) ,(XOr      11 13 9) ,(Not      12 14   ) ,(Eql      13 15 20), (Tag (Just 5)) ,(NotEql   14 16 21) ,(Lt       15 17 22) ,(Gt       16 18 23) ,(LEq      17 19 24) ,(GEq      18 20 25) ,(Jump     (Just 1)  )  ,(Jz       50 (Just 2) )  ,(Jnotz    51 (Just 3) )  ,(JLt      52 90 (Just 5)),(JGt      53 91 (Just 6)),(JLEq     54 92 Nothing),(JGEq     55 93 Nothing),(Addi     56 94 42)  ,(Subi     57 95 42)  ,(Multi    58 96 45)  ,(Divi     59 97 100)  ,(Addf     60 98 54)  ,(Subf     61 99 0.3)  ,(Multf    62 100 0.5)  ,(Divf     63 101 42.0)  ,(Mv       64 102  )  ,(Load     42 (MemIndex "Tail" 64) )     ,(Store  (MemIndirIndexR 42 30) 20)     ,(Loadi    0 42)     ,(Call     "fibo" )     ,(Param    59 )     ,(Comment  (pComment 59) ) ]
+programExample = fromList stuff
+    where stuff = [Nop,            
+                  (Mult     cu t0 t1),
+                  (Call     "fibo_3" ),
+                  (JLt      a x Nothing ),
+                  (Jump     (Just 3)    ),
+                  (Eql      t0 t0 t1),
+                  (Add      a pic a),
+                  (And      z x cu),
+                  (PrintEnum "pokeDaysLaborables" (Int_Cons 1)),
+                  (Print     a ),
+                  (Tag      (Just 58) )  ,
+                  (Lt       a x z),
+                  (ShiftL a x 4) ,
+                  (Gt       a x cu),
+                  (Comment  "This came from line 305" ),
+                  (Pot      z pic cu),
+                  (GEq      a x cu),
+                  (Jz       a   (Just 69) ),
+                  (Sub      z x cu),
+                  (Not      x x ),
+                  (Mv       a x    ),
+                  (Tag      Nothing ) ,
+                  (Or       z x cu),
+                  (StoreArray z a z),
+                  (JGEq     a x (Just 50) ),
+                  (ShiftR a x 4) ,
+                  (JGt      a x Nothing  ),
+                  (Tag      (Just 20) ),
+                  (NotEql   a cu t2),
+                  (Div      z x cu),
+                  (Tag      Nothing ),
+                  (JLEq     a x Nothing  ),
+                  (LEq      a x z),
+                  (ReadArray  a (Int_Cons 3) x),
+                  (Jnotz    a   (Just 42) ),
+                  (XOr      z x cu),
+                  (StorePointer a z),
+                  (Param    x ),
+                  (ReadPointer  z a)]
 
 -- Binary store
 saveProgram :: FilePath -> Program -> IO()
