@@ -21,48 +21,77 @@ import Data.ByteString.Lazy as Wf(writeFile)
 --import System.Directory(removeFile)
 
 {- Memory access -}
-data Memory = MemIndexR      Int Int    --   0(R0) 0 + contents(R0)
-            | MemIndex       String Int --  lb(R0) lb + contents(R0)
-            | MemIndirIndex  String Int -- *lb(R0) contents(lb + contents(R0))
-            | MemIndirIndexR Int Int    --  *0(R1) contents( 0 + contents(R1))
+--data Memory = MemIndexR      Int Int    --   0(R0) 0 + contents(R0)
+            --| MemIndex       String Int --  lb(R0) lb + contents(R0)
+            --| MemIndirIndex  String Int -- *lb(R0) contents(lb + contents(R0))
+            --| MemIndirIndexR Int Int    --  *0(R1) contents( 0 + contents(R1))
+
+--instance Show Memory where
+    --show (MemIndexR      o  r0) = show  o ++ "(R" ++ show r0 ++ ")"
+    --show (MemIndex       lb r0) =       lb ++ "(R" ++ show r0 ++ ")"
+    --show (MemIndirIndex  lb r0) = '*' :      lb ++ "(R" ++ show r0 ++ ")"
+    --show (MemIndirIndexR o  r0) = '*' : show  o ++ "(R" ++ show r0 ++ ")"
+
+--instance Binary Memory where
+    --put (MemIndexR      o  r0) = putWord8 0 >> put o  >> put r0
+    --put (MemIndirIndexR o  r0) = putWord8 1 >> put o  >> put r0 
+    --put (MemIndex       lb r0) = putWord8 2 >> put lb >> put r0
+    --put (MemIndirIndex  lb r1) = putWord8 3 >> put lb >> put r0
+
+    --get = do key <- getWord8
+             --case key of
+                --0 ->  build2get MemIndexR     
+                --1 ->  build2get MemIndirIndexR
+                --2 ->  build2get MemIndex      
+                --3 ->  build2get MemIndirIndex 
+
+data Var = Int_Cons   Int
+         | Float_Cons Float
+         | MemAdress  String
+         | Temp       Int 
 
 instance Show Memory where
-    show (MemIndexR      o  r0) = show  o ++ "(R" ++ show r0 ++ ")"
-    show (MemIndex       lb r0) =       lb ++ "(R" ++ show r0 ++ ")"
-    show (MemIndirIndex  lb r0) = '*' :      lb ++ "(R" ++ show r0 ++ ")"
-    show (MemIndirIndexR o  r0) = '*' : show  o ++ "(R" ++ show r0 ++ ")"
+    show (Int_Cons   i  ) = "#"  ++ show i
+    show (Float_Cons f  ) = "f#" ++ show f
+    show (MemAdress  lb ) = lb
+    show (Temp       t0 ) = "t"  ++ show t0
 
 instance Binary Memory where
-    put (MemIndexR      o  r0) = putWord8 0 >> put o  >> put r0
-    put (MemIndirIndexR o  r0) = putWord8 1 >> put o  >> put r0 
-    put (MemIndex       lb r0) = putWord8 2 >> put lb >> put r0
-    put (MemIndirIndex  lb r0) = putWord8 3 >> put lb >> put r0
+    put (Int_Cons   i  ) = putWord8 0 >> put i 
+    put (Float_Cons f  ) = putWord8 1 >> put f 
+    put (MemAdress  lb ) = putWord8 2 >> put lb
+    put (Temp       t0 ) = putWord8 3 >> put t0
 
     get = do key <- getWord8
              case key of
-                0 ->  build2get MemIndexR     
-                1 ->  build2get MemIndirIndexR
-                2 ->  build2get MemIndex      
-                3 ->  build2get MemIndirIndex 
+                0 ->  B.get >>= return . Int_Cons     
+                1 ->  B.get >>= return . Float_Cons
+                2 ->  B.get >>= return . MemAdress      
+                3 ->  B.get >>= return . Temp 
 
 {- Intermediate machine -}
 data IntIns = -- Dest Src1 Src2  -  Reg,Reg,Reg
-              FlMult   Int Int Int  -- Float
-            | FlAdd    Int Int Int
-            | FlSub    Int Int Int
-            | FlDiv    Int Int Int
-            | IntMul   Int Int Int  -- Integers
-            | IntAdd   Int Int Int
-            | IntSub   Int Int Int
-            | IntDiv   Int Int Int
-            | And      Int Int Int  -- Generic logic bitwise operations
-            | Or       Int Int Int
-            | XOr      Int Int Int
-            | Eql      Int Int Int
-            | NotEql   Int Int Int
-            | Not      Int Int
-            | ShiftL   Int Int Int -- Reg - Reg - Int
-            | ShiftR   Int Int Int -- Reg - Reg - Int
+              --FlMult   Int Int Int  -- Float
+            --| FlAdd    Int Int Int
+            --| FlSub    Int Int Int
+            --| FlDiv    Int Int Int
+            --| IntMul   Int Int Int  -- Integers
+            --| IntAdd   Int Int Int
+            --| IntSub   Int Int Int
+            --| IntDiv   Int Int Int
+            | Add      Var Var Var
+            | Sub      Var Var Var
+            | Div      Var Var Var
+            | Mult     Var Var Var
+            | Pot      Var Var Var
+            | And      Var Var Var  -- Generic logic bitwise operations
+            | Or       Var Var Var
+            | XOr      Var Var Var
+            | Eql      Var Var Var
+            | NotEql   Var Var Var
+            | Not      Var Var
+            | ShiftL   Var Var Var -- Reg - Reg - Int
+            | ShiftR   Var Var Var -- Reg - Reg - Int
             -- Compare integers
             | Lt      Int Int Int  -- lower
             | Gt      Int Int Int  -- greater
@@ -87,8 +116,8 @@ data IntIns = -- Dest Src1 Src2  -  Reg,Reg,Reg
             | Multf    Int Int Float
             | Divf     Int Int Float
             -- Src Dest
-            | Load     Int Memory -- Loading oper
-            | Store    Memory Int
+            --| Load     Int Memory -- Loading oper
+            --| Store    Memory Int
             | Mv       Int    Int
             -- Load long value into registers
             | Loadi    Int Int
@@ -107,8 +136,10 @@ data IntIns = -- Dest Src1 Src2  -  Reg,Reg,Reg
             | PrintStr  Int    -- Print string pointed from 
             | PrintEnum Memory -- Print enum at label
             -- Do we need this?
-            -- | AccessArray R0     := R1[R2]
-            -- | StoreArray  R3[R4] := R5
+            | ReadPointer  Int Int Int
+            | StorePointer Int Int Int
+            | ReadArray    Int Int Int
+            | StoreArray   Int Int Int
             -- PROCEDURES TO BE IMPLEMENTED IN MIPS
             -- Missing conversionFunctions
             -- Floor
@@ -282,6 +313,10 @@ instance Binary IntIns where
        47 ->  B.get >>= return . PrintEnum 
        48 ->  buildTac ShiftL 
        49 ->  buildTac ShiftR 
+       50 ->  buildTac ReadPointer
+       51 ->  buildTac StorePointer
+       52 ->  buildTac ReadArray
+       53 ->  buildTac StoreArray
 
 -- Print auxiliaries
 shwAsgn  int        = "R" ++ show int ++ ":="
