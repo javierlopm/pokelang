@@ -1,9 +1,10 @@
 module InsToTac(
     forestToTac,
-    TranlatorState
-    ) where
-
---ghci -i InsToTac.hs Tac.hs Instructions.hs ../types/Types.hs ../tokens/Tokens.hs ../symtable/TableTree.hs
+    initTranslator,
+    execTree,
+    TranlatorState(..),
+    TreeTranslator
+) where
 
 import Data.Sequence(empty,Seq,(|>),(<|))
 import Data.Monoid((<>),mempty)
@@ -13,13 +14,16 @@ import Instructions
 import Control.Monad.State
 import Tac
 
-type TreeTranslator  = StateT TranlatorState IO 
 data TranlatorState  = TranlatorState { tempCount  :: Word
                                       , labelCount :: Word }    
-                                      deriving(Show)      
+                                      --deriving(Show)      
+type TreeTranslator  = StateT TranlatorState IO 
+
+initTranslator :: TranlatorState
+initTranslator = TranlatorState 0 0
 
 -- use foldM instead
-forestToTac :: [(String,Ins)] -> TreeTranslator ([(String,IntIns)])
+forestToTac :: [(String,Ins)] -> TreeTranslator ( [(String,Program)] )
 forestToTac [] = return mempty
 forestToTac ((str,insTree):tl)  = do 
     headTac       <- treeToTac insTree
@@ -28,10 +32,18 @@ forestToTac ((str,insTree):tl)  = do
     return ( pure (str,headTac) <> forestTacTail)
 
 
-treeToTac :: Ins -> TreeTranslator (IntIns)
-treeToTac _ = return Nop
+treeToTac :: Ins -> TreeTranslator (Program)
+treeToTac (Assign e1 e2) = do 
+    (tac1,var1) <- expToTac e1
+    (tac2,var2) <- expToTac e2
+    let finaltac = (tac1 <> tac2) <> (pure (Mv var1 var2))
+    liftIO $ putStrLn $ show finaltac
+    return finaltac
+treeToTac _ = return (pure Nop)
 
-treeToTac' :: Exp -> TreeTranslator((IntIns,Var))
-treeToTac' _ = return (Nop,Temp 4)
+expToTac :: Exp -> TreeTranslator ((Program,Var))
+expToTac _ = return (pure Nop,Temp 4)
 
---insToTac :: Ins ->  -> IntIns
+-- Alias
+execTree :: Monad m => StateT s m a -> s -> m s
+execTree = execStateT
