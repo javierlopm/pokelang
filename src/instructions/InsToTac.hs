@@ -26,6 +26,7 @@ initTranslator = TranlatorState 0 0
 forestToTac :: [(String,Ins)] -> TreeTranslator ( [(String,Program)] )
 forestToTac [] = return mempty
 forestToTac ((str,insTree):tl)  = do 
+    liftIO $ putStrLn $ show insTree
     headTac       <- treeToTac insTree
     forestTacTail <- forestToTac tl
     -- Maybe there'es no need to return, only write to file?
