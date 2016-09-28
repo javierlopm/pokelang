@@ -21,19 +21,22 @@ import Data.ByteString.Lazy as Wf(writeFile)
 data Var = Int_Cons   Int
          | Float_Cons Float
          | MemAdress  String
-         | Temp       Word   -- Non negative: t0, t1 .. 
+         | Temp       Word   -- Non negative: t0, t1 ..
+         | Fp   -- Frame pointer
 
 instance Show Var where
     show (Int_Cons   i  ) = "#"  ++ show i
     show (Float_Cons f  ) = "f#" ++ show f
     show (MemAdress  lb ) = lb
     show (Temp       t0 ) = "t"  ++ show t0
+    show Fp = "FP"
 
 instance Binary Var where
     put (Int_Cons   i  ) = putWord8 0 >> put i 
     put (Float_Cons f  ) = putWord8 1 >> put f 
     put (MemAdress  lb ) = putWord8 2 >> put lb
     put (Temp       t0 ) = putWord8 3 >> put t0
+    put  Fp              = putWord8 4
 
     get = do key <- getWord8
              case key of
@@ -41,6 +44,7 @@ instance Binary Var where
                 1 ->  B.get >>= return . Float_Cons
                 2 ->  B.get >>= return . MemAdress      
                 3 ->  B.get >>= return . Temp 
+                4 ->  return Fp
 
 type Src1  = Var 
 type Src2  = Var

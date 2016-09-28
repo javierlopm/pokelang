@@ -54,13 +54,14 @@ import Debug.Trace(trace)
 
 import Control.Monad.RWS.Strict
 import Control.Monad(foldM,sequence)
-import Data.Maybe(fromJust,isNothing)
+import Data.Maybe(fromJust,isNothing,isJust)
 import Tokens
 import TableTree
 import Types
 import ErrorHandle(strError)
 import qualified Data.Sequence as S
 import Instructions
+
 
 type OurMonad    = RWS String (S.Seq(Message)) ScopeNZip
 type SymTable    = Scope Declare  
@@ -529,12 +530,17 @@ checkMain = do
         then return ()
         else tellError $ strError (0,0) "" "hitMAINlee" "function not found"
 
+-- Check if there is a mainFunction and add it at the begining of the list
 checkMain' :: [(String,Ins)] -> OurMonad( [(String,Ins)] )
 checkMain' functions = do
-    if any ( (=="hitMAINlee")  . fst) functions
-    then return functions
+    let (fs,list) = foldl processIns (Nothing,[]) functions
+    if isJust fs
+    then return (("hitMAINlee" , fromJust fs) : list)
     else do tellError $ strError (0,0)"" "hitMAINlee" "function not found"
             return []
+  where processIns (a,l) (string,insTree) = if string == "hitMAINlee" 
+                                              then (Just insTree, l)
+                                              else (a, (string,insTree):l)
 
 checkRecursiveDec :: Token -> TypeTuple -> OurMonad()
 checkRecursiveDec dataTok typeSec = do 
