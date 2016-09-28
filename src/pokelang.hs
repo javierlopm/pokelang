@@ -53,6 +53,7 @@ main = do
                 "-p"      -> execParser False goods
                 "-a"      -> execParser True  goods
                 "-i"      -> getIns  goods
+                "-tac"    -> getIns  goods
                 otherwise -> print $ "Unrecognized argument" ++ runargs
       else do mapM_ print errors
               putStrLn $ "--pkcc: "++ show errorcount ++ " errors found."
