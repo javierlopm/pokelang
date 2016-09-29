@@ -19,8 +19,16 @@ data TranlatorState  = TranlatorState { tempCount  :: Word
                                       --deriving(Show)      
 type TreeTranslator  = StateT TranlatorState IO 
 
+vpp :: TranlatorState -> TranlatorState
+vpp (TranlatorState w1 w2) = (TranlatorState (succ w1) w2)
+
 initTranslator :: TranlatorState
 initTranslator = TranlatorState 0 0
+
+newTemp :: TreeTranslator(Word)
+newTemp = do nt <- gets tempCount
+             modify vpp
+             return nt
 
 -- use foldM instead
 forestToTac :: [(String,Ins)] -> TreeTranslator ( [(String,Program)] )
@@ -43,7 +51,9 @@ treeToTac (Assign e1 e2) = do
 treeToTac _ = return (pure Nop)
 
 expToTac :: Exp -> TreeTranslator ((Program,Var))
-expToTac _ = return (pure Nop,Temp 4)
+expToTac (Binary op exp1 exp2) = do 
+    nt <- newTemp
+    return (pure Nop,Temp nt)
 
 -- Alias
 execTree :: Monad m => StateT s m a -> s -> m s
