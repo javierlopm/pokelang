@@ -12,9 +12,13 @@ import Data.Foldable(foldl)
 import Data.Monoid((<>),mempty)
 import Control.Applicative(pure)
 import Data.Word(Word)
-import Instructions
 import Control.Monad.State
-import Tac hiding(Eql,NotEql)
+
+import Instructions hiding(Operator(Eql,NotEql,Div))
+import Tac          hiding(IntIns(Eql,NotEql,Div))
+
+import Instructions as I(Operator(Eql,NotEql,Div))
+import Tac          as T(IntIns(Eql,NotEql,Div))
 
 data TranlatorState  = TranlatorState { tempCount  :: Word
                                       , labelCount :: Word }    
@@ -82,20 +86,47 @@ treeToTac (Block iS ) = do
 treeToTac _ = return (pure Nop)
 
 expToTac :: Exp -> TreeTranslator ((Program,Var))
-expToTac (Binary op (ExpInt i1) (ExpInt i2)) = do
-    let newVar = case op of Plus       ->  i1 + i2
-                            Minus      ->  i1 - i2
-                            Multiply   ->  i1 * i2
-                            Mod        ->  i1 `mod` i2
-                            Power      ->  i1 ^ i2
-                            Eql        ->    if i1 == i2 then 1 else 0
-                            NotEql     ->    if i1 == i2 then 0 else 1
-                            Less       ->    if i1 < i2 then 1 else 0
-                            LessEql    ->    if i1 <= i2 then 1 else 0
-                            GreaterEql ->  if i1 >= i2 then 1 else 0
-                            Greater    ->   if i1 > i2 then 1 else 0
-    -- must check if its smaller than x-bits threshold 
-    return (empty,Int_Cons newVar)
+expToTac (ExpInt   i1) = return (empty,Int_Cons   i1) -- Single constant values
+expToTac (ExpFloat i1) = return (empty,Float_Cons i1)
+-- Two integer constants
+expToTac (Binary op (ExpInt i1) (ExpInt i2)) = do 
+    let newVar = case op of 
+                    Plus       ->  i1 + i2
+                    Minus      ->  i1 - i2
+                    Multiply   ->  i1 * i2
+                    Mod        ->  i1 `mod` i2
+                    I.Div      ->  i1 `div` i2
+                    Power      ->  i1 ^ i2
+                    I.Eql      ->  if i1 == i2 then 1 else 0
+                    I.NotEql   ->  if i1 == i2 then 0 else 1
+                    Less       ->  if i1 <  i2 then 1 else 0
+                    LessEql    ->  if i1 <= i2 then 1 else 0
+                    GreaterEql ->  if i1 >= i2 then 1 else 0
+                    Greater    ->  if i1 >  i2 then 1 else 0
+                    FloatDiv   ->  error "Trying to do float div over two integers"
+    -- must check if its smaller than 16-bits threshold signed. Maybe leave this for mips
+    if ((-32768) <= newVar) && (newVar <= 32767)
+        then return (empty,Int_Cons newVar)
+        else do nt <- newTemp
+                return (empty |> (Mv (Temp nt) (Int_Cons newVar)) , (Temp nt))
+expToTac (Binary op (ExpFloat i1) (ExpFloat i2)) = do -- Two integer constants
+    let newVar = case op of 
+                    Plus       -> i1 + i2
+                    Minus      -> i1 - i2
+                    Multiply   -> i1 * i2
+                    FloatDiv   -> i1 / i2
+                    I.Eql      -> if i1 == i2 then 1 else 0
+                    I.NotEql   -> if i1 == i2 then 0 else 1
+                    Less       -> if i1 <  i2 then 1 else 0
+                    LessEql    -> if i1 <= i2 then 1 else 0
+                    GreaterEql -> if i1 >= i2 then 1 else 0
+                    Greater    -> if i1 >  i2 then 1 else 0
+                    Power      -> error "Trying to do power two floats"
+                    Mod        -> error "Trying to do mod over two floats"
+    -- must check if its smaller than 16-bits threshold signed
+    nt <- newTemp
+    return (empty |> (Mv (Temp nt) (Float_Cons newVar)) , (Temp nt))
+    
 expToTac (Binary op exp1 exp2) = do 
     nt <- newTemp
     return (pure Nop,Temp nt)
