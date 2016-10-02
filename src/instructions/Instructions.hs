@@ -156,7 +156,7 @@ instance Show Operator where
 
 data Exp = Binary  Operator Exp Exp
          | Unary   Operator Exp
-         | ExpVar  String
+         | ExpVar  Declare
          | ExpTrue
          | ExpFalse
          | ExpFloat Float
@@ -167,18 +167,6 @@ data Exp = Binary  Operator Exp Exp
          | NoExp
          deriving (Show)
 
---showIndExp :: Int -> Exp -> String
---showIndExp n (Binary  op e1 e2)      =  show op 
---showIndExp n (Unary   op e1   )      =
---showIndExp n (ExpVar  String)              =
---showIndExp n (ExpTrue)                     =
---showIndExp n (ExpFalse)                    =
---showIndExp n (ExpFloat Float)              =
---showIndExp n (ExpInt   Int)                =
---showIndExp n (ExpChar  Char)               =
---showIndExp n (ExpEnum  String)             =
---showIndExp n (CallVal  String (Seq(Exp)) ) =
---showIndExp n (NoExp)                       =
 
 
 emptyExpList :: (Seq(Exp))
