@@ -74,7 +74,11 @@ treeToTac (ForStep low high step ins ) = do
     (stepProg,_) <- expToTac step
     insProg      <- treeToTac ins
     return $ (lowProg >< highProg) >< insProg
-    
+
+treeToTac (Block iS ) = do 
+    progSeq <- mapM treeToTac iS
+    return $ foldl (><) empty progSeq
+
 treeToTac _ = return (pure Nop)
 
 expToTac :: Exp -> TreeTranslator ((Program,Var))
