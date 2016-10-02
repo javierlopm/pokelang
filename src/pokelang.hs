@@ -13,6 +13,7 @@ import Instructions
 import Data.Foldable(toList)
 import InsToTac
 import Instructions
+import Tac(showP)
 
 
 myF :: String -> String -> (String,String)
@@ -44,7 +45,7 @@ getIns tokens pr = do
     then do if pr then putStrLn $ printAsts ast else return ()
             return ast
     else printErrors errorcount id errors >> die "" >> return []
-    
+  
 main = do
   arg1:arg2:_ <- getArgs
   let (fileToRead,runargs)=myF arg1 arg2
@@ -58,7 +59,8 @@ main = do
                 "-a"      -> execParser True  goods
                 "-i"      -> getIns goods True >> return ()
                 "-tac"    -> do ast <- getIns goods False
-                                execTree (forestToTac ast) initTranslator
+                                programs <- evalTree (forestToTac ast) initTranslator
+                                putStrLn $ foldl (\ b (string,p) -> b ++ string ++ "\n" ++ showP p ) "" programs
                                 return ()
                 otherwise -> print $ "Unrecognized argument" ++ runargs
       else do mapM_ print errors
