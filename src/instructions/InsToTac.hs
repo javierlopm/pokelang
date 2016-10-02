@@ -6,7 +6,8 @@ module InsToTac(
     TreeTranslator
 ) where
 
-import Data.Sequence(empty,Seq,(|>),(<|))
+import Data.Sequence(empty,Seq,(|>),(<|),(><))
+import Data.Foldable(foldl)
 import Data.Monoid((<>),mempty)
 import Control.Applicative(pure)
 import Data.Word(Word)
@@ -48,6 +49,32 @@ treeToTac (Assign e1 e2) = do
     let finaltac = (tac1 <> tac2) <> (pure (Mv var1 var2))
     liftIO $ putStrLn $ show finaltac
     return finaltac
+
+treeToTac (If    iS   ) = do 
+    progSeq <- mapM treeToTac iS
+    return $ foldl (><) empty progSeq
+treeToTac (Else  ins ) = treeToTac ins >>= return
+treeToTac (Guard cond ins) = do 
+    insProg      <- treeToTac ins
+    (condProg,_) <- expToTac cond
+    return (condProg >< insProg) 
+treeToTac (While cond ins   ) = do 
+    insProg  <- treeToTac ins
+    (condProg,_) <- expToTac cond
+    return (condProg >< insProg)
+
+treeToTac (For low high ins ) = do
+    (lowProg ,_) <- expToTac low -- Maybe not needed, aren't they always constant numbers?
+    (highProg,_) <- expToTac high
+    insProg      <- treeToTac ins
+    return $ (lowProg >< highProg) >< insProg
+treeToTac (ForStep low high step ins ) = do
+    (lowProg ,_) <- expToTac low -- Maybe not needed, aren't they always constant numbers?
+    (highProg,_) <- expToTac high
+    (stepProg,_) <- expToTac step
+    insProg      <- treeToTac ins
+    return $ (lowProg >< highProg) >< insProg
+    
 treeToTac _ = return (pure Nop)
 
 expToTac :: Exp -> TreeTranslator ((Program,Var))
