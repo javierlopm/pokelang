@@ -161,12 +161,11 @@ Ins : {- λ -}                 {% return (TypeVoid, newBlock ) }
     | Ins EXIT           ";"  {% checkOkIns Exit     (snd $1) (fst $1)  }
     | Ins RETURN   Exp   ";"  {% checkOkIns ((Return (Just (sel3 $3)) )) (snd $1) (fst $1) } -- Cambiar para exp
     | Ins RETURN         ";"  {% checkOkIns ((Return Nothing )) (snd $1) (fst $1) }
-    | Ins READ  "("  ID   ")" ";" {% checkReadable $4 True  >>= checkOkIns ((Read . ExpVar .lexeme) $4) (snd $1) } --revisar
+    | Ins READ  "("  ID   ")" ";" {% buildRead $4 $1 } --revisar
     | Ins ID    "("ExpList")" ";" {% (checkFunctionCall $2 (fst $4)) >>=  (checkOkIns (Call (lexeme $2) (snd $4) ) (snd $1)) . (notErrors (fst $1)) . fst   } 
     | Ins BEGIN Ent0 SmplDcls Ins END   {% exitScope >>   checkOkIns (snd $5) (snd $1) (notErrors (fst $1) (fst $5)) } 
     | Ins IF    Exp ":" Ent0 SmplDcls Ins Ent1 NextIf Else END     {% checkAllOk [(checkGuarded $2 $3 $7), (return (fst $10)), (return (fst $1))] TypeVoid TypeVoid "" 0 >>= checkOkIns (mergeIf (Guard (trd $3) (snd $7)) (snd $9) (snd $10) ) (snd $1) } --{% checkOkIns (addToBlock (mergeIf (Guard ExpTrue) $9 $10 )) $1 } -- verificar que $3 es bool, $9 y $10 son void
     | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                 {% checkAllOk [(checkGuarded $2 $3 $7), (return (fst $1))] TypeVoid TypeVoid "" 0                     >>= checkOkIns (While (trd $3) (snd $7) ) (snd $1) }               --{% checkOkIns (addToBlock (While ExpTrue) ) $1  }
-    -- left it here
     | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkFor     $2   [$5,$7,$9] , return (fst $12), return (fst $1) ] TypeVoid TypeVoid "" 0 >>= checkOkIns (ForStep (trd $5) (trd $7) (trd $9) (snd $12)) (snd $1) } -- MISSING INSTRUCTIONS
     | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkFor     $2   [$5,$7]    , return (fst $10), return (fst $1) ] TypeVoid TypeVoid "" 0 >>= checkOkIns (For (trd $5) (trd $7) (snd $10)) (snd $1) } 
     | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkEnumFor $2 $3 $5 $7     , return (fst $10), return (fst $1) ] TypeVoid TypeVoid "" 0 >>= checkOkIns (For ((ExpEnum .lexeme) $5) ((ExpEnum .lexeme) $7) (snd $10)) (snd $1) }
@@ -265,8 +264,8 @@ Exp :  -- Cambiar los NoExp por las Exp
     | Exp "!=" Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary NotEql     (sel3 $1) (sel3 $3)) }
     -- Expresiones sobre lienzo.
     | Exp "!!" Exp            {% return (TypeBool,(sel2 $1),(Binary Access     (sel3 $3) (sel3 $1))) }
-    | Exp "."  ID             {% checkFieldAccess $1 $3  >>= expIns (Binary Access (sel3 $1) (ExpVar (lexeme $3))) } -- Binary Access (sel3 $1) (sel3 $3)
-    | ID SquareList %prec ARR {% return (TypeBool,$1,(arrayParser (ExpVar (lexeme $1)) (snd $2))) }
+    -- | Exp "."  ID             {% checkFieldAccess $1 $3  >>= expIns (Binary Access (sel3 $1) (ExpVar (lexeme $3))) } -- Binary Access (sel3 $1) (sel3 $3)
+    | ID SquareList %prec ARR {% checkArray $1 (snd $2) }
     --Llamadas a funciones
     | ID "(" ExpList ")"   {% checkFunctionCall $1 (fst $3)  >>= expIns (CallVal (lexeme $1) (snd $3)) } 
     --Acceso a apuntadores
@@ -278,19 +277,18 @@ Exp :  -- Cambiar los NoExp por las Exp
     -- Constantes.
     -- Llamadas
     | SIZEOF "(" Reference ")" {% return (TypeInt,$1,NoExp) } -- Can be known at compile time
-    -- | GET    "(" ENUM ")"      {% return (TypeBool,(sel2 $2),NoExp) } -- Si no lo hacemos por gramatica, mejor error pero no se puede conocer a tiempo de compilacion
     | GET    "(" ENUM ")"      {% return (TypeBool,$3,ExpEnum  (lexeme $3)) }
     | TRUE      {% return (TypeBool,$1,ExpTrue) }   
     | FALSE     {% return (TypeBool,$1,ExpFalse) }   
-    | ID        {% checkItsDeclared $1  >>= expIns (ExpVar (lexeme $1))  } 
-    | DATAID    {% return (TypeError,$1,ExpVar (lexeme $1)) } -- check its declared
+    | ID        {% checkItsDeclared' $1 } 
     | FLOAT     {% return (TypeFloat,$1,ExpFloat (rep $1)) }   
     | INT       {% return (TypeInt,$1,ExpInt (value $1)) }   
     | CHAR      {% return (TypeChar,$1,ExpChar (char $1)) }  
     | ENUM      {% return (TypeEnumCons,$1,ExpEnum  (lexeme $1)) }
+    -- | GET    "(" ENUM ")"      {% return (TypeBool,(sel2 $2),NoExp) } -- Si no lo hacemos por gramatica, mejor error pero no se puede conocer a tiempo de compilacion
+    -- | DATAID    {% return (TypeError,$1,ExpVar (lexeme $1)) } -- check its declared
 
  
-
 SquareList: "[" Exp "]"            { ([sel1 $2],[sel3 $2]) } -- Check it's int and acc number of nesting
           | SquareList "[" Exp "]" { (sel1 $3 : (fst $1),sel3 $3 : (snd $1)) } -- Check it's int and acc number of nesting
 
