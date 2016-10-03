@@ -1,6 +1,5 @@
 module GrammarMonad(module GrammarMonad) where
 
-
 import Debug.Trace(trace)
 
 import Control.Monad.RWS.Strict
@@ -702,7 +701,7 @@ builtinFunctions = emptyScope
 --          ("intToChar"     , makeFunc [TypeInt      , TypeChar  ] ),
 --          ("charToInt"     , makeFunc [TypeChar     , TypeInt   ] ),
 --          ("floor"         , makeFunc [TypeFloat    , TypeInt   ] ),
---          ("celing"        , makeFunc [TypeFloat    , TypeInt   ] ),
+--          ("celing"        , makeFunc [TypeFloat    , TypeInt   ] ),  
 --          ("succ"          , makeFunc [TypeEnumCons , TypeEnumCons ] ),
 --          ("pred"          , makeFunc [TypeEnumCons , TypeEnumCons ] ),
 --          ("pidGET"        , makeFunc [TypeEnumCons , TypeInt   ] ),
