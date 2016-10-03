@@ -32,8 +32,8 @@ funcball VOIDtorb hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
 #        menol = Martes;
         CHARmander hola;
         pINTachu hola2;
-        hola2 = 3;
-        hola2 += 3 + erNovich.socialSecurityNumber;
+        hola2 = erNovich.socialSecurityNumber;
+        hola2 += 2;
         hola = 'c';
     vamo_a_calmano
     

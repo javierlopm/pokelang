@@ -518,7 +518,7 @@ checkFieldAccess (ty1,tk1,_) tk2 = do
             then return(((storedType . fromJust) (getValS (lexeme tk2) strScope)),tk2)
             else tellError (error2 (getDataName ty1)) >> return (TypeError,tk1)
     else tellError error1  >> return (TypeError,tk1)
-  where error1 = strError (position tk1) "Variable" (lexeme tk1) "it's not a valid struct/union, field cannot be accessed"
+  where error1 = strError (position tk1) "Variable" (lexeme tk1) "it's not a valid struct/union, field cannot be accessed" -- AQUI
         error2 dn = strError (position tk1) "Variable" (lexeme tk2) ("not found in struct/union " ++ show dn )
         l      = lexeme tk1
 
@@ -581,7 +581,9 @@ checkAllOk l (TypeEnum s1) (TypeEnumCons) s2 0 = do
   --else do return TypeError
 checkAllOk l a b s t
     | checkAssign a b t = checkAllOk l TypeVoid TypeVoid s 0
-    | otherwise       = return TypeError
+    | otherwise       = do
+                        tellError error1 >> return TypeError
+    where error1= strError (0,0) "-" "-" $ show a ++ "..." ++ show b ++ "..." ++ show t
 
 checkOkType :: OurMonad ()  -- Action to execute
                  -> Type      -- Type obtained
