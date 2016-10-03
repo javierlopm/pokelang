@@ -31,8 +31,10 @@ funcball VOIDtorb hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
         ENUManyte pokeDaysLaborables menol;
 #        menol = Martes;
         CHARmander hola;
-        hola = 4.5;
-        menol = Lunes;
+        pINTachu hola2;
+        hola2 = 3;
+        hola2 += 3 + erNovich.socialSecurityNumber;
+        hola = 'c';
     vamo_a_calmano
     
 vamo_a_calmano

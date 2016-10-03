@@ -153,9 +153,9 @@ Prog : Dcls  {% checkMain' $1 }
 
 Ins : {- λ -}                 {% return (TypeVoid, newBlock ) }
     | Ins Exp "="  Exp   ";"  {% checkAllOk [checkLValue (sel1 $2, sel2 $2), (return (fst $1))] (sel1 $2) (sel1 $4) (lexeme (sel2 $4)) 0 >>= checkOkIns (Assign    (sel3 $2) (sel3 $4)) (snd $1)  } 
-    | Ins Exp "*=" Exp   ";"  {% checkAllOk [checkLValue (sel1 $2, sel2 $2), (return (fst $1))] TypeVoid TypeVoid "" 1 >>= checkOkIns (AssignMul (sel3 $2) (sel3 $4)) (snd $1)  } 
-    | Ins Exp "+=" Exp   ";"  {% checkAllOk [checkLValue (sel1 $2, sel2 $2), (return (fst $1))] TypeVoid TypeVoid "" 2 >>= checkOkIns (AssignSum (sel3 $2) (sel3 $4)) (snd $1)  } 
-    | Ins Exp "-=" Exp   ";"  {% checkAllOk [checkLValue (sel1 $2, sel2 $2), (return (fst $1))] TypeVoid TypeVoid "" 3 >>= checkOkIns (AssignMin (sel3 $2) (sel3 $4)) (snd $1)  } 
+    | Ins Exp "*=" Exp   ";"  {% checkAllOk [checkLValue (sel1 $2, sel2 $2), (return (fst $1))] (sel1 $2) (sel1 $4) (lexeme (sel2 $4)) 1 >>= checkOkIns (AssignMul (sel3 $2) (sel3 $4)) (snd $1)  } 
+    | Ins Exp "+=" Exp   ";"  {% checkAllOk [checkLValue (sel1 $2, sel2 $2), (return (fst $1))] (sel1 $2) (sel1 $4) (lexeme (sel2 $4)) 2 >>= checkOkIns (AssignSum (sel3 $2) (sel3 $4)) (snd $1)  } 
+    | Ins Exp "-=" Exp   ";"  {% checkAllOk [checkLValue (sel1 $2, sel2 $2), (return (fst $1))] (sel1 $2) (sel1 $4) (lexeme (sel2 $4)) 3 >>= checkOkIns (AssignMin (sel3 $2) (sel3 $4)) (snd $1)  } 
     | Ins BREAK          ";"  {% checkOkIns Break    (snd $1) (fst $1)  }
     | Ins CONTINUE       ";"  {% checkOkIns Continue (snd $1) (fst $1)  }
     | Ins EXIT           ";"  {% checkOkIns Exit     (snd $1) (fst $1)  }

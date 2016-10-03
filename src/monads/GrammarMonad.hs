@@ -568,11 +568,11 @@ checkAllOk l TypeVoid TypeVoid _ _ =
      if all (/= TypeError) typeL
      then return TypeVoid
      else return TypeError
-checkAllOk l (TypeEnum s1) (TypeEnum s2)  _  _ = if s1==s2 then checkAllOk l TypeVoid TypeVoid "" 0
+checkAllOk l (TypeEnum s1) (TypeEnum s2)  _  0 = if s1==s2 then checkAllOk l TypeVoid TypeVoid "" 0
                                                  else return TypeError
-checkAllOk l (TypeEnum s1) (TypeEnumCons) s2 t = do
+checkAllOk l (TypeEnum s1) (TypeEnumCons) s2 0 = do
   enuTbl <- gets enuTbl
-  if (isNothing (getValS s2 enuTbl)) then 
+  if ((not.isNothing) (getValS s2 enuTbl)) then 
     if s1 == ( storedDType $ fromJust $ getValS s2 enuTbl) 
     then checkAllOk l TypeVoid TypeVoid "" 0
     else return TypeError
