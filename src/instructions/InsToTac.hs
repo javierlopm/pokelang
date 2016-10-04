@@ -8,12 +8,13 @@ module InsToTac(
 ) where
 
 import Data.Sequence(empty,Seq,(|>),(<|),(><))
-import Data.Foldable(foldl)
+import qualified Data.Foldable as F(foldl)
 import Data.Monoid((<>),mempty)
 import Control.Applicative(pure)
 import Data.Word(Word)
 import Control.Monad.State
 import Types(Declare(..),Direction(..))
+import qualified Data.Traversable as M(mapM)
 
 import Instructions hiding(Operator(Eql,NotEql,Div,Mod))
 import Tac          hiding(IntIns(Eql,NotEql,Div,Mod))
@@ -57,8 +58,8 @@ treeToTac (Assign e1 e2) = do
     return finaltac
 
 treeToTac (If    iS   ) = do 
-    progSeq <- mapM treeToTac iS
-    return $ foldl (><) empty progSeq
+    progSeq <- M.mapM treeToTac iS
+    return $ F.foldl (><) empty progSeq
 treeToTac (Else  ins ) = treeToTac ins >>= return
 treeToTac (Guard cond ins) = do 
     insProg      <- treeToTac ins
@@ -82,8 +83,8 @@ treeToTac (ForStep low high step ins ) = do
     return $ (lowProg >< highProg) >< insProg
 
 treeToTac (Block iS ) = do 
-    progSeq <- mapM treeToTac iS
-    return $ foldl (><) empty progSeq
+    progSeq <- M.mapM treeToTac iS
+    return $ F.foldl (><) empty progSeq
 treeToTac _ = return (pure Nop)
 
 expToTac :: Exp -> TreeTranslator ((Program,Var))
