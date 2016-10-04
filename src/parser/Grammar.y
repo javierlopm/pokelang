@@ -264,7 +264,7 @@ Exp :  -- Cambiar los NoExp por las Exp
     | Exp "!=" Exp      {% checkComp (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary NotEql     (sel3 $1) (sel3 $3)) }
     -- Expresiones sobre lienzo.
     | Exp "!!" Exp            {% return (TypeBool,(sel2 $1),(Binary Access     (sel3 $3) (sel3 $1))) }
-    -- | Exp "."  ID             {% checkFieldAccess $1 $3  >>= expIns (Binary Access (sel3 $1) (ExpVar (lexeme $3))) } -- Binary Access (sel3 $1) (sel3 $3)
+    | Exp "."  ID             {% checkFieldAccess $1 $3  >>= expIns (Binary Access (sel3 $1) (sel3 $3) ) } -- Binary Access (sel3 $1) (sel3 $3)
     | ID SquareList %prec ARR {% checkArray $1 (snd $2) }
     --Llamadas a funciones
     | ID "(" ExpList ")"   {% checkFunctionCall $1 (fst $3)  >>= expIns (CallVal (lexeme $1) (snd $3)) } 

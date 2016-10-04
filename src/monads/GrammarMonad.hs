@@ -498,9 +498,9 @@ checkFunctionCall ident calltup = do
         error2  = strError (position ident) "number of arguments don't match with" (lexeme ident) "declaration."
 
 
-checkFieldAccess :: (Type,Token,Exp) -> Token -> OurMonad((Type,Token))
+checkFieldAccess :: (Type,Token,Exp) -> (Type,Token,Exp) -> OurMonad((Type,Token))
 checkFieldAccess (TypeError,tk1,_) _ = return (TypeError,tk1)
-checkFieldAccess (ty1,tk1,_) tk2 = do
+checkFieldAccess (ty1,tk1,_) (ty2,tk2,_) = do
     state <- get
     if structured ty1 
     then do let strScope = (fields . fromJust) $ getValS (getDataName ty1) 
