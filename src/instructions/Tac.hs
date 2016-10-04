@@ -55,6 +55,7 @@ type Label = Word -- Non-negative tags: tag_0, tag_1, tag_2...
 data IntIns = Add      Dest Src1 Src2 -- Aritmetic Operations
             | Sub      Dest Src1 Src2
             | Div      Dest Src1 Src2
+            | Mod      Dest Src1 Src2
             | Mult     Dest Src1 Src2
             | Pot      Dest Src1 Src2
             -- Logic bitwise operations

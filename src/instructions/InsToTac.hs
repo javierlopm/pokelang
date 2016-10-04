@@ -13,12 +13,13 @@ import Data.Monoid((<>),mempty)
 import Control.Applicative(pure)
 import Data.Word(Word)
 import Control.Monad.State
+import Types(Declare(..),Direction(..))
 
-import Instructions hiding(Operator(Eql,NotEql,Div))
-import Tac          hiding(IntIns(Eql,NotEql,Div))
+import Instructions hiding(Operator(Eql,NotEql,Div,Mod))
+import Tac          hiding(IntIns(Eql,NotEql,Div,Mod))
 
-import Instructions as I(Operator(Eql,NotEql,Div))
-import Tac          as T(IntIns(Eql,NotEql,Div))
+import Instructions as I(Operator(Eql,NotEql,Div,Mod))
+import Tac          as T(IntIns(Eql,NotEql,Div,Mod))
 
 data TranlatorState  = TranlatorState { tempCount  :: Word
                                       , labelCount :: Word }    
@@ -88,16 +89,20 @@ treeToTac _ = return (pure Nop)
 expToTac :: Exp -> TreeTranslator ((Program,Var))
 expToTac (ExpInt   i1) = return (empty,Int_Cons   i1) -- Single constant values
 expToTac (ExpFloat i1) = return (empty,Float_Cons i1)
+expToTac (ExpVar dec s)= newTemp >>= return . ((,) empty) . Temp -- Just a example
+-- Swap operands
+expToTac (Binary op (ExpInt i2) (ExpVar ev s)) = expToTac (Binary op (ExpVar ev s) (ExpInt i2))
+
 -- Two integer constants
 expToTac (Binary op (ExpInt i1) (ExpInt i2)) = do 
     let newVar = case op of 
                     Plus       ->  i1 + i2
                     Minus      ->  i1 - i2
                     Multiply   ->  i1 * i2
-                    Mod        ->  i1 `mod` i2
+                    I.Mod      ->  i1 `mod` i2
                     I.Div      ->  i1 `div` i2
                     Power      ->  i1 ^ i2
-                    I.Eql      ->  if i1 == i2 then 1 else 0
+                    I.Eql      ->  if i1 == i2 then 1 else 0  -- 1/0 or true false constants?
                     I.NotEql   ->  if i1 == i2 then 0 else 1
                     Less       ->  if i1 <  i2 then 1 else 0
                     LessEql    ->  if i1 <= i2 then 1 else 0
@@ -109,6 +114,8 @@ expToTac (Binary op (ExpInt i1) (ExpInt i2)) = do
         then return (empty,Int_Cons newVar)
         else do nt <- newTemp
                 return (empty |> (Mv (Temp nt) (Int_Cons newVar)) , (Temp nt))
+
+-- Two float constants
 expToTac (Binary op (ExpFloat i1) (ExpFloat i2)) = do -- Two integer constants
     let newVar = case op of 
                     Plus       -> i1 + i2
@@ -122,14 +129,43 @@ expToTac (Binary op (ExpFloat i1) (ExpFloat i2)) = do -- Two integer constants
                     GreaterEql -> if i1 >= i2 then 1 else 0
                     Greater    -> if i1 >  i2 then 1 else 0
                     Power      -> error "Trying to do power two floats"
-                    Mod        -> error "Trying to do mod over two floats"
+                    I.Mod      -> error "Trying to do mod over two floats"
     -- must check if its smaller than 16-bits threshold signed
     nt <- newTemp
     return (empty |> (Mv (Temp nt) (Float_Cons newVar)) , (Temp nt))
-    
+
+-- Variable and Int base case
+expToTac (Binary op (ExpVar ev s) (ExpInt i2)) = do 
+    let tacOper = case op of Plus       ->  Add
+                             Minus      ->  Sub
+                             Multiply   ->  Mult
+                             I.Mod      ->  T.Mod
+                             I.Div      ->  T.Div
+                             Power      ->  Pot
+                             I.Eql      ->  T.Eql
+                             I.NotEql   ->  T.NotEql
+                             Less       ->  Lt
+                             LessEql    ->  LEq
+                             GreaterEql ->  GEq
+                             Greater    ->  Gt
+    resTemp <- newTemp
+    let nt = Temp resTemp
+    case (dir ev) of
+        Label      -> return( pure (tacOper nt (MemAdress s) (Int_Cons i2)) , nt )
+        (Offset o) -> do 
+            tempLocal <- newTemp
+            let tl = Temp tempLocal
+            let loadInTemp = empty      |> (ReadArray tl Fp (Int_Cons o))
+            let doOper     = loadInTemp |> (tacOper nt tl (Int_Cons i2))
+            return (doOper , nt )
+
+-- Two Vars
+-- expToTac (Binary op (ExpVar ev1 s1) (ExpVar ev2 s2)) = undefined
+
+-- Generic unkwon operation
 expToTac (Binary op exp1 exp2) = do 
     nt <- newTemp
-    return (pure Nop,Temp nt)
+    return (empty,Temp nt)
 expToTac _ = return (pure Nop,Temp 0)
 
 -- Alias

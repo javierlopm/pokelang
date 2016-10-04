@@ -156,7 +156,7 @@ instance Show Operator where
 
 data Exp = Binary  Operator Exp Exp
          | Unary   Operator Exp
-         | ExpVar  Declare
+         | ExpVar  Declare  String
          | ExpTrue
          | ExpFalse
          | ExpFloat Float

@@ -414,9 +414,9 @@ checkItsDeclared' tk = do
     state <- get
     if (not . isNothing)  (lookUp (zipp state) (lexeme tk))
         then do (tellLog . concat) whathappened
-                return ((typeFound (lookUp (zipp state) (lexeme tk))),tk, (ExpVar (fromJust (lookUp (zipp state) (lexeme tk))) ))
+                return ((typeFound (lookUp (zipp state) (lexeme tk))),tk, (ExpVar (fromJust (lookUp (zipp state) (lexeme tk))) (lexeme tk) ))
         else if isInScope (scp state) (lexeme tk)
-                then return (( typeFound (getValS (lexeme tk) (scp state))),tk,(ExpVar (fromJust (getValS (lexeme tk) (scp state))) ))
+                then return (( typeFound (getValS (lexeme tk) (scp state))),tk,(ExpVar (fromJust (getValS (lexeme tk) (scp state))) (lexeme tk) ))
                 else tellError error1 >> return (TypeError,tk,NoExp)
   where whathappened = ["Variable ",lexeme tk," at ",(show . position) tk," well used."]
         error1       = strError (position tk) " variable or datatype" (lexeme tk) "used but not declared."
@@ -426,9 +426,9 @@ buildVar :: Token -> OurMonad(Exp)
 buildVar tk = do 
     state <- get
     maybe (maybe (tellError error1 >> return NoExp)
-                 (\ globalDec -> return (ExpVar globalDec) )
+                 (\ globalDec -> return (ExpVar globalDec (lexeme tk)) )
                  ( getValS (lexeme tk) (scp state)))
-          (\ localDec -> (tellLog .concat) whathappened >>return (ExpVar localDec))
+          (\ localDec -> (tellLog .concat) whathappened >>return (ExpVar localDec (lexeme tk)))
           (lookUp (zipp state) (lexeme tk))
  where error1       = strError (position tk) " variable or datatype" (lexeme tk) "used but not declared."
        whathappened = ["Variable ",lexeme tk," at ",(show . position) tk," well used."]
@@ -652,7 +652,7 @@ checkArray :: Token -> [Exp] -> OurMonad((Type,Token,Exp))
 checkArray tok list = do
     varDec <- getDeclare tok
     maybe (return (TypeError,tok,NoExp))
-          (\ dec -> return (storedType dec, tok, arrayParser (ExpVar dec) list))
+          (\ dec -> return (storedType dec, tok, arrayParser (ExpVar dec (lexeme tok)) list))
           varDec   
 
 --checkAll :: Token -> [Type] -> [Type] -> OurMonad (Type)
