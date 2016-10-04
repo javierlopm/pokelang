@@ -89,7 +89,6 @@ treeToTac _ = return (pure Nop)
 expToTac :: Exp -> TreeTranslator ((Program,Var))
 expToTac (ExpInt   i1) = return (empty,Int_Cons   i1) -- Single constant values
 expToTac (ExpFloat i1) = return (empty,Float_Cons i1)
-expToTac (ExpVar dec s)= newTemp >>= return . ((,) empty) . Temp -- Just a example
 -- Swap operands
 expToTac (Binary op (ExpInt i2) (ExpVar ev s)) = expToTac (Binary op (ExpVar ev s) (ExpInt i2))
 
@@ -118,7 +117,7 @@ expToTac (Binary op (ExpInt i1) (ExpInt i2)) = do
 -- Two float constants
 expToTac (Binary op (ExpFloat i1) (ExpFloat i2)) = do -- Two integer constants
     let newVar = case op of 
-                    Plus       -> i1 + i2
+                    Plus       -> i1 + i2 -- float operators MAYBE MISSING
                     Minus      -> i1 - i2
                     Multiply   -> i1 * i2
                     FloatDiv   -> i1 / i2
@@ -160,14 +159,48 @@ expToTac (Binary op (ExpVar ev s) (ExpInt i2)) = do
             return (doOper , nt )
 
 -- Two Vars
--- expToTac (Binary op (ExpVar ev1 s1) (ExpVar ev2 s2)) = undefined
+expToTac (Binary op (ExpVar ev1 s1) (ExpVar ev2 s2)) = do
+    let tacOper = case op of Plus       ->  Add
+                             Minus      ->  Sub
+                             Multiply   ->  Mult
+                             I.Mod      ->  T.Mod
+                             I.Div      ->  T.Div
+                             Power      ->  Pot
+                             I.Eql      ->  T.Eql
+                             I.NotEql   ->  T.NotEql
+                             Less       ->  Lt
+                             LessEql    ->  LEq
+                             GreaterEql ->  GEq
+                             Greater    ->  Gt
+                             -- Logic operator MISSING
+    blah <- newTemp
+    let nt = Temp blah
+    makeOper tacOper nt (dir ev1) (dir ev2)
+  where makeOper c nt  Label      Label       = return (pure (c nt (ma s1) (ma s2)) , nt)
+        makeOper c nt (Offset o1) (Offset o2) = do 
+            (i1,temp1) <- loadLocal o1
+            (i2,temp2) <- loadLocal o2
+            return ( empty |> i1 |> i2 |> (c nt temp1 temp2) , nt )
+        makeOper c nt  Label     (Offset o) = do
+            (i,temp) <- loadLocal o
+            return (empty |> i |> (c nt (ma s1) temp) , nt)
+        makeOper c nt (Offset o)  Label     = makeOper c nt Label (Offset o)
+        ma = MemAdress
 
+
+-- Single variable
+expToTac (ExpVar dec s)= newTemp >>= return . ((,) empty) . Temp -- Just a example
 -- Generic unkwon operation
 expToTac (Binary op exp1 exp2) = do 
     nt <- newTemp
     return (empty,Temp nt)
 expToTac _ = return (pure Nop,Temp 0)
 
+loadLocal :: Int -> TreeTranslator((IntIns,Var))
+loadLocal ofs = do tempLocal <- newTemp
+                   let tl = (Temp tempLocal)
+                   return ((ReadArray tl Fp (Int_Cons ofs)),tl)
+    
 -- Alias
 execTree :: Monad m => StateT s m a -> s -> m s
 execTree = execStateT
