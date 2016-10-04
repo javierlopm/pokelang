@@ -1,5 +1,6 @@
 module Main where
 import System.Environment
+import System.Exit
 import System.IO(hPutStrLn,stderr)  
 import Tokens
 import Grammar
@@ -10,10 +11,13 @@ import Types
 import GrammarMonad
 import Instructions
 import Data.Foldable(toList)
+import InsToTac
+import Instructions
+import Tac(showP)
 
 
 myF :: String -> String -> (String,String)
-myF arg1 arg2 = if and [arg1 /= "-l",arg1/="-p",arg1/="-i",arg1/="-a"] 
+myF arg1 arg2 = if and [arg1 /= "-l",arg1/="-p",arg1/="-i",arg1/="-a",arg1/="-tac"] 
                     then (arg1,arg2)
                     else (arg2,arg1)
 
@@ -33,14 +37,15 @@ execParser printLex tokens = do
             putStrLn $ "SymTable:\n========================" ++ show scps
     else do printErrors errorcount id errors
 
-getIns :: [Token] -> IO()
-getIns tokens = do
+getIns :: [Token] -> Bool -> IO ([(String,Ins)])
+getIns tokens pr = do
   let (ast,state,strlog) = run (parser tokens) "" initialState
   let (logs,errors,errorcount) = checkParseError strlog
   if errorcount == 0
-    then putStrLn $ printAsts ast
-    else printErrors errorcount id errors
-    
+    then do if pr then putStrLn $ printAsts ast else return ()
+            return ast
+    else printErrors errorcount id errors >> die "" >> return []
+  
 main = do
   arg1:arg2:_ <- getArgs
   let (fileToRead,runargs)=myF arg1 arg2
@@ -52,7 +57,11 @@ main = do
                 "-l"      -> mapM_ print goods
                 "-p"      -> execParser False goods
                 "-a"      -> execParser True  goods
-                "-i"      -> getIns  goods
+                "-i"      -> getIns goods True >> return ()
+                "-tac"    -> do ast <- getIns goods False
+                                programs <- evalTree (forestToTac ast) initTranslator
+                                putStrLn $ foldl (\ b (string,p) -> b ++ string ++ "\n" ++ showP p ) "" programs
+                                return ()
                 otherwise -> print $ "Unrecognized argument" ++ runargs
       else do mapM_ print errors
               putStrLn $ "--pkcc: "++ show errorcount ++ " errors found."

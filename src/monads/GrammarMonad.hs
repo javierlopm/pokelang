@@ -1,66 +1,17 @@
-module GrammarMonad(
-    OurMonad,
-    SymTable,
-    TableZipper,
-    ScopeNZip,
-    exec,
-    run,
-    checkIsFunc,
-    checkLValue,
-    checkReadable,
-    initialState,
-    makeTable,
-    onZip,
-    onScope,
-    onStrScope,
-    exitScope,
-    insertEmpty,
-   -- insertEmptyData,
-    insertForwardFunc,
-    insertForwardData,
-    insertFunction,
-    insertData,
-    insertEnum,
-    insertLEnumCons,
-    insertDeclareInScope,
-    insertParamInScope,
-    checkItsDeclared,
-    checkEnumAndInsert,
-    checkBinary,
-    checkFunctionCall,
-    checkRecursiveDec,
-    checkFieldAccess,
-    checkMain,
-    checkMain',
-    tellError,
-    toggleUnion,
-    cleanParams,
-    checkOkIns,
-    addToBlock,
-    expIns,
-    arrayParser,
-    sel1,
-    sel2,
-    sel3,
-    checkGuarded,
-    checkAllOk,
-    checkFor,
-    checkEnumFor,
-    checkAndBuild
-    -- getDataSize
-) where
+module GrammarMonad(module GrammarMonad) where
 
 import Debug.Trace(trace)
 
 import Control.Monad.RWS.Strict
 import Control.Monad(foldM,sequence)
-import Data.Maybe(fromJust,isNothing)
+import Data.Maybe(fromJust,isNothing,isJust)
 import Tokens
 import TableTree
 import Types
 import ErrorHandle(strError)
 import qualified Data.Sequence as S
 import Instructions
+
 
 type OurMonad    = RWS String (S.Seq(Message)) ScopeNZip
 type SymTable    = Scope Declare  
@@ -454,10 +405,50 @@ checkItsDeclared tk = do
         else if isInScope (scp state) (lexeme tk)
                 then return (( typeFound (getValS (lexeme tk) (scp state))),tk)
                 else tellError error1 >> return (TypeError,tk)
-      
   where whathappened = ["Variable ",lexeme tk," at ",(show . position) tk," well used."]
         error1       = strError (position tk) " variable or datatype" (lexeme tk) "used but not declared."
         typeFound    = storedType . fromJust
+
+checkItsDeclared' :: Token -> OurMonad ((Type,Token,Exp))
+checkItsDeclared' tk = do
+    state <- get
+    if (not . isNothing)  (lookUp (zipp state) (lexeme tk))
+        then do (tellLog . concat) whathappened
+                return ((typeFound (lookUp (zipp state) (lexeme tk))),tk, (ExpVar (fromJust (lookUp (zipp state) (lexeme tk))) (lexeme tk) ))
+        else if isInScope (scp state) (lexeme tk)
+                then return (( typeFound (getValS (lexeme tk) (scp state))),tk,(ExpVar (fromJust (getValS (lexeme tk) (scp state))) (lexeme tk) ))
+                else tellError error1 >> return (TypeError,tk,NoExp)
+  where whathappened = ["Variable ",lexeme tk," at ",(show . position) tk," well used."]
+        error1       = strError (position tk) " variable or datatype" (lexeme tk) "used but not declared."
+        typeFound    = storedType . fromJust
+
+buildVar :: Token -> OurMonad(Exp)
+buildVar tk = do 
+    state <- get
+    maybe (maybe (tellError error1 >> return NoExp)
+                 (\ globalDec -> return (ExpVar globalDec (lexeme tk)) )
+                 ( getValS (lexeme tk) (scp state)))
+          (\ localDec -> (tellLog .concat) whathappened >>return (ExpVar localDec (lexeme tk)))
+          (lookUp (zipp state) (lexeme tk))
+ where error1       = strError (position tk) " variable or datatype" (lexeme tk) "used but not declared."
+       whathappened = ["Variable ",lexeme tk," at ",(show . position) tk," well used."]
+
+getDeclare :: Token -> OurMonad(Maybe(Declare))
+getDeclare tk = do 
+    state <- get
+    maybe (maybe (return Nothing)
+                 (\ globalDec -> return (Just globalDec))
+                 ( getValS (lexeme tk) (scp state)))
+          (\ localDec -> (tellLog .concat) whathappened >> return (Just localDec))
+          (lookUp (zipp state) (lexeme tk))
+ where error1       = strError (position tk) " variable or datatype" (lexeme tk) "used but not declared."
+       whathappened = ["Variable ",lexeme tk," at ",(show . position) tk," well used."]
+
+
+
+expIns :: Exp -> (Type,Token) -> OurMonad((Type,Token,Exp))
+expIns ins (TypeError,to) = return (TypeError,to,NoExp)
+expIns ins (ty,to)        = return (ty,to,ins)
 
 checkAssign :: Type -> Type -> Int -> Bool
 checkAssign (TypeField _ TypeInt) TypeInt at = True
@@ -529,12 +520,17 @@ checkMain = do
         then return ()
         else tellError $ strError (0,0) "" "hitMAINlee" "function not found"
 
+-- Check if there is a mainFunction and add it at the begining of the list
 checkMain' :: [(String,Ins)] -> OurMonad( [(String,Ins)] )
 checkMain' functions = do
-    if any ( (=="hitMAINlee")  . fst) functions
-    then return functions
+    let (fs,list) = foldl processIns (Nothing,[]) functions
+    if isJust fs
+    then return (("hitMAINlee" , fromJust fs) : list)
     else do tellError $ strError (0,0)"" "hitMAINlee" "function not found"
             return []
+  where processIns (a,l) (string,insTree) = if string == "hitMAINlee" 
+                                              then (Just insTree, l)
+                                              else (a, (string,insTree):l)
 
 checkRecursiveDec :: Token -> TypeTuple -> OurMonad()
 checkRecursiveDec dataTok typeSec = do 
@@ -547,6 +543,12 @@ checkOkIns :: Ins -> Ins -> Type -> OurMonad ( (Type,Ins) )
 checkOkIns ins block t = if t /= TypeError
                             then return (TypeVoid, ins `insertIns` block )
                             else return (TypeError, Error )
+
+buildRead :: Token -> (Type,Ins) -> OurMonad((Type,Ins))
+buildRead four one = do 
+    itsReadable <- checkReadable four True 
+    newVar      <- buildVar four
+    checkOkIns (Read newVar ) (snd one) itsReadable
 
 -- Change by a instruction type default
 adefault = undefined
@@ -648,7 +650,12 @@ checkEnumFor tok newVar enum1 enum2 = do
                               (toStr tok) 
                               ("upper limit is " ++ (show t1) ++ " and lower limit is " ++ (show t2) )
 
-
+checkArray :: Token -> [Exp] -> OurMonad((Type,Token,Exp))
+checkArray tok list = do
+    varDec <- getDeclare tok
+    maybe (return (TypeError,tok,NoExp))
+          (\ dec -> return (storedType dec, tok, arrayParser (ExpVar dec (lexeme tok)) list))
+          varDec   
 
 --checkAll :: Token -> [Type] -> [Type] -> OurMonad (Type)
 --checkAll t obtained expected = if all (not isError) obtained
@@ -662,9 +669,7 @@ checkEnumFor tok newVar enum1 enum2 = do
 
 
 
-expIns :: Exp -> (Type,Token) -> OurMonad((Type,Token,Exp))
-expIns ins (TypeError,to) = return (TypeError,to,NoExp)
-expIns ins (ty,to)        = return (ty,to,ins)
+
 
 sel1 :: (Type,Token,Exp) -> Type
 sel1 (a,_,_) = a
@@ -698,7 +703,7 @@ builtinFunctions = emptyScope
 --          ("intToChar"     , makeFunc [TypeInt      , TypeChar  ] ),
 --          ("charToInt"     , makeFunc [TypeChar     , TypeInt   ] ),
 --          ("floor"         , makeFunc [TypeFloat    , TypeInt   ] ),
---          ("celing"        , makeFunc [TypeFloat    , TypeInt   ] ),
+--          ("celing"        , makeFunc [TypeFloat    , TypeInt   ] ),  
 --          ("succ"          , makeFunc [TypeEnumCons , TypeEnumCons ] ),
 --          ("pred"          , makeFunc [TypeEnumCons , TypeEnumCons ] ),
 --          ("pidGET"        , makeFunc [TypeEnumCons , TypeInt   ] ),

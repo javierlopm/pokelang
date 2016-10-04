@@ -1,0 +1,19 @@
+funcball VOIDtorb hitMAINlee():
+    pINTachu o;
+    pINTachu t;
+    pINTachu th;
+    pINTachu f;
+    pINTachu fi;
+    pINTachu s;
+    pINTachu se;
+    pINTachu e;
+    pINTachu n;
+    pINTachu te;
+
+    o  = 1;
+    t  = 1 + 1;
+    th = 3 * 1;
+    f  = 2 ^ 2;
+    s  = t * th;
+
+vamo_a_calmano
