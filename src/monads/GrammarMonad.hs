@@ -498,20 +498,22 @@ checkFunctionCall ident calltup = do
         error2  = strError (position ident) "number of arguments don't match with" (lexeme ident) "declaration."
 
 
-checkFieldAccess :: (Type,Token,Exp) -> (Type,Token,Exp) -> OurMonad((Type,Token))
-checkFieldAccess (TypeError,tk1,_) _ = return (TypeError,tk1)
-checkFieldAccess (ty1,tk1,_) (ty2,tk2,_) = do
+checkFieldAccess :: (Type,Token,Exp) -> Token -> OurMonad((Type,Token,Exp))
+checkFieldAccess (TypeError,tk1,_) _ = return (TypeError,tk1,NoExp)
+checkFieldAccess (ty1,tk1,exp1) tk2 = do
     state <- get
     if structured ty1 
     then do let strScope = (fields . fromJust) $ getValS (getDataName ty1) 
                                                          (scp state) 
-            if isInScope strScope (lexeme tk2)
-            then return(((storedType . fromJust) (getValS (lexeme tk2) strScope)),tk2)
-            else tellError (error2 (getDataName ty1)) >> return (TypeError,tk1)
-    else tellError error1  >> return (TypeError,tk1)
-  where error1 = strError (position tk1) "Variable" (lexeme tk1) "it's not a valid struct/union, field cannot be accessed" -- AQUI
-        error2 dn = strError (position tk1) "Variable" (lexeme tk2) ("not found in struct/union " ++ show dn )
+            if isInScope strScope l2
+            then do let dec = fromJust $ getValS l2 strScope
+                    return (storedType dec, tk2, Binary Access exp1 (ExpVar dec l2) )
+            else tellError (error2 (getDataName ty1)) >> return (TypeError,tk1,NoExp)
+    else tellError error1  >> return (TypeError,tk1,NoExp)
+  where error1 = strError (position tk1) "Variable" l "it's not a valid struct/union, field cannot be accessed" -- AQUI
+        error2 dn = strError (position tk1) "Variable" l2 ("not found in struct/union " ++ show dn )
         l      = lexeme tk1
+        l2      = lexeme tk2
 
 checkMain :: OurMonad()
 checkMain = do
