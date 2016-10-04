@@ -7,10 +7,9 @@ module InsToTac(
     TreeTranslator
 ) where
 
-import Data.Sequence(empty,Seq,(|>),(<|),(><))
+import Data.Sequence(empty,Seq,(|>),(<|),(><),singleton)
 import qualified Data.Foldable as F(foldl)
 import Data.Monoid((<>),mempty)
-import Control.Applicative(pure)
 import Data.Word(Word)
 import Control.Monad.State
 import Types(Declare(..),Direction(..))
@@ -46,14 +45,14 @@ forestToTac ((str,insTree):tl)  = do
     headTac       <- treeToTac insTree
     forestTacTail <- forestToTac tl
     -- Maybe there'es no need to return, only write to file?
-    return ( pure (str,headTac) <> forestTacTail)
+    return ( [(str,headTac)] <> forestTacTail)
 
 
 treeToTac :: Ins -> TreeTranslator (Program)
 treeToTac (Assign e1 e2) = do 
     (tac1,var1) <- expToTac e1
     (tac2,var2) <- expToTac e2
-    let finaltac = (tac1 <> tac2) <> (pure (Mv var1 var2))
+    let finaltac = (tac1 <> tac2) <> (singleton (Mv var1 var2))
     -- liftIO $ putStrLn $ show finaltac
     return finaltac
 
@@ -85,7 +84,7 @@ treeToTac (ForStep low high step ins ) = do
 treeToTac (Block iS ) = do 
     progSeq <- M.mapM treeToTac iS
     return $ F.foldl (><) empty progSeq
-treeToTac _ = return (pure Nop)
+treeToTac _ = return (singleton Nop)
 
 expToTac :: Exp -> TreeTranslator ((Program,Var))
 expToTac (ExpInt   i1) = return (empty,Int_Cons   i1) -- Single constant values
@@ -151,7 +150,7 @@ expToTac (Binary op (ExpVar ev s) (ExpInt i2)) = do
     resTemp <- newTemp
     let nt = Temp resTemp
     case (dir ev) of
-        Label      -> return( pure (tacOper nt (MemAdress s) (Int_Cons i2)) , nt )
+        Label      -> return( singleton (tacOper nt (MemAdress s) (Int_Cons i2)) , nt )
         (Offset o) -> do 
             tempLocal <- newTemp
             let tl = Temp tempLocal
@@ -177,7 +176,7 @@ expToTac (Binary op (ExpVar ev1 s1) (ExpVar ev2 s2)) = do
     blah <- newTemp
     let nt = Temp blah
     makeOper tacOper nt (dir ev1) (dir ev2)
-  where makeOper c nt  Label      Label       = return (pure (c nt (ma s1) (ma s2)) , nt)
+  where makeOper c nt  Label      Label       = return (singleton (c nt (ma s1) (ma s2)) , nt)
         makeOper c nt (Offset o1) (Offset o2) = do 
             (i1,temp1) <- loadLocal o1
             (i2,temp2) <- loadLocal o2
@@ -195,7 +194,7 @@ expToTac (ExpVar dec s)= newTemp >>= return . ((,) empty) . Temp -- Just a examp
 expToTac (Binary op exp1 exp2) = do 
     nt <- newTemp
     return (empty,Temp nt)
-expToTac _ = return (pure Nop,Temp 0)
+expToTac _ = return (singleton Nop,Temp 0)
 
 loadLocal :: Int -> TreeTranslator((IntIns,Var))
 loadLocal ofs = do tempLocal <- newTemp

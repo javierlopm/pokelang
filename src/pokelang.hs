@@ -1,6 +1,6 @@
 module Main where
 import System.Environment
-import System.Exit
+import System.Exit(exitFailure)
 import System.IO(hPutStrLn,stderr)  
 import Tokens
 import Grammar
@@ -44,7 +44,7 @@ getIns tokens pr = do
   if errorcount == 0
     then do if pr then putStrLn $ printAsts ast else return ()
             return ast
-    else printErrors errorcount id errors >> die "" >> return []
+    else printErrors errorcount id errors >> exitFailure >> return []
   
 main = do
   arg1:arg2:_ <- getArgs
