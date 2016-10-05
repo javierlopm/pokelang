@@ -16,7 +16,7 @@ STRUCTabuzz poketrainer {
 funcball pINTachu fibo(pINTachu n):
     STRUCTabuzz poketrainer ash;
 
-    n = ash.mypkmn.type;
+    #n = ash.mypkmn.type;
     n *= 4;
     n *= 4;
 
