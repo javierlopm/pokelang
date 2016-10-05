@@ -15,11 +15,11 @@ import Control.Monad.State
 import Types(Declare(..),Direction(..))
 import qualified Data.Traversable as M(mapM)
 
-import Instructions hiding(Operator(Eql,NotEql,Mod,And,Or))
-import Tac          hiding(IntIns(Eql,NotEql,Mod,And,Or))
+import Instructions hiding(Operator(Eql,NotEql,Mod,And,Or,Not))
+import Tac          hiding(IntIns(Eql,NotEql,Mod,And,Or,Not))
 
-import Instructions as I(Operator(Eql,NotEql,Mod,And,Or))
-import Tac          as T(IntIns(Eql,NotEql,Mod,And,Or))
+import Instructions as I(Operator(Eql,NotEql,Mod,And,Or,Not))
+import Tac          as T(IntIns(Eql,NotEql,Mod,And,Or,Not))
 
 data TranlatorState  = TranlatorState { tempCount  :: Word
                                       , labelCount :: Word }    
@@ -89,12 +89,16 @@ treeToTac (Block iS ) = do
 treeToTac _ = return (singleton Nop)
 
 expToTac :: Exp -> TreeTranslator ((Program,Var))
+expToTac (Unary op (ExpInt   a) ) = return  (empty , operateui op a )
+expToTac (Unary op (ExpFloat a) ) = return  (empty , operateuf op a )
+
 expToTac (ExpInt   i1) = return (empty,Int_Cons   i1) -- Single constant values
 expToTac (ExpFloat i1) = return (empty,Float_Cons i1)
--- expToTac (ExpFloat i1) = return (empty,Float_Cons i1) Convertir true y false en 1 0
+expToTac (ExpTrue    ) = return (empty,Int_Cons    1)
+expToTac (ExpFalse   ) = return (empty,Int_Cons    0)
 expToTac (Binary op (ExpInt i2) (ExpVar ev s)) = expToTac (Binary op (ExpVar ev s) (ExpInt i2))
 
--- Two integer constants
+-- Two integer constants or booleans
 expToTac (Binary op (ExpInt i1) (ExpInt i2)) = do 
     let newVar = operatei op i1 i2
     -- must check if its smaller than 16-bits threshold signed. Maybe leave this for mips
@@ -124,6 +128,10 @@ expToTac (Binary op exp1 exp2) = do
     (ins1,t1) <- expToTac exp1
     (ins1,t2) <- expToTac exp2
     return ( singleton (insTranslation op (Temp nt) t1 t2) ,Temp nt)
+expToTac (Unary op a) = do 
+    tempLocal  <- newTemp
+    (ins,wher) <- expToTac a
+    return (ins |> (insTranslation' op wher (Temp tempLocal)),(Temp tempLocal))
 
 expToTac _ = return (singleton Nop,Temp 0)
 
@@ -145,7 +153,8 @@ operatei Less       a b = Int_Cons $ toInt $ a <   b
 operatei LessEql    a b = Int_Cons $ toInt $ a <=  b
 operatei GreaterEql a b = Int_Cons $ toInt $ a >=  b
 operatei Greater    a b = Int_Cons $ toInt $ a >   b
--- Add bools here
+operatei I.And      a b = Int_Cons $ toInt $ a == 1 && b == 1
+operatei I.Or       a b = Int_Cons $ toInt $ a == 1 || b == 1
 
 operatef :: Operator -> Float -> Float -> Var
 operatef Plusf      a b = Float_Cons (a + b)
@@ -158,6 +167,14 @@ operatef Less       a b = Int_Cons $ toInt $ (a <  b)
 operatef LessEql    a b = Int_Cons $ toInt $ (a <= b)
 operatef GreaterEql a b = Int_Cons $ toInt $ (a >= b)
 operatef Greater    a b = Int_Cons $ toInt $ (a >  b)
+
+operateui :: Operator -> Int -> Var
+operateui Negi a   = Int_Cons (-a)
+operateui I.Not 0  = Int_Cons  1
+operateui I.Not _  = Int_Cons  0
+
+operateuf :: Operator -> Float -> Var
+operateuf Negf a = Float_Cons (-a) 
 
 insTranslation :: Operator -> Var -> Var -> Var -> IntIns
 insTranslation Greater    = Gt 
@@ -178,22 +195,19 @@ insTranslation I.Mod      = T.Mod
 insTranslation Multiplyi  = Multi
 insTranslation Multiplyf  = Multf
 insTranslation Power      = Pot
--- insTranslation Address          = 
--- insTranslation Access          = 
--- insTranslation Not          = 
--- insTranslation Neg          = 
--- insTranslation SOr          = 
+insTranslation Access     = ReadArray
 -- insTranslation SAnd          = 
+-- insTranslation SOr   =  
+    
+insTranslation' :: Operator -> Var -> Var -> IntIns
+insTranslation' I.Not   =  T.Not
+insTranslation' Negi    =  Negaf
+insTranslation' Negf    =  Negaf
+insTranslation' Address =  ReadPointer
 
--- insToOper :: Operator -> Var -> Var -> IntIns
--- insToOper Less () ()
--- insToOper Less () ()
--- insToOper Less () ()
-
-
+toInt :: Bool -> Int
 toInt False = 0
 toInt True  = 1
-
 
 -- Alias
 execTree :: Monad m => StateT s m a -> s -> m s

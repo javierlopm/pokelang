@@ -65,11 +65,13 @@ data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
             | Mod      Dest Src1 Src2
             | Multi    Dest Src1 Src2
             | Pot      Dest Src1 Src2
+            | Negai    Dest Src1
             -- Float Operations over Ints
             | Addf     Dest Src1 Src2 
             | Subf     Dest Src1 Src2
             | Divf     Dest Src1 Src2
             | Multf    Dest Src1 Src2
+            | Negaf    Dest Src1
             -- Logic bitwise operations
             | And      Dest Src1 Src2  
             | Or       Dest Src1 Src2
@@ -123,6 +125,8 @@ instance Show      IntIns where
     show (Or     r0 r1 r2)  =  showTAC r0 r1 "|"  r2
     show (XOr    r0 r1 r2)  =  showTAC r0 r1 "XOr"r2
     show (Not    r0 r1   )  =  show2AC r0 r1 "~" 
+    show (Negai  r0 r1   )  =  show2AC r0 r1 "-" 
+    show (Negaf  r0 r1   )  =  show2AC r0 r1 "-f" 
     show (Eql    r0 r1 r2)  =  showTAC r0 r1 "="  r2
     show (NotEql r0 r1 r2)  =  showTAC r0 r1 "/=" r2
     show (ShiftL r0 r1 i)   = showTACi r0 r1 "<<" i
@@ -193,6 +197,8 @@ instance Binary IntIns where
     put (Subf    r0 r1 r2)   = putWord8 37  >> put r0 >> put r1 >> put r2
     put (Divf    r0 r1 r2)   = putWord8 38  >> put r0 >> put r1 >> put r2
     put (Multf   r0 r1 r2)   = putWord8 39  >> put r0 >> put r1 >> put r2
+    put (Negai   r0 str )    = putWord8 40 >> put r0 >>  put str
+    put (Negaf   r0 str )    = putWord8 41 >> put r0 >>  put str
 
     get = do 
     key <- getWord8
@@ -237,6 +243,8 @@ instance Binary IntIns where
        37 -> buildTac Subf   
        38 -> buildTac Divf   
        39 -> buildTac Multf  
+       40 -> build2get Negai  
+       41 -> build2get Negaf  
 
 -- Print auxiliaries
 showTAC  d s1 op s2 = show d ++" := "++ show s1 ++" "++ op ++ " " ++ show s2
