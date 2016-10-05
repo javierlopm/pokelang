@@ -6,7 +6,8 @@ module Tac(
     showP,
     saveProgram,
     loadProgram,
-    backPatch
+    backPatch,
+    isCons
 ) where 
 
 import Prelude hiding(foldr)
@@ -52,12 +53,17 @@ type Dest  = Var
 type Label = Word -- Non-negative tags: tag_0, tag_1, tag_2... 
 
 {- Intermediate machine -}
-data IntIns = Add      Dest Src1 Src2 -- Aritmetic Operations
-            | Sub      Dest Src1 Src2
-            | Div      Dest Src1 Src2
+data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
+            | Subi     Dest Src1 Src2
+            | Divi     Dest Src1 Src2
             | Mod      Dest Src1 Src2
-            | Mult     Dest Src1 Src2
+            | Multi    Dest Src1 Src2
             | Pot      Dest Src1 Src2
+            -- Float Operations over Ints
+            | Addf     Dest Src1 Src2 
+            | Subf     Dest Src1 Src2
+            | Divf     Dest Src1 Src2
+            | Multf    Dest Src1 Src2
             -- Logic bitwise operations
             | And      Dest Src1 Src2  
             | Or       Dest Src1 Src2
@@ -97,12 +103,15 @@ data IntIns = Add      Dest Src1 Src2 -- Aritmetic Operations
             | Print     Src1        -- Print Integer constant
             | PrintEnum String Src1 -- Print enum at label
             
-
 instance Show      IntIns where
-    show (Add    r0 r1 r2)  =  showTAC r0 r1 "f+" r2
-    show (Sub    r0 r1 r2)  =  showTAC r0 r1 "f-" r2
-    show (Div    r0 r1 r2)  =  showTAC r0 r1 "f/" r2
-    show (Mult   r0 r1 r2)  =  showTAC r0 r1 "*"  r2
+    show (Addi    r0 r1 r2)  =  showTAC r0 r1 "+" r2
+    show (Subi    r0 r1 r2)  =  showTAC r0 r1 "-" r2
+    show (Divi    r0 r1 r2)  =  showTAC r0 r1 "/" r2
+    show (Multi   r0 r1 r2)  =  showTAC r0 r1 "*"  r2
+    show (Addf    r0 r1 r2)  =  showTAC r0 r1 "f+" r2
+    show (Subf    r0 r1 r2)  =  showTAC r0 r1 "f-" r2
+    show (Divf    r0 r1 r2)  =  showTAC r0 r1 "f/" r2
+    show (Multf   r0 r1 r2)  =  showTAC r0 r1 "f*"  r2
     show (Pot    r0 r1 r2)  =  showTAC r0 r1 "^"  r2
     show (And    r0 r1 r2)  =  showTAC r0 r1 "&"  r2
     show (Or     r0 r1 r2)  =  showTAC r0 r1 "|"  r2
@@ -131,7 +140,7 @@ instance Show      IntIns where
     show (Call     str )      = "Call " ++ str
     show (Param    par )      = "Param " ++ show par
     show (Tag      i   )      = '\n': (showJust i) ++ ":"
-    show (Comment  str )      = ';': str
+    show (Comment  str )      =  "\n#"++ str
     show (Print     c  )      = "Print "      ++ show c
     show (PrintEnum c i)      = "Print enum " ++ show c ++ "[" ++ show i ++"]"
     show Nop                  = "Nop"
@@ -139,10 +148,10 @@ instance Show      IntIns where
 -- Ewwwww, it might be improved with Generics?
 instance Binary IntIns where
     put  Nop                 = putWord8 0 
-    put (Mult     r0 r1 r2)  = putWord8 1  >> put r0 >> put r1 >> put r2
-    put (Add      r0 r1 r2)  = putWord8 2  >> put r0 >> put r1 >> put r2
-    put (Sub      r0 r1 r2)  = putWord8 3  >> put r0 >> put r1 >> put r2
-    put (Div      r0 r1 r2)  = putWord8 4  >> put r0 >> put r1 >> put r2
+    put (Multi     r0 r1 r2) = putWord8 1  >> put r0 >> put r1 >> put r2
+    put (Addi      r0 r1 r2) = putWord8 2  >> put r0 >> put r1 >> put r2
+    put (Subi      r0 r1 r2) = putWord8 3  >> put r0 >> put r1 >> put r2
+    put (Divi      r0 r1 r2) = putWord8 4  >> put r0 >> put r1 >> put r2
     put (Pot      r0 r1 r2)  = putWord8 5  >> put r0 >> put r1 >> put r2
     put (And      r0 r1 r2)  = putWord8 6  >> put r0 >> put r1 >> put r2
     put (Or       r0 r1 r2)  = putWord8 7  >> put r0 >> put r1 >> put r2
@@ -166,23 +175,27 @@ instance Binary IntIns where
     put (Mv       r0 r1  )   = putWord8 25 >> put r0 >>  put r1 
     put (ReadPointer  r0 r1) = putWord8 26 >> put r0 >>  put r1 
     put (StorePointer r0 r1) = putWord8 27 >> put r0 >>  put r1 
-    put (ReadArray  r0 r1 r2)= putWord8 28 >> put r0 >>  put r1 >> put r2 
-    put (StoreArray r0 r1 r2)= putWord8 29 >> put r0 >>  put r1 >> put r2 
+    put (ReadArray  r0 r1 r2) = putWord8 28 >> put r0 >>  put r1 >> put r2 
+    put (StoreArray r0 r1 r2) = putWord8 29 >> put r0 >>  put r1 >> put r2 
     put (Call     str )      = putWord8 30 >> put str
     put (Param    par )      = putWord8 31 >> put par
     put (Comment  str )      = putWord8 32 >> put str
     put (Tag      str )      = putWord8 33 >> put str
     put (Print     r0 )      = putWord8 34 >> put r0
     put (PrintEnum lb i)     = putWord8 35 >> put lb >> put i
+    put (Addf    r0 r1 r2)   = putWord8 36  >> put r0 >> put r1 >> put r2
+    put (Subf    r0 r1 r2)   = putWord8 37  >> put r0 >> put r1 >> put r2
+    put (Divf    r0 r1 r2)   = putWord8 38  >> put r0 >> put r1 >> put r2
+    put (Multf   r0 r1 r2)   = putWord8 39  >> put r0 >> put r1 >> put r2
 
     get = do 
     key <- getWord8
     case key of
        0  ->  return    Nop
-       1  ->  buildTac  Mult
-       2  ->  buildTac  Add
-       3  ->  buildTac  Sub
-       4  ->  buildTac  Div
+       1  ->  buildTac  Multi
+       2  ->  buildTac  Addi
+       3  ->  buildTac  Subi
+       4  ->  buildTac  Divi
        5  ->  buildTac  Pot
        6  ->  buildTac  And
        7  ->  buildTac  Or
@@ -214,6 +227,10 @@ instance Binary IntIns where
        33 ->  B.get >>= return . Tag
        34 ->  B.get >>= return . Print
        35 ->  build2get PrintEnum 
+       36 -> buildTac Addf   
+       37 -> buildTac Subf   
+       38 -> buildTac Divf   
+       39 -> buildTac Multf  
 
 -- Print auxiliaries
 showTAC  d s1 op s2 = show d ++" := "++ show s1 ++" "++ op ++ " " ++ show s2
@@ -237,6 +254,11 @@ pComment l = "Found at line" ++ show l
 isTag :: IntIns -> Bool
 isTag (Tag a) = True
 isTag _       = False
+
+isCons :: Var -> Bool
+isCons (Int_Cons   a) = True
+isCons (Float_Cons a) = True
+isCons _              = False
 
 -- Program as a sequence of instructions
 type Program = Seq IntIns
@@ -273,12 +295,12 @@ t2 = Temp 2
 programExample :: Program
 programExample = fromList stuff
     where stuff = [Nop,            
-                  (Mult     cu t0 t1),
+                  (Multi     cu t0 t1),
                   (Call     "fibo_3" ),
                   (JLt      a x Nothing ),
                   (Jump     (Just 3)    ),
                   (Eql      t0 t0 t1),
-                  (Add      a pic a),
+                  (Addi      a pic a),
                   (And      z x cu),
                   (PrintEnum "pokeDaysLaborables" (Int_Cons 1)),
                   (Print     a ),
@@ -290,7 +312,7 @@ programExample = fromList stuff
                   (Pot      z pic cu),
                   (GEq      a x cu),
                   (Jz       a   (Just 69) ),
-                  (Sub      z x cu),
+                  (Subi      z x cu),
                   (Not      x x ),
                   (Mv       a x    ),
                   (Tag      Nothing ) ,
@@ -301,7 +323,7 @@ programExample = fromList stuff
                   (JGt      a x Nothing  ),
                   (Tag      (Just 20) ),
                   (NotEql   a cu t2),
-                  (Div      z x cu),
+                  (Divi      z x cu),
                   (Tag      Nothing ),
                   (JLEq     a x Nothing  ),
                   (LEq      a x z),
