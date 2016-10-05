@@ -699,6 +699,7 @@ checkArray tok list = do
 --base +  (j * tamDimJ + i) * tamTipo
 --base +  ((k * tamDimK + j) * tamDimJ + i) * tamTipo
 arrayParser :: Type -> [Exp] -> (Type,Exp)
+arrayParser (TypeArray t dim) (exp:[]) = (t,(Binary Multiplyi (ExpInt (getSize t)) (exp)))
 arrayParser ts exps = (final_t,expBuilt)
   where 
     (dims,final_t) = dimensionArray ts
