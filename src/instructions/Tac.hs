@@ -7,7 +7,8 @@ module Tac(
     saveProgram,
     loadProgram,
     backPatch,
-    isCons
+    isCons,
+    getCons
 ) where 
 
 import Prelude hiding(foldr)
@@ -24,6 +25,11 @@ data Var = Int_Cons   Int
          | MemAdress  String
          | Temp       Word   -- Non negative: t0, t1 ..
          | Fp   -- Frame pointer
+
+getCons :: Var -> Int
+getCons (Int_Cons   c) = c
+-- getCons (Float_Cons c) = c
+getCons _              = error "cannot get constant at Var"
 
 instance Show Var where
     show (Int_Cons   i  ) = "#"  ++ show i

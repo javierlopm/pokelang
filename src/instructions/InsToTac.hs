@@ -91,98 +91,24 @@ treeToTac _ = return (singleton Nop)
 expToTac :: Exp -> TreeTranslator ((Program,Var))
 expToTac (ExpInt   i1) = return (empty,Int_Cons   i1) -- Single constant values
 expToTac (ExpFloat i1) = return (empty,Float_Cons i1)
--- Swap operands
+-- expToTac (ExpFloat i1) = return (empty,Float_Cons i1) Convertir true y false en 1 0
 expToTac (Binary op (ExpInt i2) (ExpVar ev s)) = expToTac (Binary op (ExpVar ev s) (ExpInt i2))
-
-operate :: Num a => a -> a -> Var
-operate Plusi      = ExpInt . (+)
-operate Minusi     = ExpInt . (-)
-operate Multiplyi  = ExpInt . (*)
-operate I.Mod      = ExpInt . mod
-operate Divi       = ExpInt . div
-operate Power      = ExpInt . toInt . (^)
-operate I.Eql      = ExpInt . toInt . (==)
-operate I.NotEql   = ExpInt . toInt . (/=)
-operate Less       = ExpInt . toInt . (<)
-operate LessEql    = ExpInt . toInt . (<=)
-operate GreaterEql = ExpInt . toInt . (>=)
-operate Greater    = ExpInt . toInt . (>)
-operate Plusf      = ExpFloat . (+)
-operate Minusf     = ExpFloat . (-)
-operate Multiplyf  = ExpFloat . (*)
-operate Divf       = ExpFloat . (/)
-
 
 -- Two integer constants
 expToTac (Binary op (ExpInt i1) (ExpInt i2)) = do 
     let newVar = operate op i1 i2
     -- must check if its smaller than 16-bits threshold signed. Maybe leave this for mips
-    if ((-32768) <= newVar) && (newVar <= 32767)
-        then return (empty,Int_Cons newVar)
+    if ((-32768) <= (getCons newVar)) && ( (getCons newVar) <= 32767)
+        then return (empty, newVar)
         else do nt <- newTemp
-                return (empty |> (Mv (Temp nt) (Int_Cons newVar)) , (Temp nt))
+                return (empty |> (Mv (Temp nt) newVar) , (Temp nt))
 
 -- Two float constants
 expToTac (Binary op (ExpFloat i1) (ExpFloat i2)) = do -- Two integer constants
     let newVar = operate op i1 i2
     -- must check if its smaller than 16-bits threshold signed
     nt <- newTemp
-    return (empty |> (Mv (Temp nt) (Float_Cons newVar)) , (Temp nt))
-
--- Variable and Int base case
--- expToTac (Binary op (ExpVar ev s) (ExpInt i2)) = do 
---     let tacOper = case op of Plus       ->  Add
---                              Minus      ->  Sub
---                              Multiply   ->  Mult
---                              I.Mod      ->  T.Mod
---                              Divi       ->  T.Div
---                              Power      ->  Pot
---                              I.Eql      ->  T.Eql
---                              I.NotEql   ->  T.NotEql
---                              Less       ->  Lt
---                              LessEql    ->  LEq
---                              GreaterEql ->  GEq
---                              Greater    ->  Gt
---     resTemp <- newTemp
---     let nt = Temp resTemp
---     case (dir ev) of
---         Label      -> return( singleton (tacOper nt (MemAdress s) (Int_Cons i2)) , nt )
---         (Offset o) -> do 
---             tempLocal <- newTemp
---             let tl = Temp tempLocal
---             let loadInTemp = empty      |> (ReadArray tl Fp (Int_Cons o))
---             let doOper     = loadInTemp |> (tacOper nt tl (Int_Cons i2))
---             return (doOper , nt )
-
--- Two Vars
--- expToTac (Binary op (ExpVar ev1 s1) (ExpVar ev2 s2)) = do
---     let tacOper = case op of Plus       ->  Add
---                              Minus      ->  Sub
---                              Multiply   ->  Mult
---                              I.Mod      ->  T.Mod
---                              I.Div      ->  T.Div
---                              Power      ->  Pot
---                              I.Eql      ->  T.Eql
---                              I.NotEql   ->  T.NotEql
---                              Less       ->  Lt
---                              LessEql    ->  LEq
---                              GreaterEql ->  GEq
---                              Greater    ->  Gt
---                              -- Logic operator MISSING
---     blah <- newTemp
---     let nt = Temp blah
---     makeOper tacOper nt (dir ev1) (dir ev2)
---   where makeOper c nt  Label      Label       = return (singleton (c nt (ma s1) (ma s2)) , nt)
---         makeOper c nt (Offset o1) (Offset o2) = do 
---             (i1,temp1) <- loadLocal o1
---             (i2,temp2) <- loadLocal o2
---             return ( empty |> i1 |> i2 |> (c nt temp1 temp2) , nt )
---         makeOper c nt  Label     (Offset o) = do
---             (i,temp) <- loadLocal o
---             return (empty |> i |> (c nt (ma s1) temp) , nt)
---         makeOper c nt (Offset o)  Label     = makeOper c nt Label (Offset o)
---         ma = MemAdress
-
+    return (empty |> (Mv (Temp nt) newVar) , (Temp nt))
 
 -- Single variable
 expToTac (ExpVar dec s) = case (dir dec) of
@@ -206,6 +132,25 @@ loadLocal ofs = do tempLocal <- newTemp
                    let tl = (Temp tempLocal)
                    return ((ReadArray tl Fp (Int_Cons ofs)),tl)
 
+operate :: Num a => constr -> a -> a -> Var
+operate (Plusi     ) = ExpInt . (+)
+operate (Minusi    ) = ExpInt . (-)
+operate (Multiplyi ) = ExpInt . (*)
+operate (I.Mod     ) = ExpInt . mod
+operate (Divi      ) = ExpInt . div
+operate (Power     ) = ExpInt . toInt . (^)
+operate (I.Eql     ) = ExpInt . toInt . (==)
+operate (I.NotEql  ) = ExpInt . toInt . (/=)
+operate (Less      ) = ExpInt . toInt . (<)
+operate (LessEql   ) = ExpInt . toInt . (<=)
+operate (GreaterEql) = ExpInt . toInt . (>=)
+operate (Greater   ) = ExpInt . toInt . (>)
+operate (Plusf     ) = ExpFloat . (+)
+operate (Minusf    ) = ExpFloat . (-)
+operate (Multiplyf ) = ExpFloat . (*)
+operate (Divf      ) = ExpFloat . (/)
+-- operate I.And
+
 insTranslation :: Operator -> Var -> Var -> Var -> IntIns
 insTranslation Greater    = Gt 
 insTranslation Less       = Lt 
@@ -217,14 +162,14 @@ insTranslation I.And      = T.And
 insTranslation I.Or       = T.Or
 insTranslation Div        = Divi 
 insTranslation FloatDiv   = Divf
--- insTranslation Plusi = Addi 
--- insTranslation Plusf = Addf 
--- insTranslation Minusf = Subf
--- insTranslation Minusi = Subi
-insTranslation I.Mod     = T.Mod
-insTranslation Multiplyi = Multi
-insTranslation Multiplyf = Multf
-insTranslation Power     = Pot
+insTranslation Plusi      = Addi 
+insTranslation Plusf      = Addf 
+insTranslation Minusf     = Subf
+insTranslation Minusi     = Subi
+insTranslation I.Mod      = T.Mod
+insTranslation Multiplyi  = Multi
+insTranslation Multiplyf  = Multf
+insTranslation Power      = Pot
 -- insTranslation Address          = 
 -- insTranslation Access          = 
 -- insTranslation Not          = 
