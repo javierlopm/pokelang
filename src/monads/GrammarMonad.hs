@@ -680,22 +680,21 @@ checkArray :: Token -> [Exp] -> OurMonad((Type,Token,Exp))
 checkArray tok list = do
     varDec <- getDeclare tok 
     maybe (return (TypeError,tok,NoExp))
-          (\ dec -> return (storedType dec, tok, arrayParser (ExpVar dec (lexeme tok)) list))
-          varDec   
+          (\ dec -> do  let (final_t,expBuilt) = arrayParser (storedType dec) list
+                        return (storedType dec, tok, expBuilt))
+          varDec
+  where error1 = "HELP array"
 
-
---arrayParser' :: Type -> [Exp] -> (Type,Exp)
---arrayParser' (TypeArray baseT dim) (exp:[])  = Binary Multiplyi exp (getSize baseT) 
---arrayParser' (TypeArray nA dim) (exp:exps)   = Binary Plusi (Binary Multiplyi () ()) ()  
 
 --base +  (j * tamDimJ + i) * tamTipo
 --base +  ((k * tamDimK + j) * tamDimJ + i) * tamTipo
 arrayParser :: Type -> [Exp] -> (Type,Exp)
 arrayParser ts exps = (final_t,expBuilt)
-    where (dims,final_t) = dimensionArray ts
-          buildExp accExp (dim,i) = (Binary Multiplyi (Binary Plusi accExp (ExpInt i)) (ExpInt i))
-          expList = tail $ zip  ((init dims) ++ [getSize final_t])  exps
-          expBuilt = foldr buildExp (Binary Multiplyi (head dims) (head exps)) expList
+  where 
+    (dims,final_t) = dimensionArray ts
+    expBuilt = foldr buildExp (Binary Multiplyi (ExpInt (head dims)) (head exps)) expList
+    buildExp (dim,i) accExp = (Binary Multiplyi (Binary Plusi accExp i) (ExpInt dim))
+    expList  = tail $ zip  ((init dims) ++ [getSize final_t])  exps
 
 dimensionArray :: Type -> ([Int],Type)
 dimensionArray (TypeArray t1 dim) = ( dim : dimesions ,final_t)
