@@ -54,6 +54,7 @@ treeToTac :: Ins -> TreeTranslator (Program)
 treeToTac (Assign e1 e2) = do 
     (tac2,var2) <- expToTac e2
     (tac1,var1) <- expToTac e1
+
     let finaltac = (tac1 <> tac2) <> (singleton (StorePointer var1 var2))
     -- liftIO $ putStrLn $ show finaltac
     return finaltac
@@ -137,6 +138,7 @@ expToTac (Binary op exp1 exp2) = do
     (ins1,t1) <- expToTac exp1
     (ins2,t2) <- expToTac exp2
     nt <- newTemp
+
     return (  (ins1 <> ins2) |> (insTranslation op (Temp nt) t1 t2) ,Temp nt)
 expToTac (Unary op a) = do 
     tempLocal  <- newTemp

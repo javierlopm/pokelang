@@ -596,16 +596,24 @@ checkAllOk l a b s t
                         tellError error1 >> return TypeError
     where error1= strError (0,0) "Something went wrong..." "on the expression:" $ "\""++show a ++ " = " ++ show b ++ "\" something went horribly wrong"
 
+getBaseType :: Type -> Type
+getBaseType (TypeArray t1 d1) = getBaseType t1
+getBaseType a                 = a
+
 checkAssign :: Type -> Type -> Int -> Bool
 checkAssign (TypeField _ TypeInt) TypeInt at = True
 checkAssign (TypeField _ TypeBool) TypeBool 0 = True
 checkAssign (TypeField _ TypeChar) TypeChar 0 = True
 checkAssign (TypeField _ TypeFloat) TypeFloat at = True
-checkAssign TypeFloat TypeInt at = True
-checkAssign TypeFloat TypeFloat at = True
-checkAssign TypeInt TypeInt at = True
+checkAssign (TypeArray t1 d1) t2 0 = (getBaseType t1) == t2 && isBasic t2
+checkAssign (TypeArray t1 d1) t2 t = (getBaseType t1) == t2 && isNumeric t2
+checkAssign t1 (TypeArray t2 d2) 0 = (getBaseType t2) == t1 && isBasic t1
+checkAssign t1 (TypeArray t2 d2) t = (getBaseType t2) == t1 && isNumeric t1
 checkAssign TypeBool TypeBool 0 = True
 checkAssign TypeChar TypeChar 0 = True
+--checkAssign TypeFloat TypeInt at = True
+checkAssign TypeFloat TypeFloat at = True
+checkAssign TypeInt   TypeInt at = True
 --checkAssign TypeEnum TypeEnumCons 0 = True
 --checkAssign TypeEnum TypeEnum 0 = True
 checkAssign (TypePointer t1) t2 0 =  t1 == t2
@@ -683,7 +691,7 @@ checkArray tok list = do
           (\ dec -> do 
               let (final_t,expBuilt) = arrayParser (storedType dec) list
               let finalExp = (Binary Array (ExpVar dec (lexeme tok)) expBuilt)
-              return (storedType dec, tok, expBuilt))
+              return (storedType dec, tok, finalExp))
           varDec
   where error1 = "HELP array"
 

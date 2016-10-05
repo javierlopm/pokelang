@@ -15,6 +15,7 @@ module Types(
     toPointer,
     isPointer,
     isBasic,
+    isNumeric,
     toEmptyArray,
     toArray,
     makeType,
@@ -301,6 +302,10 @@ isPointer :: Type -> Bool
 isPointer (TypePointer _ ) = True
 isPointer _                = False
 
+isNumeric :: Type -> Bool 
+isNumeric TypeInt   = True
+isNumeric TypeFloat = True
+isNumeric _         = False
 
 isBasic :: Type -> Bool 
 isBasic TypeInt    = True

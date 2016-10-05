@@ -16,7 +16,7 @@ funcball VOIDtorb hitMAINlee():
 
     STRUCTabuzz poketrainer carlitos;
 
-    pINTachu [5]anArray;
+    pINTachu [5][10]anArray;
 
     --
     o  = 1;
@@ -24,11 +24,11 @@ funcball VOIDtorb hitMAINlee():
     th = 3 * 1 + t + f;
     se  = 2 ^ 2; 
     s  = t * th;
-    o = t;
     --
+    #o = t;
 
-    anArray[3] = 4;
+    anArray[3][4] = 4;
 
-    s = carlitos.socialSecurityNumber;
+    #s = carlitos.socialSecurityNumber;
 
 vamo_a_calmano
