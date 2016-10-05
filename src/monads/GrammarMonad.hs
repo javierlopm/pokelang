@@ -680,8 +680,10 @@ checkArray :: Token -> [Exp] -> OurMonad((Type,Token,Exp))
 checkArray tok list = do
     varDec <- getDeclare tok 
     maybe (return (TypeError,tok,NoExp))
-          (\ dec -> do  let (final_t,expBuilt) = arrayParser (storedType dec) list
-                        return (storedType dec, tok, expBuilt))
+          (\ dec -> do 
+              let (final_t,expBuilt) = arrayParser (storedType dec) list
+              let finalExp = (Binary Array (ExpVar dec (lexeme tok)) expBuilt)
+              return (storedType dec, tok, expBuilt))
           varDec
   where error1 = "HELP array"
 

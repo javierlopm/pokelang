@@ -205,6 +205,7 @@ insTranslation I.Mod      = T.Mod
 insTranslation Multiplyi  = Multi
 insTranslation Multiplyf  = Multf
 insTranslation Power      = Pot
+insTranslation Array      = ReadArray
 --insTranslation Access     = ReadArray
 -- insTranslation SAnd          = 
 -- insTranslation SOr   =  

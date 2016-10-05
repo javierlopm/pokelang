@@ -112,6 +112,7 @@ data Operator = And -- Binary
               | Div
               | FloatDiv
               | Mod
+              | Array
               | Negi 
               | Negf 
               | Plusi 
@@ -130,7 +131,7 @@ data Operator = And -- Binary
               | Eql
               -- Unary
               | Address -- Ampersand
-              | Access  -- Arrays and structs
+              | Access  --  structs
               | Not
 
 instance Show Operator where
@@ -149,6 +150,7 @@ instance Show Operator where
     show Minusf         = "f-"
     show Multiplyi      = "*"
     show Multiplyf      = "f*"
+    show Array          = "Arraaaaay"
     --show FloatMultiply = "f*"
     show Power         = "^"
     show Greater       = ">"

@@ -27,7 +27,7 @@ funcball VOIDtorb hitMAINlee():
     o = t;
     --
 
-    #anArray[3] = 4;
+    anArray[3] = 4;
 
     s = carlitos.socialSecurityNumber;
 
