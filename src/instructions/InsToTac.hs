@@ -15,16 +15,18 @@ import Control.Monad.State
 import Types(Declare(..),Direction(..))
 import qualified Data.Traversable as M(mapM)
 
-import Instructions hiding(Operator(Eql,NotEql,Div,Mod))
-import Tac          hiding(IntIns(Eql,NotEql,Div,Mod))
+import Instructions hiding(Operator(Eql,NotEql,Mod,And,Or))
+import Tac          hiding(IntIns(Eql,NotEql,Mod,And,Or))
 
-import Instructions as I(Operator(Eql,NotEql,Div,Mod))
-import Tac          as T(IntIns(Eql,NotEql,Div,Mod))
+import Instructions as I(Operator(Eql,NotEql,Mod,And,Or))
+import Tac          as T(IntIns(Eql,NotEql,Mod,And,Or))
 
 data TranlatorState  = TranlatorState { tempCount  :: Word
                                       , labelCount :: Word }    
                                       --deriving(Show)      
 type TreeTranslator  = StateT TranlatorState IO 
+
+debugVar = True
 
 vpp :: TranlatorState -> TranlatorState
 vpp (TranlatorState w1 w2) = (TranlatorState (succ w1) w2)
@@ -52,7 +54,7 @@ treeToTac :: Ins -> TreeTranslator (Program)
 treeToTac (Assign e1 e2) = do 
     (tac1,var1) <- expToTac e1
     (tac2,var2) <- expToTac e2
-    let finaltac = (tac1 <> tac2) <> (singleton (Mv var1 var2))
+    let finaltac = (tac1 <> tac2) <> (singleton (StorePointer var1 var2))
     -- liftIO $ putStrLn $ show finaltac
     return finaltac
 
@@ -92,22 +94,28 @@ expToTac (ExpFloat i1) = return (empty,Float_Cons i1)
 -- Swap operands
 expToTac (Binary op (ExpInt i2) (ExpVar ev s)) = expToTac (Binary op (ExpVar ev s) (ExpInt i2))
 
+operate :: Num a => a -> a -> Var
+operate Plusi      = ExpInt . (+)
+operate Minusi     = ExpInt . (-)
+operate Multiplyi  = ExpInt . (*)
+operate I.Mod      = ExpInt . mod
+operate Divi       = ExpInt . div
+operate Power      = ExpInt . toInt . (^)
+operate I.Eql      = ExpInt . toInt . (==)
+operate I.NotEql   = ExpInt . toInt . (/=)
+operate Less       = ExpInt . toInt . (<)
+operate LessEql    = ExpInt . toInt . (<=)
+operate GreaterEql = ExpInt . toInt . (>=)
+operate Greater    = ExpInt . toInt . (>)
+operate Plusf      = ExpFloat . (+)
+operate Minusf     = ExpFloat . (-)
+operate Multiplyf  = ExpFloat . (*)
+operate Divf       = ExpFloat . (/)
+
+
 -- Two integer constants
 expToTac (Binary op (ExpInt i1) (ExpInt i2)) = do 
-    let newVar = case op of 
-                    Plus       ->  i1 + i2
-                    Minus      ->  i1 - i2
-                    Multiply   ->  i1 * i2
-                    I.Mod      ->  i1 `mod` i2
-                    I.Div      ->  i1 `div` i2
-                    Power      ->  i1 ^ i2
-                    I.Eql      ->  if i1 == i2 then 1 else 0  -- 1/0 or true false constants?
-                    I.NotEql   ->  if i1 == i2 then 0 else 1
-                    Less       ->  if i1 <  i2 then 1 else 0
-                    LessEql    ->  if i1 <= i2 then 1 else 0
-                    GreaterEql ->  if i1 >= i2 then 1 else 0
-                    Greater    ->  if i1 >  i2 then 1 else 0
-                    FloatDiv   ->  error "Trying to do float div over two integers"
+    let newVar = operate op i1 i2
     -- must check if its smaller than 16-bits threshold signed. Maybe leave this for mips
     if ((-32768) <= newVar) && (newVar <= 32767)
         then return (empty,Int_Cons newVar)
@@ -116,91 +124,124 @@ expToTac (Binary op (ExpInt i1) (ExpInt i2)) = do
 
 -- Two float constants
 expToTac (Binary op (ExpFloat i1) (ExpFloat i2)) = do -- Two integer constants
-    let newVar = case op of 
-                    Plus       -> i1 + i2 -- float operators MAYBE MISSING
-                    Minus      -> i1 - i2
-                    Multiply   -> i1 * i2
-                    FloatDiv   -> i1 / i2
-                    I.Eql      -> if i1 == i2 then 1 else 0
-                    I.NotEql   -> if i1 == i2 then 0 else 1
-                    Less       -> if i1 <  i2 then 1 else 0
-                    LessEql    -> if i1 <= i2 then 1 else 0
-                    GreaterEql -> if i1 >= i2 then 1 else 0
-                    Greater    -> if i1 >  i2 then 1 else 0
-                    Power      -> error "Trying to do power two floats"
-                    I.Mod      -> error "Trying to do mod over two floats"
+    let newVar = operate op i1 i2
     -- must check if its smaller than 16-bits threshold signed
     nt <- newTemp
     return (empty |> (Mv (Temp nt) (Float_Cons newVar)) , (Temp nt))
 
 -- Variable and Int base case
-expToTac (Binary op (ExpVar ev s) (ExpInt i2)) = do 
-    let tacOper = case op of Plus       ->  Add
-                             Minus      ->  Sub
-                             Multiply   ->  Mult
-                             I.Mod      ->  T.Mod
-                             I.Div      ->  T.Div
-                             Power      ->  Pot
-                             I.Eql      ->  T.Eql
-                             I.NotEql   ->  T.NotEql
-                             Less       ->  Lt
-                             LessEql    ->  LEq
-                             GreaterEql ->  GEq
-                             Greater    ->  Gt
-    resTemp <- newTemp
-    let nt = Temp resTemp
-    case (dir ev) of
-        Label      -> return( singleton (tacOper nt (MemAdress s) (Int_Cons i2)) , nt )
-        (Offset o) -> do 
-            tempLocal <- newTemp
-            let tl = Temp tempLocal
-            let loadInTemp = empty      |> (ReadArray tl Fp (Int_Cons o))
-            let doOper     = loadInTemp |> (tacOper nt tl (Int_Cons i2))
-            return (doOper , nt )
+-- expToTac (Binary op (ExpVar ev s) (ExpInt i2)) = do 
+--     let tacOper = case op of Plus       ->  Add
+--                              Minus      ->  Sub
+--                              Multiply   ->  Mult
+--                              I.Mod      ->  T.Mod
+--                              Divi       ->  T.Div
+--                              Power      ->  Pot
+--                              I.Eql      ->  T.Eql
+--                              I.NotEql   ->  T.NotEql
+--                              Less       ->  Lt
+--                              LessEql    ->  LEq
+--                              GreaterEql ->  GEq
+--                              Greater    ->  Gt
+--     resTemp <- newTemp
+--     let nt = Temp resTemp
+--     case (dir ev) of
+--         Label      -> return( singleton (tacOper nt (MemAdress s) (Int_Cons i2)) , nt )
+--         (Offset o) -> do 
+--             tempLocal <- newTemp
+--             let tl = Temp tempLocal
+--             let loadInTemp = empty      |> (ReadArray tl Fp (Int_Cons o))
+--             let doOper     = loadInTemp |> (tacOper nt tl (Int_Cons i2))
+--             return (doOper , nt )
 
 -- Two Vars
-expToTac (Binary op (ExpVar ev1 s1) (ExpVar ev2 s2)) = do
-    let tacOper = case op of Plus       ->  Add
-                             Minus      ->  Sub
-                             Multiply   ->  Mult
-                             I.Mod      ->  T.Mod
-                             I.Div      ->  T.Div
-                             Power      ->  Pot
-                             I.Eql      ->  T.Eql
-                             I.NotEql   ->  T.NotEql
-                             Less       ->  Lt
-                             LessEql    ->  LEq
-                             GreaterEql ->  GEq
-                             Greater    ->  Gt
-                             -- Logic operator MISSING
-    blah <- newTemp
-    let nt = Temp blah
-    makeOper tacOper nt (dir ev1) (dir ev2)
-  where makeOper c nt  Label      Label       = return (singleton (c nt (ma s1) (ma s2)) , nt)
-        makeOper c nt (Offset o1) (Offset o2) = do 
-            (i1,temp1) <- loadLocal o1
-            (i2,temp2) <- loadLocal o2
-            return ( empty |> i1 |> i2 |> (c nt temp1 temp2) , nt )
-        makeOper c nt  Label     (Offset o) = do
-            (i,temp) <- loadLocal o
-            return (empty |> i |> (c nt (ma s1) temp) , nt)
-        makeOper c nt (Offset o)  Label     = makeOper c nt Label (Offset o)
-        ma = MemAdress
+-- expToTac (Binary op (ExpVar ev1 s1) (ExpVar ev2 s2)) = do
+--     let tacOper = case op of Plus       ->  Add
+--                              Minus      ->  Sub
+--                              Multiply   ->  Mult
+--                              I.Mod      ->  T.Mod
+--                              I.Div      ->  T.Div
+--                              Power      ->  Pot
+--                              I.Eql      ->  T.Eql
+--                              I.NotEql   ->  T.NotEql
+--                              Less       ->  Lt
+--                              LessEql    ->  LEq
+--                              GreaterEql ->  GEq
+--                              Greater    ->  Gt
+--                              -- Logic operator MISSING
+--     blah <- newTemp
+--     let nt = Temp blah
+--     makeOper tacOper nt (dir ev1) (dir ev2)
+--   where makeOper c nt  Label      Label       = return (singleton (c nt (ma s1) (ma s2)) , nt)
+--         makeOper c nt (Offset o1) (Offset o2) = do 
+--             (i1,temp1) <- loadLocal o1
+--             (i2,temp2) <- loadLocal o2
+--             return ( empty |> i1 |> i2 |> (c nt temp1 temp2) , nt )
+--         makeOper c nt  Label     (Offset o) = do
+--             (i,temp) <- loadLocal o
+--             return (empty |> i |> (c nt (ma s1) temp) , nt)
+--         makeOper c nt (Offset o)  Label     = makeOper c nt Label (Offset o)
+--         ma = MemAdress
 
 
 -- Single variable
-expToTac (ExpVar dec s)= newTemp >>= return . ((,) empty) . Temp -- Just a example
+expToTac (ExpVar dec s) = case (dir dec) of
+        Label  -> return( commentedIns , (MemAdress s) )
+        (Offset o) -> do 
+            tempLocal <- newTemp
+            let tl = Temp tempLocal
+            return ( commentedIns |> (ReadArray tl Fp (Int_Cons o)) , tl )
+    where commentedIns = if debugVar then empty |> (Comment ("Variable " ++ s)) else empty
 -- Generic unkwon operation
 expToTac (Binary op exp1 exp2) = do 
     nt <- newTemp
-    return (empty,Temp nt)
+    (ins1,t1) <- expToTac exp1
+    (ins1,t2) <- expToTac exp2
+    return ( singleton (insTranslation op (Temp nt) t1 t2) ,Temp nt)
+
 expToTac _ = return (singleton Nop,Temp 0)
 
 loadLocal :: Int -> TreeTranslator((IntIns,Var))
 loadLocal ofs = do tempLocal <- newTemp
                    let tl = (Temp tempLocal)
                    return ((ReadArray tl Fp (Int_Cons ofs)),tl)
-    
+
+insTranslation :: Operator -> Var -> Var -> Var -> IntIns
+insTranslation Greater    = Gt 
+insTranslation Less       = Lt 
+insTranslation LessEql    = LEq
+insTranslation GreaterEql = GEq
+insTranslation I.NotEql   = T.NotEql
+insTranslation I.Eql      = T.Eql
+insTranslation I.And      = T.And
+insTranslation I.Or       = T.Or
+insTranslation Div        = Divi 
+insTranslation FloatDiv   = Divf
+-- insTranslation Plusi = Addi 
+-- insTranslation Plusf = Addf 
+-- insTranslation Minusf = Subf
+-- insTranslation Minusi = Subi
+insTranslation I.Mod     = T.Mod
+insTranslation Multiplyi = Multi
+insTranslation Multiplyf = Multf
+insTranslation Power     = Pot
+-- insTranslation Address          = 
+-- insTranslation Access          = 
+-- insTranslation Not          = 
+-- insTranslation Neg          = 
+-- insTranslation SOr          = 
+-- insTranslation SAnd          = 
+
+-- insToOper :: Operator -> Var -> Var -> IntIns
+-- insToOper Less () ()
+-- insToOper Less () ()
+-- insToOper Less () ()
+
+
+toInt False = 0
+toInt True  = 1
+
+
 -- Alias
 execTree :: Monad m => StateT s m a -> s -> m s
 execTree = execStateT
