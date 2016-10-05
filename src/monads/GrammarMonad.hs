@@ -679,8 +679,11 @@ checkEnumFor tok newVar enum1 enum2 = do
 checkArray :: Token -> [Exp] -> OurMonad((Type,Token,Exp))
 checkArray tok list = do
     varDec <- getDeclare tok
+    
     maybe (return (TypeError,tok,NoExp))
-          (\ dec -> return (storedType dec, tok, arrayParser (ExpVar dec (lexeme tok)) list))
+          (\ dec -> let = HELP -- Debo cambiar el storedType quitandole anidamientos
+                               -- usar: stripArray n veces y isArray
+                    return (storedType dec, tok, arrayParser (ExpVar dec (lexeme tok)) list))
           varDec   
 
 --checkAll :: Token -> [Type] -> [Type] -> OurMonad (Type)
@@ -706,10 +709,10 @@ sel2 (_,b,_) = b
 sel3 :: (Type,Token,Exp) -> Exp
 sel3 (_,_,c) = c
 
-arrayParser :: Exp -> [Exp] -> Exp
-arrayParser var = foldr nest var
+arrayParser :: Exp -> [Exp] -> (Exp,Int)
+arrayParser var = foldr nest (var,0)
                 where
-                  nest nLevel var = (Binary Access nLevel var)
+                  nest nLevel (var,l) = ((Binary Access nLevel var),l+1)
 
 
 addToBlock :: Ins -> OurMonad()
