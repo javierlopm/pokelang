@@ -246,7 +246,7 @@ Exp :  -- Cambiar los NoExp por las Exp
     | Exp "^"  Exp      {% return ((sel1 $1),(sel2 $1),(Binary Power (sel3 $1) (sel3 $3)))                                      }   -- Int/Float and Int
     | Exp "*"  Exp      {% checkBinary nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns' (Binary Multiplyi (sel3 $1) (sel3 $3)) }   -- Both Float/Int
     | Exp "/"  Exp      {% checkBinary [TypeFloat] (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Div (sel3 $1) (sel3 $3)) }   -- Both Float
-    | Exp "//" Exp      {% checkFLoatDiv nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary FloatDiv (sel3 $1) (sel3 $3)) }   -- last one integer
+    | Exp "//" Exp      {% checkFloatDiv nums (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary FloatDiv (sel3 $1) (sel3 $3)) }   -- last one integer
     | Exp "%"  Exp      {% checkBinary [TypeInt] (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Mod (sel3 $1) (sel3 $3)) }     -- Both Integer
     | "-" Exp %prec NEG {% return (TypeInt, (sel2 $2),(Unary Neg (sel3 $2)))  }
     -- Expresiones Booleanas.

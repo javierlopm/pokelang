@@ -133,32 +133,31 @@ loadLocal ofs = do tempLocal <- newTemp
                    return ((ReadArray tl Fp (Int_Cons ofs)),tl)
 
 operatei :: Operator -> Int -> Int -> Var
-operatei Plusi      = ExpInt . (+)
-operatei Minusi     = ExpInt . (-)
-operatei Multiplyi  = ExpInt . (*)
-operatei I.Mod      = ExpInt . mod
-operatei Div        = ExpInt . div
-operatei Power      = ExpInt . toInt . (^)
-operatei I.Eql      = ExpInt . toInt . (==)
-operatei I.NotEql   = ExpInt . toInt . (/=)
-operatei Less       = ExpInt . toInt . (<)
-operatei LessEql    = ExpInt . toInt . (<=)
-operatei GreaterEql = ExpInt . toInt . (>=)
-operatei Greater    = ExpInt . toInt . (>)
+operatei Plusi      a b = Int_Cons  (a + b)
+operatei Minusi     a b = Int_Cons  (a - b)
+operatei Multiplyi  a b = Int_Cons  (a * b)
+operatei Power      a b = Int_Cons  (a ^ b)
+operatei I.Mod      a b = Int_Cons  (a `mod` b)
+operatei Div        a b = Int_Cons  (a `div` b)
+operatei I.Eql      a b = Int_Cons $ toInt $ a ==  b
+operatei I.NotEql   a b = Int_Cons $ toInt $ a /=  b
+operatei Less       a b = Int_Cons $ toInt $ a <   b
+operatei LessEql    a b = Int_Cons $ toInt $ a <=  b
+operatei GreaterEql a b = Int_Cons $ toInt $ a >=  b
+operatei Greater    a b = Int_Cons $ toInt $ a >   b
 -- Add bools here
 
 operatef :: Operator -> Float -> Float -> Var
-operatef Plusf      = ExpFloat . (+)
-operatef Minusf     = ExpFloat . (-)
-operatef Multiplyf  = ExpFloat . (*)
-operatef FloatDiv   = ExpFloat . (/)
-operatef Power      = ExpInt . toInt . (^)
-operatef I.Eql      = ExpInt . toInt . (==)
-operatef I.NotEql   = ExpInt . toInt . (/=)
-operatef Less       = ExpInt . toInt . (<)
-operatef LessEql    = ExpInt . toInt . (<=)
-operatef GreaterEql = ExpInt . toInt . (>=)
-operatef Greater    = ExpInt . toInt . (>)
+operatef Plusf      a b = Float_Cons (a + b)
+operatef Minusf     a b = Float_Cons (a - b)
+operatef Multiplyf  a b = Float_Cons (a * b)
+operatef FloatDiv   a b = Float_Cons (a / b)
+operatef I.Eql      a b = Int_Cons $ toInt $ (a == b)
+operatef I.NotEql   a b = Int_Cons $ toInt $ (a /= b)
+operatef Less       a b = Int_Cons $ toInt $ (a <  b)
+operatef LessEql    a b = Int_Cons $ toInt $ (a <= b)
+operatef GreaterEql a b = Int_Cons $ toInt $ (a >= b)
+operatef Greater    a b = Int_Cons $ toInt $ (a >  b)
 
 insTranslation :: Operator -> Var -> Var -> Var -> IntIns
 insTranslation Greater    = Gt 
