@@ -52,8 +52,8 @@ forestToTac ((str,insTree):tl)  = do
 
 treeToTac :: Ins -> TreeTranslator (Program)
 treeToTac (Assign e1 e2) = do 
-    (tac1,var1) <- expToTac e1
     (tac2,var2) <- expToTac e2
+    (tac1,var1) <- expToTac e1
     let finaltac = (tac1 <> tac2) <> (singleton (StorePointer var1 var2))
     -- liftIO $ putStrLn $ show finaltac
     return finaltac
@@ -96,7 +96,7 @@ expToTac (ExpInt   i1) = return (empty,Int_Cons   i1) -- Single constant values
 expToTac (ExpFloat i1) = return (empty,Float_Cons i1)
 expToTac (ExpTrue    ) = return (empty,Int_Cons    1)
 expToTac (ExpFalse   ) = return (empty,Int_Cons    0)
-expToTac (Binary op (ExpInt i2) (ExpVar ev s)) = expToTac (Binary op (ExpVar ev s) (ExpInt i2))
+-- expToTac (Binary op (ExpInt i2) (ExpVar ev s)) = expToTac (Binary op (ExpVar ev s) (ExpInt i2))
 
 -- Two integer constants or booleans
 expToTac (Binary op (ExpInt i1) (ExpInt i2)) = do 
@@ -124,10 +124,10 @@ expToTac (ExpVar dec s) = case (dir dec) of
     where commentedIns = if debugVar then empty |> (Comment ("Variable " ++ s)) else empty
 -- Generic unkwon operation
 expToTac (Binary op exp1 exp2) = do 
-    nt <- newTemp
     (ins1,t1) <- expToTac exp1
-    (ins1,t2) <- expToTac exp2
-    return ( singleton (insTranslation op (Temp nt) t1 t2) ,Temp nt)
+    (ins2,t2) <- expToTac exp2
+    nt <- newTemp
+    return (  (ins1 <> ins2) |> (insTranslation op (Temp nt) t1 t2) ,Temp nt)
 expToTac (Unary op a) = do 
     tempLocal  <- newTemp
     (ins,wher) <- expToTac a
