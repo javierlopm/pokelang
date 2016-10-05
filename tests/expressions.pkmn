@@ -1,3 +1,11 @@
+STRUCTabuzz poketrainer {
+    socialSecurityNumber :: pINTachu,
+    best_friend          :: STRUCTabuzz poketrainer*,
+    name                 :: CHARmander 
+}
+
+
+
 funcball VOIDtorb hitMAINlee():
     pINTachu o;
     pINTachu t;
@@ -5,6 +13,8 @@ funcball VOIDtorb hitMAINlee():
     pINTachu f;
     pINTachu s;
     pINTachu se;
+
+    STRUCTabuzz poketrainer carlitos;
 
     pINTachu [5]anArray;
 
@@ -14,9 +24,11 @@ funcball VOIDtorb hitMAINlee():
     th = 3 * 1 + t + f;
     se  = 2 ^ 2; 
     s  = t * th;
-    o = t; 
-    --
+    o = t;
 
     anArray[3] = 4;
+    --
+
+    s = carlitos.socialSecurityNumber;
 
 vamo_a_calmano

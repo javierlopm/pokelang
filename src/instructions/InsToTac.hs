@@ -98,6 +98,16 @@ expToTac (ExpTrue    ) = return (empty,Int_Cons    1)
 expToTac (ExpFalse   ) = return (empty,Int_Cons    0)
 -- expToTac (Binary op (ExpInt i2) (ExpVar ev s)) = expToTac (Binary op (ExpVar ev s) (ExpInt i2))
 
+-- Field access in structs and unions
+expToTac node@(Binary Access exp1 exp2) = do
+    nt <- newTemp
+    let newIns = maybe (ReadArray (Temp nt) Fp (Int_Cons ofs) ) 
+                       (\ s -> ReadArray (Temp nt) (MemAdress s) (Int_Cons ofs)) 
+                       addr
+    return (empty |> newIns , Temp nt)
+    where (addr,ofs) = getStructOrUnion node 
+
+
 -- Two integer constants or booleans
 expToTac (Binary op (ExpInt i1) (ExpInt i2)) = do 
     let newVar = operatei op i1 i2
@@ -195,10 +205,23 @@ insTranslation I.Mod      = T.Mod
 insTranslation Multiplyi  = Multi
 insTranslation Multiplyf  = Multf
 insTranslation Power      = Pot
-insTranslation Access     = ReadArray
+--insTranslation Access     = ReadArray
 -- insTranslation SAnd          = 
 -- insTranslation SOr   =  
-    
+
+
+getStructOrUnion :: Exp -> (Maybe String,Int)
+getStructOrUnion (Binary Access (ExpVar dec1 s1) (ExpVar dec2 s2)) = 
+    case dir dec1 of 
+        (Offset o) -> (Nothing, o + o2 )
+        Label      -> (Just s1, o2)
+  where (Offset o2) = dir dec2
+getStructOrUnion (Binary Access exp1 (ExpVar dec s)) = (finalDir,totalofst + o)
+    where (finalDir,totalofst) = getStructOrUnion exp1
+          (Offset o) = dir dec
+getStructOrUnion (Binary _ _ _) = error "Error at getStructOrUnion InsToTac.hs"
+
+
 insTranslation' :: Operator -> Var -> Var -> IntIns
 insTranslation' I.Not   =  T.Not
 insTranslation' Negi    =  Negaf

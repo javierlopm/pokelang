@@ -215,7 +215,7 @@ isArray (TypeArray  _ _ ) = True
 isArray _                 = False
 
 stripArray :: Type -> Type
-stripArray (TypeArray  t1 _ ) = True
+stripArray (TypeArray  t1 _ ) = t1
 stripArray _  = error "Trying to strip something that it's not an array"
 
 
