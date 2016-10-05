@@ -20,6 +20,7 @@ ENUManyte pokeDaysLaborables {
 
 funcball VOIDtorb hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
     STRUCTabuzz pokepanita erNovich;
+    butterFloat flotante;
     vamo_a_empeza
         STRUCTabuzz pokepanita [2][3] erNovich2;
     vamo_a_calmano
@@ -33,6 +34,7 @@ funcball VOIDtorb hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
         CHARmander hola;
         pINTachu hola2;
         hola2 = erNovich.socialSecurityNumber;
+        flotante = -0.0 + 3.0;
         hola2 += 2;
         hola = 'c';
     vamo_a_calmano

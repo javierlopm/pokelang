@@ -479,11 +479,17 @@ checkAssign (TypeEmptyArray t1) t2 0 = t1 == t2
 --checkAssign (TypeArray t) t 0 = True
 checkAssign _ _ _ = False
 
-checkFloatDiv :: Type -> Type -> Token -> Token -> OurMonad ((Type,Token))
-checkFloatDiv TypeInt TypeInt tok tok2   = return (TypeInt,tok2)
-checkFloatDiv TypeFloat TypeInt tok tok2 = return (TypeFloat,tok2)
-checkFloatDiv TypeError _ tok _           = do tellError error  >> return (TypeError,tok)
+checkFloatDiv ::  [Type] -> Type -> Type -> Token -> Token -> OurMonad ((Type,Token))
+checkFloatDiv expected TypeInt TypeInt tok tok2   = return (TypeInt,tok2)
+checkFloatDiv expected TypeFloat TypeInt tok tok2 = return (TypeFloat,tok2)
+checkFloatDiv expected t t2 tok tok2           = do tellError error  >> return (TypeError,tok2)
     where error = strError (position tok) "Types in the operator" (toStr tok) ("must be butterFloat or pINTachu / pINTachu.")
+
+checkNeg      :: (Type,Token,Exp) -> OurMonad((Type,Token,Exp))
+checkNeg (TypeInt,to,exp1)   = return (TypeInt,to,(Unary Negi exp1))
+checkNeg (TypeFloat,to,exp1) = return (TypeFloat,to,(Unary Negf exp1))
+checkNeg (_,to,_)            = do tellError error >> return (TypeError,to,NoExp)
+    where error = strError (position to) "Types in the operator" (toStr to) ("must be either butterFloat or pINTachu.")
 
 checkBinary :: [Type] -> Type -> Type -> Token -> Token -> OurMonad ((Type,Token))
 checkBinary expected TypeError _ _ tok = return (TypeError,tok)
