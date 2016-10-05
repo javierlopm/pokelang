@@ -96,7 +96,7 @@ expToTac (Binary op (ExpInt i2) (ExpVar ev s)) = expToTac (Binary op (ExpVar ev 
 
 -- Two integer constants
 expToTac (Binary op (ExpInt i1) (ExpInt i2)) = do 
-    let newVar = operate op i1 i2
+    let newVar = operatei op i1 i2
     -- must check if its smaller than 16-bits threshold signed. Maybe leave this for mips
     if ((-32768) <= (getCons newVar)) && ( (getCons newVar) <= 32767)
         then return (empty, newVar)
@@ -105,7 +105,7 @@ expToTac (Binary op (ExpInt i1) (ExpInt i2)) = do
 
 -- Two float constants
 expToTac (Binary op (ExpFloat i1) (ExpFloat i2)) = do -- Two integer constants
-    let newVar = operate op i1 i2
+    let newVar = operatef op i1 i2
     -- must check if its smaller than 16-bits threshold signed
     nt <- newTemp
     return (empty |> (Mv (Temp nt) newVar) , (Temp nt))
@@ -132,24 +132,33 @@ loadLocal ofs = do tempLocal <- newTemp
                    let tl = (Temp tempLocal)
                    return ((ReadArray tl Fp (Int_Cons ofs)),tl)
 
-operate :: Num a => constr -> a -> a -> Var
-operate (Plusi     ) = ExpInt . (+)
-operate (Minusi    ) = ExpInt . (-)
-operate (Multiplyi ) = ExpInt . (*)
-operate (I.Mod     ) = ExpInt . mod
-operate (Divi      ) = ExpInt . div
-operate (Power     ) = ExpInt . toInt . (^)
-operate (I.Eql     ) = ExpInt . toInt . (==)
-operate (I.NotEql  ) = ExpInt . toInt . (/=)
-operate (Less      ) = ExpInt . toInt . (<)
-operate (LessEql   ) = ExpInt . toInt . (<=)
-operate (GreaterEql) = ExpInt . toInt . (>=)
-operate (Greater   ) = ExpInt . toInt . (>)
-operate (Plusf     ) = ExpFloat . (+)
-operate (Minusf    ) = ExpFloat . (-)
-operate (Multiplyf ) = ExpFloat . (*)
-operate (Divf      ) = ExpFloat . (/)
--- operate I.And
+operatei :: Operator -> Int -> Int -> Var
+operatei Plusi      = ExpInt . (+)
+operatei Minusi     = ExpInt . (-)
+operatei Multiplyi  = ExpInt . (*)
+operatei I.Mod      = ExpInt . mod
+operatei Div        = ExpInt . div
+operatei Power      = ExpInt . toInt . (^)
+operatei I.Eql      = ExpInt . toInt . (==)
+operatei I.NotEql   = ExpInt . toInt . (/=)
+operatei Less       = ExpInt . toInt . (<)
+operatei LessEql    = ExpInt . toInt . (<=)
+operatei GreaterEql = ExpInt . toInt . (>=)
+operatei Greater    = ExpInt . toInt . (>)
+-- Add bools here
+
+operatef :: Operator -> Float -> Float -> Var
+operatef Plusf      = ExpFloat . (+)
+operatef Minusf     = ExpFloat . (-)
+operatef Multiplyf  = ExpFloat . (*)
+operatef FloatDiv   = ExpFloat . (/)
+operatef Power      = ExpInt . toInt . (^)
+operatef I.Eql      = ExpInt . toInt . (==)
+operatef I.NotEql   = ExpInt . toInt . (/=)
+operatef Less       = ExpInt . toInt . (<)
+operatef LessEql    = ExpInt . toInt . (<=)
+operatef GreaterEql = ExpInt . toInt . (>=)
+operatef Greater    = ExpInt . toInt . (>)
 
 insTranslation :: Operator -> Var -> Var -> Var -> IntIns
 insTranslation Greater    = Gt 
