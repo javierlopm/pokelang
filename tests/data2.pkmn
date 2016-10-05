@@ -28,12 +28,12 @@ funcball VOIDtorb hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
         STRUCTabuzz pokepanita [2][3] erNovich3;
     vamo_a_calmano
     vamo_a_empeza
-        STRUCTabuzz pokepanita [2][3] erNovich4;
         ENUManyte pokeDaysLaborables menol;
 #        menol = Martes;
         CHARmander hola;
         pINTachu hola2;
-        hola2 = erNovich.socialSecurityNumber;
+        pINTachu [3]erNovich4;
+        erNovich4[1] = 1;
         flotante = -0.0 + 3.0;
         hola2 += 2;
         hola = 'c';

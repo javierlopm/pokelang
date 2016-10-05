@@ -462,23 +462,6 @@ expIns' (Binary op a b) (TypeFloat,to) = return (TypeFloat,to,(Binary op' a b))
 
 expIns' ins (t,to)      = return (TypeError,to,NoExp)
 
-checkAssign :: Type -> Type -> Int -> Bool
-checkAssign (TypeField _ TypeInt) TypeInt at = True
-checkAssign (TypeField _ TypeBool) TypeBool 0 = True
-checkAssign (TypeField _ TypeChar) TypeChar 0 = True
-checkAssign (TypeField _ TypeFloat) TypeFloat at = True
-checkAssign TypeFloat TypeInt at = True
-checkAssign TypeFloat TypeFloat at = True
-checkAssign TypeInt TypeInt at = True
-checkAssign TypeBool TypeBool 0 = True
-checkAssign TypeChar TypeChar 0 = True
---checkAssign TypeEnum TypeEnumCons 0 = True
---checkAssign TypeEnum TypeEnum 0 = True
-checkAssign (TypePointer t1) t2 0 =  t1 == t2
-checkAssign (TypeEmptyArray t1) t2 0 = t1 == t2
---checkAssign (TypeArray t) t 0 = True
-checkAssign _ _ _ = False
-
 checkFloatDiv ::  [Type] -> Type -> Type -> Token -> Token -> OurMonad ((Type,Token))
 checkFloatDiv expected TypeInt TypeInt tok tok2   = return (TypeInt,tok2)
 checkFloatDiv expected TypeFloat TypeInt tok tok2 = return (TypeFloat,tok2)
@@ -611,7 +594,24 @@ checkAllOk l a b s t
     | checkAssign a b t = checkAllOk l TypeVoid TypeVoid s 0
     | otherwise       = do
                         tellError error1 >> return TypeError
-    where error1= strError (0,0) "-" "-" $ show a ++ "..." ++ show b ++ "..." ++ show t
+    where error1= strError (0,0) "Something went wrong..." "on the expression:" $ "\""++show a ++ " = " ++ show b ++ "\" something went horribly wrong"
+
+checkAssign :: Type -> Type -> Int -> Bool
+checkAssign (TypeField _ TypeInt) TypeInt at = True
+checkAssign (TypeField _ TypeBool) TypeBool 0 = True
+checkAssign (TypeField _ TypeChar) TypeChar 0 = True
+checkAssign (TypeField _ TypeFloat) TypeFloat at = True
+checkAssign TypeFloat TypeInt at = True
+checkAssign TypeFloat TypeFloat at = True
+checkAssign TypeInt TypeInt at = True
+checkAssign TypeBool TypeBool 0 = True
+checkAssign TypeChar TypeChar 0 = True
+--checkAssign TypeEnum TypeEnumCons 0 = True
+--checkAssign TypeEnum TypeEnum 0 = True
+checkAssign (TypePointer t1) t2 0 =  t1 == t2
+checkAssign (TypeEmptyArray t1) t2 0 = t1 == t2
+--checkAssign (TypeArray t) t 0 = True
+checkAssign _ _ _ = False
 
 checkOkType :: OurMonad ()  -- Action to execute
                  -> Type      -- Type obtained
