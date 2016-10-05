@@ -36,7 +36,9 @@ module Types(
     align,
     isAFunction,
     isEnumCons,
-    notErrors
+    notErrors,
+    isArray,
+    stripArray
     -- addLeftType,
     -- singleType,
 ) where
@@ -208,10 +210,19 @@ notErrors :: Type -> Type -> Type
 notErrors a b = if (a /= TypeError && b /= TypeError) then TypeVoid
                                                       else TypeError
 
+isArray :: Type -> Bool
+isArray (TypeArray  _ _ ) = True
+isArray _                 = False
+
+stripArray :: Type -> Type
+stripArray (TypeArray  t1 _ ) = True
+stripArray _  = error "Trying to strip something that it's not an array"
+
 
 isEnumCons :: Declare -> Bool
 isEnumCons (EnumCons  _ _ _ _) = True
 isEnumCons _                     = False
+
 
 isAFunction :: Declare -> Bool
 isAFunction (Function _ _ _)  = True
