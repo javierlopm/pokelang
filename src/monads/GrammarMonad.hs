@@ -683,6 +683,30 @@ checkArray tok list = do
           (\ dec -> return (storedType dec, tok, arrayParser (ExpVar dec (lexeme tok)) list))
           varDec   
 
+
+--arrayParser' :: Type -> [Exp] -> (Type,Exp)
+--arrayParser' (TypeArray baseT dim) (exp:[])  = Binary Multiplyi exp (getSize baseT) 
+--arrayParser' (TypeArray nA dim) (exp:exps)   = Binary Plusi (Binary Multiplyi () ()) ()  
+
+--base +  (j * tamDimJ + i) * tamTipo
+--base +  ((k * tamDimK + j) * tamDimJ + i) * tamTipo
+arrayParser :: Type -> [Exp] -> (Type,Exp)
+arrayParser ts exps = (final_t,expBuilt)
+    where (dims,final_t) = dimensionArray ts
+          buildExp accExp (dim,i) = (Binary Multiplyi (Binary Plusi accExp (ExpInt i)) (ExpInt i))
+          expList = tail $ zip  ((init dims) ++ [getSize final_t])  exps
+          expBuilt = foldr buildExp (Binary Multiplyi (head dims) (head exps)) expList
+
+dimensionArray :: Type -> ([Int],Type)
+dimensionArray (TypeArray t1 dim) = ( dim : dimesions ,final_t)
+    where (dimesions,final_t) = dimensionArray t1 
+dimensionArray final_t            = ([],final_t)
+
+--arrayParser :: Exp -> [Exp] -> Exp
+--arrayParser var = foldr nest var
+--                where
+--                  nest nLevel var = (Binary Access nLevel var)
+
 --checkAll :: Token -> [Type] -> [Type] -> OurMonad (Type)
 --checkAll t obtained expected = if all (not isError) obtained
 --                               then process $ foldl findErrors [] (zip obtained expected)
@@ -706,10 +730,7 @@ sel2 (_,b,_) = b
 sel3 :: (Type,Token,Exp) -> Exp
 sel3 (_,_,c) = c
 
-arrayParser :: Exp -> [Exp] -> Exp
-arrayParser var = foldr nest var
-                where
-                  nest nLevel var = (Binary Access nLevel var)
+
 
 
 addToBlock :: Ins -> OurMonad()
