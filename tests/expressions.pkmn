@@ -1,10 +1,12 @@
 STRUCTabuzz poketrainer {
     socialSecurityNumber :: pINTachu,
     best_friend          :: STRUCTabuzz poketrainer*,
-    name                 :: CHARmander 
+    name                 :: pINTachu 
 }
 
-
+lvalue rvalue
+arreglos
+jumping code
 
 funcball VOIDtorb hitMAINlee():
     pINTachu o;
@@ -13,22 +15,32 @@ funcball VOIDtorb hitMAINlee():
     pINTachu f;
     pINTachu s;
     pINTachu se;
+    BOOLbasaur true;
+    BOOLbasaur false;
 
     STRUCTabuzz poketrainer carlitos;
 
     pINTachu [5]anArray;
+    pINTachu [5][5]otherArray;
+    pINTachu i;
+    pINTachu j;
 
+    true = squirtrue;
+    false = squirfalse;
+    true = (true || false) && (3 > 5) ;
+    
     --
     o  = 1;
     t  = 1 + 1;
-    th = 3 * 1 + t + f;
+    th = 3 * 2 + t + f;
     se  = 2 ^ 2; 
     s  = t * th;
+    
+    o = t;
+# 20 * i , 4*4 , lurgo sum
+#    anArray[3] = 4 + otherArray[i][j];
+
+    s = carlitos.name;
     --
-    #o = t;
-
-    anArray[3] = 4;
-
-    #s = carlitos.socialSecurityNumber;
 
 vamo_a_calmano

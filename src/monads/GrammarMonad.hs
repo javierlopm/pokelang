@@ -691,7 +691,7 @@ checkArray tok list = do
           (\ dec -> do 
               let (final_t,expBuilt) = arrayParser (storedType dec) list
               let finalExp = (Binary Array (ExpVar dec (lexeme tok)) expBuilt)
-              return (storedType dec, tok, finalExp))
+              return (final_t, tok, finalExp))
           varDec
   where error1 = "HELP array"
 

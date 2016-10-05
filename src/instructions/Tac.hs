@@ -150,7 +150,7 @@ instance Show      IntIns where
     show (Call     str )      = "Call " ++ str
     show (Param    par )      = "Param " ++ show par
     show (Tag      i   )      = '\n': (showJust i) ++ ":"
-    show (Comment  str )      =  "\n#"++ str
+    show (Comment  str )      =  "\n# "++ str
     show (Print     c  )      = "Print "      ++ show c
     show (PrintEnum c i)      = "Print enum " ++ show c ++ "[" ++ show i ++"]"
     show Nop                  = "Nop"
