@@ -450,6 +450,18 @@ expIns :: Exp -> (Type,Token) -> OurMonad((Type,Token,Exp))
 expIns ins (TypeError,to) = return (TypeError,to,NoExp)
 expIns ins (ty,to)        = return (ty,to,ins)
 
+expIns' :: Exp -> (Type,Token) -> OurMonad((Type,Token,Exp))
+expIns' (Binary op a b) (TypeInt,to)   = return (TypeInt,  to, (Binary op a b))
+expIns' (Binary op a b) (TypeFloat,to) = return (TypeFloat,to,(Binary op' a b))
+  where op' = case op of
+              Negi      -> Negf 
+              Plusi     -> Plusf 
+              Minusi    -> Minusf
+              Multiplyi -> Multiplyf
+              _         -> op
+
+expIns' ins (t,to)      = return (TypeError,to,NoExp)
+
 checkAssign :: Type -> Type -> Int -> Bool
 checkAssign (TypeField _ TypeInt) TypeInt at = True
 checkAssign (TypeField _ TypeBool) TypeBool 0 = True
@@ -466,6 +478,12 @@ checkAssign (TypePointer t1) t2 0 =  t1 == t2
 checkAssign (TypeEmptyArray t1) t2 0 = t1 == t2
 --checkAssign (TypeArray t) t 0 = True
 checkAssign _ _ _ = False
+
+checkFloatDiv :: Type -> Type -> Token -> Token -> OurMonad ((Type,Token))
+checkFloatDiv TypeInt TypeInt tok tok2   = return (TypeInt,tok2)
+checkFloatDiv TypeFloat TypeInt tok tok2 = return (TypeFloat,tok2)
+checkFloatDiv TypeError _ tok _           = do tellError error  >> return (TypeError,tok)
+    where error = strError (position tok) "Types in the operator" (toStr tok) ("must be butterFloat or pINTachu / pINTachu.")
 
 checkBinary :: [Type] -> Type -> Type -> Token -> Token -> OurMonad ((Type,Token))
 checkBinary expected TypeError _ _ tok = return (TypeError,tok)

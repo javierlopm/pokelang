@@ -111,12 +111,16 @@ data Operator = And -- Binary
               | SOr 
               | Div
               | FloatDiv
-              | Neg 
               | Mod
-              | Plus 
-              | Minus
-              | Multiply
-              | FloatMultiply
+              | Negi 
+              | Negf 
+              | Plusi 
+              | Plusf 
+              | Minusi
+              | Minusf
+              | Multiplyi
+              | Multiplyf
+              -- | FloatMultiply
               | Power
               | Greater
               | Less
@@ -136,12 +140,16 @@ instance Show Operator where
     show SOr           = "or"
     show Div           = "/"
     show FloatDiv      = "//"
-    show Neg           = "-"
     show Mod           = "%"
-    show Plus          = "+"
-    show Minus         = "-"
-    show Multiply      = "*"
-    show FloatMultiply = "f*"
+    show Negi           = "-"
+    show Negf           = "f-"
+    show Plusi          = "+"
+    show Plusf          = "f+"
+    show Minusi         = "-"
+    show Minusf         = "f-"
+    show Multiplyi      = "*"
+    show Multiplyf      = "f*"
+    --show FloatMultiply = "f*"
     show Power         = "^"
     show Greater       = ">"
     show Less          = "<"
