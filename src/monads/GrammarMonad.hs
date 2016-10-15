@@ -703,7 +703,7 @@ arrayParser (TypeArray t dim) (exp:[]) = (t,(Binary Multiplyi (ExpInt (getSize t
 arrayParser ts exps = (final_t,expBuilt)
   where 
     (dims,final_t) = dimensionArray ts
-    expBuilt = foldr buildExp (Binary Multiplyi (ExpInt (head dims)) (head exps)) expList
+    expBuilt = foldr buildExp (Binary Multiplyi (ExpInt ((head dims)*(getSize final_t))) (head exps)) expList
     buildExp (dim,i) accExp = (Binary Multiplyi (Binary Plusi accExp i) (ExpInt dim))
     expList  = tail $ zip  ((init dims) ++ [getSize final_t])  exps
 

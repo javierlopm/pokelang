@@ -4,32 +4,22 @@ STRUCTabuzz poketrainer {
     name                 :: pINTachu 
 }
 
-lvalue rvalue
-arreglos
-jumping code
-
 funcball VOIDtorb hitMAINlee():
-    pINTachu o;
-    pINTachu t;
-    pINTachu th;
-    pINTachu f;
-    pINTachu s;
-    pINTachu se;
-    BOOLbasaur true;
-    BOOLbasaur false;
-
-    STRUCTabuzz poketrainer carlitos;
-
-    pINTachu [5]anArray;
-    pINTachu [5][5]otherArray;
+    pINTachu [10]anArray;
+    pINTachu [3][2]otherArray;
     pINTachu i;
     pINTachu j;
 
+
+    STRUCTabuzz poketrainer carlitos;
+
+
+    --
     true = squirtrue;
     false = squirfalse;
     true = (true || false) && (3 > 5) ;
     
-    --
+    
     o  = 1;
     t  = 1 + 1;
     th = 3 * 2 + t + f;
@@ -38,9 +28,11 @@ funcball VOIDtorb hitMAINlee():
     
     o = t;
 # 20 * i , 4*4 , lurgo sum
-#    anArray[3] = 4 + otherArray[i][j];
 
     s = carlitos.name;
     --
+    
+    i = anArray[3];
+    i = otherArray[2][2];
 
 vamo_a_calmano

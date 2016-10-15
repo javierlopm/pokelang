@@ -158,10 +158,10 @@ instance Show      IntIns where
 -- Ewwwww, it might be improved with Generics?
 instance Binary IntIns where
     put  Nop                 = putWord8 0 
-    put (Multi     r0 r1 r2) = putWord8 1  >> put r0 >> put r1 >> put r2
-    put (Addi      r0 r1 r2) = putWord8 2  >> put r0 >> put r1 >> put r2
-    put (Subi      r0 r1 r2) = putWord8 3  >> put r0 >> put r1 >> put r2
-    put (Divi      r0 r1 r2) = putWord8 4  >> put r0 >> put r1 >> put r2
+    put (Multi    r0 r1 r2)  = putWord8 1  >> put r0 >> put r1 >> put r2
+    put (Addi     r0 r1 r2)  = putWord8 2  >> put r0 >> put r1 >> put r2
+    put (Subi     r0 r1 r2)  = putWord8 3  >> put r0 >> put r1 >> put r2
+    put (Divi     r0 r1 r2)  = putWord8 4  >> put r0 >> put r1 >> put r2
     put (Pot      r0 r1 r2)  = putWord8 5  >> put r0 >> put r1 >> put r2
     put (And      r0 r1 r2)  = putWord8 6  >> put r0 >> put r1 >> put r2
     put (Or       r0 r1 r2)  = putWord8 7  >> put r0 >> put r1 >> put r2
@@ -169,8 +169,8 @@ instance Binary IntIns where
     put (Not      r0 r1   )  = putWord8 9  >> put r0 >> put r1 
     put (Eql      r0 r1 r2)  = putWord8 10 >> put r0 >> put r1 >> put r2
     put (NotEql   r0 r1 r2)  = putWord8 11 >> put r0 >> put r1 >> put r2
-    put (ShiftR r0 r1 i)     = putWord8 12 >> put r0 >> put r1 >> put i
-    put (ShiftL r0 r1 i)     = putWord8 13 >> put r0 >> put r1 >> put i
+    put (ShiftR   r0 r1 i)   = putWord8 12 >> put r0 >> put r1 >> put i
+    put (ShiftL   r0 r1 i)   = putWord8 13 >> put r0 >> put r1 >> put i
     put (Lt       r0 r1 r2)  = putWord8 14 >> put r0 >> put r1 >> put r2
     put (Gt       r0 r1 r2)  = putWord8 15 >> put r0 >> put r1 >> put r2
     put (LEq      r0 r1 r2)  = putWord8 16 >> put r0 >> put r1 >> put r2
