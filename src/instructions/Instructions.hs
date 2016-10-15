@@ -10,7 +10,8 @@ module Instructions(
     emptyExpList,
     addExpList,
     stripBlock,
-    printAsts
+    printAsts,
+    isCompare
 ) where
 
 -- import Data.Sequence(empty,viewl,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
@@ -177,7 +178,14 @@ data Exp = Binary  Operator Exp Exp
          | NoExp
          deriving (Show)
 
-
+isCompare :: Operator -> Bool
+isCompare Greater    = True
+isCompare Less       = True
+isCompare LessEql    = True
+isCompare GreaterEql = True
+isCompare NotEql     = True
+isCompare Eql        = True
+isCompare _ = False
 
 emptyExpList :: (Seq(Exp))
 emptyExpList = empty

@@ -6,7 +6,7 @@ module Tac(
     showP,
     saveProgram,
     loadProgram,
-    backPatch,
+    jumpTrueFalse,
     isCons,
     getCons
 ) where 
@@ -87,13 +87,15 @@ data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
             | LEq     Dest Src1 Src2  -- lower or equal
             | GEq     Dest Src1 Src2  -- equal 
             -- Jumps
-            | Jump     (Maybe(Label))
-            | Jz       Src1 (Maybe(Label))
-            | Jnotz    Src1 (Maybe(Label))
-            | JLt      Src1 Src2 (Maybe(Label))
-            | JGt      Src1 Src2 (Maybe(Label))
-            | JLEq     Src1 Src2 (Maybe(Label))
-            | JGEq     Src1 Src2 (Maybe(Label))
+            | Jump     Label
+            | Jz       Src1 Label
+            | Jnotz    Src1 Label
+            | JLt      Src1 Src2 Label
+            | JGt      Src1 Src2 Label
+            | JLEq     Src1 Src2 Label
+            | JGEq     Src1 Src2 Label
+            | JEq      Src1 Src2 Label
+            | JNEq     Src1 Src2 Label
             -- Copy / Read / Store
             | Mv           Dest Src1
             | ReadPointer  Dest Src1
@@ -105,7 +107,7 @@ data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
             | Param   Src1    
             -- Extras
             | Comment String
-            | Tag     (Maybe(Label))
+            | Tag     Label
             | Nop 
             -- Prints
             | Print     Src1        -- Print Integer constant
@@ -135,13 +137,15 @@ instance Show      IntIns where
     show (Gt     r0 r1 r2)  =  showTAC r0 r1 ">"  r2
     show (LEq    r0 r1 r2)  =  showTAC r0 r1 "<=" r2
     show (GEq    r0 r1 r2)  =  showTAC r0 r1 ">=" r2
-    show (Jump   i    )     = "goto " ++ showJust i
-    show (Jz     r0 i )     = "if " ++ show r0 ++ "is z  goto" ++ showJust i 
-    show (Jnotz  r0 i )     = "if " ++ show r0 ++ "is nz goto" ++ showJust i 
+    show (Jump   i    )     = "goto " ++ show i
+    show (Jz     r0 i )     = "if " ++ show r0 ++ "is z  goto" ++ show i 
+    show (Jnotz  r0 i )     = "if " ++ show r0 ++ "is nz goto" ++ show i 
     show (JLt    r0 r1 i)   = showIf r0 r1 "<"   i
     show (JGt    r0 r1 i)   = showIf r0 r1 ">"   i
     show (JLEq   r0 r1 i)   = showIf r0 r1 "<="  i
     show (JGEq   r0 r1 i)   = showIf r0 r1 ">="  i
+    show (JEq    r0 r1 i)   = showIf r0 r1 "=="  i
+    show (JNEq   r0 r1 i)   = showIf r0 r1 "/="  i
     show (Mv     r0 r1  )   =  show r0 ++ " := " ++ show r1
     show (ReadPointer  d s1 )   =  show2AC d s1 "*"
     show (StorePointer d s1 )   = '*' : show d ++ " := " ++ show s1 
@@ -149,7 +153,7 @@ instance Show      IntIns where
     show (StoreArray   d s1 s2) = show d ++'[':show s1 ++ "] := " ++ show s2
     show (Call     str )      = "Call " ++ str
     show (Param    par )      = "Param " ++ show par
-    show (Tag      i   )      = '\n': (showJust i) ++ ":"
+    show (Tag      i   )      = '\n': show i ++ ":"
     show (Comment  str )      =  "\n# "++ str
     show (Print     c  )      = "Print "      ++ show c
     show (PrintEnum c i)      = "Print enum " ++ show c ++ "[" ++ show i ++"]"
@@ -199,6 +203,8 @@ instance Binary IntIns where
     put (Multf   r0 r1 r2)   = putWord8 39  >> put r0 >> put r1 >> put r2
     put (Negai   r0 str )    = putWord8 40 >> put r0 >>  put str
     put (Negaf   r0 str )    = putWord8 41 >> put r0 >>  put str
+    put (JEq     r0 r1 str)  = putWord8 42 >> put r0 >>  put r1 >> put str
+    put (JNEq     r0 r1 str) = putWord8 43 >> put r0 >>  put r1 >> put str
 
     get = do 
     key <- getWord8
@@ -245,14 +251,16 @@ instance Binary IntIns where
        39 -> buildTac Multf  
        40 -> build2get Negai  
        41 -> build2get Negaf  
+       42 -> buildTac JEq  
+       43 -> buildTac JNEq  
 
 -- Print auxiliaries
 showTAC  d s1 op s2 = show d ++" := "++ show s1 ++" "++ op ++ " " ++ show s2
 showTACi d s1 op i  = show d ++ " := " ++ show s1 ++ " " ++ op ++ " #" ++ show i
 show2AC  d s1 op    = show d ++ " := "  ++ op ++" " ++  show s1
-showIf r0 r1 s labl = "if " ++ show r0 ++ " " ++ s ++ " " ++ show r1 ++ " goto " ++ showJust labl
-showJust (Just i) = "tag_" ++ show i
-showJust Nothing  = "___"
+showIf r0 r1 s labl = "if " ++ show r0 ++ " " ++ s ++ " " ++ show r1 ++ " goto " ++ show labl
+-- show (Just i) = "tag_" ++ show i
+-- show Nothing  = "___"
 
 -- Monad auxiliaries for put functions
 build2get :: (Binary a1, Binary a2) => (a1 -> a2 -> r) -> Get r
@@ -282,20 +290,26 @@ showP :: Program -> String
 showP = foldr mapCon ""
     where mapCon ins base= (if isTag ins then""else"    ")++show ins++"\n"++base
 
+jumpTrueFalse :: Word       -- true label
+                  -> Word     -- false label
+                     -> Word   -- finish label
+                       -> Word  -- Temp var
+                         -> Program
+jumpTrueFalse tl fl fil t = empty |> (Tag tl) |> (Mv (Temp t) (Int_Cons 1)) |> (Jump fil) |> (Tag fl)|> (Mv (Temp t) (Int_Cons 0)) |> (Tag fil)
 
-patchI :: IntIns -> Word -> IntIns
-patchI (Jump   Nothing)       i = (Jump   (Just i))
-patchI (Tag    Nothing)       i = (Tag    (Just i))
-patchI (Jz     r0 Nothing)    i = (Jz    r0 (Just i))
-patchI (Jnotz  r0 Nothing)    i = (Jnotz r0 (Just i))
-patchI (JLt    r0 r1 Nothing) i = (JLt   r0 r1 (Just i))
-patchI (JGt    r0 r1 Nothing) i = (JGt   r0 r1 (Just i))
-patchI (JLEq   r0 r1 Nothing) i = (JLEq  r0 r1 (Just i))
-patchI (JGEq   r0 r1 Nothing) i = (JGEq  r0 r1 (Just i))
-patchI a _ = a
+-- patchI :: IntIns -> Word -> IntIns
+-- patchI (Jump   Nothing)       i = (Jump   (Just i))
+-- patchI (Tag    Nothing)       i = (Tag    (Just i))
+-- patchI (Jz     r0 Nothing)    i = (Jz    r0 (Just i))
+-- patchI (Jnotz  r0 Nothing)    i = (Jnotz r0 (Just i))
+-- patchI (JLt    r0 r1 Nothing) i = (JLt   r0 r1 (Just i))
+-- patchI (JGt    r0 r1 Nothing) i = (JGt   r0 r1 (Just i))
+-- patchI (JLEq   r0 r1 Nothing) i = (JLEq  r0 r1 (Just i))
+-- patchI (JGEq   r0 r1 Nothing) i = (JGEq  r0 r1 (Just i))
+-- patchI a _ = a
 
-backPatch :: Program -> Word -> Program
-backPatch p lb = fmap (\ ins -> patchI ins lb ) p 
+-- backPatch :: Program -> Word -> Program
+-- backPatch p lb = fmap (\ ins -> patchI ins lb ) p 
 
 cu = Int_Cons 42
 pic = Float_Cons 3.14
@@ -311,38 +325,38 @@ programExample = fromList stuff
     where stuff = [Nop,            
                   (Multi     cu t0 t1),
                   (Call     "fibo_3" ),
-                  (JLt      a x Nothing ),
-                  (Jump     (Just 3)    ),
+                  (JLt      a x 5 ),
+                  (Jump     3 ),
                   (Eql      t0 t0 t1),
                   (Addi      a pic a),
                   (And      z x cu),
                   (PrintEnum "pokeDaysLaborables" (Int_Cons 1)),
                   (Print     a ),
-                  (Tag      (Just 58) )  ,
+                  (Tag       58 )  ,
                   (Lt       a x z),
                   (ShiftL a x 4) ,
                   (Gt       a x cu),
                   (Comment  "This came from line 305" ),
                   (Pot      z pic cu),
                   (GEq      a x cu),
-                  (Jz       a   (Just 69) ),
+                  (Jz       a   69 ),
                   (Subi      z x cu),
                   (Not      x x ),
                   (Mv       a x    ),
-                  (Tag      Nothing ) ,
+                  (Tag      5 ) ,
                   (Or       z x cu),
                   (StoreArray z a z),
-                  (JGEq     a x (Just 50) ),
+                  (JGEq     a x 50 ),
                   (ShiftR a x 4) ,
-                  (JGt      a x Nothing  ),
-                  (Tag      (Just 20) ),
+                  (JGt      a x 3  ),
+                  (Tag      20 ),
                   (NotEql   a cu t2),
                   (Divi      z x cu),
-                  (Tag      Nothing ),
-                  (JLEq     a x Nothing  ),
+                  (Tag      59 ),
+                  (JLEq     a x 56  ),
                   (LEq      a x z),
                   (ReadArray  a (Int_Cons 3) x),
-                  (Jnotz    a   (Just 42) ),
+                  (Jnotz    a   42 ),
                   (XOr      z x cu),
                   (StorePointer a z),
                   (Param    x ),
