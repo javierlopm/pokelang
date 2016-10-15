@@ -66,6 +66,9 @@ getJumps = do tl <- gets trueLabel
               fl <- gets falseLabel
               return (fromJust tl,fromJust fl)
 
+swapNot :: TreeTranslator()
+swapNot =
+
 jumpsAreSet :: TreeTranslator (Bool)
 jumpsAreSet = gets trueLabel >>= maybe (return False) ( \ _ -> return True)
 
@@ -129,94 +132,13 @@ expToTac (Unary op (ExpFloat a) ) = return  (empty , operateuf op a )
 
 expToTac (ExpInt   i1) = return (empty,Int_Cons   i1) -- Single constant values
 expToTac (ExpFloat i1) = return (empty,Float_Cons i1)
--- expToTac (ExpTrue    ) = return (empty,Int_Cons    1) -- gotoExpTrue
--- expToTac (ExpFalse   ) = return (empty,Int_Cons    0) -- gotoExpFalse
+expToTac (ExpTrue    ) = return (empty,Int_Cons    1) -- gotoExpTrue
+expToTac (ExpFalse   ) = return (empty,Int_Cons    0) -- gotoExpFalse
 -- expToTac (Binary op (ExpInt i2) (ExpVar ev s)) = expToTac (Binary op (ExpVar ev s) (ExpInt i2))
   
 
-expToTac node@(Binary Greater exp1 exp2) = do
-    jAreSet <- jumpsAreSet
-    if jAreSet 
-        then do (p1,v1) <- expToTac exp1
-                (p2,v2) <- expToTac exp2
-                (lt,lf) <- getJumps
-                -- Making counts for some other bool
-                -- Second argument won't be need
-                return ( (p1 <> p2) |> (JGt v1 v2 lt) |> (Jump lf) , Fp ) 
-        else do (lt,lf) <- setJumps
-                (p1,v1) <- expToTac exp1
-                (p2,v2) <- expToTac exp2
-                nl      <- newLabel
-                nt      <- newTemp
-                -- could temp be in two places?
-                let jumpCode = (JLEq v1 v2 lf) <| (jumpTrueFalse lt lf nl nt)
-                unsetJumps
-                return ( (p1 <> p2) <> jumpCode , (Temp nt) )
-
-
-expToTac node@(Binary Less       exp1 exp2) = do
-    jAreSet <- jumpsAreSet
-    if jAreSet 
-        then do (p1,v1) <- expToTac exp1
-                (p2,v2) <- expToTac exp2
-                (lt,lf) <- getJumps
-                -- Making counts for some other bool
-                -- Second argument won't be need
-                return ( (p1 <> p2) |> (JLt v1 v2 lt) |> (Jump lf) , Fp ) 
-        else do (lt,lf) <- setJumps
-                (p1,v1) <- expToTac exp1
-                (p2,v2) <- expToTac exp2
-                nl      <- newLabel
-                nt      <- newTemp
-                -- could temp be in two places?
-                let jumpCode = (JGEq v1 v2 lf) <| (jumpTrueFalse lt lf nl nt)
-                unsetJumps
-                return ( (p1 <> p2) <> jumpCode , (Temp nt) )
-
-expToTac node@(Binary LessEql    exp1 exp2) = do
-    jAreSet <- jumpsAreSet
-    if jAreSet 
-        then do (p1,v1) <- expToTac exp1
-                (p2,v2) <- expToTac exp2
-                (lt,lf) <- getJumps
-                -- Making counts for some other bool
-                -- Second argument won't be need
-                return ( (p1 <> p2) |> (JLEq v1 v2 lt) |> (Jump lf) , Fp ) 
-        else do (lt,lf) <- setJumps
-                (p1,v1) <- expToTac exp1
-                (p2,v2) <- expToTac exp2
-                nl      <- newLabel
-                nt      <- newTemp
-                -- could temp be in two places?
-                let jumpCode = (JGt v1 v2 lf) <| (jumpTrueFalse lt lf nl nt)
-                unsetJumps
-                return ( (p1 <> p2) <> jumpCode , (Temp nt) )
-
-expToTac node@(Binary GreaterEql exp1 exp2) = do
-    jAreSet <- jumpsAreSet
-    if jAreSet 
-        then do (p1,v1) <- expToTac exp1
-                (p2,v2) <- expToTac exp2
-                (lt,lf) <- getJumps
-                -- Making counts for some other bool
-                -- Second argument won't be need
-                return ( (p1 <> p2) |> (JLt v1 v2 lt) |> (Jump lf) , Fp ) 
-        else do (lt,lf) <- setJumps
-                (p1,v1) <- expToTac exp1
-                (p2,v2) <- expToTac exp2
-                nl      <- newLabel
-                nt      <- newTemp
-                -- could temp be in two places?
-                let jumpCode = (JGEq v1 v2 lf) <| (jumpTrueFalse lt lf nl nt)
-                unsetJumps
-                return ( (p1 <> p2) <> jumpCode , (Temp nt) )
-
--- expToTac node@(Binary I.NotEql   exp1 exp2) = do
-
--- expToTac node@(Binary I.Eql      exp1 exp2) = do
 
 -- expToTac node@(Binary I.And      exp1 exp2) = do
-
 -- expToTac node@(Binary I.Or       exp1 exp2) = do
 
 
