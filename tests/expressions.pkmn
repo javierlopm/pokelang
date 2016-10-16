@@ -1,22 +1,38 @@
-funcball VOIDtorb hitMAINlee():
-    pINTachu o;
-    pINTachu t;
-    pINTachu th;
-    pINTachu f;
-    pINTachu s;
-    pINTachu se;
+STRUCTabuzz poketrainer {
+    socialSecurityNumber :: pINTachu,
+    best_friend          :: STRUCTabuzz poketrainer*,
+    name                 :: pINTachu 
+}
 
-    pINTachu [5]anArray;
+funcball VOIDtorb hitMAINlee():
+    pINTachu [10]anArray;
+    pINTachu [3][2]otherArray;
+    pINTachu i;
+    pINTachu j;
+
+
+    STRUCTabuzz poketrainer carlitos;
+
 
     --
+    true = squirtrue;
+    false = squirfalse;
+    true = (true || false) && (3 > 5) ;
+    
+    
     o  = 1;
     t  = 1 + 1;
-    th = 3 * 1 + t + f;
+    th = 3 * 2 + t + f;
     se  = 2 ^ 2; 
     s  = t * th;
-    o = t; 
-    --
+    
+    o = t;
+# 20 * i , 4*4 , lurgo sum
 
-    anArray[3] = 4;
+    s = carlitos.name;
+    --
+    
+    i = anArray[3];
+    i = otherArray[2][2];
 
 vamo_a_calmano

@@ -15,6 +15,7 @@ module Types(
     toPointer,
     isPointer,
     isBasic,
+    isNumeric,
     toEmptyArray,
     toArray,
     makeType,
@@ -215,7 +216,7 @@ isArray (TypeArray  _ _ ) = True
 isArray _                 = False
 
 stripArray :: Type -> Type
-stripArray (TypeArray  t1 _ ) = True
+stripArray (TypeArray  t1 _ ) = t1
 stripArray _  = error "Trying to strip something that it's not an array"
 
 
@@ -301,6 +302,10 @@ isPointer :: Type -> Bool
 isPointer (TypePointer _ ) = True
 isPointer _                = False
 
+isNumeric :: Type -> Bool 
+isNumeric TypeInt   = True
+isNumeric TypeFloat = True
+isNumeric _         = False
 
 isBasic :: Type -> Bool 
 isBasic TypeInt    = True

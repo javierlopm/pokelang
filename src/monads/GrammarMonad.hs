@@ -596,16 +596,24 @@ checkAllOk l a b s t
                         tellError error1 >> return TypeError
     where error1= strError (0,0) "Something went wrong..." "on the expression:" $ "\""++show a ++ " = " ++ show b ++ "\" something went horribly wrong"
 
+getBaseType :: Type -> Type
+getBaseType (TypeArray t1 d1) = getBaseType t1
+getBaseType a                 = a
+
 checkAssign :: Type -> Type -> Int -> Bool
 checkAssign (TypeField _ TypeInt) TypeInt at = True
 checkAssign (TypeField _ TypeBool) TypeBool 0 = True
 checkAssign (TypeField _ TypeChar) TypeChar 0 = True
 checkAssign (TypeField _ TypeFloat) TypeFloat at = True
-checkAssign TypeFloat TypeInt at = True
-checkAssign TypeFloat TypeFloat at = True
-checkAssign TypeInt TypeInt at = True
+checkAssign (TypeArray t1 d1) t2 0 = (getBaseType t1) == t2 && isBasic t2
+checkAssign (TypeArray t1 d1) t2 t = (getBaseType t1) == t2 && isNumeric t2
+checkAssign t1 (TypeArray t2 d2) 0 = (getBaseType t2) == t1 && isBasic t1
+checkAssign t1 (TypeArray t2 d2) t = (getBaseType t2) == t1 && isNumeric t1
 checkAssign TypeBool TypeBool 0 = True
 checkAssign TypeChar TypeChar 0 = True
+--checkAssign TypeFloat TypeInt at = True
+checkAssign TypeFloat TypeFloat at = True
+checkAssign TypeInt   TypeInt at = True
 --checkAssign TypeEnum TypeEnumCons 0 = True
 --checkAssign TypeEnum TypeEnum 0 = True
 checkAssign (TypePointer t1) t2 0 =  t1 == t2
@@ -678,13 +686,36 @@ checkEnumFor tok newVar enum1 enum2 = do
 
 checkArray :: Token -> [Exp] -> OurMonad((Type,Token,Exp))
 checkArray tok list = do
-    varDec <- getDeclare tok
-    
+    varDec <- getDeclare tok 
     maybe (return (TypeError,tok,NoExp))
-          (\ dec -> let = HELP -- Debo cambiar el storedType quitandole anidamientos
-                               -- usar: stripArray n veces y isArray
-                    return (storedType dec, tok, arrayParser (ExpVar dec (lexeme tok)) list))
-          varDec   
+          (\ dec -> do 
+              let (final_t,expBuilt) = arrayParser (storedType dec) list
+              let finalExp = (Binary Array (ExpVar dec (lexeme tok)) expBuilt)
+              return (final_t, tok, finalExp))
+          varDec
+  where error1 = "HELP array"
+
+
+--base +  (j * tamDimJ + i) * tamTipo
+--base +  ((k * tamDimK + j) * tamDimJ + i) * tamTipo
+arrayParser :: Type -> [Exp] -> (Type,Exp)
+arrayParser (TypeArray t dim) (exp:[]) = (t,(Binary Multiplyi (ExpInt (getSize t)) (exp)))
+arrayParser ts exps = (final_t,expBuilt)
+  where 
+    (dims,final_t) = dimensionArray ts
+    expBuilt = foldr buildExp (Binary Multiplyi (ExpInt ((head dims)*(getSize final_t))) (head exps)) expList
+    buildExp (dim,i) accExp = (Binary Multiplyi (Binary Plusi accExp i) (ExpInt dim))
+    expList  = tail $ zip  ((init dims) ++ [getSize final_t])  exps
+
+dimensionArray :: Type -> ([Int],Type)
+dimensionArray (TypeArray t1 dim) = ( dim : dimesions ,final_t)
+    where (dimesions,final_t) = dimensionArray t1 
+dimensionArray final_t            = ([],final_t)
+
+--arrayParser :: Exp -> [Exp] -> Exp
+--arrayParser var = foldr nest var
+--                where
+--                  nest nLevel var = (Binary Access nLevel var)
 
 --checkAll :: Token -> [Type] -> [Type] -> OurMonad (Type)
 --checkAll t obtained expected = if all (not isError) obtained
@@ -709,10 +740,7 @@ sel2 (_,b,_) = b
 sel3 :: (Type,Token,Exp) -> Exp
 sel3 (_,_,c) = c
 
-arrayParser :: Exp -> [Exp] -> (Exp,Int)
-arrayParser var = foldr nest (var,0)
-                where
-                  nest nLevel (var,l) = ((Binary Access nLevel var),l+1)
+
 
 
 addToBlock :: Ins -> OurMonad()

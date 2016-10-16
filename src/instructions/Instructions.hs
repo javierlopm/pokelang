@@ -10,7 +10,9 @@ module Instructions(
     emptyExpList,
     addExpList,
     stripBlock,
-    printAsts
+    printAsts,
+    isCompare,
+    isAO
 ) where
 
 -- import Data.Sequence(empty,viewl,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
@@ -112,6 +114,7 @@ data Operator = And -- Binary
               | Div
               | FloatDiv
               | Mod
+              | Array
               | Negi 
               | Negf 
               | Plusi 
@@ -130,7 +133,7 @@ data Operator = And -- Binary
               | Eql
               -- Unary
               | Address -- Ampersand
-              | Access  -- Arrays and structs
+              | Access  --  structs
               | Not
 
 instance Show Operator where
@@ -149,6 +152,7 @@ instance Show Operator where
     show Minusf         = "f-"
     show Multiplyi      = "*"
     show Multiplyf      = "f*"
+    show Array          = "Arraaaaay"
     --show FloatMultiply = "f*"
     show Power         = "^"
     show Greater       = ">"
@@ -175,7 +179,19 @@ data Exp = Binary  Operator Exp Exp
          | NoExp
          deriving (Show)
 
+isCompare :: Operator -> Bool
+isCompare Greater    = True
+isCompare Less       = True
+isCompare LessEql    = True
+isCompare GreaterEql = True
+isCompare NotEql     = True
+isCompare Eql        = True
+isCompare _          = False
 
+isAO :: Operator -> Bool
+isAO And = True
+isAO Or  = True
+isAO _   = False
 
 emptyExpList :: (Seq(Exp))
 emptyExpList = empty
