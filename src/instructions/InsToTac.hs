@@ -27,7 +27,7 @@ data TranlatorState  = TranlatorState { tempCount  :: Word       -- Temporal var
                                       , trueLabel  :: Maybe Word -- Last true label created
                                       , falseLabel :: Maybe Word -- Last false label created
                                       , jumpOn     :: Bool       -- jump if true or false found
-                                      , lastJumpTo :: Bool }     -- to what label the jump was made
+                                      , lastJumpTo :: Word }     -- to what label the jump was made
                                       --deriving(Show)      
 type TreeTranslator  = StateT TranlatorState IO 
 
@@ -41,7 +41,7 @@ alb (TranlatorState w1 w2 w3 w4 b w5) = (TranlatorState w1 (succ w2) w3 w4 b w5)
 
 
 initTranslator :: TranlatorState
-initTranslator = TranlatorState 0 0 Nothing Nothing False False
+initTranslator = TranlatorState 0 0 Nothing Nothing False 0
 
 newTemp :: TreeTranslator(Word)
 newTemp = do nt <- gets tempCount
@@ -74,8 +74,8 @@ swapNot = modify (\(TranlatorState w1 w2 tl fl d w3) -> (TranlatorState w1 w2 fl
 makeJumpTo :: Bool -> TreeTranslator()
 makeJumpTo bool = modify (\(TranlatorState w1 w2 tl fl _ w3) -> (TranlatorState w1 w2 fl tl bool w3))
 
-setLastJump :: Bool -> TreeTranslator()
-setLastJump bool = modify (\(TranlatorState w1 w2 tl fl b _) -> (TranlatorState w1 w2 fl tl b bool))
+setLastJump :: Word -> TreeTranslator()
+setLastJump word = modify (\(TranlatorState w1 w2 tl fl b _) -> (TranlatorState w1 w2 fl tl b word))
 
 jumpsAreSet :: TreeTranslator (Bool)
 jumpsAreSet = gets trueLabel >>= maybe (return False) ( \ _ -> return True)
@@ -205,11 +205,12 @@ makeCompare exp1 exp2 oper = do
         (p2,v2) <- expToTac exp2
         (lt,lf) <- getJumps
         jumpOnTrue <- gets jumpOn
-        nIns <- if jumpOnTrue 
-                then (mk oper v1 v2 lt)        >> setLastJump lt
-                else (mkRevOper oper v1 v2 lf) >> setLastJump lf
+        newIns <- if jumpOnTrue 
+                        then setLastJump lt >> return (mkOp oper v1 v2 lt)     
+                        else setLastJump lf >> return (mkRevOper oper v1 v2 lf)
         return ( (p1 <> p2) |> newIns |> (Jump lf) , Fp ) 
     else do 
+        (lt,lf) <- setJumps
         (p1,v1) <- expToTac exp1
         (p2,v2) <- expToTac exp2
         nl      <- newLabel
@@ -220,8 +221,8 @@ makeCompare exp1 exp2 oper = do
 makeBool :: Operator -> Exp -> Exp -> TreeTranslator ((Program,Var))
 makeBool op exp1 exp2 = do 
     jAreSet <- jumpsAreSet
-    case op of I.And -> False
-               I.Or  -> True
+    makeJumpTo (case op of I.And -> False
+                           I.Or  -> True)
     if jAreSet 
         then do (p1,v1) <- expToTac exp1
                 (p2,v2) <- expToTac exp2
@@ -233,7 +234,8 @@ makeBool op exp1 exp2 = do
                 nt      <- newTemp
                 unsetJumps
                 lastJump <- gets lastJumpTo
-                return ( p1 <> p2 <> (jumpTrueFalse lt lf nl nt (not lastJump)) , Temp nt ) 
+                let notLastJump = if lastJump == lt then False else True
+                return ( p1 <> p2 <> (jumpTrueFalse lt lf nl nt notLastJump) , Temp nt ) 
 
 
 loadLocal :: Int -> TreeTranslator((IntIns,Var))
