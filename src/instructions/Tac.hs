@@ -153,7 +153,7 @@ instance Show      IntIns where
     show (StoreArray   d s1 s2) = show d ++'[':show s1 ++ "] := " ++ show s2
     show (Call     str )      = "Call " ++ str
     show (Param    par )      = "Param " ++ show par
-    show (Tag      i   )      = '\n': show i ++ ":"
+    show (Tag      i   )      = '\n': "tag_" ++ show i ++ ":"
     show (Comment  str )      =  "\n# "++ str
     show (Print     c  )      = "Print "      ++ show c
     show (PrintEnum c i)      = "Print enum " ++ show c ++ "[" ++ show i ++"]"

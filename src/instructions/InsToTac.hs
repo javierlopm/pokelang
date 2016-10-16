@@ -49,7 +49,7 @@ newTemp = do nt <- gets tempCount
              return nt
 
 newLabel :: TreeTranslator(Word)
-newLabel = do nl <- gets tempCount
+newLabel = do nl <- gets labelCount
               modify alb
               return nl
 
@@ -72,10 +72,10 @@ swapNot :: TreeTranslator()
 swapNot = modify (\(TranlatorState w1 w2 tl fl d w3) -> (TranlatorState w1 w2 fl tl d w3))
 
 makeJumpTo :: Bool -> TreeTranslator()
-makeJumpTo bool = modify (\(TranlatorState w1 w2 tl fl _ w3) -> (TranlatorState w1 w2 fl tl bool w3))
+makeJumpTo bool = modify (\(TranlatorState w1 w2 tl fl _ w3) -> (TranlatorState w1 w2 tl fl bool w3))
 
 setLastJump :: Word -> TreeTranslator()
-setLastJump word = modify (\(TranlatorState w1 w2 tl fl b _) -> (TranlatorState w1 w2 fl tl b word))
+setLastJump word = modify (\(TranlatorState w1 w2 tl fl b _) -> (TranlatorState w1 w2 tl fl b word))
 
 jumpsAreSet :: TreeTranslator (Bool)
 jumpsAreSet = gets trueLabel >>= maybe (return False) ( \ _ -> return True)
@@ -205,10 +205,13 @@ makeCompare exp1 exp2 oper = do
         (p2,v2) <- expToTac exp2
         (lt,lf) <- getJumps
         jumpOnTrue <- gets jumpOn
+        -- liftIO $ putStrLn $ show jumpOnTrue
+        liftIO $ putStrLn $ "label true:" ++ show lt ++ ", label false:" ++ show lf
+
         newIns <- if jumpOnTrue 
-                        then setLastJump lt >> return (mkOp oper v1 v2 lt)     
-                        else setLastJump lf >> return (mkRevOper oper v1 v2 lf)
-        return ( (p1 <> p2) |> newIns |> (Jump lf) , Fp ) 
+                        then setLastJump lt >> return (empty |> (mkOp oper v1 v2 lt)     )
+                        else setLastJump lf >> return (empty |> (mkRevOper oper v1 v2 lf))
+        return ( (p1 <> p2) <> newIns , Fp ) 
     else do 
         (lt,lf) <- setJumps
         (p1,v1) <- expToTac exp1
@@ -232,8 +235,8 @@ makeBool op exp1 exp2 = do
                 (p2,v2) <- expToTac exp2
                 nl      <- newLabel
                 nt      <- newTemp
-                unsetJumps
                 lastJump <- gets lastJumpTo
+                unsetJumps
                 let notLastJump = if lastJump == lt then False else True
                 return ( p1 <> p2 <> (jumpTrueFalse lt lf nl nt notLastJump) , Temp nt ) 
 

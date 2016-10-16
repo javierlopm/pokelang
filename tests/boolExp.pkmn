@@ -1,0 +1,12 @@
+funcball VOIDtorb hitMAINlee():
+    BOOLbasaur a;
+    BOOLbasaur b;
+
+    pINTachu   m;
+    pINTachu   n;
+    pINTachu   o;
+
+
+    a = (m > 20) && (n <= 15) || (o==n);
+
+vamo_a_calmano
