@@ -11,7 +11,8 @@ module Instructions(
     addExpList,
     stripBlock,
     printAsts,
-    isCompare
+    isCompare,
+    isAO
 ) where
 
 -- import Data.Sequence(empty,viewl,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
@@ -185,7 +186,12 @@ isCompare LessEql    = True
 isCompare GreaterEql = True
 isCompare NotEql     = True
 isCompare Eql        = True
-isCompare _ = False
+isCompare _          = False
+
+isAO :: Operator -> Bool
+isAO And = True
+isAO Or  = True
+isAO _   = False
 
 emptyExpList :: (Seq(Exp))
 emptyExpList = empty

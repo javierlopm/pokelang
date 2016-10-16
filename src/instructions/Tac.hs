@@ -294,8 +294,10 @@ jumpTrueFalse :: Word       -- true label
                   -> Word     -- false label
                      -> Word   -- finish label
                        -> Word  -- Temp var
-                         -> Program
-jumpTrueFalse tl fl fil t = empty |> (Tag tl) |> (Mv (Temp t) (Int_Cons 1)) |> (Jump fil) |> (Tag fl)|> (Mv (Temp t) (Int_Cons 0)) |> (Tag fil)
+                         -> Bool -- What label goes first, true or false
+                          -> Program
+jumpTrueFalse tl fl fil t True  = empty |> (Tag tl) |> (Mv (Temp t) (Int_Cons 1)) |> (Jump fil) |> (Tag fl) |> (Mv (Temp t) (Int_Cons 0)) |> (Tag fil)
+jumpTrueFalse tl fl fil t False = empty |> (Tag fl) |> (Mv (Temp t) (Int_Cons 0)) |> (Jump fil) |> (Tag tl) |> (Mv (Temp t) (Int_Cons 1)) |> (Tag fil)
 
 -- patchI :: IntIns -> Word -> IntIns
 -- patchI (Jump   Nothing)       i = (Jump   (Just i))

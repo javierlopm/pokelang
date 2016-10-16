@@ -22,24 +22,26 @@ import Tac          hiding(IntIns(Eql,NotEql,Mod,And,Or,Not))
 import Instructions as I(Operator(Eql,NotEql,Mod,And,Or,Not))
 import Tac          as T(IntIns(Eql,NotEql,Mod,And,Or,Not))
 
-data TranlatorState  = TranlatorState { tempCount  :: Word
-                                      , labelCount :: Word
-                                      , trueLabel  :: Maybe Word
-                                      , falseLabel :: Maybe Word }    
+data TranlatorState  = TranlatorState { tempCount  :: Word       -- Temporal variables generator
+                                      , labelCount :: Word       -- Label generator
+                                      , trueLabel  :: Maybe Word -- Last true label created
+                                      , falseLabel :: Maybe Word -- Last false label created
+                                      , jumpOn     :: Bool       -- jump if true or false found
+                                      , lastJumpTo :: Bool }     -- to what label the jump was made
                                       --deriving(Show)      
 type TreeTranslator  = StateT TranlatorState IO 
 
 debugVar = True
 
 vpp :: TranlatorState -> TranlatorState
-vpp (TranlatorState w1 w2 w3 w4) = (TranlatorState (succ w1) w2 w3 w4)
+vpp (TranlatorState w1 w2 w3 w4 b w5) = (TranlatorState (succ w1) w2 w3 w4 b w5)
 
 alb :: TranlatorState -> TranlatorState
-alb (TranlatorState w1 w2 w3 w4) = (TranlatorState w1 (succ w2) w3 w4)
+alb (TranlatorState w1 w2 w3 w4 b w5) = (TranlatorState w1 (succ w2) w3 w4 b w5)
 
 
 initTranslator :: TranlatorState
-initTranslator = TranlatorState 0 0 Nothing Nothing
+initTranslator = TranlatorState 0 0 Nothing Nothing False False
 
 newTemp :: TreeTranslator(Word)
 newTemp = do nt <- gets tempCount
@@ -67,14 +69,20 @@ getJumps = do tl <- gets trueLabel
               return (fromJust tl,fromJust fl)
 
 swapNot :: TreeTranslator()
-swapNot =
+swapNot = modify (\(TranlatorState w1 w2 tl fl d w3) -> (TranlatorState w1 w2 fl tl d w3))
+
+makeJumpTo :: Bool -> TreeTranslator()
+makeJumpTo bool = modify (\(TranlatorState w1 w2 tl fl _ w3) -> (TranlatorState w1 w2 fl tl bool w3))
+
+setLastJump :: Bool -> TreeTranslator()
+setLastJump bool = modify (\(TranlatorState w1 w2 tl fl b _) -> (TranlatorState w1 w2 fl tl b bool))
 
 jumpsAreSet :: TreeTranslator (Bool)
 jumpsAreSet = gets trueLabel >>= maybe (return False) ( \ _ -> return True)
 
 modJumps :: Bool -> Maybe Word -> TreeTranslator()
-modJumps True  mw = modify (\(TranlatorState a b _  c)->TranlatorState a b mw c)
-modJumps False mw = modify (\(TranlatorState a b c _ )->TranlatorState a b c mw)
+modJumps True  mw = modify (\(TranlatorState a b _  c d e)->TranlatorState a b mw c d e)
+modJumps False mw = modify (\(TranlatorState a b c _  d e)->TranlatorState a b c mw d e)
 
 -- use foldM instead
 forestToTac :: [(String,Ins)] -> TreeTranslator ( [(String,Program)] )
@@ -137,11 +145,6 @@ expToTac (ExpFalse   ) = return (empty,Int_Cons    0) -- gotoExpFalse
 -- expToTac (Binary op (ExpInt i2) (ExpVar ev s)) = expToTac (Binary op (ExpVar ev s) (ExpInt i2))
   
 
-
--- expToTac node@(Binary I.And      exp1 exp2) = do
--- expToTac node@(Binary I.Or       exp1 exp2) = do
-
-
 -- Field access in structs and unions
 expToTac node@(Binary Access exp1 exp2) = do
     nt <- newTemp
@@ -179,6 +182,7 @@ expToTac (ExpVar dec s) = case (dir dec) of
 -- Generic unkwon operation
 expToTac (Binary op exp1 exp2)
     | isCompare op = makeCompare exp1 exp2 op
+    | isAO op      = makeBool    op exp1 exp2 
     | otherwise    = do 
         (ins1,t1) <- expToTac exp1
         (ins2,t2) <- expToTac exp2
@@ -196,21 +200,40 @@ makeCompare :: Exp -> Exp -> Operator -> TreeTranslator ((Program,Var))
 makeCompare exp1 exp2 oper = do 
     jAreSet <- jumpsAreSet
     if jAreSet 
+    then do 
+        (p1,v1) <- expToTac exp1
+        (p2,v2) <- expToTac exp2
+        (lt,lf) <- getJumps
+        jumpOnTrue <- gets jumpOn
+        nIns <- if jumpOnTrue 
+                then (mk oper v1 v2 lt)        >> setLastJump lt
+                else (mkRevOper oper v1 v2 lf) >> setLastJump lf
+        return ( (p1 <> p2) |> newIns |> (Jump lf) , Fp ) 
+    else do 
+        (p1,v1) <- expToTac exp1
+        (p2,v2) <- expToTac exp2
+        nl      <- newLabel
+        nt      <- newTemp
+        let jumpCode = (mkRevOper oper v1 v2 lf) <| (jumpTrueFalse lt lf nl nt True)
+        return ( (p1 <> p2) <> jumpCode , (Temp nt) )
+
+makeBool :: Operator -> Exp -> Exp -> TreeTranslator ((Program,Var))
+makeBool op exp1 exp2 = do 
+    jAreSet <- jumpsAreSet
+    case op of I.And -> False
+               I.Or  -> True
+    if jAreSet 
         then do (p1,v1) <- expToTac exp1
                 (p2,v2) <- expToTac exp2
-                (lt,lf) <- getJumps
-                -- Making counts for some other bool
-                -- Second argument won't be need
-                return ( (p1 <> p2) |> (mkOp oper v1 v2 lt) |> (Jump lf) , Fp ) 
+                return ( p1 <> p2 , Fp ) 
         else do (lt,lf) <- setJumps
                 (p1,v1) <- expToTac exp1
                 (p2,v2) <- expToTac exp2
                 nl      <- newLabel
                 nt      <- newTemp
-                -- could temp be in two places?
-                let jumpCode = (mkRevOper oper v1 v2 lf) <| (jumpTrueFalse lt lf nl nt)
                 unsetJumps
-                return ( (p1 <> p2) <> jumpCode , (Temp nt) )
+                lastJump <- gets lastJumpTo
+                return ( p1 <> p2 <> (jumpTrueFalse lt lf nl nt (not lastJump)) , Temp nt ) 
 
 
 loadLocal :: Int -> TreeTranslator((IntIns,Var))
