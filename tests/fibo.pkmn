@@ -16,7 +16,9 @@ STRUCTabuzz poketrainer {
 funcball pINTachu fibo(pINTachu n):
     STRUCTabuzz poketrainer ash;
 
-    #n = ash.mypkmn.type;
+    CHARmander mh;
+    mh = ash.mypkmn.type;
+
     n *= 4;
     n *= 4;
 
@@ -67,7 +69,8 @@ funcball VOIDtorb hitMAINlee(pINTachu n):
     pINTachu n;
     STRUCTabuzz poketrainer ash;
     
-    n = ash.mypkmn.type;
+    CHARmander mh;
+    mh = ash.mypkmn.type;
     n *= 4;
     n *= 4;
 

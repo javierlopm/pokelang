@@ -137,9 +137,9 @@ instance Show      IntIns where
     show (Gt     r0 r1 r2)  =  showTAC r0 r1 ">"  r2
     show (LEq    r0 r1 r2)  =  showTAC r0 r1 "<=" r2
     show (GEq    r0 r1 r2)  =  showTAC r0 r1 ">=" r2
-    show (Jump   i    )     = "goto " ++ show i
-    show (Jz     r0 i )     = "if " ++ show r0 ++ "is z  goto" ++ show i 
-    show (Jnotz  r0 i )     = "if " ++ show r0 ++ "is nz goto" ++ show i 
+    show (Jump   i    )     = "goto tag_" ++ show i
+    show (Jz     r0 i )     = "if " ++ show r0 ++ "is z  goto tag_" ++ show i 
+    show (Jnotz  r0 i )     = "if " ++ show r0 ++ "is nz goto tag_" ++ show i 
     show (JLt    r0 r1 i)   = showIf r0 r1 "<"   i
     show (JGt    r0 r1 i)   = showIf r0 r1 ">"   i
     show (JLEq   r0 r1 i)   = showIf r0 r1 "<="  i
@@ -258,7 +258,7 @@ instance Binary IntIns where
 showTAC  d s1 op s2 = show d ++" := "++ show s1 ++" "++ op ++ " " ++ show s2
 showTACi d s1 op i  = show d ++ " := " ++ show s1 ++ " " ++ op ++ " #" ++ show i
 show2AC  d s1 op    = show d ++ " := "  ++ op ++" " ++  show s1
-showIf r0 r1 s labl = "if " ++ show r0 ++ " " ++ s ++ " " ++ show r1 ++ " goto " ++ show labl
+showIf r0 r1 s labl = "if " ++ show r0 ++ " " ++ s ++ " " ++ show r1 ++ " goto tag_" ++ show labl
 -- show (Just i) = "tag_" ++ show i
 -- show Nothing  = "___"
 
