@@ -60,6 +60,9 @@ setJumps = do lt <- newLabel
               modJumps False (Just lf)
               return (lt,lf)
 
+setTheseJumps :: Word -> Word -> TreeTranslator ()
+setTheseJumps lt lf = modJumps True  (Just lt) >> modJumps False (Just lf)
+
 unsetJumps :: TreeTranslator ()
 unsetJumps = modJumps True Nothing >> modJumps False Nothing
 
@@ -224,13 +227,27 @@ makeCompare exp1 exp2 oper = do
 makeBool :: Operator -> Exp -> Exp -> TreeTranslator ((Program,Var))
 makeBool op exp1 exp2 = do 
     jAreSet <- jumpsAreSet
-    makeJumpTo (case op of I.And -> False
-                           I.Or  -> True)
+    
     if jAreSet 
-        then do (p1,v1) <- expToTac exp1
+        then do nextOperator <- newLabel -- jump to next eval
+                (lt,lf) <- getJumps
+                -- jumps from left to next binary from the future
+                case op of
+                    I.And -> setTheseJumps lt nextOperator >> makeJumpTo False
+                    I.Or  -> setTheseJumps nextOperator lf >> makeJumpTo True
+                (p1,v1) <- expToTac exp1
+
+                -- jumps back to normal for right one
+                case op of I.And ->  makeJumpTo True
+                           I.Or  ->  makeJumpTo False
+                setTheseJumps lt lf
+
                 (p2,v2) <- expToTac exp2
-                return ( p1 <> p2 , Fp ) 
+                return ( (p1 <> p2) |> (Tag nextOperator), Fp )
         else do (lt,lf) <- setJumps
+                case op of
+                    I.And -> makeJumpTo False
+                    I.Or  -> makeJumpTo True
                 (p1,v1) <- expToTac exp1
                 (p2,v2) <- expToTac exp2
                 nl      <- newLabel
@@ -238,7 +255,7 @@ makeBool op exp1 exp2 = do
                 lastJump <- gets lastJumpTo
                 unsetJumps
                 let notLastJump = if lastJump == lt then False else True
-                return ( p1 <> p2 <> (jumpTrueFalse lt lf nl nt notLastJump) , Temp nt ) 
+                return ( (p1 <> p2) <> (jumpTrueFalse lt lf nl nt notLastJump) , Temp nt ) 
 
 
 loadLocal :: Int -> TreeTranslator((IntIns,Var))
