@@ -573,28 +573,28 @@ checkOk action t = if t /= TypeError
                       else return TypeError
 
 {- Checking all the returns from monad types aren't errors -}
-checkAllOk :: [OurMonad(Type)] -> Type -> Type -> String -> Int -> OurMonad(Type)
-checkAllOk l TypeVoid TypeVoid _ _ =  
+checkAllOk :: [OurMonad(Type)] -> Type -> Type -> String -> Token -> Int -> OurMonad(Type)
+checkAllOk l TypeVoid TypeVoid _ tok _ =  
   do typeL <- (sequence l)
      if all (/= TypeError) typeL
      then return TypeVoid
      else return TypeError
-checkAllOk l (TypeEnum s1) (TypeEnum s2)  _  0 = if s1==s2 then checkAllOk l TypeVoid TypeVoid "" 0
+checkAllOk l (TypeEnum s1) (TypeEnum s2)  _  tok 0 = if s1==s2 then checkAllOk l TypeVoid TypeVoid "" tok 0
                                                  else return TypeError
-checkAllOk l (TypeEnum s1) (TypeEnumCons) s2 0 = do
+checkAllOk l (TypeEnum s1) (TypeEnumCons) s2 tok 0 = do
   enuTbl <- gets enuTbl
   if ((not.isNothing) (getValS s2 enuTbl)) then 
     if s1 == ( storedDType $ fromJust $ getValS s2 enuTbl) 
-    then checkAllOk l TypeVoid TypeVoid "" 0
+    then checkAllOk l TypeVoid TypeVoid "" tok 0
     else return TypeError
   else
     return TypeError
   --else do return TypeError
-checkAllOk l a b s t
-    | checkAssign a b t = checkAllOk l TypeVoid TypeVoid s 0
+checkAllOk l a b s tok t
+    | checkAssign a b t = checkAllOk l TypeVoid TypeVoid s tok 0
     | otherwise       = do
                         tellError error1 >> return TypeError
-    where error1= strError (0,0) "Something went wrong..." "on the expression:" $ "\""++show a ++ " = " ++ show b ++ "\" something went horribly wrong"
+    where error1= strError (0,0) "Incompatible types on asignation: " (toStr tok)  $ "\""++show a ++ (toStr tok)  ++ show b ++ "\""
 
 getBaseType :: Type -> Type
 getBaseType (TypeArray t1 d1) = getBaseType t1

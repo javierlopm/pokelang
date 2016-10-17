@@ -73,6 +73,7 @@ funcball VOIDtorb hitMAINlee(pINTachu n):
     mh = ash.mypkmn.type;
     n *= 4;
     n *= 4;
+    ash.mypkmn.type = 'd';
 
     si n == 0 || n == 1:
         vamo_a_retorna 1;
