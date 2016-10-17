@@ -208,8 +208,8 @@ makeCompare exp1 exp2 oper = do
         (p2,v2) <- expToTac exp2
         (lt,lf) <- getJumps
         jumpOnTrue <- gets jumpOn
-        -- liftIO $ putStrLn $ show jumpOnTrue
-        liftIO $ putStrLn $ "label true:" ++ show lt ++ ", label false:" ++ show lf
+        liftIO $ putStrLn $ show jumpOnTrue
+        -- liftIO $ putStrLn $ "label true:" ++ show lt ++ ", label false:" ++ show lf
 
         newIns <- if jumpOnTrue 
                         then setLastJump lt >> return (empty |> (mkOp oper v1 v2 lt)     )
@@ -227,28 +227,31 @@ makeCompare exp1 exp2 oper = do
 makeBool :: Operator -> Exp -> Exp -> TreeTranslator ((Program,Var))
 makeBool op exp1 exp2 = do 
     jAreSet <- jumpsAreSet
+
+    case op of I.And -> makeJumpTo False
+               I.Or  -> makeJumpTo True
     
     if jAreSet 
         then do nextOperator <- newLabel -- jump to next eval
                 (lt,lf) <- getJumps
                 -- jumps from left to next binary from the future
                 case op of
-                    I.And -> setTheseJumps lt nextOperator >> makeJumpTo False
-                    I.Or  -> setTheseJumps nextOperator lf >> makeJumpTo True
+                    I.And -> setTheseJumps lt nextOperator
+                    I.Or  -> setTheseJumps nextOperator lf
                 (p1,v1) <- expToTac exp1
 
-                -- jumps back to normal for right one
-                case op of I.And ->  makeJumpTo True
-                           I.Or  ->  makeJumpTo False
+                case op of I.And -> makeJumpTo True
+                           I.Or  -> makeJumpTo False
+
                 setTheseJumps lt lf
 
                 (p2,v2) <- expToTac exp2
                 return ( (p1 <> p2) |> (Tag nextOperator), Fp )
         else do (lt,lf) <- setJumps
-                case op of
-                    I.And -> makeJumpTo False
-                    I.Or  -> makeJumpTo True
+                
                 (p1,v1) <- expToTac exp1
+                case op of I.And -> makeJumpTo True
+                           I.Or  -> makeJumpTo False
                 (p2,v2) <- expToTac exp2
                 nl      <- newLabel
                 nt      <- newTemp
