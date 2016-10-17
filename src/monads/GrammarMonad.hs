@@ -507,6 +507,7 @@ checkFunctionCall ident calltup = do
 
 checkFieldAccess :: (Type,Token,Exp) -> Token -> OurMonad((Type,Token,Exp))
 checkFieldAccess (TypeError,tk1,_) _ = return (TypeError,tk1,NoExp)
+checkFieldAccess (TypePointer ty1,tk1,exp1) tk2 = checkFieldAccess (ty1,tk1,exp1) tk2
 checkFieldAccess (ty1,tk1,exp1) tk2 = do
     state <- get
     if structured ty1 
@@ -616,7 +617,8 @@ checkAssign TypeFloat TypeFloat at = True
 checkAssign TypeInt   TypeInt at = True
 --checkAssign TypeEnum TypeEnumCons 0 = True
 --checkAssign TypeEnum TypeEnum 0 = True
-checkAssign (TypePointer t1) t2 0 =  t1 == t2
+checkAssign (TypePointer t1) (TypePointer t2) 0 =  checkAssign t1 t2 0
+checkAssign (TypePointer _) TypeInt 0 =  True
 checkAssign (TypeEmptyArray t1) t2 0 = t1 == t2
 --checkAssign (TypeArray t) t 0 = True
 checkAssign _ _ _ = False

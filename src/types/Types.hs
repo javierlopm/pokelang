@@ -25,6 +25,7 @@ module Types(
     emptyTypeMatches,
     sameData,
     isNotRecursiveData,
+    accessP,
     -- Type Tuple Functions
     transformType,
     emptytuple,
@@ -177,9 +178,14 @@ instance Show Type where
 -- lists
 nums = [TypeInt,TypeFloat]
 
+accessP :: Type -> Type
+accessP (TypePointer t) = t
+accessP _               = TypeError
+
 structured :: Type -> Bool
 structured (TypeStruct  _ ) = True
 structured (TypeUnion  _ )  = True
+structured (TypePointer t1) = structured t1
 structured _                = False
 
 enumMatches :: Declare -> String -> Bool

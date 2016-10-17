@@ -188,9 +188,9 @@ GlobDeclare : Reference          { ( $1 ,False) }
             | GLOBAL Reference   { ( $2 ,True ) }
 
 -- Randomly nested Pointer-Array-Empty_Arrray references (or not)
-Reference: PrimType              {            $1           }
-         | Reference "*"         { TypePointer    $1       }
-         | Reference "[" INT "]" { TypeArray $1 (value $3) }
+Reference: PrimType              {             $1            }
+         | Reference "*"         { TypePointer $1            }
+         | Reference "[" INT "]" { TypeArray   $1 (value $3) }
          -- | Reference "[" "]"     { TypeEmptyArray $1       }
 
 PrimType : INTDEC           {     makeType $1    }
@@ -269,9 +269,9 @@ Exp :  -- Cambiar los NoExp por las Exp
     --Llamadas a funciones
     | ID "(" ExpList ")"   {% checkFunctionCall $1 (fst $3)  >>= expIns (CallVal (lexeme $1) (snd $3)) } 
     --Acceso a apuntadores
-    | "*" Exp %prec POINT  {% return (TypeBool,(sel2 $2),Unary Access (sel3 $2)) }
+    | "*" Exp %prec POINT  {% return (accessP (sel1 $2),(sel2 $2),Unary Access (sel3 $2)) }
     --Direccion de variable
-    | "&" Exp %prec AMP    {% return (TypeBool,(sel2 $2),Unary Address (sel3 $2))  }
+    | "&" Exp %prec AMP    {% return (TypeInt,(sel2 $2),Unary Address (sel3 $2))  }
     -- Asociatividad.
     | "(" Exp ")"    {% return $2 }
     -- Constantes.
