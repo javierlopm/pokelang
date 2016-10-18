@@ -352,6 +352,26 @@ align lastPos = if r == 0 then (lastPos      ,0)
     Declare type transformation functions
 -}
 
+reverseTypeArray :: Type -> Type
+TypeInt
+TypeBool
+TypeChar
+TypeString
+TypeFloat
+TypeVoid
+TypeEnumCons
+TypeEnum
+TypeStruct
+TypeUnion
+TypeField
+TypePointer
+TypeEmptyArray
+TypeArray
+TypeFunction
+Helpers
+TypeSatisfies
+TypeUndefined
+TypeError
 
 toPointer :: Declare -> Declare
 toPointer dec = dec { storedType = TypePointer oldtype }

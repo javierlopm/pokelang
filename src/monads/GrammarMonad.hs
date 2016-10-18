@@ -703,16 +703,16 @@ checkArray tok list = do
   where error1 = "HELP array"
 
 
---base +  (j * tamDimJ + i) * tamTipo
---base +  ((k * tamDimK + j) * tamDimJ + i) * tamTipo
+--base +  (j * tamDimI + i) * tamTipo
+--base +  ((k * tamDimJ + j) * tamDimI + i) * tamTipo
 arrayParser :: Type -> [Exp] -> (Type,Exp)
-arrayParser (TypeArray t dim) (exp:[]) = (t,(Binary Multiplyi (ExpInt (getSize t)) (exp)))
-arrayParser ts exps = (final_t,expBuilt)
-  where 
-    (dims,final_t) = dimensionArray ts
-    expBuilt = foldr buildExp (Binary Multiplyi (ExpInt ((head dims)*(getSize final_t))) (head exps)) expList
-    buildExp (dim,i) accExp = (Binary Multiplyi (Binary Plusi accExp i) (ExpInt dim))
-    expList  = tail $ zip  ((init dims) ++ [getSize final_t])  exps
+arrayParser t1@(TypeArray t dim) (exp:[]) = error $ show t1  --(t,(Binary Multiplyi (ExpInt (getSize t)) (exp)))
+arrayParser ts exps = error $ show ts --(final_t,expBuilt)
+  -- where 
+  --   (dims,final_t) = dimensionArray ts
+  --   expBuilt = foldr buildExp (Binary Multiplyi (ExpInt ((head dims)*(getSize final_t))) (head exps)) expList
+  --   buildExp (dim,i) accExp = (Binary Multiplyi (Binary Plusi accExp i) (ExpInt dim))
+  --   expList  = tail $ zip  ((init dims) ++ [getSize final_t])  exps
 
 dimensionArray :: Type -> ([Int],Type)
 dimensionArray (TypeArray t1 dim) = ( dim : dimesions ,final_t)
