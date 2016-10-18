@@ -7,6 +7,6 @@ funcball VOIDtorb hitMAINlee():
     pINTachu   o;
 
 
-    a = ((((m > 20) && (n <= 15)) || (o==n)) || (o > 3)) && (a==b) && b;
+    a = ( ( ((m>20)&&(n<=15)) || (o==n)) || (o > 3)  ) && a && b;
 
 vamo_a_calmano

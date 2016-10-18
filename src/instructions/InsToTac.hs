@@ -167,6 +167,7 @@ expToTac (Binary op (ExpInt i1) (ExpInt i2)) = do
         else do nt <- newTemp
                 return (empty |> (Mv (Temp nt) newVar) , (Temp nt))
 
+
 -- Two float constants
 expToTac (Binary op (ExpFloat i1) (ExpFloat i2)) = do -- Two integer constants
     let newVar = operatef op i1 i2
@@ -208,7 +209,7 @@ makeCompare exp1 exp2 oper = do
         (p2,v2) <- expToTac exp2
         (lt,lf) <- getJumps
         jumpOnTrue <- gets jumpOn
-        liftIO $ putStrLn $ show jumpOnTrue
+        -- liftIO $ putStrLn $ show jumpOnTrue
         -- liftIO $ putStrLn $ "label true:" ++ show lt ++ ", label false:" ++ show lf
 
         newIns <- if jumpOnTrue 
@@ -242,7 +243,15 @@ makeBool op exp1 exp2 = do
                             I.Or  -> setTheseJumps nextOperator lf
                     else return ()
 
-                (p1,v1) <- expToTac exp1
+                (p1,v1)    <- expToTac exp1
+                np1        <- newCode exp1 p1 v1
+                
+
+                if brokenChain op exp2 
+                    then case op of
+                            I.And -> makeJumpTo True
+                            I.Or  -> makeJumpTo True
+                    else return ()
 
                 case op of I.And -> makeJumpTo True
                            I.Or  -> makeJumpTo False
@@ -250,20 +259,33 @@ makeBool op exp1 exp2 = do
                 setTheseJumps lt lf
 
                 (p2,v2) <- expToTac exp2
-                return ( (p1 <> p2) |> (Tag nextOperator), Fp )
+                np2     <- newCode exp2 p2 v2
+
+                return ( (np1 <> np2) |> (Tag nextOperator), Fp )
         else do (lt,lf) <- setJumps
                 
                 (p1,v1) <- expToTac exp1
+                np1     <- newCode exp1 p1 v1
+
                 case op of I.And -> makeJumpTo True
                            I.Or  -> makeJumpTo False
                 (p2,v2) <- expToTac exp2
+                np2     <- newCode exp2 p2 v2
+
                 nl      <- newLabel
                 nt      <- newTemp
                 lastJump <- gets lastJumpTo
                 unsetJumps
                 let notLastJump = if lastJump == lt then False else True
-                return ( (p1 <> p2) <> (jumpTrueFalse lt lf nl nt notLastJump) , Temp nt ) 
+                return ( (np1 <> np2) <> (jumpTrueFalse lt lf nl nt notLastJump) , Temp nt ) 
 
+newCode :: Exp -> Program -> Var -> TreeTranslator(Program)
+newCode exp1 p1 v1  = do 
+    jumpOnTrue <- gets jumpOn
+    (nlt,nlf)  <- getJumps
+    if itsVar exp1 
+    then return (p1 |> (if jumpOnTrue then (Jnotz v1 nlt) else (Jz v1 nlf)))
+    else return p1
 
 loadLocal :: Int -> TreeTranslator((IntIns,Var))
 loadLocal ofs = do tempLocal <- newTemp

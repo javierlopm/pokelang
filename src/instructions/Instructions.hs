@@ -14,6 +14,7 @@ module Instructions(
     isCompare,
     isAO,
     brokenChain,
+    itsVar
 ) where
 
 -- import Data.Sequence(empty,viewl,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
@@ -193,6 +194,10 @@ isAO :: Operator -> Bool
 isAO And = True
 isAO Or  = True
 isAO _   = False
+
+itsVar :: Exp -> Bool
+itsVar (ExpVar _ _) = True
+itsVar _ = False 
 
 brokenChain :: Operator -> Exp -> Bool
 brokenChain And (Binary Or  _ _) = False
