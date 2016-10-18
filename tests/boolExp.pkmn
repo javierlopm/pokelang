@@ -11,7 +11,10 @@
 #
 #vamo_a_calmano
 
+
 funcball VOIDtorb hitMAINlee():
 	pINTachu* a;
-	*a = 4 + *a;
+#	*a = 4 + *a;
+    a = ( ( ((m>20)&&(n<=15)) || (o==n)) || (o > 3)  ) && a && b;
+
 vamo_a_calmano

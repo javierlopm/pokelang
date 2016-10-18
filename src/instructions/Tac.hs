@@ -138,8 +138,8 @@ instance Show      IntIns where
     show (LEq    r0 r1 r2)  =  showTAC r0 r1 "<=" r2
     show (GEq    r0 r1 r2)  =  showTAC r0 r1 ">=" r2
     show (Jump   i    )     = "goto tag_" ++ show i
-    show (Jz     r0 i )     = "if " ++ show r0 ++ "is z  goto tag_" ++ show i 
-    show (Jnotz  r0 i )     = "if " ++ show r0 ++ "is nz goto tag_" ++ show i 
+    show (Jz     r0 i )     = "if " ++ show r0 ++ " is z  goto tag_" ++ show i 
+    show (Jnotz  r0 i )     = "if " ++ show r0 ++ " is nz goto tag_" ++ show i 
     show (JLt    r0 r1 i)   = showIf r0 r1 "<"   i
     show (JGt    r0 r1 i)   = showIf r0 r1 ">"   i
     show (JLEq   r0 r1 i)   = showIf r0 r1 "<="  i

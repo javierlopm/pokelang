@@ -12,7 +12,9 @@ module Instructions(
     stripBlock,
     printAsts,
     isCompare,
-    isAO
+    isAO,
+    brokenChain,
+    itsVar
 ) where
 
 -- import Data.Sequence(empty,viewl,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:>)),(><))
@@ -192,6 +194,15 @@ isAO :: Operator -> Bool
 isAO And = True
 isAO Or  = True
 isAO _   = False
+
+itsVar :: Exp -> Bool
+itsVar (ExpVar _ _) = True
+itsVar _ = False 
+
+brokenChain :: Operator -> Exp -> Bool
+brokenChain And (Binary Or  _ _) = False
+brokenChain Or  (Binary And _ _) = False
+brokenChain _  _                 = True
 
 emptyExpList :: (Seq(Exp))
 emptyExpList = empty
