@@ -269,7 +269,7 @@ Exp :  -- Cambiar los NoExp por las Exp
     --Llamadas a funciones
     | ID "(" ExpList ")"   {% checkFunctionCall $1 (fst $3)  >>= expIns (CallVal (lexeme $1) (snd $3)) } 
     --Acceso a apuntadores
-    | "*" Exp %prec POINT  {% return (TypeBool,(sel2 $2),Unary Access (sel3 $2)) }
+    | "*" Exp %prec POINT  {% return $ if (isError (sel1 $2)) then (TypeError,sel2 $2,NoExp) else (TypePointer(sel1 $2),sel2 $2,(Unary Access (sel3 $2))) }
     --Direccion de variable
     | "&" Exp %prec AMP    {% return (TypeBool,(sel2 $2),Unary Address (sel3 $2))  }
     -- Asociatividad.

@@ -191,6 +191,10 @@ expToTac (Binary op (ExpInt i1) (ExpInt i2)) = do
         else do nt <- newTemp
                 return (empty |> (Mv (Temp nt) newVar) , (Temp nt))
 
+expToTac (Unary Access ex) = do
+    nt <- (newTemp >>= return . Temp)
+    (ins,t) <- expToTac ex
+    return ( ins |> (ReadPointer nt t) , nt)
 
 -- Two float constants
 expToTac (Binary op (ExpFloat i1) (ExpFloat i2)) = do -- Two integer constants
