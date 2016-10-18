@@ -235,9 +235,13 @@ makeBool op exp1 exp2 = do
         then do nextOperator <- newLabel -- jump to next eval
                 (lt,lf) <- getJumps
                 -- jumps from left to next binary from the future
-                case op of
-                    I.And -> setTheseJumps lt nextOperator
-                    I.Or  -> setTheseJumps nextOperator lf
+
+                if brokenChain op exp1 
+                    then case op of
+                            I.And -> setTheseJumps lt nextOperator
+                            I.Or  -> setTheseJumps nextOperator lf
+                    else return ()
+
                 (p1,v1) <- expToTac exp1
 
                 case op of I.And -> makeJumpTo True
