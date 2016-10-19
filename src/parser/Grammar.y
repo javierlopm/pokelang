@@ -112,8 +112,8 @@ import Instructions
 
 -- Para los booleanos.
 
-%left  OR
 %left  AND
+%left  OR
 %left  "||"
 %left  "&&"
 %right "!"
