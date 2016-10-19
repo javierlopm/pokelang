@@ -112,8 +112,8 @@ import Instructions
 
 -- Para los booleanos.
 
-%left  OR
 %left  AND
+%left  OR
 %left  "||"
 %left  "&&"
 %right "!"
@@ -269,9 +269,15 @@ Exp :  -- Cambiar los NoExp por las Exp
     --Llamadas a funciones
     | ID "(" ExpList ")"   {% checkFunctionCall $1 (fst $3)  >>= expIns (CallVal (lexeme $1) (snd $3)) } 
     --Acceso a apuntadores
+<<<<<<< HEAD
     | "*" Exp %prec POINT  {% return (accessP (sel1 $2),(sel2 $2),Unary Access (sel3 $2)) }
     --Direccion de variable
     | "&" Exp %prec AMP    {% return (TypeInt,(sel2 $2),Unary Address (sel3 $2))  }
+=======
+    | "*" Exp %prec POINT  {% checkPointer $1 $2 }
+    --Direccion de variable
+    | "&" Exp %prec AMP    {% return (TypeBool,(sel2 $2),Unary Address (sel3 $2))  } -- return $ if (isError (sel1 $2)) then (TypeError,sel2 $2,NoExp) else (TypePointer(sel1 $2),sel2 $2,(Unary Access (sel3 $2)))
+>>>>>>> origin/javier
     -- Asociatividad.
     | "(" Exp ")"    {% return $2 }
     -- Constantes.

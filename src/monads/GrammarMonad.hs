@@ -504,6 +504,13 @@ checkFunctionCall ident calltup = do
         error1 typegot (expected,p,_) = strError (position ident) "Error in the call of" (lexeme ident) ("argument number "++show p++" didn't match with expected " ++ show expected ++ " but " ++ show typegot ++ " found.")
         error2  = strError (position ident) "number of arguments don't match with" (lexeme ident) "declaration."
 
+checkPointer :: Token -> (Type,Token,Exp) -> OurMonad((Type,Token,Exp))
+checkPointer tok tup = if (isError (sel1 tup)) 
+    then return (TypeError,sel2 tup,NoExp) 
+    else  if (not (isPointer (sel1 tup))) 
+            then do tellError (strError (position tok) "" (lexeme (sel2 tup)) (" expecting a pointer expression but " ++ show (sel2 tup) ++ "found"))
+                    return (TypeError,sel2 tup,NoExp)
+            else return (stripPointer(sel1 tup),sel2 tup,Unary Access (sel3 tup))
 
 checkFieldAccess :: (Type,Token,Exp) -> Token -> OurMonad((Type,Token,Exp))
 checkFieldAccess (TypeError,tk1,_) _ = return (TypeError,tk1,NoExp)

@@ -13,6 +13,7 @@ module Types(
     isLValue,
     isFunc,
     toPointer,
+    stripPointer,
     isPointer,
     isBasic,
     isNumeric,
@@ -340,6 +341,11 @@ getSize TypeVoid       = error "This type (void) cannot be stored"
 getSize TypeString     = error "Global variable"
 getSize (TypeSatisfies _ ) = error "wtf? really?"
 -- size TypeEmptyArray = 4
+
+stripPointer :: Type -> Type
+stripPointer (TypePointer t) = t
+stripPointer _ = error "trying to extract value from non pointer"
+
 
 -- Given a position, it returns the padding needed before insert and the new
 -- offset

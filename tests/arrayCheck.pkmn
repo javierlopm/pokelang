@@ -1,0 +1,9 @@
+funcball VOIDtorb hitMAINlee():
+    pINTachu [2][3]a;
+    pINTachu i;
+    pINTachu j;
+
+    i = a[i][j];
+
+
+vamo_a_calmano
