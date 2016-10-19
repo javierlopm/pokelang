@@ -17,6 +17,10 @@ ENUManyte pokeDaysLaborables {
     Lunes, 
     Martes}
 
+funcball pINTachu bubble( pINTachu i):
+    vamo_a_retorna i+1;
+vamo_a_calmano
+
 
 funcball VOIDtorb hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
     STRUCTabuzz pokepanita erNovich;

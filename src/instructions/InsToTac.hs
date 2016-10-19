@@ -118,8 +118,7 @@ treeToTac (Assign e1 e2) = do
     let finaltac = (tac1 <> tac2) <> (singleton (StorePointer var1 var2))
     -- liftIO $ putStrLn $ show finaltac
     return finaltac
-
-treeToTac (If    iS   ) = do 
+treeToTac (If    iS) = do 
     progSeq <- M.mapM treeToTac iS
     return $ F.foldl (><) empty progSeq
 treeToTac (Else  ins ) = treeToTac ins >>= return
@@ -131,7 +130,6 @@ treeToTac (While cond ins   ) = do
     insProg  <- treeToTac ins
     (condProg,_) <- expToTac cond
     return (condProg >< insProg)
-
 treeToTac (For low high ins ) = do
     (lowProg ,_) <- expToTac low -- Maybe not needed, aren't they always constant numbers?
     (highProg,_) <- expToTac high
@@ -143,10 +141,16 @@ treeToTac (ForStep low high step ins ) = do
     (stepProg,_) <- expToTac step
     insProg      <- treeToTac ins
     return $ (lowProg >< highProg) >< insProg
-
 treeToTac (Block iS ) = do 
     progSeq <- M.mapM treeToTac iS
     return $ F.foldl (><) empty progSeq
+treeToTac (Return v)  = do
+    maybe ( return (singleton (Jump 3) ))
+          ( \nVar -> do 
+            (condProg,rVar) <- expToTac nVar
+            let fTac = (condProg <> singleton (Param rVar)) <> (singleton (Jump 3) )
+            return (fTac))
+          (v)
 treeToTac _ = return (singleton Nop)
 
 expToTac :: Exp -> TreeTranslator ((Program,Var))

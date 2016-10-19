@@ -103,8 +103,9 @@ data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
             | ReadArray    Dest Src1 Src2
             | StoreArray   Dest Src1 Src2
             -- Function calls
-            | Call    String 
+            | Call    Label  Int
             | Param   Src1    
+            -- | Return  Src1 
             -- Extras
             | Comment String
             | Tag     Label
@@ -151,7 +152,8 @@ instance Show      IntIns where
     show (StorePointer d s1 )   = '*' : show d ++ " := " ++ show s1 
     show (ReadArray    d s1 s2) = show d ++" := "++show s1++'[' : show s2 ++ "]"
     show (StoreArray   d s1 s2) = show d ++'[':show s1 ++ "] := " ++ show s2
-    show (Call     str )      = "Call " ++ str
+    show (Call     labl  i )  = "Call " ++ show labl ++ "#" ++ show i
+   -- show (Return   s1      )  = "Return " ++ show s1
     show (Param    par )      = "Param " ++ show par
     show (Tag      i   )      = '\n': "tag_" ++ show i ++ ":"
     show (Comment  str )      =  "\n# "++ str
@@ -191,7 +193,7 @@ instance Binary IntIns where
     put (StorePointer r0 r1) = putWord8 27 >> put r0 >>  put r1 
     put (ReadArray  r0 r1 r2) = putWord8 28 >> put r0 >>  put r1 >> put r2 
     put (StoreArray r0 r1 r2) = putWord8 29 >> put r0 >>  put r1 >> put r2 
-    put (Call     str )      = putWord8 30 >> put str
+    put (Call     str i )     = putWord8 30 >> put str >> put i
     put (Param    par )      = putWord8 31 >> put par
     put (Comment  str )      = putWord8 32 >> put str
     put (Tag      str )      = putWord8 33 >> put str
@@ -205,6 +207,7 @@ instance Binary IntIns where
     put (Negaf   r0 str )    = putWord8 41 >> put r0 >>  put str
     put (JEq     r0 r1 str)  = putWord8 42 >> put r0 >>  put r1 >> put str
     put (JNEq     r0 r1 str) = putWord8 43 >> put r0 >>  put r1 >> put str
+   -- put (Return   s1  )     =  putWord8 44 >> put s1 
 
     get = do 
     key <- getWord8
@@ -239,7 +242,7 @@ instance Binary IntIns where
        27 ->  build2get StorePointer
        28 ->  buildTac  ReadArray
        29 ->  buildTac  StoreArray
-       30 ->  B.get >>= return . Call
+       30 ->  build2get Call 
        31 ->  B.get >>= return . Param
        32 ->  B.get >>= return . Comment
        33 ->  B.get >>= return . Tag
@@ -253,6 +256,7 @@ instance Binary IntIns where
        41 -> build2get Negaf  
        42 -> buildTac JEq  
        43 -> buildTac JNEq  
+      -- 44 ->  B.get >>= return . Return
 
 -- Print auxiliaries
 showTAC  d s1 op s2 = show d ++" := "++ show s1 ++" "++ op ++ " " ++ show s2
@@ -326,7 +330,7 @@ programExample :: Program
 programExample = fromList stuff
     where stuff = [Nop,            
                   (Multi     cu t0 t1),
-                  (Call     "fibo_3" ),
+                 -- (Call     "fibo_3"  ),
                   (JLt      a x 5 ),
                   (Jump     3 ),
                   (Eql      t0 t0 t1),
