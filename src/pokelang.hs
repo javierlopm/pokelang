@@ -60,7 +60,7 @@ main = do
                 "-i"      -> getIns goods True >> return ()
                 "-tac"    -> do ast <- getIns goods False
                                 programs <- evalTree (forestToTac ast) initTranslator
-                                putStrLn $ foldl (\ b (string,p) -> b ++ string ++ "\n" ++ showP p ) "" programs
+                                putStrLn $ foldl (\ b (string,p,t) -> b ++ "\n#### " ++ string ++ ":\n" ++ showP p ) "" programs
                                 return ()
                 otherwise -> print $ "Unrecognized argument" ++ runargs
       else do mapM_ print errors

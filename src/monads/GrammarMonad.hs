@@ -546,16 +546,16 @@ checkMain = do
         else tellError $ strError (0,0) "" "hitMAINlee" "function not found"
 
 -- Check if there is a mainFunction and add it at the begining of the list
-checkMain' :: [(String,Ins)] -> OurMonad( [(String,Ins)] )
+checkMain' :: [(String,Ins,TypeTuple)] -> OurMonad( [(String,Ins,TypeTuple)] )
 checkMain' functions = do
-    let (fs,list) = foldl processIns (Nothing,[]) functions
+    let ((fs,td),list) = foldl processIns (Nothing,[]) functions
     if isJust fs
-    then return (("hitMAINlee" , fromJust fs) : list)
+    then return (("hitMAINlee" , (fromJust fs), td) : list)
     else do tellError $ strError (0,0)"" "hitMAINlee" "function not found"
             return []
-  where processIns (a,l) (string,insTree) = if string == "hitMAINlee" 
-                                              then (Just insTree, l)
-                                              else (a, (string,insTree):l)
+  where processIns (a,l) (string,insTree,t) = if string == "hitMAINlee" 
+                                              then ((Just insTree,t), l)
+                                              else ((a,t), (string,insTree,t):l)
 
 checkRecursiveDec :: Token -> TypeTuple -> OurMonad()
 checkRecursiveDec dataTok typeSec = do 
