@@ -196,6 +196,19 @@ expToTac (Unary Access ex) = do
     (ins,t) <- expToTac ex
     return ( ins |> (ReadPointer nt t) , nt)
 
+expToTac (Unary Not ex) = do
+    jAreSet <- jumpsAreSet
+    
+    if jAreSet 
+        then do (lt,lf)  <- getJumps
+                setTheseJumps lf lt
+                return ( empty , Fp)
+        else do (lt,lf)   <- setJumps
+                nt        <- newTemp
+                nl        <- newLabel
+                return (jumpTrueFalse lf lt nl nt True, (Temp nt))
+
+
 -- Two float constants
 expToTac (Binary op (ExpFloat i1) (ExpFloat i2)) = do -- Two integer constants
     let newVar = operatef op i1 i2
@@ -234,81 +247,62 @@ expToTac _ = return (singleton Nop,Temp 0)
 makeCompare :: Exp -> Exp -> Operator -> TreeTranslator ((Program,Var))
 makeCompare exp1 exp2 oper = do 
     jAreSet <- jumpsAreSet
-    if jAreSet 
-    then do 
-        (p1,v1) <- expToTac exp1
-        (p2,v2) <- expToTac exp2
-        (lt,lf) <- getJumps
-        jumpOnTrue <- gets jumpOn
-        -- liftIO $ putStrLn $ show jumpOnTrue
-        -- liftIO $ putStrLn $ "label true:" ++ show lt ++ ", label false:" ++ show lf
 
-        newIns <- if jumpOnTrue 
-                        then setLastJump lt >> return (empty |> (mkOp oper v1 v2 lt)     )
-                        else setLastJump lf >> return (empty |> (mkRevOper oper v1 v2 lf))
-        return ( (p1 <> p2) <> newIns , Fp ) 
-    else do 
-        (lt,lf) <- setJumps
-        (p1,v1) <- expToTac exp1
-        (p2,v2) <- expToTac exp2
-        nl      <- newLabel
-        nt      <- newTemp
-        let jumpCode = (mkRevOper oper v1 v2 lf) <| (jumpTrueFalse lt lf nl nt True)
-        return ( (p1 <> p2) <> jumpCode , (Temp nt) )
+    (epilogue,where_var)<- if jAreSet 
+        then return (empty,Fp)
+        else do (lt,lf) <- setJumps
+                nl      <- newLabel
+                nt      <- newTemp
+                return ((jumpTrueFalse lt lf nl nt True),(Temp nt))
+
+    (p1,v1) <- expToTac exp1
+    (p2,v2) <- expToTac exp2
+    (lt,lf) <- getJumps
+    return ( ((p1 <> p2) |> (mkOp oper v1 v2 lt)) <> epilogue  , where_var )
 
 makeBool :: Operator -> Exp -> Exp -> TreeTranslator ((Program,Var))
 makeBool op exp1 exp2 = do 
     jAreSet <- jumpsAreSet
-
-    case op of I.And -> makeJumpTo False
-               I.Or  -> makeJumpTo True
     
     if jAreSet 
-        then do nextOperator <- newLabel -- jump to next eval
-                (lt,lf) <- getJumps
-                -- jumps from left to next binary from the future
+        then do (lt,lf)   <- getJumps
+                middleTag <- newLabel
 
-                if brokenChain op exp1 
-                    then case op of
-                            I.And -> setTheseJumps lt nextOperator
-                            I.Or  -> setTheseJumps nextOperator lf
-                    else return ()
-
-                (p1,v1)    <- expToTac exp1
-                np1        <- newCode exp1 p1 v1
+                case op of 
+                    I.And -> do
+                        setTheseJumps lt middleTag
+                        (p1,v1)    <- expToTac exp1
+                        setTheseJumps lt lf
+                        (p2,v2) <- expToTac exp2
+                    I.Or  -> do 
+                        setTheseJumps middleTag lf
+                        (p1,v1)    <- expToTac exp1
+                        setTheseJumps lt lf
                 
-
-                if brokenChain op exp2 
-                    then case op of
-                            I.And -> makeJumpTo True
-                            I.Or  -> makeJumpTo True
-                    else return ()
-
-                case op of I.And -> makeJumpTo True
-                           I.Or  -> makeJumpTo False
-
-                setTheseJumps lt lf
-
                 (p2,v2) <- expToTac exp2
-                np2     <- newCode exp2 p2 v2
+                return ( p1 |> (Tag middleTag) |>  p2 , Fp)
 
-                return ( (np1 <> np2) |> (Tag nextOperator), Fp )
-        else do (lt,lf) <- setJumps
-                
+        else do (lt,lf)   <- setJumps
+                middleTag <- newLabel
+
                 (p1,v1) <- expToTac exp1
                 np1     <- newCode exp1 p1 v1
 
-                case op of I.And -> makeJumpTo True
-                           I.Or  -> makeJumpTo False
-                (p2,v2) <- expToTac exp2
-                np2     <- newCode exp2 p2 v2
+                case op of 
+                    I.And -> do
+                        setTheseJumps lt middleTag
+                        (p1,v1)    <- expToTac exp1
+                        setTheseJumps lt lf
+                        (p2,v2) <- expToTac exp2
+                    I.Or  -> do 
+                        setTheseJumps middleTag lf
+                        (p1,v1)    <- expToTac exp1
+                        setTheseJumps lt lf
 
-                nl      <- newLabel
-                nt      <- newTemp
-                lastJump <- gets lastJumpTo
-                unsetJumps
-                let notLastJump = if lastJump == lt then False else True
-                return ( (np1 <> np2) <> (jumpTrueFalse lt lf nl nt notLastJump) , Temp nt ) 
+                let last_jump = case op of I.And -> False
+                                           I.Or  -> True
+
+                return ( (p1 |> (Tag middleTag) |> p2) <> (jumpTrueFalse lt lf nl nt (not last_jump)) , Fp)
 
 newCode :: Exp -> Program -> Var -> TreeTranslator(Program)
 newCode exp1 p1 v1  = do 
