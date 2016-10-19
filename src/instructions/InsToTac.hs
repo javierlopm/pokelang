@@ -108,9 +108,11 @@ modJumps False mw = modify (\(TranlatorState a b c _  d e f)->TranlatorState a b
 forestToTac' :: [(String,Ins,TypeTuple)] -> TreeTranslator ( [(String,Program)] )
 forestToTac' a = mapM buildFun  a
     where dr1 (a,b,c) = (a,b)
-          buildFun a@(str,ins,typ) = do  
-                                         ((str,prg):_) <- forestToTac [dr1 a]
-                                         return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TACCall "Epilogue" 42))
+          buildFun a@(str,ins,typ) = do  ((str,prg):_) <- forestToTac [dr1 a]
+                                         if str == "hitMAINlee" 
+                                            then  return (str, (prg |> TacExit))
+                                            else  return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TACCall "Epilogue" 42))
+                                         --return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TACCall "Epilogue" 42))
 forestToTac :: [(String,Ins)] -> TreeTranslator ( [(String,Program)] )
 forestToTac [] = return mempty
 forestToTac ((str,insTree):tl)  = do 
