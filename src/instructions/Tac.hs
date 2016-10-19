@@ -112,6 +112,7 @@ data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
             | Tag     Label
             | TagS    String
             | Nop 
+            | TacExit 
             -- Prints
             | Print     Src1        -- Print Integer constant
             | PrintEnum String Src1 -- Print enum at label
@@ -164,6 +165,7 @@ instance Show      IntIns where
     show (Print     c  )      = "Print "      ++ show c
     show (PrintEnum c i)      = "Print enum " ++ show c ++ "[" ++ show i ++"]"
     show Nop                  = "Nop"
+    show TacExit                  = "TacExit"
 
 -- Ewwwww, it might be improved with Generics?
 instance Binary IntIns where
@@ -213,6 +215,7 @@ instance Binary IntIns where
     put (JNEq     r0 r1 str) = putWord8 43 >> put r0 >>  put r1 >> put str
     put (Clean     i  )      = putWord8 44 >> put i
     put (TagS      str )      = putWord8 45 >> put str
+    put TacExit      = putWord8 46
    -- put (Return   s1  )     =  putWord8 44 >> put s1 
 
     get = do 
@@ -264,6 +267,7 @@ instance Binary IntIns where
        43 -> buildTac JNEq 
        44 -> B.get >>= return . Clean 
        45 ->  B.get >>= return . TagS
+       46 -> return TacExit
       -- 44 ->  B.get >>= return . Return
 
 -- Print auxiliaries
