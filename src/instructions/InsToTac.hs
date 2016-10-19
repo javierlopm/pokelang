@@ -166,11 +166,17 @@ treeToTac (ForStep low high step ins ) = do
     (highProg,hvar) <- expToTac high
     insProg      <- treeToTac ins
 
+    (prog_step,step_var) <- expToTac high
     -- In case of nested fors, needed for break and continue
     unsetJumps
     setBegin oldb
     setEnd   olde
-    return $ (lowProg |> (Tag begl) |> insProg) <>  highProg |> (Addi (left low) (Int_Cons step)) |> (JEq (left low) hvar begl) |> (Tag endl)
+
+    -- setLval True
+    (_,iter) <- (left low >>= expToTac)
+    -- setLval False
+
+    return $ (lowProg |> (Tag begl) |> insProg) <>  highProg  |> prog_step |> (Addi iter iter step_var) |> (JEq iter hvar begl) |> (Tag endl)
 
   where left (Assign a b) = a
 
