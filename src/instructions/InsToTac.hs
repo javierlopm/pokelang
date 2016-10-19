@@ -133,20 +133,24 @@ treeToTac (Assign e1 e2) = do
 
     let finaltac = (tac1 <> tac2) <> (singleton (StorePointer var1 var2))
     -- liftIO $ putStrLn $ show finaltac
+    
     return finaltac
 treeToTac (If    iS   ) = do
+    -- liftIO $ putStrLn $ show iS
     ending <- newLabel
     ifcode <- foldM  processGuard empty (F.toList iS)
     return (ifcode |> (Tag ending))
   where processGuard accCode (Guard exp1 ins) = do 
-            (lt,lf)       <- getJumps
+            (lt,lf)       <- setJumps
+
             (guardCode,_) <- expToTac exp1
             unsetJumps
             blockCode     <- treeToTac ins
-            let lastIf = (accCode <> guardCode |> (Tag lt)) <> blockCode |> (Tag lf)
+            let lastIf = (accCode <> guardCode |> (Tag lt)) <> blockCode |> (Comment "end") |> (Tag lf)
             return lastIf 
 
-        processGuard accCode (Else ins) = treeToTac ins >>= return 
+        processGuard accCode (Else ins) = treeToTac ins >>= return . (accCode <>)
+        processGuard _       a  = error $ "errror" ++ show a
 
 treeToTac (While cond ins   ) = do 
     (oldb,olde) <-getBegEnd
@@ -166,17 +170,32 @@ treeToTac (While cond ins   ) = do
 
     return ((((empty |> (Tag begl)) <> condProg |> (Tag lt)) <> insProg) |> (Jump begl) |> (Tag lf))
 
-treeToTac (For low high ins ) = do
-    (lowProg ,_) <- expToTac low -- Maybe not needed, aren't they always constant numbers?
-    (highProg,_) <- expToTac high
-    insProg      <- treeToTac ins
-    return $ (lowProg >< highProg) >< insProg
+treeToTac (For low high ins ) = treeToTac (ForStep low high (ExpInt 1) ins)
+    
 treeToTac (ForStep low high step ins ) = do
-    (lowProg ,_) <- expToTac low -- Maybe not needed, aren't they always constant numbers?
-    (highProg,_) <- expToTac high
-    (stepProg,_) <- expToTac step
+    (oldb,olde) <-getBegEnd
+    begl <- newLabel
+    endl <- newLabel
+
+    lowProg <- treeToTac low -- Maybe not needed, aren't they always constant numbers?
+    (highProg,hvar) <- expToTac high
     insProg      <- treeToTac ins
-    return $ (lowProg >< highProg) >< insProg
+
+    (prog_step,step_var) <- expToTac high
+    -- In case of nested fors, needed for break and continue
+    unsetJumps
+    setBegin oldb
+    setEnd   olde
+
+    
+    inc   <- treeToTac (Assign (left low) (Binary Plusi (left low) step))
+
+    (mkIter,iter) <- expToTac (left low)
+
+    return $ (lowProg |> (Tag begl))<>insProg<>highProg<>prog_step <> inc <> mkIter |> (JNEq iter hvar begl) |> (Tag endl)
+
+  where left (Assign a b) = a
+
 treeToTac (Block iS ) = do 
     progSeq <- M.mapM treeToTac iS
     return $ F.foldl (><) empty progSeq
@@ -341,8 +360,8 @@ makeBool op exp1 exp2 = do
                 nl        <- newLabel
                 nt        <- newTemp
 
-                liftIO $ putStrLn "seteando ando"
-                liftIO $ putStrLn $ show (lt,lf)
+                -- liftIO $ putStrLn "seteando ando"
+                -- liftIO $ putStrLn $ show (lt,lf)
 
 
                 case op of 

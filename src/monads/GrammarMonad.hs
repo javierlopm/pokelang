@@ -155,6 +155,12 @@ checkLValue (myType ,myToken) = do
         error4 = strError (l,c) "Cannot assign to" (show (toConstr myToken)) "because it's not a valid L-Value."
         whathappened = "Variable " ++ myLex ++ " at " ++ show l++":"++show c ++ " can be assing."
 
+recentVar :: String -> OurMonad(Exp)
+recentVar myLex = do state <- get
+                     let new_dec = fromJust $ lookUp (zipp state) myLex
+                     return (ExpVar new_dec myLex)
+            
+
 -- Dunno lol
 checkReadable :: Token -> Bool -> OurMonad (Type)
 checkReadable (TkId (l,c) lexeme) bit = do
