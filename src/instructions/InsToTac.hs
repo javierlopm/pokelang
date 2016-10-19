@@ -122,20 +122,24 @@ treeToTac (Assign e1 e2) = do
 
     let finaltac = (tac1 <> tac2) <> (singleton (StorePointer var1 var2))
     -- liftIO $ putStrLn $ show finaltac
+    
     return finaltac
 treeToTac (If    iS   ) = do
+    -- liftIO $ putStrLn $ show iS
     ending <- newLabel
     ifcode <- foldM  processGuard empty (F.toList iS)
     return (ifcode |> (Tag ending))
   where processGuard accCode (Guard exp1 ins) = do 
-            (lt,lf)       <- getJumps
+            (lt,lf)       <- setJumps
+
             (guardCode,_) <- expToTac exp1
             unsetJumps
             blockCode     <- treeToTac ins
-            let lastIf = (accCode <> guardCode |> (Tag lt)) <> blockCode |> (Tag lf)
+            let lastIf = (accCode <> guardCode |> (Tag lt)) <> blockCode |> (Comment "end") |> (Tag lf)
             return lastIf 
 
-        processGuard accCode (Else ins) = treeToTac ins >>= return 
+        processGuard accCode (Else ins) = treeToTac ins >>= return . (accCode <>)
+        processGuard _       a  = error $ "errror" ++ show a
 
 treeToTac (While cond ins   ) = do 
     (oldb,olde) <-getBegEnd
@@ -172,11 +176,12 @@ treeToTac (ForStep low high step ins ) = do
     setBegin oldb
     setEnd   olde
 
-    -- setLval True
-    (_,iter) <- expToTac (left low)
-    -- setLval False
+    
+    inc   <- treeToTac (Assign (left low) (Binary Plusi (left low) step))
 
-    return $ (lowProg |> (Tag begl))<>insProg<>highProg<>prog_step|>(Addi iter iter step_var)|>(JEq iter hvar begl) |> (Tag endl)
+    (mkIter,iter) <- expToTac (left low)
+
+    return $ (lowProg |> (Tag begl))<>insProg<>highProg<>prog_step <> inc <> mkIter |> (JNEq iter hvar begl) |> (Tag endl)
 
   where left (Assign a b) = a
 
@@ -325,8 +330,8 @@ makeBool op exp1 exp2 = do
                 nl        <- newLabel
                 nt        <- newTemp
 
-                liftIO $ putStrLn "seteando ando"
-                liftIO $ putStrLn $ show (lt,lf)
+                -- liftIO $ putStrLn "seteando ando"
+                -- liftIO $ putStrLn $ show (lt,lf)
 
 
                 case op of 

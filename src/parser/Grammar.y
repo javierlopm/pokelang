@@ -167,8 +167,8 @@ Ins : {- λ -}                 {% return (TypeVoid, newBlock ) }
     | Ins IF    Exp ":" Ent0 SmplDcls Ins Ent1 NextIf Else END     {% checkAllOk [(checkGuarded $2 $3 $7), (return (fst $10)), (return (fst $1))] TypeVoid TypeVoid "" $2 0 >>= checkOkIns (mergeIf (Guard (trd $3) (snd $7)) (snd $9) (snd $10) ) (snd $1) } --{% checkOkIns (addToBlock (mergeIf (Guard ExpTrue) $9 $10 )) $1 } -- verificar que $3 es bool, $9 y $10 son void
     | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                 {% checkAllOk [(checkGuarded $2 $3 $7), (return (fst $1))] TypeVoid TypeVoid "" $2 0                     >>= checkOkIns (While (trd $3) (snd $7) ) (snd $1) }               --{% checkOkIns (addToBlock (While ExpTrue) ) $1  }
     | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkFor     $2   [$5,$7,$9] , return (fst $12), return (fst $1) ] TypeVoid TypeVoid "" $2 0 >>= checkOkIns (ForStep (Assign $3 (sel3 $5)) (trd $7) (trd $9) (snd $12)) (snd $1) } -- MISSING INSTRUCTIONS
-    -- | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkFor     $2   [$5,$7]    , return (fst $10), return (fst $1) ] TypeVoid TypeVoid "" $2 0 >>= checkOkIns (For (Assign $3 (sel3 $5)) (trd $7) (snd $10)) (snd $1) } 
-    -- | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkEnumFor $2 (snd $3) $5 $7     , return (fst $10), return (fst $1) ] TypeVoid TypeVoid "" $2 0 >>= checkOkIns (For (Assign (fst $3) ((ExpEnum .lexeme) $5)) ((ExpEnum .lexeme) $7) (snd $10)) (snd $1) }
+    | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkFor     $2   [$5,$7]    , return (fst $10), return (fst $1) ] TypeVoid TypeVoid "" $2 0 >>= checkOkIns (For (Assign $3 (sel3 $5)) (trd $7) (snd $10)) (snd $1) } 
+    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkEnumFor $2 (snd $3) $5 $7     , return (fst $10), return (fst $1) ] TypeVoid TypeVoid "" $2 0 >>= checkOkIns (For (Assign (fst $3) ((ExpEnum .lexeme) $5)) ((ExpEnum .lexeme) $7) (snd $10)) (snd $1) }
 
 
 -- List of elseif
@@ -177,7 +177,7 @@ NextIf: {- λ -}                                     {% return (TypeVoid,newIf) 
 
 -- Else list
 Else: {- λ -}                         {% return (TypeVoid, Nothing) }
-    | ELSE ":" Ent0 SmplDcls Ins Ent1 {% checkAndBuild (Just (snd $5) ) (fst $5)  } 
+    | ELSE ":" Ent0 SmplDcls Ins Ent1 {% return (TypeVoid , Just( Else (snd $5)))  } 
 
 -- Declarations that could be global.
 SmplDcls: {- λ -}                       {% return ()}        

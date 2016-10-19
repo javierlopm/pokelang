@@ -157,7 +157,7 @@ checkLValue (myType ,myToken) = do
 
 recentVar :: String -> OurMonad(Exp)
 recentVar myLex = do state <- get
-                     let new_dec = fromJust $ getValS myLex (scp state)
+                     let new_dec = fromJust $ lookUp (zipp state) myLex
                      return (ExpVar new_dec myLex)
             
 
