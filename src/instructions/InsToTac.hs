@@ -116,7 +116,7 @@ forestToTac ((str,insTree):tl)  = do
     headTac       <- treeToTac insTree
     forestTacTail <- forestToTac tl
     tuple         <- functionsToTac (str,headTac)
-    liftIO $ putStrLn $ "\nAAAAAAAAAAAAAAAA---------------\n" ++ show insTree ++"AAAAAAAAAAAAAAAAAAA---------------\n"
+    --liftIO $ putStrLn $ "\nAAAAAAAAAAAAAAAA---------------\n" ++ show insTree ++"AAAAAAAAAAAAAAAAAAA---------------\n"
     -- Maybe there'es no need to return, only write to file?
     return ( [tuple] <> forestTacTail)
 
