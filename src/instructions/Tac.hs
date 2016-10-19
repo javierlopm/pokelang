@@ -153,7 +153,7 @@ instance Show      IntIns where
     show (StorePointer d s1 )   = '*' : show d ++ " := " ++ show s1 
     show (ReadArray    d s1 s2) = show d ++" := "++show s1++'[' : show s2 ++ "]"
     show (StoreArray   d s1 s2) = show d ++'[':show s1 ++ "] := " ++ show s2
-    show (TACCall     str  i )  = "Call " ++ str ++ "#" ++ show i
+    show (TACCall     str  i )  = "Call " ++ str ++ " #" ++ show i
     show (Clean         i )  = "Clean " ++ "#" ++ show i
    -- show (Return   s1      )  = "Return " ++ show s1
     show (Param    par )      = "Param " ++ show par

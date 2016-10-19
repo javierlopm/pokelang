@@ -7,7 +7,7 @@ module InsToTac(
     TreeTranslator
 ) where
 
-import Data.Sequence(empty,Seq,(|>),(<|),(><),singleton)
+import Data.Sequence(empty,Seq,(|>),(<|),(><),viewl,ViewL(..),singleton)
 import qualified Data.Sequence as S(null)
 import qualified Data.Foldable as F(foldl,toList)
 import Data.Monoid((<>),mempty)
@@ -171,28 +171,31 @@ treeToTac (Block iS ) = do
     progSeq <- M.mapM treeToTac iS
     return $ F.foldl (><) empty progSeq
 treeToTac (Call s args b) = do
-    if b then
-        return $ argsToProg args
-    else
-        return $ argsToProg args
+                            (prog,argC) <- argsToProg args b 0 empty 
+                            return $ prog <> singleton (TACCall s argC)
 
 treeToTac (Return v)  = do
     maybe ( return (singleton (Jump 3) ))
           ( \nVar -> do 
-            (condProg,rVar) <- expToTac nVar
-            let fTac = (condProg <> singleton (Param rVar)) <> (singleton (Jump 3) )
+            (retProg,rVar) <- expToTac nVar
+            let fTac = (retProg <> singleton (Param rVar)) <> (singleton (Jump 3) )
             return (fTac))
           (v)
 treeToTac _ = return (singleton Nop)
+ 
+argsToProg :: (Seq(Exp)) -> Bool -> Int -> Program ->  TreeTranslator((Program,Int))
+argsToProg s b i s0 =  if (S.null s)
+                   then do
+                        return (s0,i)
+                   else do
+                    (argProg,rArg) <- expToTac $ (fst . decons . viewl) s
+                    argsToProg ( (snd . decons . viewl) s) b (i+1) $ argProg <> getParam rArg b 
+    where decons EmptyL = error "Empty sequence!"
+          decons (l :< others) = (l,others)
+          getParam r True  = singleton (Param r) --Aquí se hace el access if b. ¿Capaz un ParamPointer?
+          getParam r False = singleton (Param r)
 
-argsToProg :: (Seq(Exp)) -> Seq IntIns
-argsToProg s =  if (S.null s) 
-                then 
-                    return suffering
-                else 
-                    return suffering
-            where
-                suffering = singleton Nop
+
 
 
 expToTac :: Exp -> TreeTranslator ((Program,Var))
