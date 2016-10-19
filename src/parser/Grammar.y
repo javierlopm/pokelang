@@ -250,9 +250,9 @@ Exp :  -- Cambiar los NoExp por las Exp
     | Exp "%"  Exp      {% checkBinary [TypeInt] (sel1 $1) (sel1 $3) $2 (sel2 $1) >>= expIns (Binary Mod (sel3 $1) (sel3 $3))   }   -- Both Integer
     | "-" Exp %prec NEG {% checkNeg $2                                                                                          }   -- Float/Int         
     -- Expresiones Booleanas.
-    | Exp OR Exp        {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns (Binary SOr (sel3 $1) (sel3 $3)) }
+    | Exp OR Exp        {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns (Binary Or (sel3 $1) (sel3 $3)) }
     | Exp "||" Exp      {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns (Binary Or (sel3 $1) (sel3 $3)) }
-    | Exp AND Exp       {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns (Binary SAnd (sel3 $1) (sel3 $3)) }
+    | Exp AND Exp       {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns (Binary And (sel3 $1) (sel3 $3)) }
     | Exp "&&" Exp      {% checkBinary [TypeBool] (sel1 $1) (sel1 $3) $2 (sel2 $1)  >>= expIns (Binary And (sel3 $1) (sel3 $3)) }
     | "!" Exp           {% return (TypeBool,(sel2 $2),(Unary Not (sel3 $2)))  }
     -- Expresiones relacionales.

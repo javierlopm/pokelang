@@ -1,20 +1,13 @@
-#funcball VOIDtorb hitMAINlee():
-#    BOOLbasaur a;
-#    BOOLbasaur b;
-#
-#    pINTachu   m;
-#    pINTachu   n;
-#    pINTachu   o;
-#
-#
-#    a = ((n <= 15) && (o==n)) || (m > 20)  ;
-#
-#vamo_a_calmano
-
-
 funcball VOIDtorb hitMAINlee():
-	pINTachu* a;
-#	*a = 4 + *a;
-    a = ( ( ((m>20)&&(n<=15)) || (o==n)) || (o > 3)  ) && a && b;
+    BOOLbasaur a;
+    BOOLbasaur b;
+
+    pINTachu   m;
+    pINTachu   n;
+    pINTachu   o;
+	pINTachu* z;
+	*z = 4 + *z;
+
+    a = ((n <= 15) && (o==n)) || (m > 20)  ;
 
 vamo_a_calmano
