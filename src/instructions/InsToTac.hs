@@ -26,8 +26,8 @@ data TranlatorState  = TranlatorState { tempCount  :: Word       -- Temporal var
                                       , labelCount :: Word       -- Label generator
                                       , trueLabel  :: Maybe Word -- Last true label created
                                       , falseLabel :: Maybe Word -- Last false label created
-                                      , jumpOn     :: Bool       -- jump if true or false found
-                                      , lastJumpTo :: Word       -- to what label the jump was made
+                                      , beginLabel :: Word       -- to what label the jump was made
+                                      , endLabel   :: Word       -- jump if true or false found
                                       , isItLval   :: Bool}
                                       --deriving(Show)      
 type TreeTranslator  = StateT TranlatorState IO 
@@ -42,7 +42,7 @@ alb (TranlatorState w1 w2 w3 w4 b w5 l) = (TranlatorState w1 (succ w2) w3 w4 b w
 
 
 initTranslator :: TranlatorState
-initTranslator = TranlatorState 0 0 Nothing Nothing False 0 False
+initTranslator = TranlatorState 0 0 Nothing Nothing 0 0 False
 
 newTemp :: TreeTranslator(Word)
 newTemp = do nt <- gets tempCount
@@ -72,6 +72,11 @@ getJumps = do tl <- gets trueLabel
               fl <- gets falseLabel
               return (fromJust tl,fromJust fl)
 
+getBegEnd :: TreeTranslator(Word,Word)
+getBegEnd = do tl <- gets beginLabel
+               fl <- gets endLabel
+               return (tl, fl)
+
 isLval :: TreeTranslator (Bool)
 isLval = gets isItLval >>= return
 
@@ -84,11 +89,11 @@ setRval = modify (\(TranlatorState w1 w2 tl fl d w3 _) -> (TranlatorState w1 w2 
 swapNot :: TreeTranslator()
 swapNot = modify (\(TranlatorState w1 w2 tl fl d w3 l) -> (TranlatorState w1 w2 fl tl d w3 l))
 
-makeJumpTo :: Bool -> TreeTranslator()
-makeJumpTo bool = modify (\(TranlatorState w1 w2 tl fl _ w3 l) -> (TranlatorState w1 w2 tl fl bool w3 l))
+setBegin :: Word -> TreeTranslator()
+setBegin bl = modify (\(TranlatorState w1 w2 tl fl _ w3 l) -> (TranlatorState w1 w2 tl fl bl w3 l))
 
-setLastJump :: Word -> TreeTranslator()
-setLastJump word = modify (\(TranlatorState w1 w2 tl fl b _ l) -> (TranlatorState w1 w2 tl fl b word l))
+setEnd :: Word -> TreeTranslator()
+setEnd el = modify (\(TranlatorState w1 w2 tl fl b _ l) -> (TranlatorState w1 w2 tl fl b el l))
 
 jumpsAreSet :: TreeTranslator (Bool)
 jumpsAreSet = gets trueLabel >>= maybe (return False) ( \ _ -> return True)
@@ -133,9 +138,23 @@ treeToTac (If    iS   ) = do
         processGuard accCode (Else ins) = treeToTac ins >>= return 
 
 treeToTac (While cond ins   ) = do 
+    (oldb,olde) <-getBegEnd
+    begl <- newLabel
+    endl <- newLabel
+    setBegin begl
+    setEnd   endl
+    (lt,lf)<- setJumps
+
     insProg  <- treeToTac ins
     (condProg,_) <- expToTac cond
-    return (condProg >< insProg)
+
+    -- In case of nested whiles, needed for break and continue
+    unsetJumps
+    setBegin oldb
+    setEnd   olde
+
+    return ((((empty |> (Tag begl)) <> condProg |> (Tag lt)) <> insProg) |> (Jump begl) |> (Tag lf))
+
 treeToTac (For low high ins ) = do
     (lowProg ,_) <- expToTac low -- Maybe not needed, aren't they always constant numbers?
     (highProg,_) <- expToTac high
@@ -313,14 +332,6 @@ makeBool op exp1 exp2 = do
                                            I.Or  -> True
 
                 return ((p1 |> (Tag middleTag)) <> p2 <> (jumpTrueFalse lt lf nl nt last_jump) ,Temp nt)
-
-newCode :: Exp -> Program -> Var -> TreeTranslator(Program)
-newCode exp1 p1 v1  = do 
-    jumpOnTrue <- gets jumpOn
-    (nlt,nlf)  <- getJumps
-    if itsVar exp1 
-    then return (p1 |> (if jumpOnTrue then (Jnotz v1 nlt) else (Jz v1 nlf)))
-    else return p1
 
 loadLocal :: Int -> TreeTranslator((IntIns,Var))
 loadLocal ofs = do tempLocal <- newTemp
