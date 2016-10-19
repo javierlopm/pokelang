@@ -1,6 +1,7 @@
 module InsToTac(
     forestToTac,
     initTranslator,
+    forestToTac',
     execTree,
     evalTree,
     TranlatorState(..),
@@ -16,7 +17,7 @@ import Control.Monad.State
 import Types(Declare(..),Direction(..))
 import qualified Data.Traversable as M(mapM)
 import Data.Maybe(fromJust)
-
+import Types
 import Instructions hiding(Operator(Eql,NotEql,Mod,And,Or,Not))
 import Tac          hiding(IntIns(Eql,NotEql,Mod,And,Or,Not))
 
@@ -104,6 +105,10 @@ modJumps True  mw = modify (\(TranlatorState a b _  c d e f)->TranlatorState a b
 modJumps False mw = modify (\(TranlatorState a b c _  d e f)->TranlatorState a b c mw d e f)
 
 -- use foldM instead
+forestToTac' :: [(String,Ins,TypeTuple)] -> TreeTranslator ( [(String,Program)] )
+forestToTac' a = forestToTac $ map dr1 a
+    where dr1 (a,b,c) = (a,b)
+
 forestToTac :: [(String,Ins)] -> TreeTranslator ( [(String,Program)] )
 forestToTac [] = return mempty
 forestToTac ((str,insTree):tl)  = do 

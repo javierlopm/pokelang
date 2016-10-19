@@ -37,15 +37,27 @@ execParser printLex tokens = do
             putStrLn $ "SymTable:\n========================" ++ show scps
     else do printErrors errorcount id errors
 
+dr1 :: (a,b,c) -> (a,b)
+dr1 (a,b,c) = (a,b)
+
 getIns :: [Token] -> Bool -> IO ([(String,Ins)])
 getIns tokens pr = do
   let (ast,state,strlog) = run (parser tokens) "" initialState
   let (logs,errors,errorcount) = checkParseError strlog
   if errorcount == 0
-    then do if pr then putStrLn $ printAsts ast else return ()
-            return ast
+    then do if pr then putStrLn $ printAsts (map dr1 ast) else return ()
+            return $ map dr1 ast
     else printErrors errorcount id errors >> exitFailure >> return []
   
+getIns' :: [Token] -> Bool -> IO ([(String,Ins,TypeTuple)])
+getIns' tokens pr = do
+  let (ast,state,strlog) = run (parser tokens) "" initialState
+  let (logs,errors,errorcount) = checkParseError strlog
+  if errorcount == 0
+    then do if pr then putStrLn $ printAsts (map dr1 ast) else return ()
+            return $ ast
+    else printErrors errorcount id errors >> exitFailure >> return []
+
 main = do
   arg1:arg2:_ <- getArgs
   let (fileToRead,runargs)=myF arg1 arg2
@@ -58,9 +70,9 @@ main = do
                 "-p"      -> execParser False goods
                 "-a"      -> execParser True  goods
                 "-i"      -> getIns goods True >> return ()
-                "-tac"    -> do ast <- getIns goods False
-                                programs <- evalTree (forestToTac ast) initTranslator
-                                putStrLn $ foldl (\ b (string,p,t) -> b ++ "\n#### " ++ string ++ ":\n" ++ showP p ) "" programs
+                "-tac"    -> do ast <- getIns' goods False
+                                programs <- evalTree (forestToTac' ast) initTranslator
+                                putStrLn $ foldl (\ b (string,p) -> b ++ "\n#### " ++ string ++ ":\n" ++ showP p ) "" programs
                                 return ()
                 otherwise -> print $ "Unrecognized argument" ++ runargs
       else do mapM_ print errors

@@ -210,7 +210,7 @@ Dcls:  {- λ -}                                                 {% return [] }
     | Dcls ENUMDEC DATAID "{" EnumConsList "}"     {% insertEnum $3 >> insertLEnumCons $5 (lexeme $3)   >> return $1 }
     | Dcls Ent5 "{" FieldsList "}"                 {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4 >> return $1 }
     | Dcls Ent6 "{" FieldsList Ent7 "}"            {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4 >> return $1 }
-    | Dcls FUNC  Ent2  ":" Ent0 SmplDcls Ins END   {% insertFunction (snd $3) (fst $3) True >> return ( ( lexeme(fst $3),(snd $7)) : $1 ) }
+    | Dcls FUNC  Ent2  ":" Ent0 SmplDcls Ins END   {% insertFunction (snd $3) (fst $3) True >> return ( ( lexeme(fst $3),(snd $7),(snd $3)) : $1 ) }
 
 
 -- Parameter: ListParam Reference ID  {% insertDeclareInScope $2 $3 False False }    -- Falta Hacer la lista de tipos
