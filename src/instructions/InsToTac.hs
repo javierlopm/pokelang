@@ -120,6 +120,7 @@ treeToTac (Assign e1 e2) = do
     return finaltac
 treeToTac (If    iS   ) = do
     ending <- newLabel
+    progSeq <- M.mapM treeToTac iS
     return $ F.foldl (><) empty progSeq
     -- return  |> (Tag ending)
     -- where (,final_tag,accCode)
@@ -146,6 +147,8 @@ treeToTac (ForStep low high step ins ) = do
 treeToTac (Block iS ) = do 
     progSeq <- M.mapM treeToTac iS
     return $ F.foldl (><) empty progSeq
+--treeToTac (Call s args) = do
+
 treeToTac (Return v)  = do
     maybe ( return (singleton (Jump 3) ))
           ( \nVar -> do 
@@ -154,6 +157,9 @@ treeToTac (Return v)  = do
             return (fTac))
           (v)
 treeToTac _ = return (singleton Nop)
+
+--argsTo
+
 
 expToTac :: Exp -> TreeTranslator ((Program,Var))
 expToTac (Unary op (ExpInt   a) ) = return  (empty , operateui op a )

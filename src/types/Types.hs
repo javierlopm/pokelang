@@ -65,7 +65,7 @@ data Direction = Label
                deriving(Show)
 
 -- Declarations might be functions,variables or structure types
-data Declare = Function  { pos::Pos, storedType::Type, fields   ::(Scope Declare)}
+data Declare = Function  { pos::Pos, storedType::Type, fields   ::(Scope Declare), isProc :: Bool}
              | Variable  { pos::Pos, storedType::Type, readonly :: Bool, dir :: Direction  } -- , storedTypeV::PrimType -- No se necesaita todavia
              | Cons      { pos::Pos } 
              | Struct    { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare)}
@@ -76,8 +76,11 @@ data Declare = Function  { pos::Pos, storedType::Type, fields   ::(Scope Declare
              | Empty                                -- Empty forward declare
 
 instance Show Declare where
-  show (Function (l,c) t scope ) = 
+  show (Function (l,c) t scope False) = 
       "Function ("++show l++","++show c++ ") Type:" ++show t ++ "" ++
+        showScope 1 scope ++ "\n"
+  show (Function (l,c) t scope True) = 
+      "Procedure ("++show l++","++show c++ ") Type:" ++show t ++ "" ++
         showScope 1 scope ++ "\n"
   show (Variable (l,c) t readonly dir ) = 
       "Variable ("++show l++","++show c++ ") Type:" ++show t++ " at " ++ show dir ++ " " ++ cons readonly
@@ -209,7 +212,7 @@ dataNameMatches _ _                    = False
 
 isFunc :: Maybe Declare -> Bool
 isFunc Nothing = False
-isFunc (Just (Function _ _ _))  = True
+isFunc (Just (Function _ _ _ _))  = True
 isFunc (Just (EmptyWithType _)) = True -- Forward declaration
 isFunc (Just Empty) = True
 isFunc a = False
@@ -233,7 +236,7 @@ isEnumCons _                     = False
 
 
 isAFunction :: Declare -> Bool
-isAFunction (Function _ _ _)  = True
+isAFunction (Function _ _ _ _)  = True
 isAFunction _ = False
 
 --Check if a Declaration is an Iteration Variable
@@ -297,7 +300,7 @@ isEmpty _     = False
 -- Check if forward declaration matches
 emptyTypeMatches :: Declare -> TypeTuple -> Bool
 emptyTypeMatches (EmptyWithType (TypeFunction t1)) t2 = t1 == t2
-emptyTypeMatches (Function _ (TypeFunction t1) _)  t2 = t1 == t2
+emptyTypeMatches (Function _ (TypeFunction t1) _ _)  t2 = t1 == t2
 emptyTypeMatches Empty _ = True
 emptyTypeMatches _ _     = False
 

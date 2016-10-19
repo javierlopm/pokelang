@@ -103,7 +103,8 @@ data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
             | ReadArray    Dest Src1 Src2
             | StoreArray   Dest Src1 Src2
             -- Function calls
-            | Call    Label  Int
+            | Call    String  Int
+            | Clean   Int
             | Param   Src1    
             -- | Return  Src1 
             -- Extras
@@ -152,7 +153,8 @@ instance Show      IntIns where
     show (StorePointer d s1 )   = '*' : show d ++ " := " ++ show s1 
     show (ReadArray    d s1 s2) = show d ++" := "++show s1++'[' : show s2 ++ "]"
     show (StoreArray   d s1 s2) = show d ++'[':show s1 ++ "] := " ++ show s2
-    show (Call     labl  i )  = "Call " ++ show labl ++ "#" ++ show i
+    show (Call     str  i )  = "Call " ++ str ++ "#" ++ show i
+    show (Clean         i )  = "Clean " ++ "#" ++ show i
    -- show (Return   s1      )  = "Return " ++ show s1
     show (Param    par )      = "Param " ++ show par
     show (Tag      i   )      = '\n': "tag_" ++ show i ++ ":"
@@ -207,6 +209,7 @@ instance Binary IntIns where
     put (Negaf   r0 str )    = putWord8 41 >> put r0 >>  put str
     put (JEq     r0 r1 str)  = putWord8 42 >> put r0 >>  put r1 >> put str
     put (JNEq     r0 r1 str) = putWord8 43 >> put r0 >>  put r1 >> put str
+    put (Clean     i  )      = putWord8 44 >> put i
    -- put (Return   s1  )     =  putWord8 44 >> put s1 
 
     get = do 
@@ -255,7 +258,8 @@ instance Binary IntIns where
        40 -> build2get Negai  
        41 -> build2get Negaf  
        42 -> buildTac JEq  
-       43 -> buildTac JNEq  
+       43 -> buildTac JNEq 
+       44 -> B.get >>= return . Clean 
       -- 44 ->  B.get >>= return . Return
 
 -- Print auxiliaries

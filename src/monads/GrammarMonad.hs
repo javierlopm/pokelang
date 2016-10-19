@@ -228,11 +228,13 @@ insertFunction tuple ident clean = do
   where error1       = strError (position ident) "type of function" (lexeme ident) " doesn't match with forward declaration."
         whathappened = "Function " ++ lexeme ident ++ " added at "++ linecol
         linecol      = (show.fst.position) ident ++":"++(show.snd.position) ident 
+        isProc       = if (funcReturnType tuple) == TypeVoid then True
+                       else False
         insertNclean state = do tellLog whathappened
                                 onScope $ insert (lexeme ident) 
                                              (Function (position ident) 
                                                        (TypeFunction tuple) 
-                                                       ((fromZipper) (zipp state))) 0 --Se debe CAMBIAR
+                                                       ((fromZipper) (zipp state)) isProc) 0 --Se debe CAMBIAR
                                 if clean
                                     then onZip (const (fromScope emptyScope)) -- Clean zipper
                                     else return ()

@@ -37,7 +37,7 @@ funcball VOIDtorb hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
         CHARmander hola;
         pINTachu hola2;
         pINTachu [3]erNovich4;
-        erNovich4[1] = 1;
+        erNovich4[1] = bubble(1);
         flotante = -0.0 + 3.0;
         hola2 += 2;
         hola = 'c';
