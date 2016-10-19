@@ -8,7 +8,7 @@ module InsToTac(
 ) where
 
 import Data.Sequence(empty,Seq,(|>),(<|),(><),singleton)
-import qualified Data.Foldable as F(foldl)
+import qualified Data.Foldable as F(foldl,toList)
 import Data.Monoid((<>),mempty)
 import Data.Word(Word)
 import Control.Monad.State
@@ -120,15 +120,18 @@ treeToTac (Assign e1 e2) = do
     return finaltac
 treeToTac (If    iS   ) = do
     ending <- newLabel
-    progSeq <- M.mapM treeToTac iS
-    return $ F.foldl (><) empty progSeq
-    -- return  |> (Tag ending)
-    -- where (,final_tag,accCode)
-treeToTac (Else  ins ) = treeToTac ins >>= return
-treeToTac (Guard cond ins) = do 
-    insProg      <- treeToTac ins
-    (condProg,_) <- expToTac cond
-    return (condProg >< insProg) 
+    ifcode <- foldM  processGuard empty (F.toList iS)
+    return (ifcode |> (Tag ending))
+  where processGuard accCode (Guard exp1 ins) = do 
+            (lt,lf)       <- getJumps
+            (guardCode,_) <- expToTac exp1
+            unsetJumps
+            blockCode     <- treeToTac ins
+            let lastIf = (accCode <> guardCode |> (Tag lt)) <> blockCode |> (Tag lf)
+            return lastIf 
+
+        processGuard accCode (Else ins) = treeToTac ins >>= return 
+
 treeToTac (While cond ins   ) = do 
     insProg  <- treeToTac ins
     (condProg,_) <- expToTac cond
