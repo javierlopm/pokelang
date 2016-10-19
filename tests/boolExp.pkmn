@@ -7,7 +7,7 @@ funcball VOIDtorb hitMAINlee():
     pINTachu   o;
 	pINTachu* z;
 	#*z = 4 + *z;
-    a = x <100 || x > 200 && x != y ;
+    a = x <100 || (x > 200 && x != y );
 
 
 vamo_a_calmano

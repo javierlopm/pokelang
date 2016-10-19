@@ -118,9 +118,11 @@ treeToTac (Assign e1 e2) = do
     let finaltac = (tac1 <> tac2) <> (singleton (StorePointer var1 var2))
     -- liftIO $ putStrLn $ show finaltac
     return finaltac
-treeToTac (If    iS) = do 
-    progSeq <- M.mapM treeToTac iS
+treeToTac (If    iS   ) = do
+    ending <- newLabel
     return $ F.foldl (><) empty progSeq
+    -- return  |> (Tag ending)
+    -- where (,final_tag,accCode)
 treeToTac (Else  ins ) = treeToTac ins >>= return
 treeToTac (Guard cond ins) = do 
     insProg      <- treeToTac ins
@@ -273,8 +275,8 @@ makeBool op exp1 exp2 = do
                 middleTag <- newLabel
 
                 case op of 
-                    I.And -> setTheseJumps middleTag lt
-                    I.Or  -> setTheseJumps lf middleTag
+                    I.And -> setTheseJumps middleTag lf
+                    I.Or  -> setTheseJumps lt middleTag
 
                 (p1,v1)    <- expToTac exp1
                 setTheseJumps lt lf
@@ -291,8 +293,8 @@ makeBool op exp1 exp2 = do
 
 
                 case op of 
-                    I.And -> setTheseJumps middleTag lt
-                    I.Or  -> setTheseJumps lf middleTag
+                    I.And -> setTheseJumps middleTag lf
+                    I.Or  -> setTheseJumps lt middleTag
 
                 (p1,v1)    <- expToTac exp1
                 setTheseJumps lt lf
@@ -301,7 +303,7 @@ makeBool op exp1 exp2 = do
                 let last_jump = case op of I.And -> False
                                            I.Or  -> True
 
-                return ((p1 |> (Tag middleTag)) <> p2 <> (jumpTrueFalse lt lf nl nt (not last_jump)) ,Temp nt)
+                return ((p1 |> (Tag middleTag)) <> p2 <> (jumpTrueFalse lt lf nl nt last_jump) ,Temp nt)
 
 newCode :: Exp -> Program -> Var -> TreeTranslator(Program)
 newCode exp1 p1 v1  = do 
