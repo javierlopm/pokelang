@@ -6,9 +6,8 @@ funcball VOIDtorb hitMAINlee():
     pINTachu   y;
     pINTachu   o;
 	pINTachu* z;
-	*z = 4 + *z;
+	#*z = 4 + *z;
     a = x <100 || x > 200 && x != y ;
 
->>>>>>> origin/javier
 
 vamo_a_calmano
