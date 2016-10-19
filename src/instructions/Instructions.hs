@@ -36,8 +36,8 @@ data Ins = Assign    Exp Exp
          | Guard   { cond  :: Exp, ins :: Ins }
          | Else    { ins   :: Ins }
          | While   { cond  :: Exp, ins :: Ins } 
-         | ForStep { low:: Exp, high::Exp, step :: Exp, ins :: Ins }
-         | For     { low:: Exp, high::Exp, ins :: Ins }
+         | ForStep { low:: Ins, high::Exp, step :: Exp, ins :: Ins }
+         | For     { low:: Ins, high::Exp, ins :: Ins }
          | Read    { var::Exp }
          | NoOp
          | Return  (Maybe Exp)

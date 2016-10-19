@@ -155,17 +155,25 @@ treeToTac (While cond ins   ) = do
 
     return ((((empty |> (Tag begl)) <> condProg |> (Tag lt)) <> insProg) |> (Jump begl) |> (Tag lf))
 
-treeToTac (For low high ins ) = do
-    (lowProg ,_) <- expToTac low -- Maybe not needed, aren't they always constant numbers?
-    (highProg,_) <- expToTac high
-    insProg      <- treeToTac ins
-    return $ (lowProg >< highProg) >< insProg
+treeToTac (For low high ins ) = treeToTac (ForStep low high 1 ins)
+    
 treeToTac (ForStep low high step ins ) = do
-    (lowProg ,_) <- expToTac low -- Maybe not needed, aren't they always constant numbers?
-    (highProg,_) <- expToTac high
-    (stepProg,_) <- expToTac step
+    (oldb,olde) <-getBegEnd
+    begl <- newLabel
+    endl <- newLabel
+
+    lowProg <- treeToTac low -- Maybe not needed, aren't they always constant numbers?
+    (highProg,hvar) <- expToTac high
     insProg      <- treeToTac ins
-    return $ (lowProg >< highProg) >< insProg
+
+    -- In case of nested fors, needed for break and continue
+    unsetJumps
+    setBegin oldb
+    setEnd   olde
+    return $ (lowProg |> (Tag begl) |> insProg) <>  highProg |> (Addi (left low) (Int_Cons step)) |> (JEq (left low) hvar begl) |> (Tag endl)
+
+  where left (Assign a b) = a
+
 treeToTac (Block iS ) = do 
     progSeq <- M.mapM treeToTac iS
     return $ F.foldl (><) empty progSeq
