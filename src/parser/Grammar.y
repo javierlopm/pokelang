@@ -168,7 +168,7 @@ Ins : {- λ -}                 {% return (TypeVoid, newBlock ) }
     | Ins WHILE Exp ":" Ent0 SmplDcls Ins Ent1 END                 {% checkAllOk [(checkGuarded $2 $3 $7), (return (fst $1))] TypeVoid TypeVoid "" $2 0                     >>= checkOkIns (While (trd $3) (snd $7) ) (snd $1) }               --{% checkOkIns (addToBlock (While ExpTrue) ) $1  }
     | Ins FOR Ent3 "=" Exp  "|" Exp "|" Exp ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkFor     $2   [$5,$7,$9] , return (fst $12), return (fst $1) ] TypeVoid TypeVoid "" $2 0 >>= checkOkIns (ForStep (Assign $3 (sel3 $5)) (trd $7) (trd $9) (snd $12)) (snd $1) } -- MISSING INSTRUCTIONS
     | Ins FOR Ent3 "=" Exp  "|" Exp         ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkFor     $2   [$5,$7]    , return (fst $10), return (fst $1) ] TypeVoid TypeVoid "" $2 0 >>= checkOkIns (For (Assign $3 (sel3 $5)) (trd $7) (snd $10)) (snd $1) } 
-    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkEnumFor $2 $3 $5 $7     , return (fst $10), return (fst $1) ] TypeVoid TypeVoid "" $2 0 >>= checkOkIns (For ((ExpEnum .lexeme) $5) ((ExpEnum .lexeme) $7) (snd $10)) (snd $1) }
+    | Ins FOR Ent4 "=" ENUM "|" ENUM        ":"  SmplDcls Ins  END {% exitScope >> checkAllOk [ checkEnumFor $2 (snd $3) $5 $7     , return (fst $10), return (fst $1) ] TypeVoid TypeVoid "" $2 0 >>= checkOkIns (For (Assign (fst $3) ((ExpEnum .lexeme) $5)) ((ExpEnum .lexeme) $7) (snd $10)) (snd $1) }
 
 
 -- List of elseif
@@ -304,7 +304,7 @@ Ent3 : ID          {%  onZip enterScope >>
                             return (recentVar (lexeme $1))                             } 
 Ent4 : DATAID ID   {% onZip enterScope >> 
                             checkEnumAndInsert $1 $2 >> 
-                                return $2 } 
+                                return ( recentVar (lexeme $2) ,$2) } 
 Ent5 : STRUCTDEC  DATAID {% insertForwardData $1 $2 >> 
                                 return ($1,$2)}
 Ent6 : UNIONDEC   DATAID {% toggleUnion >> 

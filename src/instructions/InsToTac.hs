@@ -155,7 +155,7 @@ treeToTac (While cond ins   ) = do
 
     return ((((empty |> (Tag begl)) <> condProg |> (Tag lt)) <> insProg) |> (Jump begl) |> (Tag lf))
 
-treeToTac (For low high ins ) = treeToTac (ForStep low high 1 ins)
+treeToTac (For low high ins ) = treeToTac (ForStep low high (ExpInt 1) ins)
     
 treeToTac (ForStep low high step ins ) = do
     (oldb,olde) <-getBegEnd
@@ -173,10 +173,10 @@ treeToTac (ForStep low high step ins ) = do
     setEnd   olde
 
     -- setLval True
-    (_,iter) <- (left low >>= expToTac)
+    (_,iter) <- expToTac (left low)
     -- setLval False
 
-    return $ (lowProg |> (Tag begl) |> insProg) <>  highProg  |> prog_step |> (Addi iter iter step_var) |> (JEq iter hvar begl) |> (Tag endl)
+    return $ (lowProg |> (Tag begl))<>insProg<>highProg<>prog_step|>(Addi iter iter step_var)|>(JEq iter hvar begl) |> (Tag endl)
 
   where left (Assign a b) = a
 
