@@ -21,6 +21,11 @@ funcball pINTachu bubble( pINTachu i):
     vamo_a_retorna i+1;
 vamo_a_calmano
 
+funcball VOIDtorb voidproc( pINTachu i):
+    i = 3;
+vamo_a_calmano
+
+
 
 funcball VOIDtorb hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
     STRUCTabuzz pokepanita erNovich;
@@ -41,6 +46,7 @@ funcball VOIDtorb hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
         flotante = -0.0 + 3.0;
         hola2 += 2;
         hola = 'c';
+        voidproc(hola2);
     vamo_a_calmano
     
     

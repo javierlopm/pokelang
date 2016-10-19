@@ -31,7 +31,7 @@ data Ins = Assign    Exp Exp
          | AssignSum Exp Exp
          | AssignMin Exp Exp
          | AssignMul Exp Exp
-         | Call      String (Seq(Exp))
+         | Call      String (Seq(Exp)) Bool
          | If      { guards::Seq(Ins) }
          | Guard   { cond  :: Exp, ins :: Ins }
          | Else    { ins   :: Ins }
@@ -56,7 +56,8 @@ showIndented n  (Assign    e1 e2 ) = ind n ++ show e1 ++ " = "  ++ show e2
 showIndented n  (AssignSum e1 e2 ) = ind n ++ show e1 ++ " += " ++ show e2 
 showIndented n  (AssignMul e1 e2 ) = ind n ++ show e1 ++ " *= " ++ show e2 
 showIndented n  (AssignMin e1 e2 ) = ind n ++ show e1 ++ " *= " ++ show e2 
-showIndented n  (Call   s expSeq ) = ind n ++ show s ++ "(" ++ (( concat . (intersperse ",\n") . (map show) . toList) expSeq) ++ ")"
+showIndented n  (Call   s expSeq False) = "FunctionCall: " ++ ind n ++ show s ++ "(" ++ (( concat . (intersperse ",\n") . (map show) . toList) expSeq) ++ ")"
+showIndented n  (Call   s expSeq True) = "ProcedureCall: " ++ ind n ++ show s ++ "(" ++ (( concat . (intersperse ",\n") . (map show) . toList) expSeq) ++ ")"
 showIndented n  (Guard  bexp ins ) = ind n ++ "If/Elif(" ++ show bexp ++ "):" ++ showIndented (n+1) ins
 showIndented n  (While  bexp ins ) = ind n ++ "While("   ++ show bexp ++ "):" ++ showIndented (n+1) ins
 showIndented n  (Else   ins   )    = ind n ++ "Else:" ++ showIndented (n+1) ins
@@ -177,7 +178,7 @@ data Exp = Binary  Operator Exp Exp
          | ExpInt   Int
          | ExpChar  Char
          | ExpEnum  String
-         | CallVal  String (Seq(Exp)) 
+         | CallVal  String (Seq(Exp)) Bool
          | NoExp
          deriving (Show)
 

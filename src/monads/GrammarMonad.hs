@@ -461,8 +461,12 @@ expIns' (Binary op a b) (TypeFloat,to) = return (TypeFloat,to,(Binary op' a b))
               Minusi    -> Minusf
               Multiplyi -> Multiplyf
               _         -> op
-
 expIns' ins (t,to)      = return (TypeError,to,NoExp)
+
+expInsF :: Exp -> ((Type,Token),Bool) -> OurMonad((Type,Token,Exp))
+expInsF (CallVal a b _) (t,boolProc)   = expIns (CallVal a b boolProc) t
+expInsF a (t,_)                      = expIns a t
+
 
 checkFloatDiv ::  [Type] -> Type -> Type -> Token -> Token -> OurMonad ((Type,Token))
 checkFloatDiv expected TypeInt TypeInt tok tok2   = return (TypeInt,tok2)
@@ -488,19 +492,21 @@ checkBinary expected l r tok tok2      = do
   where error1 = strError (position tok) "Types in the operator" (toStr tok) ("are not equal (" ++ show l ++ " and " ++ show r ++ ")")
         error2 = strError (position tok) "Operands in" (toStr tok) ("have type" ++ show l ++ " but did't match any of the expected types." ++ show expected)
 
-checkFunctionCall :: Token -> TypeTuple -> OurMonad((Type,Token))
+
+checkFunctionCall :: Token -> TypeTuple -> OurMonad(((Type,Token),Bool))
 checkFunctionCall ident calltup = do
     res <- checkIsFunc ident
     if isNothing res 
-        then return (TypeError,ident)-- Nothing to do, error
+        then return ((TypeError,ident),False)-- Nothing to do, error
         else do let funcSig = (getTuple . storedType . fromJust) res
+                let boolProc  = isProc $ fromJust res
                 if lengthMatches calltup funcSig 
                 then if trd $ tuplesMatch calltup funcSig
                      then do tellLog "Function call types work"
-                             return (funcReturnType funcSig,ident)
+                             return ((funcReturnType funcSig,ident),boolProc)
                      else do tellError . (error1 (calltup)) $ tuplesMatch calltup funcSig
-                             return (TypeError,ident)
-                else tellError error2 >> return (TypeError,ident)
+                             return ((TypeError,ident),False)
+                else tellError error2 >> return ((TypeError,ident),False)
   where trd  (_,_,a) = a
         fst' (a,_,_) = a
         error1 typegot (expected,p,_) = strError (position ident) "Error in the call of" (lexeme ident) ("argument number "++show p++" didn't match with expected " ++ show expected ++ " but " ++ show typegot ++ " found.")

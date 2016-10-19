@@ -8,6 +8,7 @@ module InsToTac(
 ) where
 
 import Data.Sequence(empty,Seq,(|>),(<|),(><),singleton)
+import qualified Data.Sequence as S(null)
 import qualified Data.Foldable as F(foldl,toList)
 import Data.Monoid((<>),mempty)
 import Data.Word(Word)
@@ -169,7 +170,11 @@ treeToTac (ForStep low high step ins ) = do
 treeToTac (Block iS ) = do 
     progSeq <- M.mapM treeToTac iS
     return $ F.foldl (><) empty progSeq
---treeToTac (Call s args) = do
+treeToTac (Call s args b) = do
+    if b then
+        return $ argsToProg args
+    else
+        return $ argsToProg args
 
 treeToTac (Return v)  = do
     maybe ( return (singleton (Jump 3) ))
@@ -180,7 +185,14 @@ treeToTac (Return v)  = do
           (v)
 treeToTac _ = return (singleton Nop)
 
---argsTo
+argsToProg :: (Seq(Exp)) -> Seq IntIns
+argsToProg s =  if (S.null s) 
+                then 
+                    return suffering
+                else 
+                    return suffering
+            where
+                suffering = singleton Nop
 
 
 expToTac :: Exp -> TreeTranslator ((Program,Var))
