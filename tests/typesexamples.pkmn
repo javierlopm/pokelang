@@ -16,9 +16,11 @@ STRUCTabuzz pokepanita {
 
 
 funcball VOIDtorb hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
-    pINTachu [4][6][5] cocoroto_the_second;
+    pINTachu i;
+    pINTachu j;
+    pINTachu [2][3] cocoroto_the_second;
     pINTachu cocoroto;
 
-    cocoroto = cocoroto_the_second[1][3][2];
+    cocoroto = cocoroto_the_second[i][j];
 
 vamo_a_calmano
