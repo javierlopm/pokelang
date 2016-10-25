@@ -712,7 +712,7 @@ checkArray tok list = do
     varDec <- getDeclare tok 
     maybe (return (TypeError,tok,NoExp))
           (\ dec -> do 
-              let (final_t,expBuilt) = arrayParser (storedType dec) list
+              let (final_t,expBuilt) = arrayParser (stripArray (storedType dec)) (reverse list)
               let finalExp = (Binary Array (ExpVar dec (lexeme tok)) expBuilt)
               return (final_t, tok, finalExp))
           varDec
@@ -726,12 +726,15 @@ arrayParser (TypeArray t dim) (exp:[]) = (t,(Binary Multiplyi (ExpInt (getSize t
 arrayParser ts exps = (final_t,expBuilt)
   where 
     (dims,final_t) = dimensionArray ts
-    expBuilt = foldr buildExp (Binary Multiplyi (ExpInt ((head dims)*(getSize final_t))) (head exps)) expList
-    buildExp (dim,i) accExp = (Binary Multiplyi (Binary Plusi accExp i) (ExpInt dim))
-    expList  = tail $ zip  ((init dims) ++ [getSize final_t])  exps
+    dims' = dims ++ [getSize final_t]
+    expBuilt = foldl buildExp (Binary Multiplyi (head exps) (ExpInt (head dims')) ) (tail expList)
+    buildExp accExp (dim,i) = (Binary Multiplyi (Binary Plusi accExp i) (ExpInt dim))
+    expList  =  zip dims' exps
+
+
 
 dimensionArray :: Type -> ([Int],Type)
-dimensionArray (TypeArray t1 dim) = ( dim : dimesions ,final_t)
+dimensionArray (TypeArray t1 dim) = ( dim : dimesions  ,final_t)
     where (dimesions,final_t) = dimensionArray t1 
 dimensionArray final_t            = ([],final_t)
 

@@ -257,7 +257,7 @@ expToTac node@(Binary Access exp1 exp2) = do
         setRval
         (tac2,var2) <- expToTac exp2
         nt <- newTemp
-        setLval
+        setLval -- No lo estamos recuperando
         return ((tac1 <> tac2) |> (Addi (Temp nt) var1 var2),(Temp nt))
   where (addr,ofs) = getStructOrUnion node 
 

@@ -337,8 +337,8 @@ isBasic _          = False
 -- Type Sizes
 getSize :: Type -> Int
 getSize TypeInt          = 4  -- Basic types are going to change
-getSize TypeBool         = 1
-getSize TypeChar         = 1
+getSize TypeBool         = 1 -- 4
+getSize TypeChar         = 1 -- 4
 getSize TypeFloat        = 4
 getSize (TypeEnum _ )    = 4
 getSize (TypePointer  _) = 4
