@@ -2,6 +2,7 @@ module Types(
     Direction(..),
     Type(..),
     Declare(..),
+    TypeHelper(..),
     Message,
     TypeTuple,
     nums,
@@ -41,7 +42,8 @@ module Types(
     isEnumCons,
     notErrors,
     isArray,
-    stripArray
+    stripArray,
+    buildType
     -- addLeftType,
     -- singleType,
 ) where
@@ -115,6 +117,14 @@ data PrimType = PrimInt        Int
               | PrimUnion      String
               | PrimStruct     String
               deriving(Show,Eq)
+
+data TypeHelper = AnArray  Int
+                | APointer
+
+buildType :: Type -> Seq(TypeHelper) -> Type
+buildType = F.foldl addInType 
+    where addInType primType (AnArray s) = TypeArray   primType s
+          addInType primType APointer    = TypePointer primType
 
 -- Language types for checks
 data Type = TypeInt  

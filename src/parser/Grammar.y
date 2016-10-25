@@ -188,10 +188,12 @@ GlobDeclare : Reference          { ( $1 ,False) }
             | GLOBAL Reference   { ( $2 ,True ) }
 
 -- Randomly nested Pointer-Array-Empty_Arrray references (or not)
-Reference: PrimType              {             $1            }
-         | Reference "*"         { TypePointer $1            }
-         | Reference "[" INT "]" { TypeArray   $1 (value $3) }
-         -- | Reference "[" "]"     { TypeEmptyArray $1       }
+Reference: PrimType Reference2   { buildType $1 $2 }
+
+
+Reference2: {- λ -}                  { empty }
+          | Reference2 "*"           { APointer             <| $1 }
+          | Reference2 "[" INT "]"   { (AnArray (value $3)) <| $1 }
 
 PrimType : INTDEC           {     makeType $1    }
          | BOOLDEC          {     makeType $1    }

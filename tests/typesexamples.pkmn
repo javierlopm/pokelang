@@ -1,0 +1,23 @@
+    --
+    Ejemplo de struct y union
+--
+articUNION poketrainer {
+    socialSecurityNumber :: pINTachu,
+    best_friend          :: articUNION poketrainer* ,
+    name                 :: CHARmander [5]*[4]*[3]
+}
+
+STRUCTabuzz pokepanita {
+    socialSecurityNumber :: pINTachu,
+    best_friend          :: articUNION poketrainer ,
+    name                 :: CHARmander *
+}
+
+
+
+funcball VOIDtorb hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
+    pINTachu cocoroto;
+    pINTachu[2][3] cocoroto_the_second;
+
+    
+vamo_a_calmano
