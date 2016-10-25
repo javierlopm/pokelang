@@ -3,21 +3,22 @@
 --
 articUNION poketrainer {
     socialSecurityNumber :: pINTachu,
-    best_friend          :: articUNION poketrainer* ,
-    name                 :: CHARmander [5]*[4]*[3]
+    best_friend          :: * articUNION poketrainer ,
+    name                 :: [5]*[4]*[3]CHARmander
 }
 
 STRUCTabuzz pokepanita {
     socialSecurityNumber :: pINTachu,
     best_friend          :: articUNION poketrainer ,
-    name                 :: CHARmander *
+    name                 :: *CHARmander
 }
 
 
 
 funcball VOIDtorb hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
     pINTachu cocoroto;
-    pINTachu[2][3] cocoroto_the_second;
+    [2][3]pINTachu cocoroto_the_second;
 
-    
+    cocoroto = cocoroto_the_second[0][3];
+
 vamo_a_calmano

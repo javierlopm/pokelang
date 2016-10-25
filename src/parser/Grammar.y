@@ -188,7 +188,7 @@ GlobDeclare : Reference          { ( $1 ,False) }
             | GLOBAL Reference   { ( $2 ,True ) }
 
 -- Randomly nested Pointer-Array-Empty_Arrray references (or not)
-Reference: PrimType Reference2   { buildType $1 $2 }
+Reference: Reference2 PrimType   { buildType $2 $1 }
 
 
 Reference2: {- λ -}                  { empty }
