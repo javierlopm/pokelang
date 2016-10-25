@@ -155,7 +155,7 @@ instance Show Operator where
     show Minusf         = "f-"
     show Multiplyi      = "*"
     show Multiplyf      = "f*"
-    show Array          = "Arraaaaay"
+    show Array          = "Aray"
     --show FloatMultiply = "f*"
     show Power         = "^"
     show Greater       = ">"

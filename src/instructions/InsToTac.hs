@@ -8,7 +8,7 @@ module InsToTac(
     TreeTranslator
 ) where
 
-import Data.Sequence(empty,Seq,(|>),(<|),(><),viewl,ViewL(..),singleton)
+import Data.Sequence(empty,Seq,(|>),(<|),(><),viewl,ViewL(..),viewr,ViewR(..),singleton)
 import qualified Data.Sequence as S(null)
 import qualified Data.Foldable as F(foldl,toList)
 import Data.Monoid((<>),mempty)
@@ -104,6 +104,8 @@ modJumps :: Bool -> Maybe Word -> TreeTranslator()
 modJumps True  mw = modify (\(TranlatorState a b _  c d e f)->TranlatorState a b mw c d e f)
 modJumps False mw = modify (\(TranlatorState a b c _  d e f)->TranlatorState a b c mw d e f)
 
+--totalType :: TypeTuple -> Int
+--totalType a = (sum (foldl getSize 0 (F.toList a))) - (getSize $ funcReturnType a )
 -- use foldM instead
 forestToTac' :: [(String,Ins,TypeTuple)] -> TreeTranslator ( [(String,Program)] )
 forestToTac' a = mapM buildFun  a
