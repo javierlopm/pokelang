@@ -161,8 +161,8 @@ Ins : {- λ -}                 {% return (TypeVoid, newBlock ) }
     | Ins EXIT           ";"  {% checkOkIns Exit     (snd $1) (fst $1)  }
     | Ins RETURN   Exp   ";"  {% checkOkIns ((Return (Just (sel3 $3)) )) (snd $1) (fst $1) } -- Cambiar para exp
     | Ins RETURN         ";"  {% checkOkIns ((Return Nothing )) (snd $1) (fst $1) }
-    | Ins PRINT "("  STRING   ")" ";" {% checkOkIns (buildPrint $4   ) (snd $1) (fst $1) } --revisar
-    | Ins READ  "("  ID       ")" ";" {% checkOkIns (buildRead  $4 $1) (snd $1) (fst $1) } --revisar
+    | Ins PRINT "("  STRING   ")" ";" {% buildPrint $4 (snd $1) (fst $1) } --revisar
+    | Ins READ  "("  ID       ")" ";" {% buildRead  $4 $1  } --revisar
     | Ins ID    "("ExpList")" ";" {% (checkFunctionCall $2 (fst $4)) >>=  \(mitupla,bool) -> (checkOkIns (Call (lexeme $2) (snd $4) bool) (snd $1)) . (notErrors (fst $1)) . fst $  mitupla } 
     | Ins BEGIN Ent0 SmplDcls Ins END   {% exitScope >>   checkOkIns (snd $5) (snd $1) (notErrors (fst $1) (fst $5)) } 
     | Ins IF    Exp ":" Ent0 SmplDcls Ins Ent1 NextIf Else END     {% checkAllOk [(checkGuarded $2 $3 $7), (return (fst $10)), (return (fst $1))] TypeVoid TypeVoid "" $2 0 >>= checkOkIns (mergeIf (Guard (trd $3) (snd $7)) (snd $9) (snd $10) ) (snd $1) } --{% checkOkIns (addToBlock (mergeIf (Guard ExpTrue) $9 $10 )) $1 } -- verificar que $3 es bool, $9 y $10 son void

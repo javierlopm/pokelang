@@ -591,13 +591,17 @@ buildRead four one = do
     newVar      <- buildVar four
     checkOkIns (Read newVar ) (snd one) itsReadable
 
-buildPrint :: Token  -> OurMonad((Type,Ins))
-buildPrint string = do 
+buildPrint :: Token -> Ins -> Type -> OurMonad((Type,Ins))
+buildPrint string i t = do 
     str_lex <- new_str_lex
     let mem_addr = "_str" ++(show str_lex)
-    let dec = StrCons (position string) TypeString (ThisLab mem_addr) (content string)
+    let dec = StrCons (position string) (ThisLab mem_addr) (content string)
     onStrScope $ (:) (mem_addr, dec)
-    return (TypeVoid,Call "print_str" (S.singleton (ExpVar dec str_lex)) True)
+
+    let new_ins = Call "print_str" (S.singleton (ExpVar dec mem_addr)) True
+
+    bleh <- checkOkIns new_ins i t
+    return bleh
 
 -- Change by a instruction type default
 adefault = undefined
