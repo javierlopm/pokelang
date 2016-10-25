@@ -53,6 +53,8 @@ getIns' :: [Token] -> Bool -> IO ([(String,Ins,TypeTuple)])
 getIns' tokens pr = do
   let (ast,state,strlog) = run (parser tokens) "" initialState
   let (logs,errors,errorcount) = checkParseError strlog
+
+  putStrLn "hola"
   if errorcount == 0
     then do if pr then putStrLn $ printAsts (map dr1 ast) else return ()
             return $ ast

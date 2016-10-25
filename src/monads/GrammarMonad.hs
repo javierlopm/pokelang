@@ -18,11 +18,12 @@ type SymTable    = Scope Declare
 type TableZipper = Zipper Declare 
 
 -- state from monad State
-data ScopeNZip = ScopeNZip { strTbl   :: SymTable
-                           , enuTbl   :: SymTable
-                           , scp      :: SymTable
-                           , zipp     :: TableZipper
-                           , onUnion  :: Bool } 
+data ScopeNZip = ScopeNZip { strTbl    :: [(String,Declare)]
+                           , enuTbl    :: SymTable
+                           , scp       :: SymTable
+                           , zipp      :: TableZipper
+                           , onUnion   :: Bool
+                           , str_count :: Int } 
                            deriving (Show)
 
 -- Alias for executing RWS monad
@@ -33,16 +34,17 @@ run = runRWS
 
 -- Monad initial state: two empty scopes and one zipper for an empty scope
 initialState :: ScopeNZip
-initialState = ScopeNZip emptyScope 
+initialState = ScopeNZip [] 
                          emptyScope 
                          builtinFunctions 
                          (fromScope emptyScope) 
                          False
+                         0
 
 -- Make a tuple with the String Scope and a Scope tree with globals and local
 -- scopes fused. Scopeception
-makeTable :: ScopeNZip -> ( Scope Declare , Scope Declare , Scope Declare)
-makeTable (ScopeNZip str enu gscp z _) = ( str , enu , fuse gscp z)
+makeTable :: ScopeNZip -> ( [(String,Declare)] , Scope Declare , Scope Declare)
+makeTable (ScopeNZip str enu gscp z _ _ ) = ( str , enu , fuse gscp z )
 
 
 -- Aliases for writing to the log
@@ -64,7 +66,7 @@ onZip fun = do zipper <- gets zipp
 
 
 -- Modify string symbol table
-onStrScope :: (SymTable -> SymTable ) -> OurMonad()
+onStrScope :: ([(String,Declare)] -> [(String,Declare)] ) -> OurMonad()
 onStrScope fun = do stringTable <- gets strTbl
                     state       <- get
                     put state { strTbl = fun stringTable }
@@ -90,6 +92,12 @@ toggleUnion :: OurMonad ()
 toggleUnion = do isInUnion <- gets onUnion
                  state     <- get
                  put state { onUnion = (not isInUnion) }
+
+new_str_lex :: OurMonad(String)
+new_str_lex = do new_int <- gets str_count
+                 state       <- get
+                 put state { str_count =  new_int + 1 }
+                 return ("str_" ++ show new_int)
 
 {-
     Check, add to scope, log functions
@@ -554,6 +562,8 @@ checkMain = do
 -- Check if there is a mainFunction and add it at the begining of the list
 checkMain' :: [(String,Ins,TypeTuple)] -> OurMonad( [(String,Ins,TypeTuple)] )
 checkMain' functions = do
+    globals <- gets scp
+    tellError $ show globals
     let ((fs,td),list) = foldl processIns ((Nothing,S.empty),[]) functions
     if isJust fs
     then return (("hitMAINlee" , (fromJust fs), td) : list)
@@ -580,6 +590,14 @@ buildRead four one = do
     itsReadable <- checkReadable four True 
     newVar      <- buildVar four
     checkOkIns (Read newVar ) (snd one) itsReadable
+
+buildPrint :: Token  -> OurMonad((Type,Ins))
+buildPrint string = do 
+    str_lex <- new_str_lex
+    let mem_addr = "_str" ++(show str_lex)
+    let dec = StrCons (position string) TypeString (ThisLab mem_addr) (content string)
+    onStrScope $ (:) (mem_addr, dec)
+    return (TypeVoid,Call "print_str" (S.singleton (ExpVar dec str_lex)) True)
 
 -- Change by a instruction type default
 adefault = undefined
