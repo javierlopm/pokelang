@@ -713,7 +713,7 @@ checkArray tok list = do
     maybe (return (TypeError,tok,NoExp))
           (\ dec -> do 
               let (final_t,expBuilt) = arrayParser (stripArray (storedType dec)) (reverse list)
-              let finalExp = (Binary Array (ExpVar dec (lexeme tok)) expBuilt)
+              let finalExp = (Binary Access (ExpVar dec (lexeme tok)) expBuilt)
               return (final_t, tok, finalExp))
           varDec
   where error1 = "HELP array"

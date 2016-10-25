@@ -21,6 +21,7 @@ funcball VOIDtorb hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
     pINTachu [2][3] cocoroto_the_second;
     pINTachu cocoroto;
 
-    cocoroto = cocoroto_the_second[i][j];
+    #cocoroto = cocoroto_the_second[i][j];
+    cocoroto_the_second[i][j] = 42;
 
 vamo_a_calmano
