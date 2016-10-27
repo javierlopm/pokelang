@@ -1,53 +1,51 @@
 --
     Ejemplo de struct y union
 --
-articUNION poketrainer {
-    socialSecurityNumber :: pINTachu,
-    best_friend          :: articUNION poketrainer* ,
-    name                 :: CHARmander [5]
-}
+# articUNION poketrainer {
+#     socialSecurityNumber :: pINTachu,
+#     best_friend          :: articUNION poketrainer* ,
+#     name                 :: CHARmander [5]
+# }
+# 
+# STRUCTabuzz pokepanita {
+#     socialSecurityNumber :: pINTachu,
+#     best_friend          :: articUNION poketrainer ,
+#     name                 :: CHARmander *
+# }
+# 
+# ENUManyte pokeDaysLaborables { 
+#     Lunes, 
+#     Martes}
 
-STRUCTabuzz pokepanita {
-    socialSecurityNumber :: pINTachu,
-    best_friend          :: articUNION poketrainer ,
-    name                 :: CHARmander *
-}
-
-ENUManyte pokeDaysLaborables { 
-    Lunes, 
-    Martes}
-
-funcball pINTachu bubble( pINTachu i):
-    vamo_a_retorna i+1;
+funcball pINTachu gcd( pINTachu a, pINTachu b):
+    vamo_a_retorna a+1;
 vamo_a_calmano
 
-funcball VOIDtorb voidproc( pINTachu i):
-    i = 3;
-vamo_a_calmano
+#funcball VOIDtorb voidproc( pINTachu i):
+#    i = 3;
+#vamo_a_calmano
 
 
 
 funcball VOIDtorb hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
-    STRUCTabuzz pokepanita erNovich;
-    butterFloat flotante;
-    vamo_a_empeza
-        STRUCTabuzz pokepanita [2][3] erNovich2;
-    vamo_a_calmano
-    vamo_a_empeza
-        STRUCTabuzz pokepanita [2][3] erNovich3;
-    vamo_a_calmano
-    vamo_a_empeza
-        ENUManyte pokeDaysLaborables menol;
+#    STRUCTabuzz pokepanita erNovich;
+#    butterFloat flotante;
+#    vamo_a_empeza
+#        STRUCTabuzz pokepanita [2][3] erNovich2;
+#    vamo_a_calmano
+#    vamo_a_empeza
+#        STRUCTabuzz pokepanita [2][3] erNovich3;
+#    vamo_a_calmano
+#        ENUManyte pokeDaysLaborables menol;
 #        menol = Martes;
-        CHARmander hola;
-        pINTachu hola2;
-        pINTachu [3]erNovich4;
-        erNovich4[1] = bubble(1);
-        flotante = -0.0 + 3.0;
-        hola2 += 2;
-        hola = 'c';
-        voidproc(hola2);
-    vamo_a_calmano
-    
-    
+#        CHARmander hola;
+#        pINTachu a;
+#        pINTachu b;
+#        pINTachu [3]erNovich4;
+#        flotante = -0.0 + 3.0;
+#        hola = 'c';
+#        voidproc(hola2);
+         pINTachu hola2;
+         #gcd(hola2,2);
+         hola2 = 1 + gcd(hola2,2);
 vamo_a_calmano

@@ -221,14 +221,24 @@ treeToTac _ = return (singleton Nop)
 argsToProg :: (Seq(Exp)) -> Bool -> Int -> Program ->  TreeTranslator((Program,Int))
 argsToProg s b i s0 =  if (S.null s)
                    then do
+                        liftIO $ putStrLn $ show s ++ " END 1----\n" 
+                        liftIO $ putStrLn $ show s0 ++ " END 2----\n" 
                         return (s0,i)
                    else do
+                    liftIO $ putStrLn $ show s ++ "call - " ++ show i ++" 1----\n" 
+                    liftIO $ putStrLn $ show s0 ++ "call - " ++ show i ++" 2----\n" 
                     (argProg,rArg) <- expToTac $ (fst . decons . viewl) s
-                    argsToProg ( (snd . decons . viewl) s) b (i+1) $ argProg <> getParam rArg b 
+                    if b then
+                        do
+                            setLval
+                            let pamToAdd = singleton (Param rArg)
+                            setRval
+                            argsToProg ( (snd . decons . viewl) s) b (i+1) $ s0 <> argProg <> pamToAdd
+                    else argsToProg ( (snd . decons . viewl) s) b (i+1) $ s0 <> argProg <> singleton (Param rArg)
     where decons EmptyL = error "Empty sequence!"
           decons (l :< others) = (l,others)
-          getParam r True  = singleton (Param r) --Aquí se hace el access if b. ¿Capaz un ParamPointer?
-          getParam r False = singleton (Param r)
+          --getParam r True  = singleton (Param r) --Aquí se hace el access if b. ¿Capaz un ParamPointer?
+          --getParam r False = singleton (Param r)
 
 
 
