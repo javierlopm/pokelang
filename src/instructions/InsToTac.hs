@@ -232,12 +232,8 @@ treeToTac _ = return (singleton Nop)
 argsToProg :: (Seq(Exp)) -> Bool -> Int -> Program ->  TreeTranslator((Program,Int))
 argsToProg s b i s0 =  if (S.null s)
                    then do
-                        liftIO $ putStrLn $ show s ++ " END 1----\n" 
-                        liftIO $ putStrLn $ show s0 ++ " END 2----\n" 
                         return (s0,i)
                    else do
-                    liftIO $ putStrLn $ show s ++ "call - " ++ show i ++" 1----\n" 
-                    liftIO $ putStrLn $ show s0 ++ "call - " ++ show i ++" 2----\n" 
                     if b then
                         do
                           setLval
