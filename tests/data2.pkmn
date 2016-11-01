@@ -17,7 +17,7 @@
 #     Lunes, 
 #     Martes}
 
-funcball VOIDtorb gcd( pINTachu a, pINTachu b):
+funcball pINTachu gcd( pINTachu a, pINTachu b):
     vamo_a_retorna a+1;
 vamo_a_calmano
 
@@ -27,7 +27,7 @@ vamo_a_calmano
 
 
 
-funcball VOIDtorb hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
+funcball pINTachu hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
 #    STRUCTabuzz pokepanita erNovich;
 #    butterFloat flotante;
 #    vamo_a_empeza
@@ -46,6 +46,6 @@ funcball VOIDtorb hitMAINlee(pINTachu hola,CHARmander t,butterFloat b):
 #        hola = 'c';
 #        voidproc(hola2);
          pINTachu hola2;
-         gcd(hola2,2);
-#         hola2 = 1 + gcd(hola2,2);
+#         gcd(hola2,2);
+         hola2 = 1 + gcd(hola2,2);
 vamo_a_calmano

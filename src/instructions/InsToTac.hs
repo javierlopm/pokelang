@@ -238,14 +238,17 @@ argsToProg s b i s0 =  if (S.null s)
                    else do
                     liftIO $ putStrLn $ show s ++ "call - " ++ show i ++" 1----\n" 
                     liftIO $ putStrLn $ show s0 ++ "call - " ++ show i ++" 2----\n" 
-                    (argProg,rArg) <- expToTac $ (fst . decons . viewl) s
                     if b then
                         do
-                            setLval
-                            let pamToAdd = singleton (Param rArg)
-                            setRval
-                            argsToProg ( (snd . decons . viewl) s) b (i+1) $ s0 <> argProg <> pamToAdd
-                    else argsToProg ( (snd . decons . viewl) s) b (i+1) $ s0 <> argProg <> singleton (Param rArg)
+                          setLval
+                          (argProg,rArg) <- expToTac $ (fst . decons . viewl) s
+                          setRval
+                          let pamToAdd = singleton (Param rArg)
+                          argsToProg ( (snd . decons . viewl) s) b (i+1) $ s0 <> argProg <> pamToAdd
+                    else
+                        do
+                          (argProg,rArg) <- expToTac $ (fst . decons . viewl) s
+                          argsToProg ( (snd . decons . viewl) s) b (i+1) $ s0 <> argProg <> singleton (Param rArg)
     where decons EmptyL = error "Empty sequence!"
           decons (l :< others) = (l,others)
           --getParam r True  = singleton (Param r) --Aquí se hace el access if b. ¿Capaz un ParamPointer?
@@ -255,7 +258,6 @@ argsToProg s b i s0 =  if (S.null s)
 expToTac :: Exp -> TreeTranslator ((Program,Var))
 expToTac (Unary op (ExpInt   a) ) = return  (empty , operateui op a )
 expToTac (Unary op (ExpFloat a) ) = return  (empty , operateuf op a )
-
 expToTac (ExpInt   i1) = return (empty,Int_Cons   i1) -- Single constant values
 expToTac (ExpFloat i1) = return (empty,Float_Cons i1)
 expToTac (ExpTrue    ) = return (empty,Int_Cons    1) -- gotoExpTrue
@@ -340,6 +342,10 @@ expToTac (Binary op exp1 exp2)
         (ins2,t2) <- expToTac exp2
         nt <- newTemp
         return ((ins1 <> ins2) |> (insTranslation op (Temp nt) t1 t2) ,Temp nt)
+expToTac (CallVal s args b ) = do
+    tempLocal  <- newTemp
+    (prog,argC) <- argsToProg args b 0 empty 
+    return ((prog <> singleton (CallExp (Temp tempLocal) s argC)),(Temp tempLocal))    
 
 expToTac (Unary op a) = do 
     tempLocal  <- newTemp

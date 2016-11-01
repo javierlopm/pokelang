@@ -104,6 +104,7 @@ data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
             | StoreArray   Dest Src1 Src2
             -- Function calls
             | TACCall    String  Int
+            | CallExp    Dest String  Int
             | Clean   Int
             | Param   Src1    
             -- | Return  Src1 
@@ -157,6 +158,7 @@ instance Show      IntIns where
     show (ReadArray    d s1 s2) = show d ++" := "++show s1++'[' : show s2 ++ "]"
     show (StoreArray   d s1 s2) = show d ++'[':show s1 ++ "] := " ++ show s2
     show (TACCall     str  i )  = "Call " ++ str ++ " #" ++ show i
+    show (CallExp   d  str  i ) = show d ++ " := Call " ++ str ++ " #" ++ show i
     show (Clean         i )  = "Clean " ++ "#" ++ show i
    -- show (Return   s1      )  = "Return " ++ show s1
     show (Param    par )      = "Param " ++ show par
@@ -201,7 +203,7 @@ instance Binary IntIns where
     put (StorePointer r0 r1) = putWord8 27 >> put r0 >>  put r1 
     put (ReadArray  r0 r1 r2) = putWord8 28 >> put r0 >>  put r1 >> put r2 
     put (StoreArray r0 r1 r2) = putWord8 29 >> put r0 >>  put r1 >> put r2 
-    put (TACCall     str i )     = putWord8 30 >> put str >> put i
+    put (TACCall     str i )  = putWord8 30 >> put str >> put i
     put (Param    par )      = putWord8 31 >> put par
     put (Comment  str )      = putWord8 32 >> put str
     put (Tag      str )      = putWord8 33 >> put str
@@ -220,6 +222,7 @@ instance Binary IntIns where
     put TacExit              = putWord8 46
     put (TagSC     str v)    = putWord8 47 >> put str >> put v
    -- put (Return   s1  )     =  putWord8 44 >> put s1 
+    put (CallExp    r0 str i ) = putWord8 48 >> put r0 >> put str >> put i
 
     get = do 
     key <- getWord8
@@ -272,6 +275,7 @@ instance Binary IntIns where
        45 -> B.get >>= return . TagS
        46 -> return TacExit
        47 -> build2get TagSC
+       48 -> buildTac CallExp
       -- 44 ->  B.get >>= return . Return
 
 -- Print auxiliaries
