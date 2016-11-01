@@ -584,7 +584,6 @@ checkMain = do
 checkMain' :: [(String,Ins,TypeTuple)] -> OurMonad( [(String,Ins,TypeTuple)] )
 checkMain' functions = do
     globals <- gets strTbl
-    tellError $ show globals
     let ((fs,td),list) = foldl processIns ((Nothing,S.empty),[]) functions
     if isJust fs
     then return (("hitMAINlee" , (fromJust fs), td) : list)

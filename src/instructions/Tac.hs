@@ -111,6 +111,7 @@ data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
             | Comment String
             | Tag     Label
             | TagS    String
+            | TagSC   String String
             | Nop 
             | TacExit 
             -- Prints
@@ -160,7 +161,8 @@ instance Show      IntIns where
    -- show (Return   s1      )  = "Return " ++ show s1
     show (Param    par )      = "Param " ++ show par
     show (Tag      i   )      = '\n': "tag_" ++ show i ++ ":"
-    show (TagS     s   )      = '\n': "tag_" ++ s ++ ":"
+    show (TagS     s   )      = '\n': "tag_" ++ s ++ ":" 
+    show (TagSC    s v )      = '\n': s ++ ": \n  " ++ show v
     show (Comment  str )      =  "\n# "++ str
     show (Print     c  )      = "Print "      ++ show c
     show (PrintEnum c i)      = "Print enum " ++ show c ++ "[" ++ show i ++"]"
@@ -213,9 +215,10 @@ instance Binary IntIns where
     put (Negaf   r0 str )    = putWord8 41 >> put r0 >>  put str
     put (JEq     r0 r1 str)  = putWord8 42 >> put r0 >>  put r1 >> put str
     put (JNEq     r0 r1 str) = putWord8 43 >> put r0 >>  put r1 >> put str
-    put (Clean     i  )      = putWord8 44 >> put i
-    put (TagS      str )      = putWord8 45 >> put str
-    put TacExit      = putWord8 46
+    put (Clean     i    )    = putWord8 44 >> put i
+    put (TagS      str  )    = putWord8 45 >> put str 
+    put TacExit              = putWord8 46
+    put (TagSC     str v)    = putWord8 47 >> put str >> put v
    -- put (Return   s1  )     =  putWord8 44 >> put s1 
 
     get = do 
@@ -266,8 +269,9 @@ instance Binary IntIns where
        42 -> buildTac JEq  
        43 -> buildTac JNEq 
        44 -> B.get >>= return . Clean 
-       45 ->  B.get >>= return . TagS
+       45 -> B.get >>= return . TagS
        46 -> return TacExit
+       47 -> build2get TagSC
       -- 44 ->  B.get >>= return . Return
 
 -- Print auxiliaries

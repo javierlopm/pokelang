@@ -4,6 +4,7 @@ module InsToTac(
     forestToTac',
     execTree,
     evalTree,
+    translateStrings,
     TranlatorState(..),
     TreeTranslator
 ) where
@@ -23,6 +24,10 @@ import Tac          hiding(IntIns(Eql,NotEql,Mod,And,Or,Not))
 
 import Instructions as I(Operator(Eql,NotEql,Mod,And,Or,Not))
 import Tac          as T(IntIns(Eql,NotEql,Mod,And,Or,Not))
+
+translateStrings :: [Declare] -> Program 
+translateStrings  = foldl addDec empty
+    where addDec prog (StrCons _ (ThisLab l) val) = prog |> (TagSC l val)
 
 data TranlatorState  = TranlatorState { tempCount  :: Word       -- Temporal variables generator
                                       , labelCount :: Word       -- Label generator
@@ -231,8 +236,6 @@ argsToProg s b i s0 =  if (S.null s)
           getParam r False = singleton (Param r)
 
 
-
-
 expToTac :: Exp -> TreeTranslator ((Program,Var))
 expToTac (Unary op (ExpInt   a) ) = return  (empty , operateui op a )
 expToTac (Unary op (ExpFloat a) ) = return  (empty , operateuf op a )
@@ -302,7 +305,8 @@ expToTac (Binary op (ExpFloat i1) (ExpFloat i2)) = do -- Two integer constants
 
 -- Single variable
 expToTac (ExpVar dec s) = case (dir dec) of
-        Label  -> return( commentedIns , (MemAdress s) )
+        Label  ->        return( commentedIns , (MemAdress s  ) )
+        (ThisLab str) -> return( commentedIns , (MemAdress str) )
         (Offset o) -> do 
             tempLocal <- newTemp
             let tl = Temp tempLocal
