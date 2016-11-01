@@ -18,7 +18,7 @@ type SymTable    = Scope Declare
 type TableZipper = Zipper Declare 
 
 -- state from monad State
-data ScopeNZip = ScopeNZip { strTbl    :: [(String,Declare)]
+data ScopeNZip = ScopeNZip { strTbl    :: [Declare]
                            , enuTbl    :: SymTable
                            , scp       :: SymTable
                            , zipp      :: TableZipper
@@ -43,7 +43,7 @@ initialState = ScopeNZip []
 
 -- Make a tuple with the String Scope and a Scope tree with globals and local
 -- scopes fused. Scopeception
-makeTable :: ScopeNZip -> ( [(String,Declare)] , Scope Declare , Scope Declare)
+makeTable :: ScopeNZip -> ( [Declare] , Scope Declare , Scope Declare)
 makeTable (ScopeNZip str enu gscp z _ _ ) = ( str , enu , fuse gscp z )
 
 
@@ -66,7 +66,7 @@ onZip fun = do zipper <- gets zipp
 
 
 -- Modify string symbol table
-onStrScope :: ([(String,Declare)] -> [(String,Declare)] ) -> OurMonad()
+onStrScope :: ([Declare] -> [Declare] ) -> OurMonad()
 onStrScope fun = do stringTable <- gets strTbl
                     state       <- get
                     put state { strTbl = fun stringTable }
@@ -93,11 +93,20 @@ toggleUnion = do isInUnion <- gets onUnion
                  state     <- get
                  put state { onUnion = (not isInUnion) }
 
-new_str_lex :: OurMonad(String)
-new_str_lex = do new_int <- gets str_count
-                 state       <- get
-                 put state { str_count =  new_int + 1 }
-                 return ("str_" ++ show new_int)
+new_str_lex :: String -> OurMonad((Direction,Bool))
+new_str_lex input = do
+    all_strings <- gets strTbl
+    let search_res = foldl find Nothing all_strings
+    maybe (new_int)
+          (\ dir_found -> return (dir_found,False))
+          search_res
+    
+  where find Nothing (StrCons _ dir val) = if val == input then (Just dir) else Nothing
+        find (Just x) _ =  (Just x)
+        new_int = do new_int <- gets str_count
+                     state   <- get
+                     put state { str_count =  new_int + 1 }
+                     return ((ThisLab ("str_" ++ show new_int)),True)
 
 {-
     Check, add to scope, log functions
@@ -552,6 +561,18 @@ checkFieldAccess (ty1,tk1,exp1) tk2 = do
         l      = lexeme tk1
         l2      = lexeme tk2
 
+buildPrint :: Token -> Ins -> Type -> OurMonad((Type,Ins))
+buildPrint string i t = do 
+    (mem_addr,is_new) <- new_str_lex (content string)
+    let dec = StrCons (position string) mem_addr (content string)
+    if is_new then onStrScope $ (:) dec
+              else return ()
+    let new_ins = Call "print_str" (S.singleton (ExpVar dec (content string))) True
+
+    bleh <- checkOkIns new_ins i t
+    return bleh
+
+
 checkMain :: OurMonad()
 checkMain = do
     globals <- gets scp
@@ -562,7 +583,7 @@ checkMain = do
 -- Check if there is a mainFunction and add it at the begining of the list
 checkMain' :: [(String,Ins,TypeTuple)] -> OurMonad( [(String,Ins,TypeTuple)] )
 checkMain' functions = do
-    globals <- gets scp
+    globals <- gets strTbl
     tellError $ show globals
     let ((fs,td),list) = foldl processIns ((Nothing,S.empty),[]) functions
     if isJust fs
@@ -591,17 +612,6 @@ buildRead four one = do
     newVar      <- buildVar four
     checkOkIns (Read newVar ) (snd one) itsReadable
 
-buildPrint :: Token -> Ins -> Type -> OurMonad((Type,Ins))
-buildPrint string i t = do 
-    str_lex <- new_str_lex
-    let mem_addr = "_str" ++(show str_lex)
-    let dec = StrCons (position string) (ThisLab mem_addr) (content string)
-    onStrScope $ (:) (mem_addr, dec)
-
-    let new_ins = Call "print_str" (S.singleton (ExpVar dec mem_addr)) True
-
-    bleh <- checkOkIns new_ins i t
-    return bleh
 
 -- Change by a instruction type default
 adefault = undefined

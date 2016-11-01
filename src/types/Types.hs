@@ -107,6 +107,9 @@ instance Show Declare where
                                   ++ "\nDeclare Type: " ++ show (TypeFunction t) 
                                   -- ++ "\nSize: "  ++ show s 
                                   ++ "\nScope: " ++ showScope 1 scp ++ "\n"
+  show (StrCons (l,c) d v) = "StrCons("++show l++","++show c++ ") "
+                          ++ "\n    Content: " ++ v
+                          ++ "\n    At mem: "  ++ show d
 
 -- Polymorphic store type
 data PrimType = PrimInt        Int
