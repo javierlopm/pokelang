@@ -609,7 +609,7 @@ buildRead :: Token -> (Type,Ins) -> OurMonad((Type,Ins))
 buildRead four one = do 
     itsReadable <- checkReadable four True 
     newVar      <- buildVar four
-    checkOkIns (Read newVar ) (snd one) itsReadable
+    checkOkIns (Read newVar ) (snd one) TypeVoid
 
 
 -- Change by a instruction type default

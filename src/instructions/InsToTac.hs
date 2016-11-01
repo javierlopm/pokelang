@@ -221,6 +221,12 @@ treeToTac (Return v)  = do
             let fTac = (retProg <> singleton (Param rVar)) <> (singleton (Jump 3) )
             return (fTac))
           (v)
+treeToTac (Read e1) = do isL <- isLval
+                         let goback = if isL then return () else setRval
+                         setLval
+                         (var_cal,var) <- expToTac e1
+                         goback
+                         return $ var_cal |> (Param var) |> (TACCall "read" 1)
 treeToTac _ = return (singleton Nop)
  
 argsToProg :: (Seq(Exp)) -> Bool -> Int -> Program ->  TreeTranslator((Program,Int))
@@ -311,7 +317,7 @@ expToTac (ExpVar dec s) = case (dir dec) of
             tempLocal <- newTemp
             let tl = Temp tempLocal
             itis <- isLval
-            if (not itis) 
+            if itis
             then return ( commentedIns |> (Addi tl Fp (Int_Cons o)) , tl ) -- PELIGROSO
             else return ( commentedIns |> (ReadArray tl Fp (Int_Cons o)) , tl )
     where commentedIns = if debugVar then empty |> (Comment ("Variable " ++ s)) else empty
