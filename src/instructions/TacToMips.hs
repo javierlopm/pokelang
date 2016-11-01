@@ -25,8 +25,8 @@ $f0-$f11  | uso general, expresiones floats
 $f13-$f32 | uso general, expresiones floats
 -}
 
-builtin :: Mips
-builtin = "\
+crt :: Mips
+crt = "\
 0print_str:
     lw $a0,4($fp)
     li $v0,4
@@ -40,3 +40,11 @@ builtin = "\
 0read_float:
 0read_char:
 "
+
+compile :: Program -> Program -> Mips
+compile globs program = ".data\n"   ++ translate globs      ++ 
+                        "\n.text\n" ++ translate programcrt ++ 
+                        "\n"        ++ crt
+
+translate :: Program -> Mips
+translate = undefined
