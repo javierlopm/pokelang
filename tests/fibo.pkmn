@@ -32,7 +32,7 @@ vamo_a_calmano
 --
     Fibonacci iterativo
 --
-funcball pINTachu fibo_iterativo(pINTachu n):
+funcball pINTachu fibo_iterativo(pINTachu n,pINTachu hola):
     pINTachu n1;
     pINTachu n2;
     pINTachu [2][3][4]arr;
