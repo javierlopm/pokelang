@@ -369,7 +369,7 @@ insertDeclareInScope dcltype   (TkId (l,c) lexeme ) isGlob readonly = do
               --tellError $ "Puse padding de " ++ show (newofs,padd) ++ " en " ++ lexeme
               if inUnion
               then (onZip . apply) $ insert0 lexeme (scopevar (Offset 0))        sz 
-              else (onZip . apply) $ insert  lexeme (scopevar (Offset newofs))  (padd+sz) 
+              else (onZip . apply) $ insert  lexeme (scopevar (Offset (-newofs)))  (padd+sz) 
 
     where error1       = generror ++ " in actual scope."
           error2       = generror ++ " in global scope."
@@ -397,8 +397,8 @@ insertParamInScope dcltype   (TkId (l,c) lexeme ) isGlob readonly = do
               sz <- varSize dcltype
               --tellError $ "Puse padding de " ++ show (newofs,padd) ++ " en " ++ lexeme
               if inUnion
-              then (onZip . apply) $ insert0 lexeme (scopevar (Offset 0))            sz 
-              else (onZip . apply) $ insert  lexeme (scopevar (Offset  ((-newofs))))  (padd+sz)  
+              then (onZip . apply) $ insert0 lexeme (scopevar (Offset 0))              sz 
+              else (onZip . apply) $ insert  lexeme (scopevar (Offset  (newofs)))  (padd+sz)  
 
     where error1       = generror ++ " in actual scope."
           error2       = generror ++ " in global scope."
