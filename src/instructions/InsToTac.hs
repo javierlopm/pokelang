@@ -215,10 +215,10 @@ treeToTac (Call s args b) = do
                             return $ prog <> singleton (TACCall s argC)
 
 treeToTac (Return v)  = do
-    maybe ( return (singleton (Jump 3) ))
+    maybe ( return (singleton (ReturnE) ))
           ( \nVar -> do 
             (retProg,rVar) <- expToTac nVar
-            let fTac = (retProg <> singleton (Param rVar)) <> (singleton (Jump 3) )
+            let fTac = (retProg <>  (singleton (ReturnS rVar) ) )
             return (fTac))
           (v)
 treeToTac (Read e1) = do isL <- isLval
@@ -244,7 +244,7 @@ argsToProg s b i s0 =  if (S.null s)
                     else
                         do
                           (argProg,rArg) <- expToTac $ (fst . decons . viewl) s
-                          argsToProg ( (snd . decons . viewl) s) b (i+1) $ s0 <> argProg <> singleton (Param rArg)
+                          argsToProg ( (snd . decons . viewl) s) b (i+1) $ s0 <> argProg <> singleton (Param rArg) --ACA
     where decons EmptyL = error "Empty sequence!"
           decons (l :< others) = (l,others)
           --getParam r True  = singleton (Param r) --Aquí se hace el access if b. ¿Capaz un ParamPointer?

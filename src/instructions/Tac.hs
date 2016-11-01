@@ -107,7 +107,8 @@ data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
             | CallExp    Dest String  Int
             | Clean   Int
             | Param   Src1    
-            -- | Return  Src1 
+            | ReturnE 
+            | ReturnS  Src1 
             -- Extras
             | Comment String
             | Tag     Label
@@ -160,7 +161,8 @@ instance Show      IntIns where
     show (TACCall     str  i )  = "Call " ++ str ++ " #" ++ show i
     show (CallExp   d  str  i ) = show d ++ " := Call " ++ str ++ " #" ++ show i
     show (Clean         i )  = "Clean " ++ "#" ++ show i
-   -- show (Return   s1      )  = "Return " ++ show s1
+    show (ReturnS   s1      )  = "Return  " ++ show s1
+    show (ReturnE          )  = "ReturnE "
     show (Param    par )      = "Param " ++ show par
     show (Tag      i   )      = '\n': "tag_" ++ show i ++ ":"
     show (TagS     s   )      = '\n': "tag_" ++ s ++ ":" 
@@ -221,8 +223,9 @@ instance Binary IntIns where
     put (TagS      str  )    = putWord8 45 >> put str 
     put TacExit              = putWord8 46
     put (TagSC     str v)    = putWord8 47 >> put str >> put v
-   -- put (Return   s1  )     =  putWord8 44 >> put s1 
     put (CallExp    r0 str i ) = putWord8 48 >> put r0 >> put str >> put i
+    put (ReturnS   s1  )     =  putWord8 49 >> put s1 
+    put (ReturnE      )     =  putWord8 50 
 
     get = do 
     key <- getWord8
@@ -276,7 +279,8 @@ instance Binary IntIns where
        46 -> return TacExit
        47 -> build2get TagSC
        48 -> buildTac CallExp
-      -- 44 ->  B.get >>= return . Return
+       49 ->  B.get >>= return . ReturnS
+       50 ->  return ReturnE
 
 -- Print auxiliaries
 showTAC  d s1 op s2 = show d ++" := "++ show s1 ++" "++ op ++ " " ++ show s2
