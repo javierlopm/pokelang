@@ -49,14 +49,15 @@ getIns tokens pr = do
             return $ map dr1 ast
     else printErrors errorcount id errors >> exitFailure >> return []
   
-getIns' :: [Token] -> Bool -> IO ([(String,Ins,TypeTuple)])
+getIns' :: [Token] -> Bool -> IO (([(String,Ins,TypeTuple)],[Declare]))
 getIns' tokens pr = do
   let (ast,state,strlog) = run (parser tokens) "" initialState
   let (logs,errors,errorcount) = checkParseError strlog
+
   if errorcount == 0
     then do if pr then putStrLn $ printAsts (map dr1 ast) else return ()
-            return $ ast
-    else printErrors errorcount id errors >> exitFailure >> return []
+            return (ast,strTbl state)
+    else printErrors errorcount id errors >> exitFailure >> return ([],[])
 
 main = do
   arg1:arg2:_ <- getArgs
@@ -70,9 +71,10 @@ main = do
                 "-p"      -> execParser False goods
                 "-a"      -> execParser True  goods
                 "-i"      -> getIns goods True >> return ()
-                "-tac"    -> do ast <- getIns' goods False
+                "-tac"    -> do (ast,strs) <- getIns' goods False
                                 programs <- evalTree (forestToTac' ast) initTranslator
-                                putStrLn $ foldl (\ b (string,p) -> b ++ "\n" ++ string ++ ":\n" ++ showP p ) "" programs
+                                let full_prog = (("",translateStrings strs):programs)
+                                putStrLn $ foldl (\ b (string,p) -> b ++ "\n" ++ string ++ ":\n" ++ showP p ) "" full_prog
                                 return ()
                 otherwise -> print $ "Unrecognized argument" ++ runargs
       else do mapM_ print errors

@@ -63,13 +63,15 @@ type Pos = (Int,Int)
 -- Las constantes enumeradas no deberian estar en un scope grande y universal?
 
 data Direction = Label
-               | Offset { bytes :: Int}
+               | Offset  {bytes :: Int}
+               | ThisLab String
                deriving(Show)
 
 -- Declarations might be functions,variables or structure types
 data Declare = Function  { pos::Pos, storedType::Type, fields   ::(Scope Declare), isProc :: Bool}
              | Variable  { pos::Pos, storedType::Type, readonly :: Bool, dir :: Direction  } -- , storedTypeV::PrimType -- No se necesaita todavia
              | Cons      { pos::Pos } 
+             | StrCons   { pos::Pos, dir::Direction,val::String}
              | Struct    { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare)}
              | Union     { pos::Pos, storedType :: Type, fieldTypes :: (Seq Type) , fields::(Scope Declare)} 
              | Enum      { pos::Pos, typeName   :: String, fields::(Scope Declare)}
@@ -105,6 +107,9 @@ instance Show Declare where
                                   ++ "\nDeclare Type: " ++ show (TypeFunction t) 
                                   -- ++ "\nSize: "  ++ show s 
                                   ++ "\nScope: " ++ showScope 1 scp ++ "\n"
+  show (StrCons (l,c) d v) = "StrCons("++show l++","++show c++ ") "
+                          ++ "\n    Content: " ++ v
+                          ++ "\n    At mem: "  ++ show d
 
 -- Polymorphic store type
 data PrimType = PrimInt        Int

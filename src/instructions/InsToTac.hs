@@ -4,6 +4,7 @@ module InsToTac(
     forestToTac',
     execTree,
     evalTree,
+    translateStrings,
     TranlatorState(..),
     TreeTranslator
 ) where
@@ -23,6 +24,10 @@ import Tac          hiding(IntIns(Eql,NotEql,Mod,And,Or,Not))
 
 import Instructions as I(Operator(Eql,NotEql,Mod,And,Or,Not))
 import Tac          as T(IntIns(Eql,NotEql,Mod,And,Or,Not))
+
+translateStrings :: [Declare] -> Program 
+translateStrings  = foldl addDec empty
+    where addDec prog (StrCons _ (ThisLab l) val) = prog |> (TagSC l val)
 
 data TranlatorState  = TranlatorState { tempCount  :: Word       -- Temporal variables generator
                                       , labelCount :: Word       -- Label generator
@@ -216,6 +221,12 @@ treeToTac (Return v)  = do
             let fTac = (retProg <> singleton (Param rVar)) <> (singleton (Jump 3) )
             return (fTac))
           (v)
+treeToTac (Read e1) = do isL <- isLval
+                         let goback = if isL then return () else setRval
+                         setLval
+                         (var_cal,var) <- expToTac e1
+                         goback
+                         return $ var_cal |> (Param var) |> (TACCall "read" 1)
 treeToTac _ = return (singleton Nop)
  
 argsToProg :: (Seq(Exp)) -> Bool -> Int -> Program ->  TreeTranslator((Program,Int))
@@ -239,8 +250,6 @@ argsToProg s b i s0 =  if (S.null s)
           decons (l :< others) = (l,others)
           --getParam r True  = singleton (Param r) --Aquí se hace el access if b. ¿Capaz un ParamPointer?
           --getParam r False = singleton (Param r)
-
-
 
 
 expToTac :: Exp -> TreeTranslator ((Program,Var))
@@ -312,12 +321,13 @@ expToTac (Binary op (ExpFloat i1) (ExpFloat i2)) = do -- Two integer constants
 
 -- Single variable
 expToTac (ExpVar dec s) = case (dir dec) of
-        Label  -> return( commentedIns , (MemAdress s) )
+        Label  ->        return( commentedIns , (MemAdress s  ) )
+        (ThisLab str) -> return( commentedIns , (MemAdress str) )
         (Offset o) -> do 
             tempLocal <- newTemp
             let tl = Temp tempLocal
             itis <- isLval
-            if (not itis) 
+            if itis
             then return ( commentedIns |> (Addi tl Fp (Int_Cons o)) , tl ) -- PELIGROSO
             else return ( commentedIns |> (ReadArray tl Fp (Int_Cons o)) , tl )
     where commentedIns = if debugVar then empty |> (Comment ("Variable " ++ s)) else empty

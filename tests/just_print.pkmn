@@ -1,0 +1,10 @@
+funcball VOIDtorb hitMAINlee():
+    pINTachu n;
+    vamo_a_lee(n);
+
+    vamo_a_imprimi("cosas");
+    vamo_a_imprimi("chanchcas");
+    vamo_a_imprimi("vamo_a_imprimir('cosas')");
+    vamo_a_imprimi("cosas");
+    
+vamo_a_calmano
