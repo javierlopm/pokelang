@@ -118,7 +118,7 @@ forestToTac' a = mapM buildFun  a
           buildFun a@(str,ins,typ) = do  ((str,prg):_) <- forestToTac [dr1 a]
                                          if str == "hitMAINlee" 
                                             then  return (str, (prg |> TacExit))
-                                            else  return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TACCall "Epilogue" 42))
+                                            else  return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TagS (str++"_epilogue"))   |> (TACCall "Epilogue" 42) )
                                          --return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TACCall "Epilogue" 42))
 forestToTac :: [(String,Ins)] -> TreeTranslator ( [(String,Program)] )
 forestToTac [] = return mempty
