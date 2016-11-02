@@ -1,15 +1,15 @@
 funcball VOIDtorb hitMAINlee():
     BOOLbasaur a;
     BOOLbasaur b;
+    BOOLbasaur c;
 
     pINTachu   x;
     pINTachu   y;
     pINTachu   o;
 	pINTachu* z;
 	
-    si (x <100 || x > 200 && x != y ) :
-    	x = 0;
-    vamo_a_calmano
+    a = (x>x) and (x<x);
 
+ 
 
 vamo_a_calmano

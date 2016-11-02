@@ -20,7 +20,7 @@
 |$f0-$f11  | Uso general, expresiones floats|
 |$f13-$f32 | Uso general, expresiones floats|
 
-|Operacion        | 3 reg | 2 registros + constante|
+|Operacion        | 3/2 reg | 2 registros + constante|
 |-----------------|:-----:|:-------------------:|
 | Addi     D S1 S2 | add r1 r2 r3 | (addi r1 r2 #c) o (li r3 #c; add ) |
 | Subi     D S1 S2 | sub r1 r2 r3 | (subi r1 r2 #c) o (li r3 #c; sub ) |
@@ -37,12 +37,12 @@
 | XOr      D S1 S2 | |  |
 
 | Negai    D S1    | (pseudo) Neg r1 r2 | - |
-| Negaf    D S1       | |  |
-| Eql      D S1 S2       | |  |
-| NotEql   D S1 S2       | |  |
-| Not      D S1       | |  |
-| ShiftL   D S1 Word        | |  |
-| ShiftR   D S1 Word        | |  |
+| Negaf    D S1    | |  |
+| Eql      D S1 S2 | - | - |
+| NotEql   D S1 S2 | - | - |
+| Not      D S1    | - | - |
+| ShiftL   D1 S2 C3| - | sll R1, R2, #C3 |
+| ShiftR   D1 S2 C3| |  |
 | Lt      D S1 S2
 | Gt      D S1 S2
 | LEq     D S1 S2  
