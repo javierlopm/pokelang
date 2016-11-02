@@ -20,7 +20,7 @@
 |$f13-$f32 | Uso general, expresiones floats|
 
 |Operacion        | 3/2 reg | 2 registros + constante|
-|-----------------|:-----:|:-------------------:|
+|:-----------------|:-----|:-------------------|
 | Addi     Dx Sy Sz | add rx, ry, rz | li r3 #c <br> addi rx, ry, rz |
 | Subi     Dx Sy Sz | sub rx, ry, rz | li r3 #c <br> sub rx, ry, rz  |
 | Divi     Dx Sy Sz | (pseudo) div rx, ry, rz  | (li r3 #c; div )    |
