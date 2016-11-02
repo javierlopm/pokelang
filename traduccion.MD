@@ -4,37 +4,40 @@
 | Registros| Uso                        |
 |:--------:|----------------------------|
 |$zero     | Reservado                  |
+|$r1       | Reservado                  |
 |$v0-$v1   | Reservado para syscalls    |
 |$a0-$a3   | Reservado para syscalls    |
 |$t0-$t4   | Epilogo y prologo de llamadas|
 |$t5-$t7   | Uso general, expresiones   |
-|$s0-$s7   | Uso general, expresiones   |
+|$s0-$s8   | Uso general, expresiones   |
 |$k0,$k1   | Reservado para OS          |
 |$gp       | Reservado para globales    |
 |$sp       | Reservado para stackpointer|
 |$fp       | Reservado para frame pointer|
 |$ra       | Reservado para globales        |
+|$lo $hi ? | Reservado para multiplicaciones|
 |$f12      | Reservado para print de float  |
 |$f0-$f11  | Uso general, expresiones floats|
 |$f13-$f32 | Uso general, expresiones floats|
 
-|Operacion        | 3 reg | Registros2 + constante|
-|-----------------|-------|---------------------|
+|Operacion        | 3 reg | 2 registros + constante|
+|-----------------|:-----:|:-------------------:|
 | Addi     D S1 S2 | add r1 r2 r3 | (addi r1 r2 #c) o (li r3 #c; add ) |
 | Subi     D S1 S2 | sub r1 r2 r3 | (subi r1 r2 #c) o (li r3 #c; sub ) |
-| Divi     D S1 S2 | (pseudo) div r1 r2 r3  | (li r3 #c; sub )
-| Mod      D S1 S2 |   |
-| Multi    D S1 S2 |   |
-| Pot      D S1 S2 |   |
-| Negai    D S1    | - |
-| Addf     D S1 S2        | |  |
-| Subf     D S1 S2       | |  |
-| Divf     D S1 S2       | |  |
-| Multf    D S1 S2       | |  |
+| Divi     D S1 S2 | (pseudo) div r1 r2 r3  | (li r3 #c; div )    |
+| Mod      D S1 S2 | (div r2 r3);(mv r1 $lo)| (li r3 #c; div; mv) |
+| Multi    D S1 S2 | (pseudo) mulo r1 r2 r3 | (li r3 #c; mulo )   |
+| Pot      D S1 S2 | - | - |
+| Addf     D S1 S2 | add.d r1 r2 r3 | load float |
+| Subf     D S1 S2 | mul.s r1 r2 r3 |  |
+| Divf     D S1 S2 | div.s r1 r2 r3 |  |
+| Multf    D S1 S2 | |  |
+| And      D S1 S2 | |  |
+| Or       D S1 S2 | |  |
+| XOr      D S1 S2 | |  |
+
+| Negai    D S1    | (pseudo) Neg r1 r2 | - |
 | Negaf    D S1       | |  |
-| And      D S1 S2         | |  |
-| Or       D S1 S2       | |  |
-| XOr      D S1 S2       | |  |
 | Eql      D S1 S2       | |  |
 | NotEql   D S1 S2       | |  |
 | Not      D S1       | |  |
