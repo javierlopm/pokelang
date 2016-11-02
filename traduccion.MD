@@ -31,10 +31,9 @@
 | Subf     Dx Sy Sz | sub.s rx, ry, rz | lwcp1 primero |
 | Divf     Dx Sy Sz | div.s rx, ry, rz | lwcp1 primero |
 | Multf    Dx Sy Sz | mul.s rx, ry, rz | lwcp1 primero |
-| And      Dx Sy Sz | |  |
-| Or       Dx Sy Sz | |  |
-| XOr      Dx Sy Sz | |  |
-
+| And      Dx Sy Sz | - | - |
+| Or       Dx Sy Sz | - | - |
+| XOr      Dx Sy Sz | - | - |
 | Negai    Dx Sy    | (pseudo) neg   rx, ry | - |
 | Negaf    Dx Sy    | neg.s rx, ry | - |
 | Eql      Dx Sy Sz | - | - |
@@ -42,19 +41,19 @@
 | Not      Dx Sy    | - | - |
 | ShiftL   Dx Sy Cz | - | sll rx, ry, #cz |
 | ShiftR   Dx Sy Cz | - | sra rx, ry, #cz |
-| Lt      Dx Sy Sz
-| Gt      Dx Sy Sz
-| LEq     Dx Sy Sz  
-| GEq     Dx Sy Sz 
-| Jump     Label
-| Jz       Sx Label
-| Jnotz    Sx Label
-| JLt      Sx Sy Label
-| JGt      Sx Sy Label
-| JLEq     Sx Sy Label
-| JGEq     Sx Sy Label
-| JEq      Sx Sy Label
-| JNEq     Sx Sy Label
+| Lt      Dx Sy Sz  | - | - |
+| Gt      Dx Sy Sz  | - | - |
+| LEq     Dx Sy Sz  | - | - |
+| GEq     Dx Sy Sz  | - | - |
+| Jump     Label    | j Label | - |
+| Jz       Sx Label | beqz rx, Label | - |
+| Jnotz    Sx Label | bnez rx, Label | - |
+| JLt      Sx Sy Label | bltu rx,  ry, Label | - |
+| JGt      Sx Sy Label | bgtu rx,  ry, Label | - |
+| JLEq     Sx Sy Label | bleu rx,  ry, Label | - |
+| JGEq     Sx Sy Label | bgeu rx,  ry, Label | - |
+| JEq      Sx Sy Label | beq rx,  ry, Label  | - |
+| JNEq     Sx Sy Label | bne rx,  ry, Label  | - |
 
 |Operacion          | Memoria/reg    | Reg/Reg       | Mem/Mem|
 |-------------------|:--------------:|:-------------:|:------:|

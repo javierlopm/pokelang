@@ -8,7 +8,7 @@ funcball VOIDtorb hitMAINlee():
     pINTachu   o;
 	pINTachu* z;
 	
-    a = (x>x) and (x<x);
+    a = ! ((x>x) and (x<x));
 
  
 
