@@ -66,20 +66,20 @@
 
 
 
-| TACCall    String  Int | ?
-| Clean   Int            | ?
-| Param   S1             | ?
-| Return  S1 
-| Extras
+| TACCall    String  Int | ? |
+| Clean   Int            | ? |
+| Param   S1             | ? |
+| Return  S1             | ? |
+| Extras                 | ? |
 
-| Comment String | # str
-| Tag     Label  | n_tag:
-| TagS    String | 0_str:
-| TagSC   String String | DUNNO
-| Nop            | nop
-| TacExit        | 
-| Print     S1        | implemtaci'on en crt
-| PrintEnum String S1 | implemtaci'on en crt
+| Comment String | # str  |
+| Tag     Label  | n_tag: |
+| TagS    String | 0_str: |
+| TagSC   String String | DUNNO |
+| Nop            | nop |
+| TacExit        |     | 
+| Print     S1        | implemtaci'on en crt |
+| PrintEnum String S1 | implemtaci'on en crt |
 
 * 1: debe ser eliminado del Tac y tansformado en un ciclo de multiplicaciones o hacer uso del siguiente fragmento
 
