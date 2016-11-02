@@ -1,8 +1,11 @@
-module TacToMips(
-    
-) where
+module TacToMips(module TacToMips) where
+
+import Data.Word
+import Data.Sequence
+import Data.Foldable(foldr)
 
 type Mips = String
+type Register = Word
 {-
 $zero reservado
 -------------------------------------
@@ -25,18 +28,46 @@ $f0-$f11  | uso general, expresiones floats
 $f13-$f32 | uso general, expresiones floats
 -}
 
-builtin :: Mips
-builtin = "\
-0print_str:
-    lw $a0,4($fp)
-    li $v0,4
-    syscall
+crt :: Mips
+crt = "\
+0print_str:       \
+    lw $a0,0($fp) \
+    li $v0,4      \
+    syscall       \
+    jr $ra        \
+0read_int:        \
+    li $v0,5      \
+    syscall       \
+    lw $a0,0($fp) \
+    st $v0,0($a0) \
+    jr $ra        \
+0read_float:      \
+    li $v0,6      \
+    syscall       \
+    lw $a0,0($fp) \
+    st $f0,0($a0) \
+    jr $ra        \
+0read_char:       \
+    lw $a0,0($fp) \
+    li $a1,1      \
+    li $v0,8      \
+    syscall       \
     jr $ra
-
-0read_int:
-    lw $a0,0($fp)
-    li $v0
-    jr $ra
-0read_float:
-0read_char:
 "
+
+compile :: Program -> Program -> Mips
+compile globs program = ".data\n"   ++ translate globs      ++ 
+                        "\n.text\n" ++ translate programcrt ++ 
+                        "\n"        ++ crt
+
+translate :: Program -> Mips
+translate  = undefined
+
+template :: Program -> [Register] -> Mips
+template (Addi     Dest Src1 Src2)  = "addi " 
+template (Subi     Dest Src1 Src2)  = ""
+template (Divi     Dest Src1 Src2)  = ""
+template (Mod      Dest Src1 Src2)  = ""
+template (Multi    Dest Src1 Src2)  = ""
+template (Pot      Dest Src1 Src2)  = ""
+template (Negai    Dest Src1     )  = ""
