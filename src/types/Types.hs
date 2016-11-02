@@ -37,6 +37,7 @@ module Types(
     lengthMatches,
     makeTypeTuple,
     getSize,
+    getSizeTT,
     align,
     isAFunction,
     isEnumCons,
@@ -51,7 +52,7 @@ module Types(
 import Data.List          (intersperse)
 import TableTree          (Scope(..),showScope)
 import qualified Data.Foldable as F (toList,all,foldl)
-import Data.Sequence as S (Seq,(|>),ViewR(..),empty,viewr,zipWith,length,fromList)
+import Data.Sequence as S (Seq,(|>),ViewR(..),empty,null,viewr,zipWith,length,fromList,viewl, ViewL(..))
 import Tokens(Token(TkInt  ,TkBool ,TkChar
                    ,TkVoid ,TkFloat,TkStruct
                    ,TkUnion,TkEnum ,TkNull
@@ -359,6 +360,13 @@ getSize TypeVoid       = error "This type (void) cannot be stored"
 getSize TypeString     = error "Global variable"
 getSize (TypeSatisfies _ ) = error "wtf? really?"
 -- size TypeEmptyArray = 4
+
+getSizeTT :: TypeTuple -> Int
+getSizeTT s = if (S.null s) 
+                 then 0
+                 else getSize( (fst . decons . S.viewl) s ) + getSizeTT ((snd . decons . S.viewl) s) 
+    where decons EmptyL = error "Empty sequence!"
+          decons (l S.:< others) = (l,others)
 
 stripPointer :: Type -> Type
 stripPointer (TypePointer t) = t

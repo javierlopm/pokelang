@@ -487,7 +487,7 @@ expIns' (Binary op a b) (TypeFloat,to) = return (TypeFloat,to,(Binary op' a b))
 expIns' ins (t,to)      = return (TypeError,to,NoExp)
 
 expInsF :: Exp -> ((Type,Token),Bool) -> OurMonad((Type,Token,Exp))
-expInsF (CallVal a b _) (t,boolProc)   = expIns (CallVal a b boolProc) t
+expInsF (CallVal a b s _) (t,boolProc)   = expIns (CallVal a b s boolProc) t
 expInsF a (t,_)                      = expIns a t
 
 
@@ -567,7 +567,7 @@ buildPrint string i t = do
     let dec = StrCons (position string) mem_addr (content string)
     if is_new then onStrScope $ (:) dec
               else return ()
-    let new_ins = Call "print_str" (S.singleton (ExpVar dec (content string))) True
+    let new_ins = Call "print_str" (S.singleton (ExpVar dec (content string))) (length (lexeme string)) True
 
     bleh <- checkOkIns new_ins i t
     return bleh

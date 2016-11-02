@@ -210,9 +210,9 @@ treeToTac (ForStep low high step ins ) = do
 treeToTac (Block iS ) = do 
     progSeq <- M.mapM treeToTac iS
     return $ F.foldl (><) empty progSeq
-treeToTac (Call s args b) = do
-                            (prog,argC) <- argsToProg args b 0 empty 
-                            return $ prog <> singleton (TACCall s argC)
+treeToTac (Call s args size b) = do
+                            prog <- argsToProg args b empty 
+                            return $ prog <> singleton (TACCall s size)
 
 treeToTac (Return v)  = do
     maybe ( return (singleton (ReturnE) ))
@@ -229,22 +229,23 @@ treeToTac (Read e1) = do isL <- isLval
                          return $ var_cal |> (Param var) |> (TACCall "read" 1)
 treeToTac _ = return (singleton Nop)
  
-argsToProg :: (Seq(Exp)) -> Bool -> Int -> Program ->  TreeTranslator((Program,Int))
-argsToProg s b i s0 =  if (S.null s)
+argsToProg :: (Seq(Exp)) -> Bool ->  Program ->  TreeTranslator((Program))
+argsToProg s b s0 =  if (S.null s)
                    then do
-                        return (s0,i)
+                        return s0
                    else do
+                    let firstExp =  (fst . decons . viewl) s
                     if b then
                         do
                           setLval
-                          (argProg,rArg) <- expToTac $ (fst . decons . viewl) s
+                          (argProg,rArg) <- expToTac firstExp
                           setRval
                           let pamToAdd = singleton (Param rArg)
-                          argsToProg ( (snd . decons . viewl) s) b (i+1) $ s0 <> argProg <> pamToAdd
+                          argsToProg ( (snd . decons . viewl) s) b $ s0 <> argProg <> pamToAdd
                     else
                         do
-                          (argProg,rArg) <- expToTac $ (fst . decons . viewl) s
-                          argsToProg ( (snd . decons . viewl) s) b (i+1) $ s0 <> argProg <> singleton (Param rArg) --ACA
+                          (argProg,rArg) <- expToTac firstExp
+                          argsToProg ( (snd . decons . viewl) s) b $ s0 <> argProg <> singleton (Param rArg) --ACA
     where decons EmptyL = error "Empty sequence!"
           decons (l :< others) = (l,others)
           --getParam r True  = singleton (Param r) --Aquí se hace el access if b. ¿Capaz un ParamPointer?
@@ -338,10 +339,10 @@ expToTac (Binary op exp1 exp2)
         (ins2,t2) <- expToTac exp2
         nt <- newTemp
         return ((ins1 <> ins2) |> (insTranslation op (Temp nt) t1 t2) ,Temp nt)
-expToTac (CallVal s args b ) = do
+expToTac (CallVal s args size b ) = do
     tempLocal  <- newTemp
-    (prog,argC) <- argsToProg args b 0 empty 
-    return ((prog <> singleton (CallExp (Temp tempLocal) s argC)),(Temp tempLocal))    
+    prog <- argsToProg args b empty 
+    return ((prog <> singleton (CallExp (Temp tempLocal) s size)),(Temp tempLocal))    
 
 expToTac (Unary op a) = do 
     tempLocal  <- newTemp
