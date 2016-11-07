@@ -23,7 +23,8 @@ data ScopeNZip = ScopeNZip { strTbl    :: [Declare]
                            , scp       :: SymTable
                            , zipp      :: TableZipper
                            , onUnion   :: Bool
-                           , str_count :: Int } 
+                           , str_count :: Int
+                           , isRef     :: Bool } 
                            deriving (Show)
 
 -- Alias for executing RWS monad
@@ -40,11 +41,12 @@ initialState = ScopeNZip []
                          (fromScope emptyScope) 
                          False
                          0
+                         False
 
 -- Make a tuple with the String Scope and a Scope tree with globals and local
 -- scopes fused. Scopeception
 makeTable :: ScopeNZip -> ( [Declare] , Scope Declare , Scope Declare)
-makeTable (ScopeNZip str enu gscp z _ _ ) = ( str , enu , fuse gscp z )
+makeTable (ScopeNZip str enu gscp z _ _ _ ) = ( str , enu , fuse gscp z )
 
 
 -- Aliases for writing to the log
@@ -82,6 +84,13 @@ onScope :: (SymTable -> SymTable) -> OurMonad ()
 onScope fun = do scope <- gets scp
                  state <- get
                  put state { scp = fun scope }
+
+setRef :: OurMonad()
+setRef = do state <- get
+            put state { isRef = True }
+unSetRef :: OurMonad()
+unSetRef = do state <- get
+              put state { isRef = False }
 
 -- Exit the actual scope in the Zipper
 exitScope :: OurMonad ()
@@ -384,27 +393,22 @@ insertParamInScope dcltype   (TkId (l,c) lexeme ) isGlob readonly = do
     state <- get
     if isMember (zipp state) lexeme -- Most recent scope
     then tellError error1
-    else if isGlob 
-         then if isInScope (scp state) lexeme -- global scope enum
-              then tellError error2
-              else do 
-                   tellLog whathappened
-                   onScope  $ insert lexeme (scopevar Label) 0 --Se debe CAMBIAR
-         else do 
-              tellLog whathappened
-              inUnion <- gets onUnion
-              let (newofs,padd) = (align . getOfs . fst) $ zipp state
-              sz <- varSize dcltype
-              --tellError $ "Puse padding de " ++ show (newofs,padd) ++ " en " ++ lexeme
-              if inUnion
-              then (onZip . apply) $ insert0 lexeme (scopevar (Offset 0))              sz 
-              else (onZip . apply) $ insert  lexeme (scopevar (Offset  (newofs)))  (padd+sz)  
+    else do 
+      tellLog whathappened
+      let (newofs,padd) = (align . getOfs . fst) $ zipp state
+      sz <- varSize dcltype
 
-    where error1       = generror ++ " in actual scope."
-          error2       = generror ++ " in global scope."
-          scopevar  d  = (Variable (l,c) dcltype readonly d)
-          generror     = "Error:" ++ show l ++":"++show c ++" redefinition of " ++ lexeme
-          whathappened = "Added " ++ lexeme ++" at "++show l++":"++show c ++ " with type " ++ show dcltype
+      --tellError $ "Puse padding de " ++ show (newofs,padd) ++ " en " ++ lexeme
+      isref <- gets isRef
+
+      if (isRef state)
+      then (onZip . apply) $ insert  lexeme (scopevar (Reference (newofs)))  (padd+4)
+      else (onZip . apply) $ insert  lexeme (scopevar (Offset    (newofs)))  (padd+sz)
+  where error1       = generror ++ " in actual scope."
+        error2       = generror ++ " in global scope."
+        scopevar  d  = (Variable (l,c) dcltype readonly d)
+        generror     = "Error:" ++ show l ++":"++show c ++" redefinition of " ++ lexeme
+        whathappened = "Added " ++ lexeme ++" at "++show l++":"++show c ++ " with type " ++ show dcltype
 
 
 -- Check if datatype is enum and insert as readonly
@@ -534,6 +538,9 @@ checkFunctionCall ident calltup = do
         fst' (a,_,_) = a
         error1 typegot (expected,p,_) = strError (position ident) "Error in the call of" (lexeme ident) ("argument number "++show p++" didn't match with expected " ++ show expected ++ " but " ++ show typegot ++ " found.")
         error2  = strError (position ident) "number of arguments don't match with" (lexeme ident) "declaration."
+
+checkFunctionType :: Type -> OurMonad( )
+checkFunctionType typ = if typ == TypeVoid then setRef else return ()
 
 checkPointer :: Token -> (Type,Token,Exp) -> OurMonad((Type,Token,Exp))
 checkPointer tok tup = if (isError (sel1 tup)) 

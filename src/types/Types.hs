@@ -64,7 +64,8 @@ type Pos = (Int,Int)
 -- Las constantes enumeradas no deberian estar en un scope grande y universal?
 
 data Direction = Label
-               | Offset  {bytes :: Int}
+               | Offset     {bytes :: Int}
+               | Reference  {bytes :: Int}
                | ThisLab String
                deriving(Show)
 

@@ -209,7 +209,7 @@ PrimType : INTDEC           {     makeType $1    }
 -- Global declarations on scope level 0
 Dcls:  {- λ -}                                                 {% return [] }
     | Dcls Reference   ID         ";"                          {% insertDeclareInScope $2 $3 True False >> return $1 } -- Always global, GlobDeclare not needed
-    | Dcls FWD FUNC Reference ID Ent0 "(" Parameters ")" ";"   {% insertForwardFunc (addType $8 $4) $5  >> return $1 }
+    | Dcls FWD FUNC Ent8 ID Ent0 "(" Parameters ")" ";"   {% insertForwardFunc (addType $8 $4) $5  >> return $1 }
     | Dcls ENUMDEC DATAID "{" EnumConsList "}"     {% insertEnum $3 >> insertLEnumCons $5 (lexeme $3)   >> return $1 }
     | Dcls Ent5 "{" FieldsList "}"                 {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4 >> return $1 }
     | Dcls Ent6 "{" FieldsList Ent7 "}"            {% checkRecursiveDec (snd $2) $4 >> insertData $2 $4 >> return $1 }
@@ -299,7 +299,7 @@ SquareList: "[" Exp "]"            { ([sel1 $2],[sel3 $2]) } -- Check it's int a
 
 Ent0 : {- λ -}     {% onZip enterScope }
 Ent1 : {- λ -}     {% exitScope  }
-Ent2 : Reference ID "(" Parameters  ")" {% insertFunction ($4 `addType` $1) $2 False
+Ent2 : Ent8 ID "(" Parameters  ")" {% insertFunction ($4 `addType` $1) $2 False
                                             >> cleanParams
                                                >> return($2,($4 `addType` $1)) } 
 Ent3 : ID          {%  onZip enterScope >>
@@ -316,6 +316,7 @@ Ent6 : UNIONDEC   DATAID {% toggleUnion >>
                                 insertForwardData $1 $2 >> 
                                     return ($1,$2)}
 Ent7 : {- λ -}    {% toggleUnion }
+Ent8: Reference {% checkFunctionType $1 >> return $1}
 
 {
 
