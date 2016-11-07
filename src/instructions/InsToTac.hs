@@ -329,6 +329,16 @@ expToTac (ExpVar dec s) = case (dir dec) of
             if itis
             then return ( commentedIns |> (Addi tl Fp (Int_Cons o)) , tl ) -- PELIGROSO
             else return ( commentedIns |> (ReadArray tl Fp (Int_Cons o)) , tl )
+        (Reference o) -> do 
+            liftIO $ putStrLn "etrandooo"
+            tempLocal  <- newTemp
+            let tl   = Temp tempLocal
+            itis <- isLval
+            if itis
+            then return ( commentedIns |> (ReadArray tl Fp (Int_Cons o)) , tl ) -- PELIGROSO
+            else do tempLocal2 <- newTemp
+                    let tint = Temp tempLocal2
+                    return ( commentedIns |> (ReadArray tint Fp (Int_Cons o)) |>  (ReadPointer tl tint) , tl )
     where commentedIns = if debugVar then empty |> (Comment ("Variable " ++ s)) else empty
 -- Generic unkwon operation
 expToTac (Binary op exp1 exp2)

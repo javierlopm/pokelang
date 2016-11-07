@@ -12,15 +12,9 @@ STRUCTabuzz poketrainer {
     mypkmn               :: STRUCTabuzz pokemon,
     name                 :: CHARmander 
 }
-
+--
 funcball pINTachu fibo(pINTachu n):
     STRUCTabuzz poketrainer ash;
-
-    CHARmander mh;
-    mh = ash.mypkmn.type;
-
-    n *= 4;
-    n *= 4;
 
     si n == 0 || n == 1:
         vamo_a_retorna 1;
@@ -28,9 +22,29 @@ funcball pINTachu fibo(pINTachu n):
         vamo_a_retorna fibo(n-1) + fibo(n-2);
     vamo_a_calmano
 vamo_a_calmano
+--
+
+funcball VOIDtorb fibo_by_ref(pINTachu n,pINTachu salida):
+    pINTachu n1;
+    pINTachu n2;
+    pINTachu naux1;
+    pINTachu naux2;
+
+    naux1 = n-1;
+    naux2 = n-2;
+
+    si n == 0 || n == 1:
+        vamo_a_retorna 1;
+    si_no:
+        fibo_by_ref(naux1,n1)
+        fibo_by_ref(naux2,n2);
+        salida = n1 + n2;
+    vamo_a_calmano
+vamo_a_calmano
 
 --
     Fibonacci iterativo
+--
 --
 funcball pINTachu fibo_iterativo(pINTachu n,pINTachu hola):
     pINTachu n1;
@@ -64,8 +78,9 @@ funcball pINTachu fibo_iterativo(pINTachu n,pINTachu hola):
         vamo_a_retorna n1;
     vamo_a_calmano
 vamo_a_calmano
+--
 
-funcball VOIDtorb hitMAINlee(pINTachu n):
+funcball VOIDtorb hitMAINlee():
     pINTachu n;
     STRUCTabuzz poketrainer ash;
     pINTachu* n3;
@@ -79,7 +94,7 @@ funcball VOIDtorb hitMAINlee(pINTachu n):
     si n == 0 || n == 1:
         vamo_a_retorna 1;
     si_no:
-        vamo_a_retorna fibo(n-1) + fibo(n-2);
+        vamo_a_retorna fibo_by_ref(n-1) + fibo_by_ref(n-2);
     vamo_a_calmano
 
 
