@@ -36,7 +36,7 @@ funcball VOIDtorb fibo_by_ref(pINTachu n,pINTachu salida):
     si n == 0 || n == 1:
         vamo_a_retorna 1;
     si_no:
-        fibo_by_ref(naux1,n1)
+        fibo_by_ref(naux1,n1);
         fibo_by_ref(naux2,n2);
         salida = n1 + n2;
     vamo_a_calmano
@@ -94,7 +94,16 @@ funcball VOIDtorb hitMAINlee():
     si n == 0 || n == 1:
         vamo_a_retorna 1;
     si_no:
-        vamo_a_retorna fibo_by_ref(n-1) + fibo_by_ref(n-2);
+        pINTachu n1;
+        pINTachu aux;
+
+
+        fibo_by_ref(n,aux);
+
+        # vamo_a_imprimi(aux);
+
+        # vamo_a_retorna fibo(n-1)- + fibo(n-2);
+
     vamo_a_calmano
 
 
