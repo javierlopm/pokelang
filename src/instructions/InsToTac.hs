@@ -137,10 +137,11 @@ functionsToTac (str,prg) = return (str,prg)
 
 treeToTac :: Ins -> TreeTranslator (Program)
 treeToTac (Assign e1 e2) = do
-    setLval
-    (tac2,var2) <- expToTac e2
     setRval
+    (tac2,var2) <- expToTac e2
+    setLval
     (tac1,var1) <- expToTac e1
+    setRval
 
     let finaltac = (tac1 <> tac2) <> (singleton (StorePointer var1 var2))
     -- liftIO $ putStrLn $ show finaltac
@@ -237,11 +238,13 @@ argsToProg s b s0 =  if (S.null s)
                     let firstExp =  (fst . decons . viewl) s
                     if b then
                         do
-                          setLval
-                          (argProg,rArg) <- expToTac firstExp
-                          setRval
-                          let pamToAdd = singleton (Param rArg)
-                          argsToProg ( (snd . decons . viewl) s) b $ s0 <> argProg <> pamToAdd
+                        isL <- isLval
+                        let goback = if isL then return () else setRval
+                        setLval
+                        (argProg,rArg) <- expToTac firstExp
+                        goback
+                        let pamToAdd = singleton (Param rArg)
+                        argsToProg ( (snd . decons . viewl) s) b $ s0 <> argProg <> pamToAdd
                     else
                         do
                           (argProg,rArg) <- expToTac firstExp

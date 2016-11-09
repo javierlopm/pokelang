@@ -85,12 +85,12 @@ funcball VOIDtorb hitMAINlee():
     STRUCTabuzz poketrainer ash;
     pINTachu* n3;
     CHARmander mh;
-    mh = ash.mypkmn.type;
+    #mh = ash.mypkmn.type;
     n *= 4;
     n *= 4;
     #ash.mypkmn.type = 'd';
-    *n3 = 4;
-    (*((*(ash.best_friend)).socialSecurityNumber)) = 4 + 2;
+    #*n3 = 4;
+    #(*((*(ash.best_friend)).socialSecurityNumber)) = 4 + 2;
     si n == 0 || n == 1:
         vamo_a_retorna 1;
     si_no:
