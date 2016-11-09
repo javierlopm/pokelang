@@ -71,3 +71,17 @@ template (Mod      Dest Src1 Src2)  = ""
 template (Multi    Dest Src1 Src2)  = ""
 template (Pot      Dest Src1 Src2)  = ""
 template (Negai    Dest Src1     )  = ""
+
+partition :: Program -> Seq((Seq(Program),a)) -- Secuencia de tuplas de programas con sus simbolos
+partition = undefined
+partition (fstIns :> program) = foldl includeInLast (empty |> (singleton (si)) , empty  )
+    where 1stblock = (singleton (singleton fstIns))
+    includeInLast :: IntIns -> (Seq((Seq(Program),a)), , Bool) -- bool indica si se debe cortar despu'es de de un if o goto
+    includeInLast (acc,mustJump) ( fstIns :> program) = if mustJump 
+                                            then (acc, , false)
+    includeInLast (acc,mustJump) (empty) = (acc,mustJump)
+
+extractSymbols :: 
+
+-- despues de un jump, nuevo elemento
+-- despues de tag    , nuevo elemento
