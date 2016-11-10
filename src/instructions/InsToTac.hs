@@ -116,6 +116,7 @@ forestToTac' :: [(String,Ins,TypeTuple)] -> TreeTranslator ( [(String,Program)] 
 forestToTac' a = mapM buildFun  a
     where dr1 (a,b,c) = (a,b)
           buildFun a@(str,ins,typ) = do  ((str,prg):_) <- forestToTac [dr1 a]
+                                         liftIO $ putStrLn $ show [dr1 a]
                                          if str == "hitMAINlee" 
                                             then  return (str, (prg |> TacExit))
                                             else  return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TagS (str++"_epilogue"))   |> (TACCall "Epilogue" 42) )
@@ -126,14 +127,15 @@ forestToTac ((str,insTree):tl)  = do
     -- liftIO $ putStrLn $ show insTree
     headTac       <- treeToTac insTree
     forestTacTail <- forestToTac tl
-    tuple         <- functionsToTac (str,headTac)
+    --tuple         <- functionsToTac (str,headTac)
+    let tuple     = (str,headTac)
     --liftIO $ putStrLn $ "\nAAAAAAAAAAAAAAAA---------------\n" ++ show insTree ++"AAAAAAAAAAAAAAAAAAA---------------\n"
     -- Maybe there'es no need to return, only write to file?
     return ( [tuple] <> forestTacTail)
 
-functionsToTac :: (String,Program) -> TreeTranslator ( (String,Program) )
-functionsToTac ("hitMAINlee",prg) = return ("hitMAINlee",prg)
-functionsToTac (str,prg) = return (str,prg)
+--functionsToTac :: (String,Program) -> TreeTranslator ( (String,Program) )
+--functionsToTac ("hitMAINlee",prg) = return ("hitMAINlee",prg)
+--functionsToTac (str,prg) = return (str,prg)
 
 treeToTac :: Ins -> TreeTranslator (Program)
 treeToTac (Assign e1 e2) = do
