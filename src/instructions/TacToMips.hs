@@ -1,29 +1,29 @@
 module TacToMips(module TacToMips) where
 
-import Prelude hiding(null)
+import Prelude hiding(null,replicate)
 import Data.Word
-import Data.Sequence
+import Data.Sequence hiding(empty)
+import qualified Data.Sequence as S(empty)
+import qualified Data.Vector   as V(empty)
+import qualified Data.Map      as M(empty)
 import Data.Foldable as F(foldl)
-import Data.Foldable(toList)
-import Data.Functor(fmap)
+import Data.Foldable (toList)
+import Data.Functor  (fmap)
+import Data.Vector     hiding(toList,(++),concat,null,empty)
+import Data.Map.Strict hiding(toList,null,empty)
 import Tac
 
-type Mips     = String
-type Register = Word
+
+type Mips       = String
+type Register   = Word
+type Registers  = [Word]
+
 
 fp :: Word
 fp = 31
 sp :: Word
 sp = 30
 
--- data GetReg = GetReg { regDescriptor    :: [Declare]
---                      , enuTbl    :: SymTable
---                      , scp       :: SymTable
---                      , zipp      :: TableZipper
---                      , onUnion   :: Bool
---                      , str_count :: Int
---                      , isRef     :: Bool } 
---                            deriving (Show)
 
 compile :: Program -> Program -> Mips -> Mips
 compile globs program crt = ".data\n"   ++ translate globs      ++ 
@@ -44,10 +44,10 @@ translate  = undefined
 -- template (Negai    Dest Src1     )  = ""
 
 partition :: Program -> Seq(Program)
-partition program = build $ F.foldl includeInLast (empty,empty) program
+partition program = build $ F.foldl includeInLast (S.empty,S.empty) program
     where includeInLast (prg,actualBlock) ins 
-            | isTag     ins = (prg |> (actualBlock |> ins), empty) 
-            | isJump    ins = (prg |> actualBlock,  empty |> ins)
+            | isTag     ins = (prg |> (actualBlock |> ins), S.empty) 
+            | isJump    ins = (prg |> actualBlock,   S.empty |> ins)
             | otherwise     = (prg, actualBlock |> ins)
           build (blocks,ablock)
             | null ablock  = blocks |> ablock
@@ -63,3 +63,14 @@ partition program = build $ F.foldl includeInLast (empty,empty) program
 
 showPartitions :: Seq(Program) -> String
 showPartitions prg = concat $ toList $ fmap (\ p -> (showP p)++ "\n----------\n") prg
+
+
+{- Inicio de getReg -}
+
+data GetReg = GetReg { regDescriptor :: Vector [Var]
+                     , varDescriptor :: Map Var ([Var],[Register]) } 
+                     deriving (Show)
+
+
+initDescriptor :: GetReg
+initDescriptor = GetReg V.empty M.empty
