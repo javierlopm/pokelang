@@ -5,6 +5,8 @@ grammar: Grammar.hs
 
 alldirs = -ilexer -itokens -iparser -isymtable -itypes -imonads -ierrors -iinstructions
 
+opts    = -O3 
+
 Tokens.o: 
 	ghc  tokens/Tokens.hs
 

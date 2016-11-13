@@ -338,9 +338,9 @@ expToTac (ExpVar dec s) = case (dir dec) of
             let tl   = Temp tempLocal
             itis <- isLval
             if itis
-            then liftIO(putStrLn "ES LVAL") >> return ( commentedIns |> (ReadArray tl Fp (Int_Cons o)) , tl ) -- PELIGROSO
+            then return ( commentedIns |> (ReadArray tl Fp (Int_Cons o)) , tl ) -- PELIGROSO
             else do tempLocal2 <- newTemp
-                    liftIO(putStrLn "ES RVAL al ver")
+                    -- liftIO(putStrLn "ES RVAL al ver")
                     let tint = Temp tempLocal2
                     return ( commentedIns |> (ReadArray tint Fp (Int_Cons o)) |>  (ReadPointer tl tint) , tl )
     where commentedIns = if debugVar then empty |> (Comment ("Variable " ++ s)) else empty

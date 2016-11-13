@@ -8,6 +8,8 @@ module Tac(
     loadProgram,
     jumpTrueFalse,
     isCons,
+    isTag,
+    isJump,
     getCons
 ) where 
 
@@ -287,8 +289,25 @@ showTAC  d s1 op s2 = show d ++" := "++ show s1 ++" "++ op ++ " " ++ show s2
 showTACi d s1 op i  = show d ++ " := " ++ show s1 ++ " " ++ op ++ " #" ++ show i
 show2AC  d s1 op    = show d ++ " := "  ++ op ++" " ++  show s1
 showIf r0 r1 s labl = "if " ++ show r0 ++ " " ++ s ++ " " ++ show r1 ++ " goto tag_" ++ show labl
--- show (Just i) = "tag_" ++ show i
--- show Nothing  = "___"
+
+
+isJump :: IntIns -> Bool
+isJump (Jump    _ ) = True
+isJump (Jz    _ _ ) = True
+isJump (Jnotz _ _ ) = True
+isJump (JLt  _ _ _) = True
+isJump (JGt  _ _ _) = True
+isJump (JLEq _ _ _) = True
+isJump (JGEq _ _ _) = True
+isJump (JEq  _ _ _) = True
+isJump (JNEq _ _ _) = True
+isJump _            = False
+
+isTag  :: IntIns -> Bool
+isTag (Tag     _)   = True
+isTag (TagS    _)   = True
+isTag (TagSC   _ _) = True
+isTag _             = False
 
 -- Monad auxiliaries for put functions
 build2get :: (Binary a1, Binary a2) => (a1 -> a2 -> r) -> Get r
@@ -301,9 +320,9 @@ buildTac constructor = liftM3 constructor B.get B.get B.get
 pComment :: Int -> String
 pComment l = "Found at line" ++ show l
 
-isTag :: IntIns -> Bool
-isTag (Tag a) = True
-isTag _       = False
+-- isTag :: IntIns -> Bool
+-- isTag (Tag a) = True
+-- isTag _       = False
 
 isCons :: Var -> Bool
 isCons (Int_Cons   a) = True
@@ -327,19 +346,6 @@ jumpTrueFalse :: Word       -- true label
 jumpTrueFalse tl fl fil t True  = empty |> (Tag tl) |> (Mv (Temp t) (Int_Cons 1)) |> (Jump fil) |> (Tag fl) |> (Mv (Temp t) (Int_Cons 0)) |> (Tag fil)
 jumpTrueFalse tl fl fil t False = empty |> (Tag fl) |> (Mv (Temp t) (Int_Cons 0)) |> (Jump fil) |> (Tag tl) |> (Mv (Temp t) (Int_Cons 1)) |> (Tag fil)
 
--- patchI :: IntIns -> Word -> IntIns
--- patchI (Jump   Nothing)       i = (Jump   (Just i))
--- patchI (Tag    Nothing)       i = (Tag    (Just i))
--- patchI (Jz     r0 Nothing)    i = (Jz    r0 (Just i))
--- patchI (Jnotz  r0 Nothing)    i = (Jnotz r0 (Just i))
--- patchI (JLt    r0 r1 Nothing) i = (JLt   r0 r1 (Just i))
--- patchI (JGt    r0 r1 Nothing) i = (JGt   r0 r1 (Just i))
--- patchI (JLEq   r0 r1 Nothing) i = (JLEq  r0 r1 (Just i))
--- patchI (JGEq   r0 r1 Nothing) i = (JGEq  r0 r1 (Just i))
--- patchI a _ = a
-
--- backPatch :: Program -> Word -> Program
--- backPatch p lb = fmap (\ ins -> patchI ins lb ) p 
 
 cu = Int_Cons 42
 pic = Float_Cons 3.14
