@@ -2,7 +2,7 @@ module TacToMips(module TacToMips) where
 
 import Prelude hiding(null,replicate)
 import Data.Word
-import Data.Sequence hiding(empty)
+import Data.Sequence hiding(empty,replicate)
 import qualified Data.Sequence as S(empty)
 import qualified Data.Vector   as V(empty)
 import qualified Data.Map      as M(empty)
@@ -12,6 +12,7 @@ import Data.Functor  (fmap)
 import Data.Vector     hiding(toList,(++),concat,null,empty)
 import Data.Map.Strict hiding(toList,null,empty)
 import Tac
+import Control.Monad.State
 
 
 type Mips       = String
@@ -71,6 +72,14 @@ data GetReg = GetReg { regDescriptor :: Vector [Var]
                      , varDescriptor :: Map Var ([Var],[Register]) } 
                      deriving (Show)
 
+newRegisters :: Vector [Var]
+newRegisters = replicate 32 []
 
 initDescriptor :: GetReg
-initDescriptor = GetReg V.empty M.empty
+initDescriptor = GetReg newRegisters M.empty
+
+type MipsGenerator = StateT GetReg IO
+
+cleanDescriptor :: MipsGenerator ()
+cleanDescriptor = put $ GetReg newRegisters M.empty
+
