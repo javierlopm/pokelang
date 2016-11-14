@@ -55,20 +55,6 @@ build3Mips m r1 r2 r3 = m~~" $"~~(stt r1)~~",$"~~(stt r2)~~",$"~~(stt r3)~~"\n"
 buildiMips :: Mips -> Register -> Register -> Int -> Mips
 buildiMips m r1 r2 c = m~~" $"~~(stt r1)~~",$"~~(stt r2)~~", "~~(stt c)~~"\n"
 
-template :: IntIns -> [Register] -> Mips
-template (Addi _ _ (Int_Cons c)) [r1,r2] = buildiMips "addi" r1 r2 c
-template (Subi _ _ (Int_Cons c)) [r1,r2] = buildiMips "addi" r1 r2 (-c)
-template (Addi _ (Int_Cons c) _) [r1,r2] = buildiMips "addi" r1 r2 c
-template (Subi _ (Int_Cons c) _) [r1,r2] = buildiMips "addi" r1 r2 (-c)
-template (Subi _ _ _) [r1,r2,r3]  = build3Mips "sub" r1 r2 r3
-template (Addi _ _ _) [r1,r2,r3]  = build3Mips "add" r1 r2 r3
--- template (Divi     Dest Src1 Src2)  = ""
--- template (Mod      Dest Src1 Src2)  = ""
--- template (Multi    Dest Src1 Src2)  = ""
--- template (Pot      Dest Src1 Src2)  = ""
--- template (Negai    Dest Src1     )  = ""
-template _ _  = ""
-
 partition :: Program -> Seq(Program)
 partition program = build $ F.foldl includeInLast (S.empty,S.empty) program
     where includeInLast (prg,actualBlock) ins 
@@ -161,11 +147,51 @@ compile ps = mapM_ (\ b -> processBlock b >> clearDescriptor) ps
 processBlock :: Program -> MipsGenerator ()
 processBlock p = mapM_ processIns p
 
+template :: IntIns -> MipsGenerator ()
+template (Addi r1 r2 (Int_Cons c))  = do getReg [r1,r2]  >> buildiMips "addi" r1 r2 c
+template (Subi _ _ (Int_Cons c))    = buildiMips "addi" r1 r2 (-c)
+template (Addi _ (Int_Cons c) _)    = buildiMips "addi" r1 r2 c
+template (Subi _ (Int_Cons c) _)    = buildiMips "addi" r1 r2 (-c)
+template (Subi _ _ _)               = build3Mips "sub" r1 r2 r3
+template (Addi _ _ _)               = build3Mips "add" r1 r2 r3
+
+template ins = 
+    case ins of 
+      (Addi r1 r2 (Int_Cons c))  -> 
+      (Subi r1 r2 (Int_Cons c))  -> 
+      (Addi r1 (Int_Cons c) _)   -> 
+      (Subi r1 (Int_Cons c) _)   -> 
+      (Subi r1 r2 r3)            -> 
+      (Addi r1 r2 r3)            -> 
+-- template (Divi     Dest Src1 Src2)  = ""
+-- template (Mod      Dest Src1 Src2)  = ""
+-- template (Multi    Dest Src1 Src2)  = ""
+-- template (Pot      Dest Src1 Src2)  = ""
+-- template (Negai    Dest Src1     )  = ""
+template _ _  = ""
+
+
 processIns :: IntIns -> MipsGenerator ()
-processIns ins = emit (template ins [0,5,13]) 
+processIns ins = do
+
+  emit (template ins [0,5,13]) 
 -- ver cuantos registros necesita la instruccion (regNeeded)
 -- buscar los registros a usar
 -- actualizar descriptores
+
+-- processIns i@(Comment s)       = emit (template ins)
+-- processIns i@(Tag     Label)   = emit (template ins)
+-- processIns i@(TagS    String)  
+-- processIns i@(TagSC   String String)
+-- processIns i@(Jump     Label)
+-- processIns i@(Jz       Src1 Label)
+-- processIns i@(Jnotz    Src1 Label)
+-- processIns i@(JLt      Src1 Src2 Label)
+-- processIns i@(JGt      Src1 Src2 Label)
+-- processIns i@(JLEq     Src1 Src2 Label)
+-- processIns i@(JGEq     Src1 Src2 Label)
+-- processIns i@(JEq      Src1 Src2 Label)
+-- processIns i@(JNEq     Src1 Src2 Label)
 
 runCompiler =  runStateT
 
