@@ -9,7 +9,7 @@
 |$a0-$a3   | Reservado para syscalls    |
 |$t0-$t4   | Epilogo y prologo de llamadas|
 |$t5-$t7   | Uso general, expresiones   |
-|$s0-$s8   | Uso general, expresiones   |
+|$s0-$s7   | Uso general, expresiones   |
 |$k0,$k1   | Reservado para OS          |
 |$gp       | Reservado para globales    |
 |$sp       | Reservado para stackpointer|
