@@ -2,6 +2,7 @@ module Main where
 import System.Environment
 import System.Exit(exitFailure)
 import System.IO(hPutStrLn,stderr)  
+import qualified Data.Text.IO as T
 import Tokens
 import Grammar
 import ErrorHandle
@@ -14,7 +15,8 @@ import Data.Foldable(toList)
 import InsToTac
 import Instructions
 import Tac(showP)
-import TacToMips(partition,showPartitions)
+import TacToMips
+import qualified Data.Sequence as S
 
 
 myF :: String -> String -> (String,String)
@@ -81,7 +83,11 @@ main = do
                               programs <- evalTree (forestToTac' ast) initTranslator
                               let full_prog = (("",translateStrings strs):programs)
                               putStrLn $ foldl (\ b (string,p) -> b ++ "\n\n" ++ ((showPartitions . partition) p) ) "" full_prog
+
+                              let prog_blocks = (map partition) (map snd full_prog)
+                              program <- runCompiler (mapM compile prog_blocks) initDescriptor
                               crt <- readFile "crt.asm"
+                              mapM  T.putStrLn (fst program)
                               return ()
                 otherwise -> print $ "Unrecognized argument" ++ runargs
       else do mapM_ print errors

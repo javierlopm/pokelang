@@ -162,7 +162,13 @@ processBlock :: Program -> MipsGenerator ()
 processBlock p = mapM_ processIns p
 
 processIns :: IntIns -> MipsGenerator ()
-processIns ins = emit (template ins [0,5,13]) -- ver cuantos registros necesita la instruccion
+processIns ins = emit (template ins [0,5,13]) 
+-- ver cuantos registros necesita la instruccion (regNeeded)
+-- buscar los registros a usar
+-- actualizar descriptores
+
+runCompiler =  runStateT
+
 -- loads, stores, array, separados
 
 -- findRegister var v = maybe (maybe (error "no hay spills") id (findEmpty v))
