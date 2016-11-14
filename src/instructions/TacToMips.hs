@@ -50,10 +50,10 @@ stt :: Show a => a -> Mips
 stt = T.pack . show
 
 build3Mips :: Mips -> Register -> Register -> Register -> Mips
-build3Mips m r1 r2 r3 = m~~"$"~~(stt r1)~~", $"~~(stt r2)~~", $"~~(stt r3)~~"\n"
+build3Mips m r1 r2 r3 = m~~" $"~~(stt r1)~~",$"~~(stt r2)~~",$"~~(stt r3)~~"\n"
 
 buildiMips :: Mips -> Register -> Register -> Int -> Mips
-buildiMips m r1 r2 c = m~~"$"~~(stt r1)~~", $"~~(stt r2)~~", "~~(stt c)~~"\n"
+buildiMips m r1 r2 c = m~~" $"~~(stt r1)~~",$"~~(stt r2)~~", "~~(stt c)~~"\n"
 
 template :: IntIns -> [Register] -> Mips
 template (Addi _ _ (Int_Cons c)) [r1,r2] = buildiMips "addi" r1 r2 c

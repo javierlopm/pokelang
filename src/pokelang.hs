@@ -82,12 +82,12 @@ main = do
                 "-c"    -> do (ast,strs) <- getIns' goods False
                               programs <- evalTree (forestToTac' ast) initTranslator
                               let full_prog = (("",translateStrings strs):programs)
-                              putStrLn $ foldl (\ b (string,p) -> b ++ "\n\n" ++ ((showPartitions . partition) p) ) "" full_prog
-
                               let prog_blocks = (map partition) (map snd full_prog)
                               program <- runCompiler (mapM compile prog_blocks) initDescriptor
-                              crt <- readFile "crt.asm"
+                              crt     <- readFile "crt.asm"
+                              putStrLn ".text\n"
                               mapM  T.putStrLn (fst program)
+                              putStrLn crt
                               return ()
                 otherwise -> print $ "Unrecognized argument" ++ runargs
       else do mapM_ print errors
