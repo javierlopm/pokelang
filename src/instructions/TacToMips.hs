@@ -103,6 +103,7 @@ addOffset :: Int -> Maybe Int
 addOffset a = Just (a+lowreg)
 
 findVar :: Var -> Vector [Var] -> Maybe(Register)
+findVar Fp  _ = Just fp
 findVar var v = (findIndex (any (var==)) v) >>= addOffset 
 
 findEmpty :: Vector [Var] -> Maybe(Register)
@@ -128,6 +129,11 @@ killVar _ = undefined
 copyDescriptor :: Var -> Var -> MipsGenerator()
 copyDescriptor = undefined
 
+clearDescriptor :: MipsGenerator()
+clearDescriptor = do 
+    state     <- get 
+    put state { regDescriptor = V.empty, varDescriptor = M.empty }
+
 updateRegDescriptors :: Int -> ([Var] -> [Var]) -> MipsGenerator()
 updateRegDescriptors reg func = do 
     registers <- gets regDescriptor
@@ -148,10 +154,16 @@ getReg (lval:rval:[])      = undefined
 getReg (lval:exp1:exp2:[]) = undefined
 
 compile :: Seq(Program) -> MipsGenerator(Mips)
-compile p = mapM_ processBlock p >> gets assembly >>= return
+compile ps = mapM_ (\ b -> processBlock b >> clearDescriptor) ps 
+                >> gets assembly 
+                    >>= return
 
 processBlock :: Program -> MipsGenerator ()
-processBlock = undefined
+processBlock p = mapM_ processIns p
+
+processIns :: IntIns -> MipsGenerator ()
+processIns ins = emit (template ins [0,5,13]) -- ver cuantos registros necesita la instruccion
+-- loads, stores, array, separados
 
 -- findRegister var v = maybe (maybe (error "no hay spills") id (findEmpty v))
 --                            id

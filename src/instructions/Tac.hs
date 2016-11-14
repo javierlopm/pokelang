@@ -10,7 +10,8 @@ module Tac(
     isCons,
     isTag,
     isJump,
-    getCons
+    getCons,
+    regNeeded
 ) where 
 
 import Prelude hiding(foldr)
@@ -55,6 +56,13 @@ instance Binary Var where
                 2 ->  B.get >>= return . MemAdress      
                 3 ->  B.get >>= return . Temp 
                 4 ->  return Fp
+
+regNeeded :: Var -> Int
+regNeeded (Int_Cons   _) = 0
+regNeeded (Float_Cons _) = 0
+regNeeded (MemAdress  _) = 1
+regNeeded (Temp       _) = 1
+regNeeded Fp             = 0
 
 type Src1  = Var 
 type Src2  = Var
