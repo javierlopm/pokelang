@@ -1,8 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module TacToMips(module TacToMips) where
 
-import Prelude hiding(replicate)
-import Control.Monad.State
+import Prelude hiding(replicate,mapM_)
 import Data.Word
 import Tac
 import qualified Data.Text     as T
@@ -10,11 +9,12 @@ import qualified Data.Sequence as S(empty,null)
 import qualified Data.Vector   as V(empty,null)
 import qualified Data.Map      as M(empty)
 import Data.Foldable as F(foldl)
-import Data.Foldable (toList)
+import Data.Foldable (toList,mapM_)
 import Data.Functor  (fmap)
-import Data.Sequence   hiding(replicate,null,empty)
-import Data.Vector     hiding(toList,(++),concat,null,empty,any)
-import Data.Map.Strict hiding(toList,null,empty,findIndex,(!))
+import Control.Monad.State hiding(mapM_)
+import Data.Sequence       hiding(replicate,null,empty)
+import Data.Vector         hiding(toList,(++),concat,null,empty,any,mapM_)
+import Data.Map.Strict     hiding(toList,null,empty,findIndex,(!))
 
 
 type Mips       = T.Text
@@ -30,11 +30,11 @@ sp :: Register
 sp = 30
 
 
-compile :: Program -> Program -> Mips -> Mips
-compile globs program crt = T.concat [".data\n"
-                                     ,translate globs
-                                     ,"\n.text\n"
-                                     ,crt]
+-- compile :: Program -> Program -> Mips -> Mips
+-- compile globs program crt = T.concat [".data\n"
+--                                      ,translate globs
+--                                      ,"\n.text\n"
+--                                      ,crt]
                     {-++ translate programcrt ++
                         "\n"        ++ crt-}
             -- crt
@@ -67,6 +67,7 @@ template (Addi _ _ _) [r1,r2,r3]  = build3Mips "add" r1 r2 r3
 -- template (Multi    Dest Src1 Src2)  = ""
 -- template (Pot      Dest Src1 Src2)  = ""
 -- template (Negai    Dest Src1     )  = ""
+template _ _  = ""
 
 partition :: Program -> Seq(Program)
 partition program = build $ F.foldl includeInLast (S.empty,S.empty) program
@@ -146,4 +147,12 @@ getReg :: [Var] -> MipsGenerator([Registers])
 getReg (lval:rval:[])      = undefined
 getReg (lval:exp1:exp2:[]) = undefined
 
--- translate :: Seq(Program) -> MipsGenerator(Mips)
+compile :: Seq(Program) -> MipsGenerator(Mips)
+compile p = mapM_ processBlock p >> gets assembly >>= return
+
+processBlock :: Program -> MipsGenerator ()
+processBlock = undefined
+
+-- findRegister var v = maybe (maybe (error "no hay spills") id (findEmpty v))
+--                            id
+--                            (findVar var v)
