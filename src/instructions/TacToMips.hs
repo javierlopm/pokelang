@@ -15,7 +15,7 @@ import Control.Monad.State hiding(mapM_)
 import Data.Sequence       hiding(replicate,null,empty)
 import Data.Vector         hiding(toList,(++),concat,null,empty,any,mapM_)
 import Data.Map.Strict     hiding(toList,null,empty,findIndex,(!))
-
+import System.Random
 
 type Mips       = T.Text
 type Register   = Int
@@ -23,6 +23,9 @@ type Registers  = [Int]
 
 lowreg  = 8
 highreg = 23
+
+-- numRegs = highreg - lowreg + 1
+numRegs = 16
 
 fp :: Register
 fp = 31
@@ -50,10 +53,10 @@ stt :: Show a => a -> Mips
 stt = T.pack . show
 
 build3Mips :: Mips -> Register -> Register -> Register -> Mips
-build3Mips m r1 r2 r3 = m~~" $"~~(stt r1)~~",$"~~(stt r2)~~",$"~~(stt r3)~~"\n"
+build3Mips m r1 r2 r3 = "    "~~m~~" $"~~(stt r1)~~",$"~~(stt r2)~~",$"~~(stt r3)~~"\n"
 
 buildiMips :: Mips -> Register -> Register -> Int -> Mips
-buildiMips m r1 r2 c = m~~" $"~~(stt r1)~~",$"~~(stt r2)~~", "~~(stt c)~~"\n"
+buildiMips m r1 r2 c = "    "~~m~~" $"~~(stt r1)~~",$"~~(stt r2)~~", "~~(stt c)~~"\n"
 
 partition :: Program -> Seq(Program)
 partition program = build $ F.foldl includeInLast (S.empty,S.empty) program
@@ -84,6 +87,8 @@ data Descriptor = Descriptor { regDescriptor  :: Vector [Var]
                              , assembly       :: Mips } 
                      deriving (Show)
 
+load :: Var -> Register -> Mips
+load _ _ = ""
 
 addOffset :: Int -> Maybe Int
 addOffset a = Just (a+lowreg)
@@ -95,25 +100,53 @@ findVar var v = (findIndex (any (var==)) v) >>= addOffset
 findEmpty :: Vector [Var] -> Maybe(Register)
 findEmpty v = (findIndex null v) >>= addOffset
 
-findRegister :: Var -> Vector [Var] -> Register
-findRegister var v = maybe (maybe (error "no hay spills") id (findEmpty v))
-                           id
-                           (findVar var v)
+
+findRegister :: Var -- Variable to store in a register
+                  -> Maybe Register -- Register that cannot be used for spill
+                   -> MipsGenerator(Register)
+findRegister var canRemove = do 
+    regs <- gets regDescriptor
+    maybe (searchEmpty regs) return (findVar var regs)
+  where searchEmpty r    = maybe doSpill loadNReturn (findEmpty r)
+        loadNReturn reg  = do emit (load var reg)
+                              updateRegDescriptors reg (const [var])
+                              -- updateVarDescriptors reg (const [var])
+                              return reg
+        doSpill   = maybe getAnyReg getAnyButThis canRemove
+        getAnyReg = do regFound <- randomRIO (0,numRegs) -- Se queda pegado si ninguno de los 16 registros
+                       hbu      <- hasBackUp regFound    -- Vive en sus posiciones de memoria
+                       if hbu then (loadNReturn regFound) else getAnyReg
+        getAnyButThis reg = do regFound <- randomRIO (0,numRegs)
+                               hbu      <- hasBackUp regFound
+                               if hbu && (regFound /= reg) 
+                                    then loadNReturn regFound
+                                    else getAnyButThis reg
 
 
 newRegisters :: Vector [Var]
-newRegisters = replicate 16 [] -- 23-8+1
+newRegisters = replicate numRegs [] -- 23-8+1
 
 initDescriptor :: Descriptor
 initDescriptor = Descriptor newRegisters M.empty T.empty
 
 type MipsGenerator = StateT Descriptor IO
 
+-- Remove defitions 
 killVar :: Var -> MipsGenerator()
 killVar _ = undefined
 
+
+-- Copy descript
 copyDescriptor :: Var -> Var -> MipsGenerator()
 copyDescriptor = undefined
+
+-- Check in var descriptor if v doesn't live only in a register
+livesInMem :: Var -> MipsGenerator(Bool)
+livesInMem = undefined
+
+-- Check if all vars in that register lives in memory
+hasBackUp :: Register -> MipsGenerator(Bool)
+hasBackUp = undefined
 
 clearDescriptor :: MipsGenerator()
 clearDescriptor = do 
@@ -148,27 +181,28 @@ processBlock :: Program -> MipsGenerator ()
 processBlock p = mapM_ processIns p
 
 template :: IntIns -> MipsGenerator ()
-template (Addi r1 r2 (Int_Cons c))  = do getReg [r1,r2]  >> buildiMips "addi" r1 r2 c
-template (Subi _ _ (Int_Cons c))    = buildiMips "addi" r1 r2 (-c)
-template (Addi _ (Int_Cons c) _)    = buildiMips "addi" r1 r2 c
-template (Subi _ (Int_Cons c) _)    = buildiMips "addi" r1 r2 (-c)
-template (Subi _ _ _)               = build3Mips "sub" r1 r2 r3
-template (Addi _ _ _)               = build3Mips "add" r1 r2 r3
-
 template ins = 
     case ins of 
-      (Addi r1 r2 (Int_Cons c))  -> 
-      (Subi r1 r2 (Int_Cons c))  -> 
-      (Addi r1 (Int_Cons c) _)   -> 
-      (Subi r1 (Int_Cons c) _)   -> 
-      (Subi r1 r2 r3)            -> 
-      (Addi r1 r2 r3)            -> 
--- template (Divi     Dest Src1 Src2)  = ""
--- template (Mod      Dest Src1 Src2)  = ""
--- template (Multi    Dest Src1 Src2)  = ""
--- template (Pot      Dest Src1 Src2)  = ""
--- template (Negai    Dest Src1     )  = ""
-template _ _  = ""
+      (Addi r1 r2 (Int_Cons c))  -> get1reg "addi" r1 r2 c
+      (Subi r1 r2 (Int_Cons c))  -> get1reg "addi" r1 r2 (-c)
+      (Addi r1 (Int_Cons c)r2)   -> get1reg "addi" r1 r2 c
+      (Subi r1 (Int_Cons c)r2)   -> get1reg "addi" r1 r2 (-c)
+      (Subi r1 r2 r3)            -> get2regs "sub" r1 r2 r3
+      (Addi r1 r2 r3)            -> get2regs "add" r1 r2 r3
+      (Comment str)              -> emit $ "#" ~~ (T.pack str) ~~ "\n"
+      (Tag     lb)               -> emit $ (stt     lb) ~~ ":\n"
+      (TagS   str)               -> emit $ (T.pack str) ~~ ":\n"
+      Nop                        -> emit "#nop"
+      otherwise                  -> return ()
+      -- (TagSC) tag para strings, usado en data, no aqui
+   where get2regs str d r1 r2 = do 
+            fstReg <- findRegister r1 Nothing 
+            sndReg <- findRegister r2 (Just fstReg)
+            build3Mips str fstReg fstReg sndReg -- CAMBIAR, DESTINO DE CALCULO MAL COLCADO
+            -- kill and update def de r1 con d
+         get1reg str d r1 cons = do 
+            fstReg <- findRegister r1 Nothing
+            buildiMips str r1 r2 cons
 
 
 processIns :: IntIns -> MipsGenerator ()
