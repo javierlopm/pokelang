@@ -113,10 +113,11 @@ findRegister var canRemove = do
                               -- updateVarDescriptors reg (const [var])
                               return reg
         doSpill   = maybe getAnyReg getAnyButThis canRemove
-        getAnyReg = do regFound <- randomRIO (0,numRegs) -- Se queda pegado si ninguno de los 16 registros
+        getAnyReg :: MipsGenerator(Register)
+        getAnyReg = do regFound <- liftIO $ randomRIO (0,numRegs) -- Se queda pegado si ninguno de los 16 registros
                        hbu      <- hasBackUp regFound    -- Vive en sus posiciones de memoria
                        if hbu then (loadNReturn regFound) else getAnyReg
-        getAnyButThis reg = do regFound <- randomRIO (0,numRegs)
+        getAnyButThis reg = do regFound <- liftIO $ randomRIO (0,numRegs)
                                hbu      <- hasBackUp regFound
                                if hbu && (regFound /= reg) 
                                     then loadNReturn regFound
@@ -180,8 +181,8 @@ compile ps = mapM_ (\ b -> processBlock b >> clearDescriptor) ps
 processBlock :: Program -> MipsGenerator ()
 processBlock p = mapM_ processIns p
 
-template :: IntIns -> MipsGenerator ()
-template ins = 
+processIns :: IntIns -> MipsGenerator ()
+processIns ins = 
     case ins of 
       (Addi r1 r2 (Int_Cons c))  -> get1reg "addi" r1 r2 c
       (Subi r1 r2 (Int_Cons c))  -> get1reg "addi" r1 r2 (-c)
@@ -189,26 +190,26 @@ template ins =
       (Subi r1 (Int_Cons c)r2)   -> get1reg "addi" r1 r2 (-c)
       (Subi r1 r2 r3)            -> get2regs "sub" r1 r2 r3
       (Addi r1 r2 r3)            -> get2regs "add" r1 r2 r3
-      (Comment str)              -> emit $ "#" ~~ (T.pack str) ~~ "\n"
+      (Comment str)              -> emit $ "# " ~~ (T.pack str) ~~ "\n"
       (Tag     lb)               -> emit $ (stt     lb) ~~ ":\n"
       (TagS   str)               -> emit $ (T.pack str) ~~ ":\n"
-      Nop                        -> emit "#nop"
+      Nop                        -> emit "# nop"
       otherwise                  -> return ()
       -- (TagSC) tag para strings, usado en data, no aqui
    where get2regs str d r1 r2 = do 
             fstReg <- findRegister r1 Nothing 
             sndReg <- findRegister r2 (Just fstReg)
-            build3Mips str fstReg fstReg sndReg -- CAMBIAR, DESTINO DE CALCULO MAL COLCADO
+            emit $ build3Mips str 42 fstReg sndReg -- CAMBIAR, DESTINO DE CALCULO MAL COLCADO
             -- kill and update def de r1 con d
          get1reg str d r1 cons = do 
             fstReg <- findRegister r1 Nothing
-            buildiMips str r1 r2 cons
+            emit $ buildiMips str 42 fstReg cons
 
 
-processIns :: IntIns -> MipsGenerator ()
-processIns ins = do
+-- processIns :: IntIns -> MipsGenerator ()
+-- processIns ins = do
 
-  emit (template ins [0,5,13]) 
+  -- emit (template ins [0,5,13]) 
 -- ver cuantos registros necesita la instruccion (regNeeded)
 -- buscar los registros a usar
 -- actualizar descriptores
