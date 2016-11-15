@@ -40,22 +40,25 @@ execParser printLex tokens = do
 dr1 :: (a,b,c) -> (a,b)
 dr1 (a,b,c) = (a,b)
 
-getIns :: [Token] -> Bool -> IO ([(String,Ins)])
+dr1' :: (a,b,c,d) -> (a,b,d)
+dr1' (a,b,c,d) = (a,b,d)
+
+getIns :: [Token] -> Bool -> IO ([(String,Ins,Int)])
 getIns tokens pr = do
   let (ast,state,strlog) = run (parser tokens) "" initialState
   let (logs,errors,errorcount) = checkParseError strlog
   if errorcount == 0
-    then do if pr then putStrLn $ printAsts (map dr1 ast) else return ()
-            return $ map dr1 ast
+    then do if pr then putStrLn $ printAsts (map dr1' ast) else return ()
+            return $ map dr1' ast
     else printErrors errorcount id errors >> exitFailure >> return []
   
-getIns' :: [Token] -> Bool -> IO (([(String,Ins,TypeTuple)],[Declare]))
+getIns' :: [Token] -> Bool -> IO (([(String,Ins,TypeTuple,Int)],[Declare]))
 getIns' tokens pr = do
   let (ast,state,strlog) = run (parser tokens) "" initialState
   let (logs,errors,errorcount) = checkParseError strlog
 
   if errorcount == 0
-    then do if pr then putStrLn $ printAsts (map dr1 ast) else return ()
+    then do if pr then putStrLn $ printAsts (map dr1' ast) else return ()
             return (ast,strTbl state)
     else printErrors errorcount id errors >> exitFailure >> return ([],[])
 

@@ -74,9 +74,9 @@ showIndented n  (Block ins) = ( concat . (intersperse ",\n") . (map (showIndente
 showIndented n  Error    = "\nError"
 showIndented n  _ = "DefaultIns"
 
-printAsts :: [(String,Ins)] -> String
+printAsts :: [(String,Ins,Int)] -> String
 printAsts = concatMap beautyprint 
-    where beautyprint (str,blck) = str ++ "\n--------------" ++ show blck ++ "\n\n"
+    where beautyprint (str,blck,int) = str ++ "\n--------------" ++ show blck ++ "\n\n"
 
 -- shortcut for indentation
 ind :: Int -> String

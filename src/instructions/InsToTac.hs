@@ -112,18 +112,18 @@ modJumps False mw = modify (\(TranlatorState a b c _  d e f)->TranlatorState a b
 --totalType :: TypeTuple -> Int
 --totalType a = (sum (foldl getSize 0 (F.toList a))) - (getSize $ funcReturnType a )
 -- use foldM instead
-forestToTac' :: [(String,Ins,TypeTuple)] -> TreeTranslator ( [(String,Program)] )
+forestToTac' :: [(String,Ins,TypeTuple,Int)] -> TreeTranslator ( [(String,Program)] )
 forestToTac' a = mapM buildFun  a
-    where dr1 (a,b,c) = (a,b)
+    where dr1 (a,b,c,d) = (a,b)
           buildFun a@(str,ins,typ) = do  ((str,prg):_) <- forestToTac [dr1 a]
-                                         liftIO $ putStrLn $ show [dr1 a]
+                                         --liftIO $ putStrLn $ show [dr1 a]
                                          if str == "hitMAINlee" 
                                             then  return (str, (prg |> TacExit))
                                             else  return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TagS (str++"_epilogue"))   |> (TACCall "Epilogue" 42) )
                                          --return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TACCall "Epilogue" 42))
-forestToTac :: [(String,Ins)] -> TreeTranslator ( [(String,Program)] )
+forestToTac :: [(String,Ins,Int)] -> TreeTranslator ( [(String,Program)] )
 forestToTac [] = return mempty
-forestToTac ((str,insTree):tl)  = do 
+forestToTac ((str,insTree,i):tl)  = do 
     -- liftIO $ putStrLn $ show insTree
     headTac       <- treeToTac insTree
     forestTacTail <- forestToTac tl
