@@ -114,7 +114,7 @@ findRegister var canRemove = do
                               return reg
         doSpill   = maybe getAnyReg getAnyButThis canRemove
         getAnyReg :: MipsGenerator(Register)
-        getAnyReg = do regFound <- liftIO $ randomRIO (0,numRegs) -- Se queda pegado si ninguno de los 16 registros
+        getAnyReg = do regFound <- liftIO $ randomRIO (0,numRegs-1) -- Se queda pegado si ninguno de los 16 registros
                        hbu      <- hasBackUp regFound    -- Vive en sus posiciones de memoria
                        if hbu then (loadNReturn regFound) else getAnyReg
         getAnyButThis reg = do regFound <- liftIO $ randomRIO (0,numRegs)
@@ -125,7 +125,7 @@ findRegister var canRemove = do
 
 
 newRegisters :: Vector [Var]
-newRegisters = replicate numRegs [] -- 23-8+1
+newRegisters = replicate numRegs [(Int_Cons 5)] -- 23-8+1
 
 initDescriptor :: Descriptor
 initDescriptor = Descriptor newRegisters M.empty T.empty
@@ -133,36 +133,37 @@ initDescriptor = Descriptor newRegisters M.empty T.empty
 type MipsGenerator = StateT Descriptor IO
 
 -- Remove defitions 
-killVar :: Var -> MipsGenerator()
-killVar _ = undefined
+-- killVar :: Var -> MipsGenerator()
+-- killVar _ = undefined
 
 
 -- Copy descript
-copyDescriptor :: Var -> Var -> MipsGenerator()
-copyDescriptor = undefined
+-- copyDescriptor :: Var -> Var -> MipsGenerator()
+-- copyDescriptor = undefined
 
 -- Check in var descriptor if v doesn't live only in a register
-livesInMem :: Var -> MipsGenerator(Bool)
-livesInMem = undefined
+-- livesInMem :: Var -> MipsGenerator(Bool)
+-- livesInMem = undefined
 
 -- Check if all vars in that register lives in memory
 hasBackUp :: Register -> MipsGenerator(Bool)
 hasBackUp r = do  reg  <- gets regDescriptor
                   vars <- gets varDescriptor
                   return $ and $ map (locateBackUp vars) (reg ! r)
-    where  locateBackUp desc var = maybe True -- REVISAR Es un error... porque no está agregado
-                                         (\ (vars,_) -> null vars ) -- buscar también que no existan otros registro con la info
+    where  locateBackUp desc var = maybe True -- (error "culito") REVISAR Es un error... porque no está agregado
+                                         (\ (vars,r1) -> ((not . null) vars) || (any (r /=) r1))
                                          (lookup var desc) 
 
 clearDescriptor :: MipsGenerator()
 clearDescriptor = do 
     state     <- get 
-    put state { regDescriptor = V.empty, varDescriptor = M.empty }
+    put state { regDescriptor = newRegisters, varDescriptor = M.empty }
 
 updateRegDescriptors :: Int -> ([Var] -> [Var]) -> MipsGenerator()
 updateRegDescriptors reg func = do 
     registers <- gets regDescriptor
     state     <- get 
+    -- liftIO $ putStrLn "update reg descriptors"
     put state { regDescriptor = registers // [(reg,(func (registers ! reg)))]}
 
 emit :: Mips -> MipsGenerator()
@@ -196,9 +197,9 @@ processIns ins =
       (Subi r1 r2 r3)            -> get2regs "sub" r1 r2 r3
       (Addi r1 r2 r3)            -> get2regs "add" r1 r2 r3
       (Comment str)              -> emit $ "# " ~~ (T.pack str) ~~ "\n"
-      (Tag     lb)               -> emit $ (stt     lb) ~~ ":\n"
+      (Tag     lb)               -> emit $ "_tag" ~~ (stt lb) ~~ ":\n"
       (TagS   str)               -> emit $ (T.pack str) ~~ ":\n"
-      Nop                        -> emit "# nop"
+      Nop                        -> emit "#nop\n"
       otherwise                  -> return ()
       -- (TagSC) tag para strings, usado en data, no aqui
    where get2regs str d r1 r2 = do 
