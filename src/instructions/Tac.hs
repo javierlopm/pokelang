@@ -28,7 +28,7 @@ data Var = Int_Cons   Int
          | MemAdress  String
          | Temp       Word   -- Non negative: t0, t1 ..
          | Fp   -- Frame pointer
-         deriving(Eq)
+         deriving(Eq,Ord)
 
 getCons :: Var -> Int
 getCons (Int_Cons   c) = c

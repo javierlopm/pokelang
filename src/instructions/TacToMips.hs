@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module TacToMips(module TacToMips) where
 
-import Prelude hiding(replicate,mapM_)
+import Prelude hiding(replicate,mapM_,lookup)
 import Data.Word
 import Tac
 import qualified Data.Text     as T
@@ -13,8 +13,8 @@ import Data.Foldable (toList,mapM_)
 import Data.Functor  (fmap)
 import Control.Monad.State hiding(mapM_)
 import Data.Sequence       hiding(replicate,null,empty)
-import Data.Vector         hiding(toList,(++),concat,null,empty,any,mapM_)
-import Data.Map.Strict     hiding(toList,null,empty,findIndex,(!))
+import Data.Vector         hiding(toList,(++),concat,null,empty,any,mapM_,sequence,mapM,and,map)
+import Data.Map.Strict     hiding(toList,null,empty,findIndex,(!),map)
 import System.Random
 
 type Mips       = T.Text
@@ -147,7 +147,12 @@ livesInMem = undefined
 
 -- Check if all vars in that register lives in memory
 hasBackUp :: Register -> MipsGenerator(Bool)
-hasBackUp = undefined
+hasBackUp r = do  reg  <- gets regDescriptor
+                  vars <- gets varDescriptor
+                  return $ and $ map (locateBackUp vars) (reg ! r)
+    where  locateBackUp desc var = maybe True -- REVISAR Es un error... porque no está agregado
+                                         (\ (vars,_) -> null vars ) -- buscar también que no existan otros registro con la info
+                                         (lookup var desc) 
 
 clearDescriptor :: MipsGenerator()
 clearDescriptor = do 
