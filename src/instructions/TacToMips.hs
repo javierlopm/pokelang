@@ -208,12 +208,39 @@ processIns ins =
       (Comment str)              -> emit $ "# " ~~ (T.pack str) ~~ "\n"
       (Tag     lb)               -> emit $ "_tag" ~~ (stt lb) ~~ ":\n"
       (TagS   str)               -> emit $ (T.pack str) ~~ ":\n"
+
+      -- Jumps
       (Jump    lb)               -> emit $ "    j _tag" ~~ (stt lb) ~~ "\n"
-      -- (JNEq r1 (Int_Cons 0) lb)  -> get1branch "beq" r1 "" (showTag lb)
-      -- (JNEq (Int_Cons 0) r1 lb)  -> get1branch "beq" r1 "" (showTag lb)
       (JEq r1 (Int_Cons c) lb)  -> get1branch "beq" r1 (stt c)  lb
       (JEq (Int_Cons c) r1 lb)  -> get1branch "beq" r1 (stt c)  lb
-      (JEq r1 r2 lb)            -> get2branch "beq" r1 r2      lb
+      (JEq r1 r2 lb)            -> get2branch "beq" r1 r2       lb
+
+      (JNEq r1 (Int_Cons c) lb)  -> get1branch "bne" r1 (stt c)  lb
+      (JNEq (Int_Cons c) r1 lb)  -> get1branch "bne" r1 (stt c)  lb
+      (JNEq r1 r2 lb)            -> get2branch "bne" r1 r2       lb
+
+      (JLt r1 (Int_Cons c) lb)  -> get1branch "blt" r1 (stt c)  lb
+      (JLt (Int_Cons c) r1 lb)  -> get1branch "blt" r1 (stt c)  lb
+      (JLt r1 r2 lb)            -> get2branch "blt" r1 r2       lb
+
+      (JGt r1 (Int_Cons c) lb)  -> get1branch "bgt" r1 (stt c)  lb
+      (JGt (Int_Cons c) r1 lb)  -> get1branch "bgt" r1 (stt c)  lb
+      (JGt r1 r2 lb)            -> get2branch "bgt" r1 r2       lb
+
+      (JLEq r1 (Int_Cons c) lb)  -> get1branch "ble" r1 (stt c)  lb
+      (JLEq (Int_Cons c) r1 lb)  -> get1branch "ble" r1 (stt c)  lb
+      (JLEq r1 r2 lb)            -> get2branch "ble" r1 r2       lb
+
+      (JGEq r1 (Int_Cons c) lb)  -> get1branch "bge" r1 (stt c)  lb
+      (JGEq (Int_Cons c) r1 lb)  -> get1branch "bge" r1 (stt c)  lb
+      (JGEq r1 r2 lb)            -> get2branch "bge" r1 r2       lb
+
+      (Jz    r1 lb)  -> get1branch "beq" r1 (showReg 0)  lb
+      (Jnotz r1 lb)  -> get1branch "bne" r1 (showReg 0)  lb
+
+      -- Mem access
+      
+
       Nop                        -> emit "# nop\n"
       otherwise                  -> return ()
       -- (TagSC) tag para strings, usado en data, no aqui

@@ -84,7 +84,8 @@ main = do
                               let full_prog = (("",translateStrings strs):programs)
                               let prog_blocks = (map partition) (map snd full_prog)
                               program <- runCompiler (mapM compile prog_blocks) initDescriptor
-                              crt     <- readFile "crt.asm"
+                              -- crt     <- readFile "crt.asm"
+                              let crt = ""
                               putStrLn ".text\n"
                               mapM  T.putStrLn (fst program)
                               putStrLn crt
