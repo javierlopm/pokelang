@@ -2,6 +2,7 @@ module Tac(
     IntIns(..),
     Var(..),
     Program,
+    Label,
     pComment,
     showP,
     saveProgram,

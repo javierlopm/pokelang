@@ -52,11 +52,17 @@ a ~~ b = a `T.append` b
 stt :: Show a => a -> Mips
 stt = T.pack . show
 
+showReg :: Register -> Mips
+showReg r = "$" ~~ (stt r)
+
 build3Mips :: Mips -> Register -> Register -> Register -> Mips
-build3Mips m r1 r2 r3 = "    "~~m~~" $"~~(stt r1)~~",$"~~(stt r2)~~",$"~~(stt r3)~~"\n"
+build3Mips m r1 r2 r3 = "    "~~m~~" "~~(showReg r1) ~~","~~(showReg r2)~~","~~(showReg r3)~~"\n"
+
+build3MipsB :: Mips -> Register -> Mips -> Word -> Mips
+build3MipsB m r1 r2 lb = "    "~~m~~" "~~(showReg r1) ~~","~~r2~~","~~(showTag lb)~~"\n"
 
 buildiMips :: Mips -> Register -> Register -> Int -> Mips
-buildiMips m r1 r2 c = "    "~~m~~" $"~~(stt r1)~~",$"~~(stt r2)~~", "~~(stt c)~~"\n"
+buildiMips m r1 r2 c = "    "~~m~~" "~~(showReg r1) ~~","~~(showReg r2)~~", "~~(stt c)~~"\n"
 
 partition :: Program -> Seq(Program)
 partition program = build $ F.foldl includeInLast (S.empty,S.empty) program
@@ -187,6 +193,9 @@ compile ps = mapM_ (\ b -> processBlock b >> clearDescriptor) ps
 processBlock :: Program -> MipsGenerator ()
 processBlock p = mapM_ processIns p
 
+showTag :: Word -> Mips
+showTag l = "_tag" ~~ (stt l)
+
 processIns :: IntIns -> MipsGenerator ()
 processIns ins = 
     case ins of 
@@ -199,7 +208,13 @@ processIns ins =
       (Comment str)              -> emit $ "# " ~~ (T.pack str) ~~ "\n"
       (Tag     lb)               -> emit $ "_tag" ~~ (stt lb) ~~ ":\n"
       (TagS   str)               -> emit $ (T.pack str) ~~ ":\n"
-      Nop                        -> emit "#nop\n"
+      (Jump    lb)               -> emit $ "    j _tag" ~~ (stt lb) ~~ "\n"
+      -- (JNEq r1 (Int_Cons 0) lb)  -> get1branch "beq" r1 "" (showTag lb)
+      -- (JNEq (Int_Cons 0) r1 lb)  -> get1branch "beq" r1 "" (showTag lb)
+      (JEq r1 (Int_Cons c) lb)  -> get1branch "beq" r1 (stt c)  lb
+      (JEq (Int_Cons c) r1 lb)  -> get1branch "beq" r1 (stt c)  lb
+      (JEq r1 r2 lb)            -> get2branch "beq" r1 r2      lb
+      Nop                        -> emit "# nop\n"
       otherwise                  -> return ()
       -- (TagSC) tag para strings, usado en data, no aqui
    where get2regs str d r1 r2 = do 
@@ -210,6 +225,13 @@ processIns ins =
          get1reg str d r1 cons = do 
             fstReg <- findRegister r1 Nothing
             emit $ buildiMips str 42 fstReg cons
+         get1branch str r1 str2 lab = do 
+            fstReg <- findRegister r1 Nothing
+            emit $ build3MipsB str fstReg str2 lab
+         get2branch str r1 r2 lab = do 
+            fstReg <- findRegister r1 Nothing
+            sndReg <- findRegister r2 Nothing
+            emit $ build3MipsB str fstReg (showReg sndReg) lab
 
 
 -- processIns :: IntIns -> MipsGenerator ()
