@@ -75,6 +75,7 @@ main = do
                 "-a"      -> execParser True  goods
                 "-i"      -> getIns goods True >> return ()
                 "-tac"    -> do (ast,strs) <- getIns' goods False
+                                putStrLn $ show ast
                                 programs <- evalTree (forestToTac' ast) initTranslator
                                 let full_prog = (("",translateStrings strs):programs)
                                 putStrLn $ foldl (\ b (string,p) -> b ++ "\n" ++ "\n" ++ showP p ) "" full_prog

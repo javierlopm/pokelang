@@ -588,7 +588,7 @@ checkMain = do
         else tellError $ strError (0,0) "" "hitMAINlee" "function not found"
 
 -- Check if there is a mainFunction and add it at the begining of the list
-checkMain' :: [(String,Ins,TypeTuple)] -> OurMonad( [(String,Ins,TypeTuple,Int)] )
+checkMain' :: [(String,Ins,TypeTuple)] -> OurMonad( [(String,Ins,TypeTuple,Int)] ) --ACA NABIL, GET INT TOTALS
 checkMain' functions = do
     globals <- gets strTbl
     let ((fs,td),list) = foldl processIns ((Nothing,S.empty),[]) functions
