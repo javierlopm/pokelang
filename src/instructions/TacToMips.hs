@@ -199,12 +199,17 @@ showTag l = "_tag" ~~ (stt l)
 processIns :: IntIns -> MipsGenerator ()
 processIns ins = 
     case ins of 
+      -- Aritmetic
       (Addi r1 r2 (Int_Cons c))  -> get1reg "addi" r1 r2 c
       (Subi r1 r2 (Int_Cons c))  -> get1reg "addi" r1 r2 (-c)
-      (Addi r1 (Int_Cons c)r2)   -> get1reg "addi" r1 r2 c
-      (Subi r1 (Int_Cons c)r2)   -> get1reg "addi" r1 r2 (-c)
+      (Divi r1 r2 (Int_Cons c))  -> return () -- get1reg "div" r1 r2 (-c)
+      (Addi r1 (Int_Cons c) r2)  -> get1reg "addi" r1 r2 c
+      (Subi r1 (Int_Cons c) r2)  -> get1reg "addi" r1 r2 (-c)
+      (Divi r1 (Int_Cons c) r2)  -> return () -- get1reg "div" r1 r2 (-c)
       (Subi r1 r2 r3)            -> get2regs "sub" r1 r2 r3
       (Addi r1 r2 r3)            -> get2regs "add" r1 r2 r3
+      (Divi r1 r2 r3)            -> get2regs "div" r1 r2 r3
+
       (Comment str)              -> emit $ "# " ~~ (T.pack str) ~~ "\n"
       (Tag     lb)               -> emit $ "_tag" ~~ (stt lb) ~~ ":\n"
       (TagS   str)               -> emit $ (T.pack str) ~~ ":\n"
@@ -239,7 +244,14 @@ processIns ins =
       (Jnotz r1 lb)  -> get1branch "bne" r1 (showReg 0)  lb
 
       -- Mem access
-      
+      (Mv           d r1)    -> emit ""
+      (ReadPointer  d r1)    -> emit ""
+      (StorePointer d r1)    -> emit ""
+      (ReadArray    d FP (Int_Cons c)) -> emit$"lw "~~(showReg 42)~~","~~(stt c)~~"("~~(showReg fp)~~")\n"
+      (ReadArray    d (Int_Cons c) FP) -> processIns (ReadArray d FP (Int_Cons c))
+      (ReadArray    d r1 r2) ->  processIns (Addi d r1 r2) >> emit$"lw "~~(showReg 42)~~",0"~~~~"("~~(showReg (-1))~~")\n"
+      (StoreArray   d r1 r2) -> 
+
 
       Nop                        -> emit "# nop\n"
       otherwise                  -> return ()
