@@ -162,6 +162,7 @@ Ins : {- λ -}                 {% return (TypeVoid, newBlock ) }
     | Ins RETURN   Exp   ";"  {% checkOkIns ((Return (Just (sel3 $3)) )) (snd $1) (fst $1) } -- Cambiar para exp
     | Ins RETURN         ";"  {% checkOkIns ((Return Nothing )) (snd $1) (fst $1) }
     | Ins PRINT "("  STRING   ")" ";" {% buildPrint $4 (snd $1) (fst $1) } --revisar
+    | Ins PRINT "("  Exp      ")" ";" {% buildGenPrint $4 (snd $1) (fst $1) } --error aqui
     | Ins READ  "("  ID       ")" ";" {% buildRead  $4 $1  } --revisar
     | Ins ID    "("ExpList")" ";" {% (checkFunctionCall $2 (fst $4)) >>=  \(mitupla,bool) -> (checkOkIns (Call (lexeme $2) (snd $4) (getSizeTT (fst $4 )) bool) (snd $1)) . (notErrors (fst $1)) . fst $  mitupla } 
     | Ins BEGIN Ent0 SmplDcls Ins END   {% exitScope >>   checkOkIns (snd $5) (snd $1) (notErrors (fst $1) (fst $5)) } 

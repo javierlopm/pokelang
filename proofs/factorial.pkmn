@@ -1,0 +1,24 @@
+--
+    Factorial iterativo
+--
+
+funcball pINTachu fibo_iterativo(pINTachu n):
+    pINTachu res;
+
+    res = 1;
+
+    vamo_a_itera i = 1 | n:
+        res = res * i;
+    vamo_a_calmano
+
+    vamo_a_retorna res;
+vamo_a_calmano
+
+
+funcball VOIDtorb hitMAINlee():
+
+
+    vamo_a_imprimi(2);
+
+
+vamo_a_calmano

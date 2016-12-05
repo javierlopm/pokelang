@@ -4,6 +4,7 @@ module TacToMips(module TacToMips) where
 import Prelude hiding(replicate,mapM_,lookup)
 import Data.Word
 import Tac
+import qualified Tac as Taa
 import qualified Data.Text     as T
 import qualified Data.Sequence as S(empty,null)
 import qualified Data.Vector   as V(empty,null)
@@ -247,10 +248,10 @@ processIns ins =
       (Mv           d r1)    -> emit ""
       (ReadPointer  d r1)    -> emit ""
       (StorePointer d r1)    -> emit ""
-      (ReadArray    d FP (Int_Cons c)) -> emit$"lw "~~(showReg 42)~~","~~(stt c)~~"("~~(showReg fp)~~")\n"
-      (ReadArray    d (Int_Cons c) FP) -> processIns (ReadArray d FP (Int_Cons c))
-      (ReadArray    d r1 r2) ->  processIns (Addi d r1 r2) >> emit$"lw "~~(showReg 42)~~",0"~~~~"("~~(showReg (-1))~~")\n"
-      (StoreArray   d r1 r2) -> 
+      (ReadArray    d Fp (Int_Cons c)) -> emit$"lw "~~(showReg 42)~~","~~(stt c)~~"("~~(showReg fp)~~")\n"
+      (ReadArray    d (Int_Cons c) Fp) -> processIns (ReadArray d Fp (Int_Cons c))
+      (ReadArray    d r1 r2) ->  emit "" --processIns (Addi d r1 r2) >> emit$"lw "~~(showReg 42)~~",0"~~""~~"("~~(showReg (-1))~~")\n"
+      -- (StoreArray   d r1 r2) -> 
 
 
       Nop                        -> emit "# nop\n"
