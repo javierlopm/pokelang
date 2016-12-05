@@ -70,26 +70,26 @@ main = do
   let (goods,errors,errorcount) = checkTokenError $ lexer s
   if null errors 
       then case runargs of 
-                "-l"      -> mapM_ print goods
-                "-p"      -> execParser False goods
-                "-a"      -> execParser True  goods
-                "-i"      -> getIns goods True >> return ()
-                "-tac"    -> do (ast,strs) <- getIns' goods False
-                                programs <- evalTree (forestToTac' ast) initTranslator
-                                let full_prog = (("",translateStrings strs):programs)
-                                putStrLn $ foldl (\ b (string,p) -> b ++ "\n" ++ "\n" ++ showP p ) "" full_prog
-                                return ()
-                "-c"    -> do (ast,strs) <- getIns' goods False
-                              programs <- evalTree (forestToTac' ast) initTranslator
-                              let full_prog = (("",translateStrings strs):programs)
-                              let prog_blocks = (map partition) (map snd full_prog)
-                              program <- runCompiler (mapM compile prog_blocks) initDescriptor
-                              -- crt     <- readFile "crt.asm"
-                              let crt = ""
-                              putStrLn ".text\n"
-                              mapM  T.putStrLn (fst program)
-                              putStrLn crt
-                              return ()
-                otherwise -> print $ "Unrecognized argument" ++ runargs
+          "-l"      -> mapM_ print goods
+          "-p"      -> execParser False goods
+          "-a"      -> execParser True  goods
+          "-i"      -> getIns goods True >> return ()
+          "-tac"    -> do (ast,strs) <- getIns' goods False
+                          programs <- evalTree (forestToTac' ast) initTranslator
+                          let full_prog = (("",translateStrings strs):programs)
+                          putStrLn $ foldl (\ b (string,p) -> b ++ "\n" ++ "\n" ++ showP p ) "" full_prog
+                          return ()
+          "-c"    -> do (ast,strs) <- getIns' goods False
+                        programs <- evalTree (forestToTac' ast) initTranslator
+                        let full_prog = (("",translateStrings strs):programs)
+                        let prog_blocks = (map partition) (map snd full_prog)
+                        program <- runCompiler (mapM compile prog_blocks) initDescriptor
+                        -- crt     <- readFile "crt.asm"
+                        let crt = ""
+                        putStrLn ".text\n"
+                        mapM  T.putStrLn (fst program)
+                        putStrLn crt
+                        return ()
+          otherwise -> print $ "Unrecognized argument" ++ runargs
       else do mapM_ print errors
               putStrLn $ "--pkcc: "++ show errorcount ++ " errors found."

@@ -16,9 +16,11 @@ vamo_a_calmano
 
 
 funcball VOIDtorb hitMAINlee():
-
-
-    vamo_a_imprimi(2);
+    
+    vamo_mientra squirtrue:
+        vamo_a_imprimi(2);
+        vamo_a_imprimi("Que desea hacer?");
+    vamo_a_calmano
 
 
 vamo_a_calmano

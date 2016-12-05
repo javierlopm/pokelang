@@ -22,6 +22,8 @@ type Mips       = T.Text
 type Register   = Int
 type Registers  = [Int]
 
+showComments = False
+
 lowreg  = 8
 highreg = 23
 
@@ -211,7 +213,7 @@ processIns ins =
       (Addi r1 r2 r3)            -> get2regs "add" r1 r2 r3
       (Divi r1 r2 r3)            -> get2regs "div" r1 r2 r3
 
-      (Comment str)              -> emit $ "# " ~~ (T.pack str) ~~ "\n"
+      (Comment str)              -> if showComments then emit  ("# " ~~ (T.pack str) ~~ "\n") else return ()
       (Tag     lb)               -> emit $ "_tag" ~~ (stt lb) ~~ ":\n"
       (TagS   str)               -> emit $ (T.pack str) ~~ ":\n"
 
@@ -245,12 +247,12 @@ processIns ins =
       (Jnotz r1 lb)  -> get1branch "bne" r1 (showReg 0)  lb
 
       -- Mem access
-      (Mv           d r1)    -> emit ""
-      (ReadPointer  d r1)    -> emit ""
-      (StorePointer d r1)    -> emit ""
-      (ReadArray    d Fp (Int_Cons c)) -> emit$"lw "~~(showReg 42)~~","~~(stt c)~~"("~~(showReg fp)~~")\n"
+      (Mv           d r1)    -> emit "AQUI HAY UN MOVE\n"
+      (ReadPointer  d r1)    -> emit "AQUI LEEMOS POINTER\n"
+      (StorePointer d r1)    -> emit "AQUI SALVAMOS POINTER\n"
+      (ReadArray    d Fp (Int_Cons c)) -> emit$"    lw "~~(showReg 42)~~","~~(stt c)~~"("~~(showReg fp)~~")\n"
       (ReadArray    d (Int_Cons c) Fp) -> processIns (ReadArray d Fp (Int_Cons c))
-      (ReadArray    d r1 r2) ->  emit "" --processIns (Addi d r1 r2) >> emit$"lw "~~(showReg 42)~~",0"~~""~~"("~~(showReg (-1))~~")\n"
+      (ReadArray    d r1 r2) ->  emit "AQUI LEEMOS ARREGLO\n" --processIns (Addi d r1 r2) >> emit$"lw "~~(showReg 42)~~",0"~~""~~"("~~(showReg (-1))~~")\n"
       -- (StoreArray   d r1 r2) -> 
 
 
