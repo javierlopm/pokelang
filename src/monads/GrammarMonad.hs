@@ -571,6 +571,7 @@ checkFieldAccess (ty1,tk1,exp1) tk2 = do
 buildPrint :: Token -> Ins -> Type -> OurMonad((Type,Ins))
 buildPrint string i t = do 
     (mem_addr,is_new) <- new_str_lex (content string)
+    -- Agregar este strings a tabla
     let dec = StrCons (position string) mem_addr (content string)
     if is_new then onStrScope $ (:) dec
               else return ()
@@ -580,23 +581,14 @@ buildPrint string i t = do
     return bleh
 
 buildGenPrint ::  (Type,Token,Exp) -> Ins -> Type -> OurMonad((Type,Ins))
-buildGenPrint (ty,tk,e) i  t = do 
-    (mem_addr,is_new) <- new_str_lex (content string)
-    let dec = StrCons (position string) mem_addr (content string)
-    if is_new then onStrScope $ (:) dec
-              else return ()
-    let func_call = case tk of TypeInt   -> "vamo_a_imprimi_i"
-                               TypeBool  -> "vamo_a_imprimi_i"
-                               TypeChar  -> "vamo_a_imprimi_c"
-                               TypeFloat -> "vamo_a_imprimi_f"
-                               _         -> ""
-                               -- TypeString      -> "vamo_a_imprimi_s"
-                               -- TypePointer t   ->
-    -- let new_ins = Call "print_str" (S.singleton (ExpVar dec (content string))) (length (lexeme string)) True
-    let new_ins = if func_call /= "" then Call "print_str" (S.singleton e) 4 False else NoOp
-    bleh <- checkOkIns new_ins i t
-    return bleh
-
+buildGenPrint (ty,tk,e) i  t = checkOkIns new_ins i t
+  where func_call TypeInt   = "vamo_a_imprimi_i"
+        func_call TypeBool  = "vamo_a_imprimi_i"
+        func_call TypeChar  = "vamo_a_imprimi_c"
+        func_call TypeFloat = "vamo_a_imprimi_f"
+        func_call _         = ""
+        call_str = func_call ty
+        new_ins = if (call_str /= "") then Call call_str (S.singleton e) 4 False else NoOp
 
 checkMain :: OurMonad()
 checkMain = do
