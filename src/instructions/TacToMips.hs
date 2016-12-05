@@ -36,6 +36,7 @@ sp :: Register
 sp = 30
 
 
+
 -- compile :: Program -> Program -> Mips -> Mips
 -- compile globs program crt = T.concat [".data\n"
 --                                      ,translate globs
@@ -47,6 +48,11 @@ sp = 30
 
 translate :: Program -> Mips
 translate  = undefined
+
+stringsToMips :: Program -> Mips
+stringsToMips strings = F.foldl convert ".data\n" strings
+    where convert oS (TagSC l val) = oS~~"_"~~T.pack l~~":  .asciiz "~~stt val~~ "\n"
+          convert oS _             = ""
 
 {- auxiliaries for templates -}
 (~~) :: Mips -> Mips -> Mips
