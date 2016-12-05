@@ -31,9 +31,11 @@ highreg = 23
 numRegs = 16
 
 fp :: Register
-fp = 31
+fp = 30
 sp :: Register
-sp = 30
+sp = 29
+gp :: Register
+gp = 28
 
 magicReg :: Register
 magicReg = 8
@@ -63,7 +65,9 @@ stt :: Show a => a -> Mips
 stt = T.pack . show
 
 showReg :: Register -> Mips
-showReg 31 = "$fp"
+showReg 28 = "$gp"
+showReg 29 = "$sp"
+showReg 30 = "$fp"
 showReg r  = "$" ~~ (stt r)
 
 build3Mips :: Mips -> Register -> Register -> Register -> Mips
