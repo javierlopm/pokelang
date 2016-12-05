@@ -35,7 +35,8 @@ fp = 31
 sp :: Register
 sp = 30
 
-
+magicReg :: Register
+magicReg = 8
 
 -- compile :: Program -> Program -> Mips -> Mips
 -- compile globs program crt = T.concat [".data\n"
@@ -62,7 +63,8 @@ stt :: Show a => a -> Mips
 stt = T.pack . show
 
 showReg :: Register -> Mips
-showReg r = "$" ~~ (stt r)
+showReg 31 = "$fp"
+showReg r  = "$" ~~ (stt r)
 
 build3Mips :: Mips -> Register -> Register -> Register -> Mips
 build3Mips m r1 r2 r3 = "    "~~m~~" "~~(showReg r1) ~~","~~(showReg r2)~~","~~(showReg r3)~~"\n"
@@ -256,9 +258,9 @@ processIns ins =
       (Mv           d r1)    -> emit "AQUI HAY UN MOVE\n"
       (ReadPointer  d r1)    -> emit "AQUI LEEMOS POINTER\n"
       (StorePointer d r1)    -> emit "AQUI SALVAMOS POINTER\n"
-      (ReadArray    d Fp (Int_Cons c)) -> emit$"    lw "~~(showReg 42)~~","~~(stt c)~~"("~~(showReg fp)~~")\n"
+      (ReadArray    d Fp (Int_Cons c)) -> emit$"    lw "~~(showReg magicReg)~~","~~(stt c)~~"("~~(showReg fp)~~")\n"
       (ReadArray    d (Int_Cons c) Fp) -> processIns (ReadArray d Fp (Int_Cons c))
-      (ReadArray    d r1 r2) ->  emit "AQUI LEEMOS ARREGLO\n" --processIns (Addi d r1 r2) >> emit$"lw "~~(showReg 42)~~",0"~~""~~"("~~(showReg (-1))~~")\n"
+      (ReadArray    d r1 r2) ->  emit "AQUI LEEMOS ARREGLO\n" --processIns (Addi d r1 r2) >> emit$"lw "~~(showReg magicReg)~~",0"~~""~~"("~~(showReg (-1))~~")\n"
       -- (StoreArray   d r1 r2) -> 
 
 
@@ -268,11 +270,11 @@ processIns ins =
    where get2regs str d r1 r2 = do 
             fstReg <- findRegister r1 Nothing 
             sndReg <- findRegister r2 (Just fstReg)
-            emit $ build3Mips str 42 fstReg sndReg -- CAMBIAR, DESTINO DE CALCULO MAL COLCADO
+            emit $ build3Mips str magicReg fstReg sndReg -- CAMBIAR, DESTINO DE CALCULO MAL COLCADO
             -- kill and update def de r1 con d
          get1reg str d r1 cons = do 
             fstReg <- findRegister r1 Nothing
-            emit $ buildiMips str 42 fstReg cons
+            emit $ buildiMips str magicReg fstReg cons
          get1branch str r1 str2 lab = do 
             fstReg <- findRegister r1 Nothing
             emit $ build3MipsB str fstReg str2 lab

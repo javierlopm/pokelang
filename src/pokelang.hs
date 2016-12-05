@@ -89,7 +89,7 @@ main = do
                         T.putStrLn $ stringsToMips $ translateStrings strs
                         putStrLn ".text"
                         mapM  T.putStrLn (fst program)
-                        -- putStrLn crt
+                        putStrLn crt
                         return ()
           otherwise -> print $ "Unrecognized argument" ++ runargs
       else do mapM_ print errors
