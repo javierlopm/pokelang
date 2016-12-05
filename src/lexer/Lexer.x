@@ -21,7 +21,7 @@ $quotable  = [\x00-\x7F] # [\']
 @identifier = $lc [ $alpha $digit \_ ]*  \??
 @dataId     = poke [ $lc $uc $digit \_ ]+ \??
 @enum       = $uc   [$alpha $digit \_]*
-@string     = \" ( $dquotable | \\\" | \' | \? )* \" 
+@string     = \" ( $dquotable | \\\" | \' | \?  )* \" 
 @char       = \' ( $quotable  | \\a | \\b | \\t | \\f | \\n | \\r | \\v | \\\\ | \\\' | \\\" | \\0 ) \'
 @singlecomment    = \# .* [\n]?
 

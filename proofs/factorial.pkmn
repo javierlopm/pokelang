@@ -1,7 +1,57 @@
+
+FORWARDtortle funcball pINTachu fibo_iterativo(pINTachu n);
+FORWARDtortle funcball pINTachu fibo_recursivo(pINTachu n);
+
+--
+    Factorial recursivo
+--
+funcball VOIDtorb hitMAINlee():
+    pINTachu opt;
+    pINTachu res;
+
+
+    vamo_mientra squirtrue:
+        vamo_a_imprimi("Que desea hacer?\n");
+        vamo_a_imprimi("1) Calcular factorial recursivo\n");
+        vamo_a_imprimi("2) Calcular factorial iterativo\n");
+        vamo_a_imprimi("3) Salir\n");
+        vamo_a_lee(opt);
+
+        si   (opt == 1):
+            vamo_a_imprimi("Introduzca el n~umero.\n>");
+            vamo_a_lee(res);
+
+            si (res < 0 ):
+                vamo_a_imprimi("Error: no se puede calcular el factorial negativo \n");
+            si_no:
+                vamo_a_imprimi(fibo_recursivo(res));
+                vamo_a_imprimi("\n");
+            vamo_a_calmano
+        y_si (opt == 2):
+            vamo_a_imprimi("Introduzca el n~umero.\n>");
+            vamo_a_lee(res);
+
+            si (res < 0 ):
+                vamo_a_imprimi("Error: no se puede calcular el factorial negativo \n");
+            si_no:
+                vamo_a_imprimi(fibo_iterativo(res));
+                vamo_a_imprimi("\n");
+            vamo_a_calmano
+
+        y_si (opt == 3):
+            vamo_a_imprimi("Chao!\n");
+            vamo_a_retorna;
+        si_no:
+            vamo_a_imprimi("Intente de nuevo con 1,2 o 3");
+        vamo_a_calmano
+
+    vamo_a_calmano
+vamo_a_calmano
+
+
 --
     Factorial iterativo
 --
-
 funcball pINTachu fibo_iterativo(pINTachu n):
     pINTachu res;
 
@@ -14,13 +64,13 @@ funcball pINTachu fibo_iterativo(pINTachu n):
     vamo_a_retorna res;
 vamo_a_calmano
 
-
-funcball VOIDtorb hitMAINlee():
-    
-    vamo_mientra squirtrue:
-        vamo_a_imprimi(2);
-        vamo_a_imprimi("Que desea hacer?");
+--
+    Factorial recursivo
+--
+funcball pINTachu fibo_recursivo(pINTachu n):
+    si (n==1):
+        vamo_a_retorna n;
+    y_si (n == 1):
+        vamo_a_retorna (n * fibo_recursivo(n-1));
     vamo_a_calmano
-
-
 vamo_a_calmano

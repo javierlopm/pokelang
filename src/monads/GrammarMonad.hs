@@ -215,6 +215,7 @@ insertEmpty tk = do
         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
 
 
+
 -- Adding forward declartion to functions
 insertForwardFunc :: TypeTuple -> Token -> OurMonad ()
 insertForwardFunc typ tk = do
@@ -222,11 +223,13 @@ insertForwardFunc typ tk = do
     if isInGlobals state tk
         then tellError error1
         else do tellLog whathappened
-                onScope $ insert (lexeme tk) (EmptyWithType (TypeFunction typ)) 0 --Se debe CAMBIAR
+                onScope $ insert (lexeme tk) (EmptyWithType (TypeFunction typ) isProc) 0  --Se debe CAMBIAR
     onZip (const (fromScope emptyScope)) -- Cleaning scope bc of parameters
   where error1       = "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
         whathappened = "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
-        linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk 
+        linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
+        isProc       = if (funcReturnType typ) == TypeVoid then True
+                          else False
 
 insertForwardData :: Token-> Token -> OurMonad ()
 insertForwardData typ tk = do
@@ -246,6 +249,7 @@ insertForwardData typ tk = do
                      then build Struct TypeStruct 
                      else build Union  TypeUnion 
         typeFound state =  fromJust $ getValS (lexeme tk) (scp state)
+
 
 -- Adding function to global scope and cleaning actual zipper
 insertFunction :: TypeTuple -> Token -> Bool -> OurMonad ()
