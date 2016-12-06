@@ -203,10 +203,8 @@ getReg :: [Var] -> MipsGenerator([Registers])
 getReg (lval:rval:[])      = undefined
 getReg (lval:exp1:exp2:[]) = undefined
 
-compile :: Seq(Program) -> MipsGenerator(Mips)
-compile ps = mapM_ (\ b -> processBlock b >> clearDescriptor) ps 
-                >> gets assembly 
-                    >>= return
+compile :: Seq(Program) -> MipsGenerator()
+compile ps = (mapM_ (\ b -> processBlock b >> clearDescriptor) ps) 
 
 processBlock :: Program -> MipsGenerator ()
 processBlock p = mapM_ processIns p
@@ -266,7 +264,7 @@ processIns ins =
       (ReadPointer  d r1)    -> emit "#AQUI LEEMOS POINTER\n"
       (StorePointer d r1)    -> emit "#AQUI SALVAMOS POINTER\n"
       (ReadArray    d Fp (Int_Cons c)) -> emit$"    lw "~~(showReg magicReg)~~","~~(stt c)~~"("~~(showReg fp)~~")\n"
-      (ReadArray    d (Int_Cons c) Fp) -> processIns (ReadArray d Fp (Int_Cons c))
+      (ReadArray    d (Int_Cons c) Fp) -> return () -- processIns (ReadArray d Fp (Int_Cons c))
       (ReadArray    d r1 r2) ->  emit "#AQUI LEEMOS ARREGLO\n" --processIns (Addi d r1 r2) >> emit$"lw "~~(showReg magicReg)~~",0"~~""~~"("~~(showReg (-1))~~")\n"
       -- (StoreArray   d r1 r2) -> 
 
@@ -316,6 +314,7 @@ processIns ins =
 
 runCompiler =  runStateT
 
+-- compilerState = evalStateT
 
 
 -- loads, stores, array, separados

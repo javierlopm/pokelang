@@ -3,6 +3,7 @@ import System.Environment
 import System.Exit(exitFailure)
 import System.IO(hPutStrLn,stderr)  
 import qualified Data.Text.IO as T
+import qualified Data.Text as To
 import Tokens
 import Grammar
 import ErrorHandle
@@ -81,14 +82,15 @@ main = do
                           return ()
           "-c"    -> do (ast,strs) <- getIns' goods False
                         programs <- evalTree (forestToTac' ast) initTranslator
-                        -- let full_prog = (("",translateStrings strs):programs)
                         let prog_blocks = (map partition) (map snd programs)
+                        -- putStrLn $ show prog_blocks
+                        -- putStrLn "FIN======================================"
                         program <- runCompiler (mapM compile prog_blocks) initDescriptor
                         -- crt     <- readFile "crt.asm"
-                        let crt = ""
-                        T.putStrLn $ stringsToMips $ translateStrings strs
+                        -- T.putStrLn $ stringsToMips $ translateStrings strs
                         putStrLn ".text"
-                        mapM  T.putStrLn (fst program)
+                        (T.putStrLn . assembly . snd) program
+                        let crt = ""
                         putStrLn crt
                         return ()
           otherwise -> print $ "Unrecognized argument" ++ runargs
