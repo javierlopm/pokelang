@@ -148,6 +148,28 @@ findRegister var canRemove = do
                                     then loadNReturn regFound
                                     else getAnyButThis reg
 
+findRegister' :: Var -- Variable to store in a register
+                  -> Maybe Register -- Register that cannot be used for spill
+                   -> MipsGenerator(Register)
+findRegister' Fp _ = return fp 
+findRegister' var canRemove = do 
+    regs <- gets regDescriptor
+    maybe (searchEmpty regs) return (findVar var regs)
+  where searchEmpty r    = maybe doSpill loadNReturn (findEmpty r)
+        loadNReturn reg  = do emit (load var (reg+lowreg))
+                              updateRegDescriptors reg (const [var])
+                              -- updateVarDescriptors reg (const [var])
+                              return (reg+lowreg)
+        doSpill   = maybe getAnyReg getAnyButThis canRemove
+        getAnyReg :: MipsGenerator(Register)
+        getAnyReg = do regFound <- liftIO $ randomRIO (0,numRegs-1) -- Se queda pegado si ninguno de los 16 registros
+                       hbu      <- hasBackUp regFound    -- Vive en sus posiciones de memoria
+                       if hbu then (loadNReturn (regFound)) else getAnyReg
+        getAnyButThis reg = do regFound <- liftIO $ randomRIO (0,numRegs)
+                               hbu      <- hasBackUp regFound
+                               if hbu && (regFound /= reg) 
+                                    then loadNReturn regFound
+                                    else getAnyButThis reg
 
 newRegisters :: Vector [Var]
 newRegisters = replicate numRegs [(Int_Cons 5)] -- 23-8+1
@@ -270,7 +292,8 @@ processIns ins =
       (ReadArray    d r1 r2) ->  emit "#AQUI LEEMOS ARREGLO\n" --processIns (Addi d r1 r2) >> emit$"lw "~~(showReg magicReg)~~",0"~~""~~"("~~(showReg (-1))~~")\n"
       -- (StoreArray   d r1 r2) -> 
 
-
+      (TACCall    str_lab  i)     -> emit $ "    jal " ~~ T.pack str_lab ~~ "\n    move $fp,$sp" -- Potencialmente hacer algo con ese i
+      (CallExp  dest  str_lab  i) -> emit $ "    jal " ~~ T.pack str_lab ~~ "\n    move $fp,$sp" -- Mover lo que se tenga a dest
       TacExit                    -> emit "    li $v0,10\n    syscall"
       Nop                        -> emit "# nop\n"
       otherwise                  -> return ()

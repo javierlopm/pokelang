@@ -86,11 +86,11 @@ main = do
                         -- putStrLn $ show prog_blocks
                         -- putStrLn "FIN======================================"
                         program <- runCompiler (mapM compile prog_blocks) initDescriptor
-                        -- crt     <- readFile "crt.asm"
+                        crt     <- readFile "crt.asm"
                         T.putStrLn $ stringsToMips $ translateStrings strs
                         putStrLn ".text\nmain:\n"
                         (T.putStrLn . assembly . snd) program
-                        let crt = ""
+                        -- let crt = ""
                         putStrLn crt
                         return ()
           otherwise -> print $ "Unrecognized argument" ++ runargs
