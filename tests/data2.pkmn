@@ -18,7 +18,7 @@
 #     Martes}
 
 funcball pINTachu gcd( pINTachu a, pINTachu b):
-    vamo_a_retorna;
+    vamo_a_retorna a+b;
 vamo_a_calmano
 
 #funcball VOIDtorb voidproc( pINTachu i):

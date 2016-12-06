@@ -109,21 +109,22 @@ modJumps :: Bool -> Maybe Word -> TreeTranslator()
 modJumps True  mw = modify (\(TranlatorState a b _  c d e f)->TranlatorState a b mw c d e f)
 modJumps False mw = modify (\(TranlatorState a b c _  d e f)->TranlatorState a b c mw d e f)
 
---totalType :: TypeTuple -> Int
---totalType a = (sum (foldl getSize 0 (F.toList a))) - (getSize $ funcReturnType a )
+totalArgs :: TypeTuple -> Int
+totalArgs a = foldl (\x y -> x + (getSize y)) 0 $ init $ F.toList a
+
 -- use foldM instead
 forestToTac' :: [(String,Ins,TypeTuple,Int)] -> TreeTranslator ( [(String,Program)] )
 forestToTac' a = mapM buildFun  a
     where dr1 (a,b,c,d) = (a,b,d)
-          buildFun a@(str,ins,typ,i) =do ((str,prg):_) <- forestToTac $ [dr1 a]
-                                         liftIO $ putStrLn $ show typ
-                                         if str == "hitMAINlee" 
-                                            then  return (str, (prg |> TacExit))
-                                            else  return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TagS (str++"_epilogue"))   |> (TACCall "Epilogue" 42) )
-                                         --return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TACCall "Epilogue" 42))
+          buildFun a@(str,ins,typ,lv)= do ((str,prg):_) <- forestToTac $ [dr1 a]
+                                          liftIO $ putStrLn $ show lv
+                                          if str == "hitMAINlee" 
+                                             then  return (str, (prg |> TacExit))
+                                             else  return (str, ((singleton (TagS str)) |> (TACCall "Prologue" lv) )<> prg |> (TagS (str++"_epilogue"))   |> (TACCall "Epilogue" 42) )
+                                          --return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TACCall "Epilogue" 42))
 forestToTac :: [(String,Ins,Int)] -> TreeTranslator ( [(String,Program)] )
 forestToTac [] = return mempty
-forestToTac ((str,insTree,i):tl)  = do 
+forestToTac ((str,insTree,lv):tl)  = do 
     -- liftIO $ putStrLn $ show insTree
     headTac       <- treeToTac insTree
     forestTacTail <- forestToTac tl
