@@ -180,7 +180,7 @@ instance Show      IntIns where
     show (Param    par i)      = "Param " ++ show par ++" #"++show i
     show (Tag      i   )      = '\n': "tag_" ++ show i ++ ":"
     show (TagS     s   )      = '\n': "tag_" ++ s ++ ":" 
-    show (TagSC    s v )      = '\n': s ++ ": \n  " ++ show v
+    show (TagSC    s v )      = '\n': s ++ ": \n  \"" ++ v ++ "\""
     show (Comment  str )      =  "\n# "++ str
     show (Print     c  )      = "Print "      ++ show c
     show (PrintEnum c i)      = "Print enum " ++ show c ++ "[" ++ show i ++"]"
@@ -316,6 +316,10 @@ isJump (JLEq _ _ _) = True
 isJump (JGEq _ _ _) = True
 isJump (JEq  _ _ _) = True
 isJump (JNEq _ _ _) = True
+isJump (TACCall _  _ ) = True
+isJump (CallExp _ _ _) = True
+isJump (ReturnE )      = True
+isJump (ReturnS  _ )   = True
 isJump _            = False
 
 isTag  :: IntIns -> Bool

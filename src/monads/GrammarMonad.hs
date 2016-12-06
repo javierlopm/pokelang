@@ -223,7 +223,7 @@ insertForwardFunc typ tk = do
     if isInGlobals state tk
         then tellError error1
         else do tellLog whathappened
-                onScope $ insert (lexeme tk) (EmptyWithType (TypeFunction typ) isProc) 0  --Se debe CAMBIAR
+                onScope $ insert (lexeme tk) (EmptyWithType (TypeFunction typ)  isProc ) 0  --Se debe CAMBIAR
     onZip (const (fromScope emptyScope)) -- Cleaning scope bc of parameters
   where error1       = "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
         whathappened = "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
@@ -580,7 +580,7 @@ buildPrint string i t = do
     if is_new then onStrScope $ (:) dec
               else return ()
     -- Pasar la direccion en vez de esta basura: (S.singleton (ExpVar dec (content string)))
-    let new_ins = Call "vamo_a_imprimi" (S.singleton (ExpVar dec (content string))) ([0]) True
+    let new_ins = Call "vamo_a_imprimi" (S.singleton (ExpVar dec (content string))) ([4]) True
     bleh <- checkOkIns new_ins i t
     return bleh
 
@@ -592,7 +592,7 @@ buildGenPrint (ty,tk,e) i  t = checkOkIns new_ins i t
         func_call TypeFloat = "vamo_a_imprimi_f"
         func_call _         = ""
         call_str = func_call ty
-        new_ins = if (call_str /= "") then Call call_str (S.singleton e) ([0]) False else NoOp
+        new_ins = if (call_str /= "") then Call call_str (S.singleton e) ([4]) False else NoOp
 
 checkMain :: OurMonad()
 checkMain = do
@@ -645,7 +645,7 @@ buildRead four one = do
       func_call TypeChar  = "vamo_a_lee_c"
       func_call TypeFloat = "vamo_a_lee_f"
       func_call _         = ""
-      new_ins newVar = if (call_str /= "") then Call call_str (S.singleton newVar) ([0]) True else NoOp
+      new_ins newVar = if (call_str /= "") then Call call_str (S.singleton newVar) ([4]) True else NoOp
           where call_str = func_call ((storedType . dec) newVar)
 
 -- Change by a instruction type default

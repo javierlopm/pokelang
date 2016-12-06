@@ -56,7 +56,7 @@ translate  = undefined
 
 stringsToMips :: Program -> Mips
 stringsToMips strings = F.foldl convert ".data\n" strings
-    where convert oS (TagSC l val) = oS~~"_"~~T.pack l~~":  .asciiz "~~stt val~~ "\n"
+    where convert oS (TagSC l val) = oS~~"_"~~T.pack l~~":  .asciiz \""~~T.pack val~~ "\"\n"
           convert oS _             = ""
 
 {- auxiliaries for templates -}
@@ -85,8 +85,8 @@ buildiMips m r1 r2 c = "    "~~m~~" "~~(showReg r1) ~~","~~(showReg r2)~~", "~~(
 partition :: Program -> Seq(Program)
 partition program = build $ F.foldl includeInLast (S.empty,S.empty) program
     where includeInLast (prg,actualBlock) ins 
-            | isTag     ins = (prg |> (actualBlock |> ins), S.empty) 
-            | isJump    ins = (prg |> actualBlock,   S.empty |> ins)
+            | isTag     ins = (prg |> actualBlock,   S.empty |> ins)
+            | isJump    ins = (prg |> (actualBlock |> ins), S.empty) 
             | otherwise     = (prg, actualBlock |> ins)
           build (blocks,ablock)
             | S.null ablock = blocks |> ablock
@@ -299,8 +299,8 @@ processIns ins =
       -- Mem access
       (Mv           d (Int_Cons i)) -> mv d i 
       (Mv           d _ )           -> emit "#AQUI HAY UN MOVE"
-      (ReadPointer  d (Int_Cons i)) -> emiti$"lw "~~(showReg magicReg)~~",0("~~(showReg magicReg)~~")\n"
-      (ReadPointer  d r1)    -> emiti$"lw "~~(showReg magicReg)~~",0("~~(showReg magicReg)~~")\n"
+      -- (ReadPointer  d i )    -> getReg d >>= (\r -> emiti$"lw "~~(showReg r)~~",0("~~(showReg magicReg)~~")\n")
+      (ReadPointer  d r1)    -> getReg d >>= (\r -> getReg r1 >>= (\r1 -> emiti$"lw "~~(showReg r)~~",0("~~(showReg r1)~~")\n"))
       (StorePointer d r1)    -> storeInP d r1
       (ReadArray    d Fp (Int_Cons c)) -> readLocal d c
       (ReadArray    d r1 r2)           -> readArr d r1 r2
@@ -309,8 +309,10 @@ processIns ins =
       (Param      (Float_Cons s) i)  -> moveSp (-4) >> emiti ("li $t0,"~~stt s~~"\n")    >> emiti "sw $t0,0($sp)\n"
       (Param      (MemAdress  s) i)  -> moveSp (-4) >> emiti ("la $t0,_"~~T.pack s~~"\n") >> emiti "sw $t0,0($sp)\n"
       (Param      t0 i)              -> paramGen t0 i
-      (Save        i ) -> moveSp (-i)
-      (Clean       i ) -> moveSp (i)
+      (Clean       0 ) -> return ()
+      (Save        i ) -> moveSp (-i-8) >> emiti ("sw $fp,"~~ stt (i+4) ~~"($sp)\n") >> emiti ("sw $ra,"~~ stt i ~~"($sp)\n") >> emiti ("addi $fp,$sp,"~~ stt (i+8) ~~"\n")
+      (Clean       i ) -> moveSp (i+4)
+
       -- (Param      (Temp s))  -> moveSp (-4) >> emit ("la $t0,"~~T.pack s~~"\n") >> emit $ "    sw $t0,0($sp)" -- really? bueno, hay que buscar el registro
       (TACCall    str_lab  i)     -> emiti $ "jal " ~~ T.pack str_lab ~~ "\n" -- Potencialmente hacer algo con ese i
       (CallExp  dest  str_lab  i) -> emiti $ "jal " ~~ T.pack str_lab ~~ "\n" -- Mover lo que se tenga a dest
@@ -331,10 +333,11 @@ processIns ins =
             fstReg <- getReg r1 
             dest   <- getReg d 
             emit $ buildiMips str dest fstReg cons
-          get1branch str r1 str2 lab = do 
+          get1branch str r1 cons lab = do 
             -- fstReg <- findRegister r1 Nothing
             fstReg <- getReg r1
-            emit $ build3MipsB str fstReg str2 lab
+            -- liftIO $ putStrLn $ (show r1) ++ " está en " ++ show fstReg ++ " \n"
+            emit $ build3MipsB str fstReg cons lab
           get2branch str r1 r2 lab = do 
             -- fstReg <- findRegister r1 Nothing
             -- sndReg <- findRegister r2 Nothing

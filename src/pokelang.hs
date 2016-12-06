@@ -90,6 +90,7 @@ main = do
                         let prog_blocks = (map partition) (map snd programs)
                         -- putStrLn $ show prog_blocks
                         -- putStrLn "FIN======================================"
+                        
                         program <- runCompiler (mapM compile prog_blocks) initDescriptor
                         crt     <- readFile "crt.asm"
                         -- putStrLn $ show $ translateStrings strs
