@@ -227,7 +227,7 @@ treeToTac (Return v)  = do
           (v)
 treeToTac (Read e1) = do isL <- isLval
                          let goback = if isL then return () else setRval
-                         setLval
+                         -- setLval
                          (var_cal,var) <- expToTac e1
                          goback
                          return $ var_cal |> (Param var 42) |> (TACCall "read" 1)
@@ -235,30 +235,30 @@ treeToTac _ = return (singleton Nop)
  
 argsToProg :: (Seq(Exp)) -> Bool ->  Program -> [Int] -> TreeTranslator((Program))
 argsToProg s b s0  tams
-                =  if (S.null s)
-                   then do
-                        return s0
-                   else do
-                    let firstExp =  (fst . decons . viewl) s
-                    -- liftIO $ putStrLn $ show s
-                    if b then
-                        do
-                        isL <- isLval
-                        let goback = if isL then return () else setRval
-                        setLval
-                        (argProg,rArg) <- expToTac firstExp
-                        goback
-                        let pamToAdd = singleton (Param rArg (head tams ))
-                        argsToProg ( (snd . decons . viewl) s) b (s0 <> argProg <> pamToAdd) (tail tams)
-                    else
-                        do
-                          (argProg,rArg) <- expToTac firstExp
-                          argsToProg ( (snd . decons . viewl) s) b (s0 <> argProg <> singleton (Param rArg (head tams))) (tail tams) --ACA
-    where decons EmptyL = error "Empty sequence!"
-          decons (l :< others) = (l,others)
-          --getParam r True  = singleton (Param r) --Aquí se hace el access if b. ¿Capaz un ParamPointer?
-          --getParam r False = singleton (Param r)
-
+    =  if (S.null s)
+       then do
+            return s0
+       else do
+        let firstExp =  (fst . decons . viewl) s
+        -- liftIO $ putStrLn $ show s
+        if b then
+            do
+            isL <- isLval
+            let goback = if isL then return () else setRval
+            setLval
+            (argProg,rArg) <- expToTac firstExp
+            goback
+            let pamToAdd = singleton (Param rArg (head tams ))
+            argsToProg ( (snd . decons . viewl) s) b (s0 <> argProg <> pamToAdd) (tail tams)
+        else
+            do
+              (argProg,rArg) <- expToTac firstExp
+              argsToProg ( (snd . decons . viewl) s) b (s0 <> argProg <> singleton (Param rArg (head tams))) (tail tams) --ACA
+  where decons EmptyL = error "Empty sequence!"
+        decons (l :< others) = (l,others)
+        --getParam r True  = singleton (Param r) --Aquí se hace el access if b. ¿Capaz un ParamPointer?
+        --getParam r False = singleton (Param r)
+  
 
 expToTac :: Exp -> TreeTranslator ((Program,Var))
 expToTac (Unary op (ExpInt   a) ) = return  (empty , operateui op a )
@@ -281,11 +281,17 @@ expToTac node@(Binary Access exp1 exp2) = do
                            addr
         return (empty |> newIns , Temp nt)
     else do 
+        isL <- isLval
+        let goback = if (not isL) then return () else setLval
+        
+        setLval
         (tac1,var1) <- expToTac exp1
         setRval
         (tac2,var2) <- expToTac exp2
+        goback
+
         nt <- newTemp
-        setLval -- No lo estamos recuperando
+
         return ((tac1 <> tac2) |> (Addi (Temp nt) var1 var2),(Temp nt))
   where (addr,ofs) = getStructOrUnion node 
 

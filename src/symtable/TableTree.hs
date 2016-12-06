@@ -36,6 +36,7 @@ import Data.Sequence(empty,viewl,viewr,length,Seq,(|>),(<|),ViewL((:<)),ViewR((:
 import Data.Maybe(fromJust,isNothing)
 import Data.List (intercalate)
 
+firstLocal = 12
 
 -- Tabla de símbolos
 type SymbolTable a = Map.Map String a
@@ -86,7 +87,7 @@ addSOffset :: Scope a -> Int -> Scope a
 addSOffset (Scope st ofs l) of2 = Scope st (ofs+of2) l
 
 cleanOffset :: Scope a -> Scope a
-cleanOffset (Scope st _ l) = Scope st 4 l
+cleanOffset (Scope st _ l) = Scope st firstLocal l
 
 enterScope' :: Scope a -> Scope a
 enterScope' (Scope symtable ofs l)  = Scope symtable ofs ((addSOffset emptyScope ofs) <| l)
