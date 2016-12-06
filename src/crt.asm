@@ -20,19 +20,25 @@ vamo_a_imprimi_c:
     syscall
     jr $ra
 # idioteces end
-vamo_a_lee_int:       
+vamo_a_lee_i:       
     li $v0,5
     syscall
     lw $a0,0($fp)
     sw $v0,0($a0)
     jr $ra
-vamo_a_lee_float:
-    # li $v0,6
-    # syscall
-    # lw $a0,0($fp)
+vamo_a_lee_b:       
+    li $v0,5
+    syscall
+    lw $a0,0($fp)
+    sw $v0,0($a0)
+    jr $ra
+vamo_a_lee_f:
+    li $v0,6
+    syscall
+    lw $a0,0($fp)
     # sw $f0,0($a0)
-    # jr $ra
-vamo_a_lee_char:
+    jr $ra
+vamo_a_lee_c:
     lw $a0,0($fp)
     li $a1,1
     li $v0,8

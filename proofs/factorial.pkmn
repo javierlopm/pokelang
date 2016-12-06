@@ -1,17 +1,17 @@
-
 FORWARDtortle funcball pINTachu fibo_iterativo(pINTachu n);
 FORWARDtortle funcball pINTachu fibo_recursivo(pINTachu n);
-
 --
     Factorial recursivo
 --
 funcball VOIDtorb hitMAINlee():
     pINTachu opt;
+    pINTachu res;
     
     vamo_a_imprimi("Bienvenido\n");
 
 
     vamo_mientra squirtrue:
+
         vamo_a_imprimi("Que desea hacer?\n");
         vamo_a_imprimi("1) Calcular factorial recursivo\n");
         vamo_a_imprimi("2) Calcular factorial iterativo\n");

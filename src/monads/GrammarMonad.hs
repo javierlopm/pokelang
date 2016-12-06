@@ -630,8 +630,17 @@ buildRead :: Token -> (Type,Ins) -> OurMonad((Type,Ins))
 buildRead four one = do 
     itsReadable <- checkReadable four True 
     newVar      <- buildVar four
-    checkOkIns (Read newVar ) (snd one) TypeVoid
-
+    if (itsReadable == TypeVoid)
+      then checkOkIns (new_ins newVar) (snd one) TypeVoid
+      else return (TypeError,Error)
+  where 
+      func_call TypeInt   = "vamo_a_lee_i"
+      func_call TypeBool  = "vamo_a_lee_b"
+      func_call TypeChar  = "vamo_a_lee_c"
+      func_call TypeFloat = "vamo_a_lee_f"
+      func_call _         = ""
+      new_ins newVar = if (call_str /= "") then Call call_str (S.singleton newVar) 4 True else NoOp
+          where call_str = func_call ((storedType . dec) newVar)
 
 -- Change by a instruction type default
 adefault = undefined

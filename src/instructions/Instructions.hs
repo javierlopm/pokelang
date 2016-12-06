@@ -171,7 +171,7 @@ instance Show Operator where
 
 data Exp = Binary  Operator Exp Exp
          | Unary   Operator Exp
-         | ExpVar  Declare  String
+         | ExpVar  { dec::Declare , nam::String }
          | ExpTrue
          | ExpFalse
          | ExpFloat Float
