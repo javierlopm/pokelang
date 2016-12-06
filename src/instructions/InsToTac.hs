@@ -117,10 +117,10 @@ forestToTac' :: [(String,Ins,TypeTuple,Int)] -> TreeTranslator ( [(String,Progra
 forestToTac' a = mapM buildFun  a
     where dr1 (a,b,c,d) = (a,b,d)
           buildFun a@(str,ins,typ,lv)= do ((str,prg):_) <- forestToTac $ [dr1 a]
-                                          liftIO $ putStrLn $ show lv
+                                          -- liftIO $ putStrLn $ show lv
                                           if str == "hitMAINlee" 
                                              then  return (str, (prg |> TacExit))
-                                             else  return (str, ((singleton (TagS str)) |> (TACCall "Prologue" lv) )<> prg |> (TagS (str++"_epilogue"))   |> (TACCall "Epilogue" 42) )
+                                             else  return (str, ((singleton (TagS str)) |> (Save lv) )<> prg |> (TagS (str++"_epilogue"))   |> (Clean lv) )
                                           --return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TACCall "Epilogue" 42))
 forestToTac :: [(String,Ins,Int)] -> TreeTranslator ( [(String,Program)] )
 forestToTac [] = return mempty
@@ -216,7 +216,7 @@ treeToTac (Block iS ) = do
     return $ F.foldl (><) empty progSeq
 treeToTac (Call s args size b) = do
                             prog <- argsToProg args b empty 
-                            return $ prog <> singleton (TACCall s size)
+                            return $ prog <> singleton (TACCall s size) <> singleton (Clean size)
 
 treeToTac (Return v)  = do
     maybe ( return (singleton (ReturnE) ))
@@ -230,7 +230,7 @@ treeToTac (Read e1) = do isL <- isLval
                          setLval
                          (var_cal,var) <- expToTac e1
                          goback
-                         return $ var_cal |> (Param var) |> (TACCall "read" 1)
+                         return $ var_cal |> (Param var 42) |> (TACCall "read" 1)
 treeToTac _ = return (singleton Nop)
  
 argsToProg :: (Seq(Exp)) -> Bool ->  Program ->  TreeTranslator((Program))
@@ -246,12 +246,12 @@ argsToProg s b s0 =  if (S.null s)
                         setLval
                         (argProg,rArg) <- expToTac firstExp
                         goback
-                        let pamToAdd = singleton (Param rArg)
+                        let pamToAdd = singleton (Param rArg 42)
                         argsToProg ( (snd . decons . viewl) s) b $ s0 <> argProg <> pamToAdd
                     else
                         do
                           (argProg,rArg) <- expToTac firstExp
-                          argsToProg ( (snd . decons . viewl) s) b $ s0 <> argProg <> singleton (Param rArg) --ACA
+                          argsToProg ( (snd . decons . viewl) s) b $ s0 <> argProg <> singleton (Param rArg 42) --ACA
     where decons EmptyL = error "Empty sequence!"
           decons (l :< others) = (l,others)
           --getParam r True  = singleton (Param r) --Aquí se hace el access if b. ¿Capaz un ParamPointer?
@@ -359,7 +359,7 @@ expToTac (Binary op exp1 exp2)
 expToTac (CallVal s args size b ) = do
     tempLocal  <- newTemp
     prog <- argsToProg args b empty 
-    return ((prog <> singleton (CallExp (Temp tempLocal) s size)),(Temp tempLocal))    
+    return ((prog <> singleton (CallExp (Temp tempLocal) s size) <> singleton (Clean size)),(Temp tempLocal))    
 
 expToTac (Unary op a) = do 
     tempLocal  <- newTemp

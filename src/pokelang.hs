@@ -59,7 +59,7 @@ getIns' tokens pr = do
 
   if errorcount == 0
     then do if pr then putStrLn $ printAsts (map dr1' ast) else return ()
-            putStrLn $ show $ strTbl state  --ACÁ NABIL
+            -- putStrLn $ show $ strTbl state  
             return (ast,strTbl state)
     else printErrors errorcount id errors >> exitFailure >> return ([],[])
 

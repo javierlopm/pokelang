@@ -106,7 +106,7 @@ data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
             | TACCall    String  Int
             | CallExp    Dest String  Int
             | Clean   Int
-            | Param   Src1    
+            | Param   Src1 Int    
             | ReturnE 
             | ReturnS  Src1 
             -- Extras
@@ -119,6 +119,8 @@ data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
             -- Prints
             | Print     Src1        -- Print Integer constant
             | PrintEnum String Src1 -- Print enum at label
+            -- save
+            | Save Int -- save on stack?
             
 instance Show      IntIns where
     show (Addi    r0 r1 r2)  =  showTAC r0 r1 "+" r2
@@ -163,7 +165,7 @@ instance Show      IntIns where
     show (Clean         i )  = "Clean " ++ "#" ++ show i
     show (ReturnS   s1      )  = "Return  " ++ show s1
     show (ReturnE          )  = "ReturnE "
-    show (Param    par )      = "Param " ++ show par
+    show (Param    par i)      = "Param " ++ show par ++" #"++show i
     show (Tag      i   )      = '\n': "tag_" ++ show i ++ ":"
     show (TagS     s   )      = '\n': "tag_" ++ s ++ ":" 
     show (TagSC    s v )      = '\n': s ++ ": \n  " ++ show v
@@ -172,6 +174,7 @@ instance Show      IntIns where
     show (PrintEnum c i)      = "Print enum " ++ show c ++ "[" ++ show i ++"]"
     show Nop                  = "Nop"
     show TacExit                  = "TacExit"
+    show (Save i)             = "Save #" ++ show i
 
 -- Ewwwww, it might be improved with Generics?
 instance Binary IntIns where
@@ -206,7 +209,7 @@ instance Binary IntIns where
     put (ReadArray  r0 r1 r2) = putWord8 28 >> put r0 >>  put r1 >> put r2 
     put (StoreArray r0 r1 r2) = putWord8 29 >> put r0 >>  put r1 >> put r2 
     put (TACCall     str i )  = putWord8 30 >> put str >> put i
-    put (Param    par )      = putWord8 31 >> put par
+    put (Param    par i )     = putWord8 31 >> put par >> put i
     put (Comment  str )      = putWord8 32 >> put str
     put (Tag      str )      = putWord8 33 >> put str
     put (Print     r0 )      = putWord8 34 >> put r0
@@ -261,7 +264,7 @@ instance Binary IntIns where
        28 ->  buildTac  ReadArray
        29 ->  buildTac  StoreArray
        30 ->  build2get TACCall 
-       31 ->  B.get >>= return . Param
+       31 ->  build2get Param
        32 ->  B.get >>= return . Comment
        33 ->  B.get >>= return . Tag
        34 ->  B.get >>= return . Print
@@ -281,6 +284,7 @@ instance Binary IntIns where
        48 -> buildTac CallExp
        49 ->  B.get >>= return . ReturnS
        50 ->  return ReturnE
+       51 -> B.get >>= return . Save 
 
 -- Print auxiliaries
 showTAC  d s1 op s2 = show d ++" := "++ show s1 ++" "++ op ++ " " ++ show s2
@@ -389,7 +393,7 @@ programExample = fromList stuff
                   (Jnotz    a   42 ),
                   (XOr      z x cu),
                   (StorePointer a z),
-                  (Param    x ),
+                  -- (Param    x ),
                   (ReadPointer  z a)]
 
 -- Binary store

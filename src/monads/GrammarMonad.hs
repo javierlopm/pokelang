@@ -11,7 +11,7 @@ import Types
 import ErrorHandle(strError)
 import qualified Data.Sequence as S
 import Instructions
-
+import qualified Data.Foldable as F(foldl,toList)
 
 type OurMonad    = RWS String (S.Seq(Message)) ScopeNZip
 type SymTable    = Scope Declare  
@@ -579,7 +579,6 @@ buildPrint string i t = do
     bleh <- checkOkIns new_ins i t
     return bleh
 
-
 checkMain :: OurMonad()
 checkMain = do
     globals <- gets scp
@@ -587,18 +586,24 @@ checkMain = do
         then return ()
         else tellError $ strError (0,0) "" "hitMAINlee" "function not found"
 
+getScopeSize :: Scope Declare -> Int 
+getScopeSize s = max offChild $ ofs s 
+            where
+              offChild = F.foldl (\a b -> max a (getScopeSize b)) (-1) $ chs s 
+
 -- Check if there is a mainFunction and add it at the begining of the list
-checkMain' :: [(String,Ins,TypeTuple)] -> OurMonad( [(String,Ins,TypeTuple,Int)] ) --ACA NABIL, GET INT TOTALS
+checkMain' :: [(String,Ins,TypeTuple)] -> OurMonad( [(String,Ins,TypeTuple,Int)] ) 
 checkMain' functions = do
-    globals <- gets strTbl
-    let ((fs,td),list) = foldl processIns ((Nothing,S.empty),[]) functions
+    globals <- gets scp
+    let ((fs,td),list) = foldl (processIns globals) ((Nothing,S.empty),[]) $  functions 
     if isJust fs
-    then return (("hitMAINlee" , (fromJust fs), td,0) : list)
+    then return (("hitMAINlee" , (fromJust fs), td,getScopeSize $ fields $ fromJust $ getValS "hitMAINlee" globals) : list)
     else do tellError $ strError (0,0)"" "hitMAINlee" "function not found"
             return []
-  where processIns ((a,s),l) (string,insTree,t) = if string == "hitMAINlee" 
+  where processIns globals ((a,s),l) ((string,insTree,t)) = 
+                                          if string == "hitMAINlee" 
                                               then ((Just insTree,t), l)
-                                              else ((a,s), (string,insTree,t,0):l)
+                                              else ((a,s), (string,insTree,t,getScopeSize $ fields $ fromJust $ getValS string globals):l)
 
 checkRecursiveDec :: Token -> TypeTuple -> OurMonad()
 checkRecursiveDec dataTok typeSec = do 

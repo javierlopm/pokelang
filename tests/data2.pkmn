@@ -1,4 +1,4 @@
---
+--	
     Ejemplo de struct y union
 --
 # articUNION poketrainer {
@@ -18,6 +18,11 @@
 #     Martes}
 
 funcball pINTachu gcd( pINTachu a, pINTachu b):
+	pINTachu c;
+	pINTachu d;
+	vamo_a_empeza
+		pINTachu f;
+	vamo_a_calmano
     vamo_a_retorna a+b;
 vamo_a_calmano
 
