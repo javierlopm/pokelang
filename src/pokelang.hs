@@ -87,7 +87,7 @@ main = do
                         -- putStrLn "FIN======================================"
                         program <- runCompiler (mapM compile prog_blocks) initDescriptor
                         -- crt     <- readFile "crt.asm"
-                        -- T.putStrLn $ stringsToMips $ translateStrings strs
+                        T.putStrLn $ stringsToMips $ translateStrings strs
                         putStrLn ".text"
                         (T.putStrLn . assembly . snd) program
                         let crt = ""
