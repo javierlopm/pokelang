@@ -116,7 +116,7 @@ forestToTac' :: [(String,Ins,TypeTuple,Int)] -> TreeTranslator ( [(String,Progra
 forestToTac' a = mapM buildFun  a
     where dr1 (a,b,c,d) = (a,b,d)
           buildFun a@(str,ins,typ,i) =do ((str,prg):_) <- forestToTac $ [dr1 a]
-                                         --liftIO $ putStrLn $ show ins
+                                         liftIO $ putStrLn $ show typ
                                          if str == "hitMAINlee" 
                                             then  return (str, (prg |> TacExit))
                                             else  return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TagS (str++"_epilogue"))   |> (TACCall "Epilogue" 42) )
