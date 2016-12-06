@@ -112,7 +112,7 @@ data Descriptor = Descriptor { regDescriptor  :: Vector [Var]
                      deriving (Show)
 
 load :: Var -> Register -> Mips
-load _ _ = ""
+load _ _ = "" -- Solo para globales cuando tengamos
 
 addOffset :: Int -> Maybe Int
 addOffset a = Just (a+lowreg)
@@ -149,11 +149,11 @@ findRegister var canRemove = do
                                     else getAnyButThis reg
 
 getReg :: Var -- Var to find register for
-           -> Bool -- is in normal procesor? if false coprocessor
+          -- -> Bool -- is in normal procesor? if false coprocessor
              -- -> Bool -- revisar si el reg no comparte lugar
               -> MipsGenerator(Register)
-getReg Fp  _ = return fp
-getReg var _ = isInRegister
+getReg Fp  = return fp
+getReg var = isInRegister
     where isInRegister = do 
             varDesc <- gets varDescriptor -- could be float descriptor
             maybe searchEmpty
@@ -178,6 +178,12 @@ getReg var _ = isInRegister
           err1 = "Empty registers list for Ry"
           err2 = "No empty registers and no spills :( sorry Novich"
 
+killVar :: Var -> MipsGenerator()
+killVar _ = undefined
+
+createTemp :: Var -> Register -> MipsGenerator ()
+createTemp = undefined
+
 
 newRegisters :: Vector [Var]
 newRegisters = replicate numRegs [] -- 23-8+1
@@ -188,8 +194,6 @@ initDescriptor = Descriptor newRegisters M.empty T.empty
 type MipsGenerator = StateT Descriptor IO
 
 -- Remove defitions 
--- killVar :: Var -> MipsGenerator()
--- killVar _ = undefined
 
 
 -- Copy descript
@@ -271,9 +275,9 @@ processIns ins =
       (Addi r1 (Int_Cons c) r2)  -> get1reg "addi" r1 r2 c
       (Subi r1 (Int_Cons c) r2)  -> get1reg "addi" r1 r2 (-c)
       (Divi r1 (Int_Cons c) r2)  -> return () -- get1reg "div" r1 r2 (-c)
-      (Subi r1 r2 r3)            -> get2regs "sub" r1 r2 r3
-      (Addi r1 r2 r3)            -> get2regs "add" r1 r2 r3
-      (Divi r1 r2 r3)            -> get2regs "div" r1 r2 r3
+      (Subi r1 r2 r3)            -> get3regs "sub" r1 r2 r3
+      (Addi r1 r2 r3)            -> get3regs "add" r1 r2 r3
+      (Divi r1 r2 r3)            -> get3regs "div" r1 r2 r3
 
       (Comment str)              -> if showComments then emit  ("# " ~~ (T.pack str) ~~ "\n") else return ()
       -- (Tag     0 )               -> emit $ "main:\n"
@@ -328,20 +332,27 @@ processIns ins =
       Nop                        -> emit "# nop\n"
       otherwise                  -> return ()
       -- (TagSC) tag para strings, usado en data, no aqui
-   where get2regs str d r1 r2 = do 
-            fstReg <- findRegister r1 Nothing 
-            sndReg <- findRegister r2 (Just fstReg)
-            emit $ build3Mips str magicReg fstReg sndReg -- CAMBIAR, DESTINO DE CALCULO MAL COLCADO
+   where get3regs str d r1 r2 = do 
+            -- fstReg <- findRegister r1 Nothing 
+            -- sndReg <- findRegister r2 (Just fstReg)
+            fstReg <- getReg r1 -- por param false o true
+            sndReg <- getReg r2 -- por param false o true
+            dReg   <- getReg d
+            emit $ build3Mips str dReg fstReg sndReg 
             -- kill and update def de r1 con d
          get1reg str d r1 cons = do 
-            fstReg <- findRegister r1 Nothing
+            -- fstReg <- findRegister r1 Nothing
+            fstReg <- getReg r1 
             emit $ buildiMips str magicReg fstReg cons
          get1branch str r1 str2 lab = do 
-            fstReg <- findRegister r1 Nothing
+            -- fstReg <- findRegister r1 Nothing
+            fstReg <- getReg r1
             emit $ build3MipsB str fstReg str2 lab
          get2branch str r1 r2 lab = do 
-            fstReg <- findRegister r1 Nothing
-            sndReg <- findRegister r2 Nothing
+            -- fstReg <- findRegister r1 Nothing
+            -- sndReg <- findRegister r2 Nothing
+            fstReg <- getReg r1
+            sndReg <- getReg r2
             emit $ build3MipsB str fstReg (showReg sndReg) lab
          moveSp n = emiti $ "addi $sp,$sp," ~~ stt n ~~ "\n"
          moveFp n = emiti $ "addi $fp,$fp," ~~ stt n ~~ "\n"
