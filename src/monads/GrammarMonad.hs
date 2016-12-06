@@ -404,8 +404,9 @@ insertParamInScope dcltype   (TkId (l,c) lexeme ) isGlob readonly = do
 
       --tellError $ "Puse padding de " ++ show (newofs,padd) ++ " en " ++ lexeme
       isref <- gets isRef
+      -- let isRef a = False
 
-      if (isRef state)
+      if False
       then (onZip . apply) $ insert  lexeme (scopevar (Reference (newofs)))  (padd+4)
       else (onZip . apply) $ insert  lexeme (scopevar (Offset    (newofs)))  (padd+sz)
   where error1       = generror ++ " in actual scope."
