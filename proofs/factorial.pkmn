@@ -8,6 +8,8 @@ FORWARDtortle funcball pINTachu fibo_recursivo(pINTachu n);
 funcball VOIDtorb hitMAINlee():
     pINTachu opt;
     pINTachu res;
+    
+    vamo_a_imprimi("Bienvenido\n");
 
 
     vamo_mientra squirtrue:

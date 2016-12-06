@@ -5,3 +5,4 @@ grammarinfo.md
 lexer/Lexer.hs
 parser/Grammar.hs
 a.out
+*.asm

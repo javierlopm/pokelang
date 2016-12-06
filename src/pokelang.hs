@@ -88,7 +88,7 @@ main = do
                         program <- runCompiler (mapM compile prog_blocks) initDescriptor
                         -- crt     <- readFile "crt.asm"
                         T.putStrLn $ stringsToMips $ translateStrings strs
-                        putStrLn ".text"
+                        putStrLn ".text\nmain:\n"
                         (T.putStrLn . assembly . snd) program
                         let crt = ""
                         putStrLn crt

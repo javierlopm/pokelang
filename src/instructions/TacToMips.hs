@@ -128,19 +128,20 @@ findEmpty v = (findIndex null v) >>= addOffset
 findRegister :: Var -- Variable to store in a register
                   -> Maybe Register -- Register that cannot be used for spill
                    -> MipsGenerator(Register)
+findRegister Fp _ = return fp 
 findRegister var canRemove = do 
     regs <- gets regDescriptor
     maybe (searchEmpty regs) return (findVar var regs)
   where searchEmpty r    = maybe doSpill loadNReturn (findEmpty r)
-        loadNReturn reg  = do emit (load var reg)
+        loadNReturn reg  = do emit (load var (reg+lowreg))
                               updateRegDescriptors reg (const [var])
                               -- updateVarDescriptors reg (const [var])
-                              return reg
+                              return (reg+lowreg)
         doSpill   = maybe getAnyReg getAnyButThis canRemove
         getAnyReg :: MipsGenerator(Register)
         getAnyReg = do regFound <- liftIO $ randomRIO (0,numRegs-1) -- Se queda pegado si ninguno de los 16 registros
                        hbu      <- hasBackUp regFound    -- Vive en sus posiciones de memoria
-                       if hbu then (loadNReturn regFound) else getAnyReg
+                       if hbu then (loadNReturn (regFound)) else getAnyReg
         getAnyButThis reg = do regFound <- liftIO $ randomRIO (0,numRegs)
                                hbu      <- hasBackUp regFound
                                if hbu && (regFound /= reg) 
@@ -227,6 +228,7 @@ processIns ins =
       (Divi r1 r2 r3)            -> get2regs "div" r1 r2 r3
 
       (Comment str)              -> if showComments then emit  ("# " ~~ (T.pack str) ~~ "\n") else return ()
+      -- (Tag     0 )               -> emit $ "main:\n"
       (Tag     lb)               -> emit $ "_tag" ~~ (stt lb) ~~ ":\n"
       (TagS   str)               -> emit $ (T.pack str) ~~ ":\n"
 
@@ -269,6 +271,7 @@ processIns ins =
       -- (StoreArray   d r1 r2) -> 
 
 
+      TacExit                    -> emit "    li $v0,10\n    syscall"
       Nop                        -> emit "# nop\n"
       otherwise                  -> return ()
       -- (TagSC) tag para strings, usado en data, no aqui
