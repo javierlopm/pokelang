@@ -109,20 +109,22 @@ modJumps :: Bool -> Maybe Word -> TreeTranslator()
 modJumps True  mw = modify (\(TranlatorState a b _  c d e f)->TranlatorState a b mw c d e f)
 modJumps False mw = modify (\(TranlatorState a b c _  d e f)->TranlatorState a b c mw d e f)
 
---totalType :: TypeTuple -> Int
---totalType a = (sum (foldl getSize 0 (F.toList a))) - (getSize $ funcReturnType a )
+totalArgs :: TypeTuple -> Int
+totalArgs a = foldl (\x y -> x + (getSize y)) 0 $ init $ F.toList a
+
 -- use foldM instead
-forestToTac' :: [(String,Ins,TypeTuple)] -> TreeTranslator ( [(String,Program)] )
+forestToTac' :: [(String,Ins,TypeTuple,Int)] -> TreeTranslator ( [(String,Program)] )
 forestToTac' a = mapM buildFun  a
-    where dr1 (a,b,c) = (a,b)
-          buildFun a@(str,ins,typ) = do  ((str,prg):_) <- forestToTac [dr1 a]
-                                         if str == "hitMAINlee" 
-                                            then  return (str, (prg |> TacExit))
-                                            else  return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TagS (str++"_epilogue"))   |> (TACCall "Epilogue" 42) )
-                                         --return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TACCall "Epilogue" 42))
-forestToTac :: [(String,Ins)] -> TreeTranslator ( [(String,Program)] )
+    where dr1 (a,b,c,d) = (a,b,d)
+          buildFun a@(str,ins,typ,lv)= do ((str,prg):_) <- forestToTac $ [dr1 a]
+                                          -- liftIO $ putStrLn $ show lv
+                                          if str == "hitMAINlee" 
+                                             then  return (str, (prg |> TacExit))
+                                             else  return (str, ((singleton (TagS str)) |> (Save lv) )<> prg |> (TagS (str++"_epilogue"))   |> (Clean lv) )
+                                          --return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TACCall "Epilogue" 42))
+forestToTac :: [(String,Ins,Int)] -> TreeTranslator ( [(String,Program)] )
 forestToTac [] = return mempty
-forestToTac ((str,insTree):tl)  = do 
+forestToTac ((str,insTree,lv):tl)  = do 
     -- liftIO $ putStrLn $ show insTree
     headTac       <- treeToTac insTree
     forestTacTail <- forestToTac tl
@@ -213,9 +215,9 @@ treeToTac (ForStep low high step ins ) = do
 treeToTac (Block iS ) = do 
     progSeq <- M.mapM treeToTac iS
     return $ F.foldl (><) empty progSeq
-treeToTac (Call s args size b) = do
-                            prog <- argsToProg args b empty 
-                            return $ prog <> singleton (TACCall s size)
+treeToTac (Call s args sizes b) = do
+                            prog <- argsToProg args b empty sizes
+                            return $ prog <> singleton (TACCall s (sum sizes)) <> singleton (Clean (sum sizes))
 
 treeToTac (Return v)  = do
     maybe ( return (singleton (ReturnE) ))
@@ -229,15 +231,17 @@ treeToTac (Read e1) = do isL <- isLval
                          setLval
                          (var_cal,var) <- expToTac e1
                          goback
-                         return $ var_cal |> (Param var) |> (TACCall "read" 1)
+                         return $ var_cal |> (Param var 42) |> (TACCall "read" 1)
 treeToTac _ = return (singleton Nop)
  
-argsToProg :: (Seq(Exp)) -> Bool ->  Program ->  TreeTranslator((Program))
-argsToProg s b s0 =  if (S.null s)
+argsToProg :: (Seq(Exp)) -> Bool ->  Program -> [Int] -> TreeTranslator((Program))
+argsToProg s b s0  tams
+                =  if (S.null s)
                    then do
                         return s0
                    else do
                     let firstExp =  (fst . decons . viewl) s
+                    -- liftIO $ putStrLn $ show s
                     if b then
                         do
                         isL <- isLval
@@ -245,12 +249,12 @@ argsToProg s b s0 =  if (S.null s)
                         setLval
                         (argProg,rArg) <- expToTac firstExp
                         goback
-                        let pamToAdd = singleton (Param rArg)
-                        argsToProg ( (snd . decons . viewl) s) b $ s0 <> argProg <> pamToAdd
+                        let pamToAdd = singleton (Param rArg (head tams ))
+                        argsToProg ( (snd . decons . viewl) s) b (s0 <> argProg <> pamToAdd) (tail tams)
                     else
                         do
                           (argProg,rArg) <- expToTac firstExp
-                          argsToProg ( (snd . decons . viewl) s) b $ s0 <> argProg <> singleton (Param rArg) --ACA
+                          argsToProg ( (snd . decons . viewl) s) b (s0 <> argProg <> singleton (Param rArg (head tams))) (tail tams) --ACA
     where decons EmptyL = error "Empty sequence!"
           decons (l :< others) = (l,others)
           --getParam r True  = singleton (Param r) --Aquí se hace el access if b. ¿Capaz un ParamPointer?
@@ -355,10 +359,10 @@ expToTac (Binary op exp1 exp2)
         (ins2,t2) <- expToTac exp2
         nt <- newTemp
         return ((ins1 <> ins2) |> (insTranslation op (Temp nt) t1 t2) ,Temp nt)
-expToTac (CallVal s args size b ) = do
+expToTac (CallVal s args sizes b ) = do
     tempLocal  <- newTemp
-    prog <- argsToProg args b empty 
-    return ((prog <> singleton (CallExp (Temp tempLocal) s size)),(Temp tempLocal))    
+    prog <- argsToProg args b empty sizes
+    return ((prog <> singleton (CallExp (Temp tempLocal) s (sum sizes)) <> singleton (Clean (sum sizes))),(Temp tempLocal))    
 
 expToTac (Unary op a) = do 
     tempLocal  <- newTemp

@@ -305,10 +305,9 @@ processIns ins =
       (ReadArray    d Fp (Int_Cons c)) -> readLocal d c
       (ReadArray    d r1 r2)           -> readArr d r1 r2
       -- (StoreArray   d r1 r2) -> 
-
-      (Param      (Int_Cons s) )   -> moveSp (-4) >> emiti ("li $t0,"~~stt s~~"\n")    >> emiti "sw $t0,0($sp)\n"
-      (Param      (Float_Cons s))  -> moveSp (-4) >> emiti ("li $t0,"~~stt s~~"\n")    >> emiti "sw $t0,0($sp)\n"
-      (Param      (MemAdress s))   -> moveSp (-4) >> emiti ("la $t0,_"~~T.pack s~~"\n") >> emiti "sw $t0,0($sp)\n"
+      (Param      (Int_Cons s)  i)   -> moveSp (-4) >> emiti ("li $t0,"~~stt s~~"\n")    >> emiti "sw $t0,0($sp)\n"
+      (Param      (Float_Cons s)i)  -> moveSp (-4) >> emiti ("li $t0,"~~stt s~~"\n")    >> emiti "sw $t0,0($sp)\n"
+      (Param      (MemAdress s) i)   -> moveSp (-4) >> emiti ("la $t0,_"~~T.pack s~~"\n") >> emiti "sw $t0,0($sp)\n"
       -- (Param      (Temp s))  -> moveSp (-4) >> emit ("la $t0,"~~T.pack s~~"\n") >> emit $ "    sw $t0,0($sp)" -- really? bueno, hay que buscar el registro
       (TACCall    str_lab  i)     -> emiti $ "jal " ~~ T.pack str_lab ~~ "\n    move $fp,$sp\n" -- Potencialmente hacer algo con ese i
       (CallExp  dest  str_lab  i) -> emiti $ "jal " ~~ T.pack str_lab ~~ "\n    move $fp,$sp\n" -- Mover lo que se tenga a dest

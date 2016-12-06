@@ -31,7 +31,7 @@ data Ins = Assign    Exp Exp
          | AssignSum Exp Exp
          | AssignMin Exp Exp
          | AssignMul Exp Exp
-         | Call      String (Seq(Exp)) Int Bool
+         | Call      String (Seq(Exp)) [Int] Bool
          | If      { guards::Seq(Ins) }
          | Guard   { cond  :: Exp, ins :: Ins }
          | Else    { ins   :: Ins }
@@ -74,9 +74,9 @@ showIndented n  (Block ins) = ( concat . (intersperse ",\n") . (map (showIndente
 showIndented n  Error    = "\nError"
 showIndented n  _ = "DefaultIns"
 
-printAsts :: [(String,Ins)] -> String
+printAsts :: [(String,Ins,Int)] -> String
 printAsts = concatMap beautyprint 
-    where beautyprint (str,blck) = str ++ "\n--------------" ++ show blck ++ "\n\n"
+    where beautyprint (str,blck,int) = str ++ "\n--------------" ++ show blck ++ "\n\n"
 
 -- shortcut for indentation
 ind :: Int -> String
@@ -178,7 +178,7 @@ data Exp = Binary  Operator Exp Exp
          | ExpInt   Int
          | ExpChar  Char
          | ExpEnum  String
-         | CallVal  String (Seq(Exp)) Int Bool
+         | CallVal  String (Seq(Exp)) [Int] Bool
          | NoExp
          deriving (Show)
 
