@@ -157,20 +157,21 @@ getReg var _ = isInRegister
     where isInRegister = do 
             varDesc <- gets varDescriptor -- could be float descriptor
             maybe searchEmpty
-                  (\ regList -> if null regList 
-                                    then  error err1 >> return (-1)
-                                    else  return ((Prelude.head regList) + lowreg))
+                  (\ (_,rL) ->  if null rL 
+                                then  error err1 >> return (-1)
+                                else  return ((Prelude.head rL) + lowreg))
                   (lookup var varDesc)
           updateWith i = do 
               emit (load var (i+lowreg))
               updateRegDescriptors i   (const [var])
               updateVarDescriptors var (const ([var],[i]))
               return (i+lowreg)
-          searchEmpty = do vectDesc <- gets regDescriptor
-                           let(found,index) = F.foldl findVec (False,0) vectDesc
-                           if found
-                              then updateWith index
-                              else error err2 >> return (-1)
+          searchEmpty = do 
+              vectDesc <- gets regDescriptor
+              let(found,index) = F.foldl findVec (False,0) vectDesc
+              if found
+                 then updateWith index
+                 else error err2 >> return (-1)
           findVec (True ,x) _  = (True,x)
           findVec (False,x) [] = (True,x)
           findVec (False,x)  _ = (False,x+1)
