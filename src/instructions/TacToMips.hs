@@ -22,7 +22,7 @@ type Mips       = T.Text
 type Register   = Int
 type Registers  = [Int]
 
-showComments = False
+showComments = True
 
 lowreg  = 8
 highreg = 23
@@ -30,12 +30,14 @@ highreg = 23
 -- numRegs = highreg - lowreg + 1
 numRegs = 16
 
-fp :: Register
-fp = 30
-sp :: Register
-sp = 29
 gp :: Register
 gp = 28
+sp :: Register
+sp = 29
+fp :: Register
+fp = 30
+ra :: Register
+ra = 31
 
 magicReg :: Register
 magicReg = 8
@@ -68,6 +70,7 @@ showReg :: Register -> Mips
 showReg 28 = "$gp"
 showReg 29 = "$sp"
 showReg 30 = "$fp"
+showReg 31 = "$ra"
 showReg r  = "$" ~~ (stt r)
 
 build3Mips :: Mips -> Register -> Register -> Register -> Mips
@@ -259,12 +262,12 @@ processIns ins =
       (Jnotz r1 lb)  -> get1branch "bne" r1 (showReg 0)  lb
 
       -- Mem access
-      (Mv           d r1)    -> emit "AQUI HAY UN MOVE\n"
-      (ReadPointer  d r1)    -> emit "AQUI LEEMOS POINTER\n"
-      (StorePointer d r1)    -> emit "AQUI SALVAMOS POINTER\n"
+      (Mv           d r1)    -> emit "#AQUI HAY UN MOVE\n"
+      (ReadPointer  d r1)    -> emit "#AQUI LEEMOS POINTER\n"
+      (StorePointer d r1)    -> emit "#AQUI SALVAMOS POINTER\n"
       (ReadArray    d Fp (Int_Cons c)) -> emit$"    lw "~~(showReg magicReg)~~","~~(stt c)~~"("~~(showReg fp)~~")\n"
       (ReadArray    d (Int_Cons c) Fp) -> processIns (ReadArray d Fp (Int_Cons c))
-      (ReadArray    d r1 r2) ->  emit "AQUI LEEMOS ARREGLO\n" --processIns (Addi d r1 r2) >> emit$"lw "~~(showReg magicReg)~~",0"~~""~~"("~~(showReg (-1))~~")\n"
+      (ReadArray    d r1 r2) ->  emit "#AQUI LEEMOS ARREGLO\n" --processIns (Addi d r1 r2) >> emit$"lw "~~(showReg magicReg)~~",0"~~""~~"("~~(showReg (-1))~~")\n"
       -- (StoreArray   d r1 r2) -> 
 
 
@@ -310,7 +313,10 @@ processIns ins =
 -- processIns i@(JEq      Src1 Src2 Label)
 -- processIns i@(JNEq     Src1 Src2 Label)
 
+
 runCompiler =  runStateT
+
+
 
 -- loads, stores, array, separados
 
