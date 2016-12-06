@@ -130,10 +130,6 @@ data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
             | TacExit 
             -- Prints
             | Print     Src1        -- Print Integer constant
-            -- | PrintF    Src1        -- Print Float   constant
-            -- | PrintC    Src1        -- Print Char   constant
-            -- | PrintD    Src1        -- Print Dir
-            -- | PrintS    Src1        -- Print String from dir
             | PrintEnum String Src1 -- Print enum at label
             
 instance Show      IntIns where

@@ -112,7 +112,8 @@ data Descriptor = Descriptor { regDescriptor  :: Vector [Var]
                      deriving (Show)
 
 load :: Var -> Register -> Mips
-load _ _ = "" -- Solo para globales cuando tengamos
+load (Int_Cons i) reg = "    li " ~~ showReg reg ~~ "," ~~ stt i ~~ "\n" -- Constantes
+load _ _ = "" -- Globales
 
 addOffset :: Int -> Maybe Int
 addOffset a = Just (a+lowreg)
@@ -125,39 +126,16 @@ findEmpty :: Vector [Var] -> Maybe(Register)
 findEmpty v = (findIndex null v) >>= addOffset
 
 
-findRegister :: Var -- Variable to store in a register
-                  -> Maybe Register -- Register that cannot be used for spill
-                   -> MipsGenerator(Register)
-findRegister Fp _ = return fp 
-findRegister var canRemove = do 
-    regs <- gets regDescriptor
-    maybe (searchEmpty regs) return (findVar var regs)
-  where searchEmpty r    = maybe doSpill loadNReturn (findEmpty r)
-        loadNReturn reg  = do emit (load var (reg+lowreg))
-                              updateRegDescriptors reg (const [var])
-                              -- updateVarDescriptors reg (const [var])
-                              return (reg+lowreg)
-        doSpill   = maybe getAnyReg getAnyButThis canRemove
-        getAnyReg :: MipsGenerator(Register)
-        getAnyReg = do regFound <- liftIO $ randomRIO (0,numRegs-1) -- Se queda pegado si ninguno de los 16 registros
-                       hbu      <- hasBackUp regFound    -- Vive en sus posiciones de memoria
-                       if hbu then (loadNReturn (regFound)) else getAnyReg
-        getAnyButThis reg = do regFound <- liftIO $ randomRIO (0,numRegs)
-                               hbu      <- hasBackUp regFound
-                               if hbu && (regFound /= reg) 
-                                    then loadNReturn regFound
-                                    else getAnyButThis reg
-
 getReg :: Var -- Var to find register for
           -- -> Bool -- is in normal procesor? if false coprocessor
              -- -> Bool -- revisar si el reg no comparte lugar
               -> MipsGenerator(Register)
 getReg Fp  = return fp
 getReg var = isInRegister
-    where isInRegister = do 
+    where isInRegister = do
             varDesc <- gets varDescriptor -- could be float descriptor
             maybe searchEmpty
-                  (\ (_,rL) ->  if null rL 
+                  (\ (_,rL) ->  if null rL
                                 then  error err1 >> return (-1)
                                 else  return ((Prelude.head rL) + lowreg))
                   (lookup var varDesc)
@@ -165,6 +143,11 @@ getReg var = isInRegister
               emit (load var (i+lowreg))
               updateRegDescriptors i   (const [var])
               updateVarDescriptors var (const ([var],[i]))
+              r <- gets regDescriptor
+              v <- gets varDescriptor
+  
+              liftIO(putStr "# ====")
+              liftIO(putStrLn $ (show r) ++ "   " ++ show v)
               return (i+lowreg)
           searchEmpty = do 
               vectDesc <- gets regDescriptor
@@ -314,9 +297,11 @@ processIns ins =
       (Jnotz r1 lb)  -> get1branch "bne" r1 (showReg 0)  lb
 
       -- Mem access
-      (Mv           d r1)    -> emit "#AQUI HAY UN MOVE\n"
-      (ReadPointer  d r1)    -> emiti$"lw "~~(showReg magicReg)~~",0("~~(showReg magicReg)~~")\n"
-      (StorePointer d r1)    -> emiti$"sw "~~(showReg magicReg)~~",0("~~(showReg magicReg)~~")\n"
+      (Mv           d (Int_Cons i)) -> mv d i 
+      (Mv           d _ )           -> emit "#AQUI HAY UN MOVE"
+      (ReadPointer  d (Int_Cons i)) -> emiti$"lw "~~(showReg magicReg)~~",0("~~(showReg magicReg)~~")\n"
+      (ReadPointer  d r1)      -> emiti$"lw "~~(showReg magicReg)~~",0("~~(showReg magicReg)~~")\n"
+      (StorePointer d r1)    -> storeInP d r1
       (ReadArray    d Fp (Int_Cons c)) -> emit$"    lw "~~(showReg magicReg)~~","~~(stt c)~~"("~~(showReg fp)~~")\n"
       (ReadArray    d (Int_Cons c) Fp) -> return () -- processIns (ReadArray d Fp (Int_Cons c))
       (ReadArray    d r1 r2) ->  emit "#AQUI LEEMOS ARREGLO\n" --processIns (Addi d r1 r2) >> emit$"lw "~~(showReg magicReg)~~",0"~~""~~"("~~(showReg (-1))~~")\n"
@@ -324,15 +309,15 @@ processIns ins =
 
       (Param      (Int_Cons s) )   -> moveSp (-4) >> emiti ("li $t0,"~~stt s~~"\n")    >> emiti "sw $t0,0($sp)\n"
       (Param      (Float_Cons s))  -> moveSp (-4) >> emiti ("li $t0,"~~stt s~~"\n")    >> emiti "sw $t0,0($sp)\n"
-      (Param      (MemAdress s))   -> moveSp (-4) >> emiti ("la $t0,"~~T.pack s~~"\n") >> emiti "sw $t0,0($sp)\n"
+      (Param      (MemAdress s))   -> moveSp (-4) >> emiti ("la $t0,_"~~T.pack s~~"\n") >> emiti "sw $t0,0($sp)\n"
       -- (Param      (Temp s))  -> moveSp (-4) >> emit ("la $t0,"~~T.pack s~~"\n") >> emit $ "    sw $t0,0($sp)" -- really? bueno, hay que buscar el registro
-      (TACCall    str_lab  i)     -> emit $ "    jal " ~~ T.pack str_lab ~~ "\n    move $fp,$sp\n" -- Potencialmente hacer algo con ese i
-      (CallExp  dest  str_lab  i) -> emit $ "    jal " ~~ T.pack str_lab ~~ "\n    move $fp,$sp\n" -- Mover lo que se tenga a dest
+      (TACCall    str_lab  i)     -> emiti $ "jal " ~~ T.pack str_lab ~~ "\n    move $fp,$sp\n" -- Potencialmente hacer algo con ese i
+      (CallExp  dest  str_lab  i) -> emiti $ "jal " ~~ T.pack str_lab ~~ "\n    move $fp,$sp\n" -- Mover lo que se tenga a dest
       TacExit                    -> emiti "li $v0,10\n" >> emiti "syscall\n"
       Nop                        -> emit "# nop\n"
       otherwise                  -> return ()
       -- (TagSC) tag para strings, usado en data, no aqui
-   where get3regs str d r1 r2 = do 
+    where get3regs str d r1 r2 = do 
             -- fstReg <- findRegister r1 Nothing 
             -- sndReg <- findRegister r2 (Just fstReg)
             fstReg <- getReg r1 -- por param false o true
@@ -340,22 +325,29 @@ processIns ins =
             dReg   <- getReg d
             emit $ build3Mips str dReg fstReg sndReg 
             -- kill and update def de r1 con d
-         get1reg str d r1 cons = do 
+          get1reg str d r1 cons = do 
             -- fstReg <- findRegister r1 Nothing
             fstReg <- getReg r1 
             emit $ buildiMips str magicReg fstReg cons
-         get1branch str r1 str2 lab = do 
+          get1branch str r1 str2 lab = do 
             -- fstReg <- findRegister r1 Nothing
             fstReg <- getReg r1
             emit $ build3MipsB str fstReg str2 lab
-         get2branch str r1 r2 lab = do 
+          get2branch str r1 r2 lab = do 
             -- fstReg <- findRegister r1 Nothing
             -- sndReg <- findRegister r2 Nothing
             fstReg <- getReg r1
             sndReg <- getReg r2
             emit $ build3MipsB str fstReg (showReg sndReg) lab
-         moveSp n = emiti $ "addi $sp,$sp," ~~ stt n ~~ "\n"
-         moveFp n = emiti $ "addi $fp,$fp," ~~ stt n ~~ "\n"
+          mv d i = do
+            dest <- getReg d
+            emiti $ "li " ~~ showReg dest ~~ ", " ~~ stt i
+          storeInP d r1 = do
+            op1   <- getReg r1
+            dest  <- getReg d
+            emiti $ "sw "~~showReg dest~~",0("~~showReg op1~~")\n"
+          moveSp n = emiti $ "addi $sp,$sp," ~~ stt n ~~ "\n"
+          moveFp n = emiti $ "addi $fp,$fp," ~~ stt n ~~ "\n"
 
 
 
