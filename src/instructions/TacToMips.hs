@@ -148,31 +148,38 @@ findRegister var canRemove = do
                                     then loadNReturn regFound
                                     else getAnyButThis reg
 
-findRegister' :: Var -- Variable to store in a register
-                  -> Maybe Register -- Register that cannot be used for spill
-                   -> MipsGenerator(Register)
-findRegister' Fp _ = return fp 
-findRegister' var canRemove = do 
-    regs <- gets regDescriptor
-    maybe (searchEmpty regs) return (findVar var regs)
-  where searchEmpty r    = maybe doSpill loadNReturn (findEmpty r)
-        loadNReturn reg  = do emit (load var (reg+lowreg))
-                              updateRegDescriptors reg (const [var])
-                              -- updateVarDescriptors reg (const [var])
-                              return (reg+lowreg)
-        doSpill   = maybe getAnyReg getAnyButThis canRemove
-        getAnyReg :: MipsGenerator(Register)
-        getAnyReg = do regFound <- liftIO $ randomRIO (0,numRegs-1) -- Se queda pegado si ninguno de los 16 registros
-                       hbu      <- hasBackUp regFound    -- Vive en sus posiciones de memoria
-                       if hbu then (loadNReturn (regFound)) else getAnyReg
-        getAnyButThis reg = do regFound <- liftIO $ randomRIO (0,numRegs)
-                               hbu      <- hasBackUp regFound
-                               if hbu && (regFound /= reg) 
-                                    then loadNReturn regFound
-                                    else getAnyButThis reg
+getReg :: Var -- Var to find register for
+           -> Bool -- is in normal procesor? if false coprocessor
+             -- -> Bool -- revisar si el reg no comparte lugar
+              -> MipsGenerator(Register)
+getReg Fp  _ = return fp
+getReg var _ = isInRegister
+    where isInRegister = do 
+            varDesc <- gets varDescriptor -- could be float descriptor
+            maybe searchEmpty
+                  (\ regList -> if null regList 
+                                    then  error err1 >> return (-1)
+                                    else  return ((Prelude.head regList) + lowreg))
+                  (lookup var varDesc)
+          updateWith i = do 
+              emit (load var (i+lowreg))
+              updateRegDescriptors i   (const [var])
+              updateVarDescriptors var (const ([var],[i]))
+              return (i+lowreg)
+          searchEmpty = do vectDesc <- gets regDescriptor
+                           let(found,index) = F.foldl findVec (False,0) vectDesc
+                           if found
+                              then updateWith index
+                              else error err2 >> return (-1)
+          findVec (True ,x) _  = (True,x)
+          findVec (False,x) [] = (True,x)
+          findVec (False,x)  _ = (False,x+1)
+          err1 = "Empty registers list for Ry"
+          err2 = "No empty registers and no spills :( sorry Novich"
+
 
 newRegisters :: Vector [Var]
-newRegisters = replicate numRegs [(Int_Cons 5)] -- 23-8+1
+newRegisters = replicate numRegs [] -- 23-8+1
 
 initDescriptor :: Descriptor
 initDescriptor = Descriptor newRegisters M.empty T.empty
@@ -209,9 +216,20 @@ clearDescriptor = do
 updateRegDescriptors :: Int -> ([Var] -> [Var]) -> MipsGenerator()
 updateRegDescriptors reg func = do 
     registers <- gets regDescriptor
-    state     <- get 
-    -- liftIO $ putStrLn "update reg descriptors"
+    state     <- get
     put state { regDescriptor = registers // [(reg,(func (registers ! reg)))]}
+    -- liftIO $ putStrLn "update reg descriptors"
+
+updateVarDescriptors :: Var -> (([Var],[Register]) -> ([Var],[Register])) -> MipsGenerator()
+updateVarDescriptors var func = do 
+    varsD  <- gets varDescriptor
+    state  <- get
+
+    let newDesc = if member var varsD
+        then Data.Map.Strict.adjust func var varsD
+        else insert var (func ([],[])) varsD
+    -- liftIO $ putStrLn "update reg descriptors"
+    put state { varDescriptor = newDesc }
 
 emit :: Mips -> MipsGenerator()
 emit code = do
@@ -219,12 +237,19 @@ emit code = do
     state  <- get
     put state { assembly = T.append acc code }
 
+emiti :: Mips -> MipsGenerator()
+emiti code = do
+    acc    <- gets assembly
+    state  <- get
+    put state { assembly = T.append acc ("    "~~code) }
+
+
 -- clearDescriptor :: MipsGenerator ()
 -- clearDescriptor = put $ Descriptor newRegisters M.empty 
 
-getReg :: [Var] -> MipsGenerator([Registers])
-getReg (lval:rval:[])      = undefined
-getReg (lval:exp1:exp2:[]) = undefined
+-- getReg :: [Var] -> MipsGenerator([Registers])
+-- getReg (lval:rval:[])      = undefined
+-- getReg (lval:exp1:exp2:[]) = undefined
 
 compile :: Seq(Program) -> MipsGenerator()
 compile ps = (mapM_ (\ b -> processBlock b >> clearDescriptor) ps) 
@@ -285,16 +310,20 @@ processIns ins =
 
       -- Mem access
       (Mv           d r1)    -> emit "#AQUI HAY UN MOVE\n"
-      (ReadPointer  d r1)    -> emit "#AQUI LEEMOS POINTER\n"
-      (StorePointer d r1)    -> emit "#AQUI SALVAMOS POINTER\n"
+      (ReadPointer  d r1)    -> emiti$"lw "~~(showReg magicReg)~~",0("~~(showReg magicReg)~~")\n"
+      (StorePointer d r1)    -> emiti$"sw "~~(showReg magicReg)~~",0("~~(showReg magicReg)~~")\n"
       (ReadArray    d Fp (Int_Cons c)) -> emit$"    lw "~~(showReg magicReg)~~","~~(stt c)~~"("~~(showReg fp)~~")\n"
       (ReadArray    d (Int_Cons c) Fp) -> return () -- processIns (ReadArray d Fp (Int_Cons c))
       (ReadArray    d r1 r2) ->  emit "#AQUI LEEMOS ARREGLO\n" --processIns (Addi d r1 r2) >> emit$"lw "~~(showReg magicReg)~~",0"~~""~~"("~~(showReg (-1))~~")\n"
       -- (StoreArray   d r1 r2) -> 
 
-      (TACCall    str_lab  i)     -> emit $ "    jal " ~~ T.pack str_lab ~~ "\n    move $fp,$sp" -- Potencialmente hacer algo con ese i
-      (CallExp  dest  str_lab  i) -> emit $ "    jal " ~~ T.pack str_lab ~~ "\n    move $fp,$sp" -- Mover lo que se tenga a dest
-      TacExit                    -> emit "    li $v0,10\n    syscall"
+      (Param      (Int_Cons s) )   -> moveSp (-4) >> emiti ("li $t0,"~~stt s~~"\n")    >> emiti "sw $t0,0($sp)\n"
+      (Param      (Float_Cons s))  -> moveSp (-4) >> emiti ("li $t0,"~~stt s~~"\n")    >> emiti "sw $t0,0($sp)\n"
+      (Param      (MemAdress s))   -> moveSp (-4) >> emiti ("la $t0,"~~T.pack s~~"\n") >> emiti "sw $t0,0($sp)\n"
+      -- (Param      (Temp s))  -> moveSp (-4) >> emit ("la $t0,"~~T.pack s~~"\n") >> emit $ "    sw $t0,0($sp)" -- really? bueno, hay que buscar el registro
+      (TACCall    str_lab  i)     -> emit $ "    jal " ~~ T.pack str_lab ~~ "\n    move $fp,$sp\n" -- Potencialmente hacer algo con ese i
+      (CallExp  dest  str_lab  i) -> emit $ "    jal " ~~ T.pack str_lab ~~ "\n    move $fp,$sp\n" -- Mover lo que se tenga a dest
+      TacExit                    -> emiti "li $v0,10\n" >> emiti "syscall\n"
       Nop                        -> emit "# nop\n"
       otherwise                  -> return ()
       -- (TagSC) tag para strings, usado en data, no aqui
@@ -313,29 +342,10 @@ processIns ins =
             fstReg <- findRegister r1 Nothing
             sndReg <- findRegister r2 Nothing
             emit $ build3MipsB str fstReg (showReg sndReg) lab
+         moveSp n = emiti $ "addi $sp,$sp," ~~ stt n ~~ "\n"
+         moveFp n = emiti $ "addi $fp,$fp," ~~ stt n ~~ "\n"
 
 
--- processIns :: IntIns -> MipsGenerator ()
--- processIns ins = do
-
-  -- emit (template ins [0,5,13]) 
--- ver cuantos registros necesita la instruccion (regNeeded)
--- buscar los registros a usar
--- actualizar descriptores
-
--- processIns i@(Comment s)       = emit (template ins)
--- processIns i@(Tag     Label)   = emit (template ins)
--- processIns i@(TagS    String)  
--- processIns i@(TagSC   String String)
--- processIns i@(Jump     Label)
--- processIns i@(Jz       Src1 Label)
--- processIns i@(Jnotz    Src1 Label)
--- processIns i@(JLt      Src1 Src2 Label)
--- processIns i@(JGt      Src1 Src2 Label)
--- processIns i@(JLEq     Src1 Src2 Label)
--- processIns i@(JGEq     Src1 Src2 Label)
--- processIns i@(JEq      Src1 Src2 Label)
--- processIns i@(JNEq     Src1 Src2 Label)
 
 
 runCompiler =  runStateT

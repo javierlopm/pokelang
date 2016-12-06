@@ -21,8 +21,8 @@
 
 |Operacion        | 3/2 reg | 2 registros + constante|
 |:-----------------|:-----|:-------------------|
-| Addi     Dx Sy Sz | add rx, ry, rz | li r3 #c <br> addi rx, ry, rz |
-| Subi     Dx Sy Sz | sub rx, ry, rz | li r3 #c <br> sub rx, ry, rz  |
+| Addi     Dx Sy Sz | add rx, ry, rz | li r3 #c | addi rx, ry, rz |
+| Subi     Dx Sy Sz | sub rx, ry, rz | li r3 #c | sub rx, ry, rz  |
 | Divi     Dx Sy Sz | (pseudo) div rx, ry, rz  | (li r3 #c; div )    |
 | Mod      Dx Sy Sz | (div r2 r3); mflo r1 | (li r3 #c; div; mv) |
 | Multi    Dx Sy Sz | (pseudo) mulo rx, ry, rz | (li r3 #c; mulo )   |
