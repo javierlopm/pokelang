@@ -1,0 +1,90 @@
+Factorial iterativo y recursivo. El programa debe operar en un ciclo infinito en el cual pregunta cuál método usar para calcular el factorial, solicitar un número entero no negativo, y mostrar el factorial calculado, hasta que el usuario indique que no quiere continuar.
+
+Las implantaciones de factorial deben estar en funciones separadas, usando pasaje por valor.
+
+Cálculo de Raíz Cuadrada por el Método de Heron. El programa debe operar en un ciclo infinito en el cual solicita un número en punto flotante no negativo, y muestra la raíz cuadrada calculada según el método descrito, con una precisión de un millonésimo, hasta que el usuario indique que no quiere continuar.
+
+El cálculo de la raíz cuadrada debe estar en una función separada, usando pasaje por valor.
+
+Cálculo de estadísticos básicos El programa debe operar en un ciclo infinito, preguntando al usuario si desea iniciar un cálculo de estadísticos, o terminar. Para cada cálculo de estadísticos comenzará por solicitar la cantidad de muestras a procesar N que debe ser un número entero positivo. Obtenido N, solicitará N números en punto flotante, y al terminar de leerlo debe presentar en pantalla:
+
+La cantidad de muestras -- N como entero.
+El promedio de las muestras -- como punto flotante.
+La varianza -- como punto flotante.
+La desviación estándar -- como punto flotante.
+El máximo y el mínimo de la muestra -- como punto flotante.
+Si su lenguaje soporta arreglos de tamaño definido a tiempo de ejecución, puede utilizarlos. En caso contrario, haga los cálculos utilizando variables acumuladores.
+
+Necesitará calcular la raíz cuadrada, pero eso ya lo hizo según el requisito anterior.
+
+Orientación a Peroles Considere un tipo de datos
+
+struct {
+  int  tipo;
+  union {
+    bool  b;
+    char  c;
+    int   i;
+    float f;
+  }
+}
+El programa debe operar en un ciclo infinito, preguntando al usuario si quiere organizar elementos, o terminar. Si el usuario indica que quiere organizar elementos, debe preguntar cuántos elementos organizar, y luego solicitarlos uno por uno. Al solicitar cada elemento debe preguntarse el tipo particular antes de leerlo.
+
+Los elementos leídos deben almacenarse en un arreglo, y luego deben reorganizarse (usando la técnica de la «Bandera Holandesa») para tener primero los booleanos, luego los caracteres, siguiendo los enteros y finalmente los flotantes, antes de imprimir el arreglo en pantalla (un elemento por línea).
+
+Su programa debe ser capaz de operar con no más de veinte (20) elementos en el arreglo y todo el trabajo debe completarse sobre el mismo arreglo.
+
+Quicksort «en sitio» El programa debe operar en un ciclo infinito, preguntando al usuario si desea ordenar números enteros, números en punto flotante, caracteres o terminar. Si el usuario decide continuar, el programa solicitará la cantidad de elementos a ordenar, como un número entero N entre 1 y 100. Una vez obtenido N, el programa solicitará los datos del tipo adecuado, y los almacenará en un arreglo del tipo adecuado, para luego ordenarlos con el método «Quicksort», presentando el arreglo como resultado.
+
+Tendrá que escribir tres funciones QuickSort con cuerpo muy similar, pero firma diferente.
+
+Quicksort «en sitio» necesita una operación swap para intercambiar los valores en dos posiciones de un arreglo. Resuelva esto usando funciones auxiliares con pasaje por referencia, i.e.
+
+void swapi(var int a, var int b) { int t; t = a; a = b; b = t; }
+
+No puede escribir esta función usando apuntadores para simular pasaje por referencia.
+
+Sistemas de Ecuaciones por Eliminación de Gauß El programa debe operar en un ciclo infinito, preguntando al usuario si desea continuar, o terminar. Si el usuario desea continuar, el programa solicitará el número N de ecuaciones (implícitamente de variables) en el sistema. Su programa debe poder resolver sistemas de hasta diez (10) ecuaciones.
+
+A partir de ese punto, el sistema debe solicitar N ecuaciones, cada una compuesta por N+1 coeficientes, todos números en punto flotante, y almacenarlos en un arreglo.
+
+Recibidos los datos, el programa debe aplicar el método de Gauss. Si el sistema tiene solución, mostrar los valores para cada una de las variables involucradas.
+
+Par o impar El programa debe operar en un ciclo infinito, preguntando al usuario si desea determinar la paridad/imparidad de un número entero, o terminar. Si el usuario decide continuar, el programa solicitará un número entero (posiblemente con signo) y debe determinar si es «par» o «impar».
+
+Las funciones par e impar deben escribirse de manera co-recursiva, i.e.
+
+par :: Int -> Bool
+par n = if n == 0 then True 
+                  else if n == 1 then False
+                                 else impar (n-1)
+
+impar :: Int -> Bool
+impar n = if n == 0 then False
+                    else if n == 1 then True
+                                   else par (n-1)
+Arbol de búsqueda de caracteres El programa debe operar en un ciclo infinito, preguntando al usuario si desea continuar o terminar. Si desea continuar, el programa preguntará la siguiente operación, la efectuará, y reresará a la pregunta inicial. Las operaciones posibles son:
+
+Insertar un valor en el árbol.
+Eliminar un valor del árbol.
+Buscar un valor en el árbol.
+Mostrar el árbol.
+Para las operaciones, Ud. debe diseñar un tipo de datos usando registros, tales que contenga:
+
+El valor almacenado -- un caracter.
+La cantidad de repeticiones -- un entero. Si el usuario inserta varias veces el mismo caracter, se incrementa este contador. Si el usuario elimina el caracter, se decrementa el contador hasta llegar a cero; y en ese caso hay que sacar el nodo del árbol.
+Hijo izquierdo e hijo derecho, como apuntadores.
+El árbol debe ser mostrado como
+
+(v0,n0)
+  (v1,n1)
+     (v2,n2)
+     -
+  (v3,n3)
+     (v4,n4)
+     (v5,n5)
+donde vI indica el valor (caracter) almacenado en el nodo, y nI el contador de repeticiones. Los nodos se muestran en preorden, primero mostrando el hijo izquierdo, y luego el derecho. Si un nodo no tiene hijos, no se muestra nada especial; si le falta algún hijo, se muestra - en su lugar.
+
+Este programa debe ejercitar malloc para la inserción de nuevos nodos, y free para la eliminación de nodos tan pronto su conteo llega a cero.
+
+Como se trata de un árbol de búsqueda, el valor almacenado en un nodo debe ser estrictamente mayor que los valores almacenados en su subárbol izquierdo, y estrictamente menor que los valores almacenados en su subárbol derecho.

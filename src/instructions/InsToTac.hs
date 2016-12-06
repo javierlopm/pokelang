@@ -2,7 +2,7 @@ module InsToTac(
     forestToTac,
     initTranslator,
     forestToTac',
-    execTree,
+    -- execTree,
     evalTree,
     translateStrings,
     TranlatorState(..),
@@ -36,7 +36,7 @@ data TranlatorState  = TranlatorState { tempCount  :: Word       -- Temporal var
                                       , beginLabel :: Word       -- to what label the jump was made
                                       , endLabel   :: Word       -- jump if true or false found
                                       , isItLval   :: Bool}
-                                      --deriving(Show)      
+                                      deriving(Show)      
 type TreeTranslator  = StateT TranlatorState IO 
 
 debugVar = True
@@ -128,15 +128,16 @@ forestToTac ((str,insTree,lv):tl)  = do
     -- liftIO $ putStrLn $ show insTree
     headTac       <- treeToTac insTree
     forestTacTail <- forestToTac tl
-    --tuple         <- functionsToTac (str,headTac)
-    let tuple     = (str,headTac)
+    estado <- get
+    -- liftIO $ putStrLn $ show estado
+    tuple         <- functionsToTac (str,headTac)
     --liftIO $ putStrLn $ "\nAAAAAAAAAAAAAAAA---------------\n" ++ show insTree ++"AAAAAAAAAAAAAAAAAAA---------------\n"
     -- Maybe there'es no need to return, only write to file?
     return ( [tuple] <> forestTacTail)
 
---functionsToTac :: (String,Program) -> TreeTranslator ( (String,Program) )
---functionsToTac ("hitMAINlee",prg) = return ("hitMAINlee",prg)
---functionsToTac (str,prg) = return (str,prg)
+functionsToTac :: (String,Program) -> TreeTranslator ( (String,Program) )
+functionsToTac ("hitMAINlee",prg) = return ("hitMAINlee",prg)
+functionsToTac (str,prg) = return (str,prg)
 
 treeToTac :: Ins -> TreeTranslator (Program)
 treeToTac (Assign e1 e2) = do
@@ -524,10 +525,22 @@ toInt :: Bool -> Int
 toInt False = 0
 toInt True  = 1
 
--- Alias
-execTree :: Monad m => StateT s m a -> s -> m s
-execTree = execStateT
+-- Aliases
 
 evalTree ::  Monad m => StateT s m a -> s -> m a
 evalTree = evalStateT
 
+
+-- evalTree = evalStateT
+
+
+
+-- forestToTac' :: [(String,Ins,TypeTuple)] -> TreeTranslator ( [(String,Program)] )
+-- forestToTac' a = mapM buildFun  a
+
+-- foldM :: [(String,Program)] -> 
+
+
+-- evalTree (forestToTac' ast) initTranslator
+
+-- evalTree

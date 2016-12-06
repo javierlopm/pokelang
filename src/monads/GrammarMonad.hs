@@ -215,6 +215,7 @@ insertEmpty tk = do
         linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
 
 
+
 -- Adding forward declartion to functions
 insertForwardFunc :: TypeTuple -> Token -> OurMonad ()
 insertForwardFunc typ tk = do
@@ -222,11 +223,13 @@ insertForwardFunc typ tk = do
     if isInGlobals state tk
         then tellError error1
         else do tellLog whathappened
-                onScope $ insert (lexeme tk) (EmptyWithType (TypeFunction typ)) 0 --Se debe CAMBIAR
+                onScope $ insert (lexeme tk) (EmptyWithType (TypeFunction typ) isProc) 0  --Se debe CAMBIAR
     onZip (const (fromScope emptyScope)) -- Cleaning scope bc of parameters
   where error1       = "Error:" ++ linecol ++" redefinition of " ++ lexeme tk
         whathappened = "Adding " ++ lexeme tk ++ " as soon as possible "++ linecol
-        linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk 
+        linecol      = (show.fst.position) tk ++":"++(show.snd.position) tk
+        isProc       = if (funcReturnType typ) == TypeVoid then True
+                          else False
 
 insertForwardData :: Token-> Token -> OurMonad ()
 insertForwardData typ tk = do
@@ -246,6 +249,7 @@ insertForwardData typ tk = do
                      then build Struct TypeStruct 
                      else build Union  TypeUnion 
         typeFound state =  fromJust $ getValS (lexeme tk) (scp state)
+
 
 -- Adding function to global scope and cleaning actual zipper
 insertFunction :: TypeTuple -> Token -> Bool -> OurMonad ()
@@ -566,18 +570,29 @@ checkFieldAccess (ty1,tk1,exp1) tk2 = do
   where error1 = strError (position tk1) "Variable" l "it's not a valid struct/union, field cannot be accessed" -- AQUI
         error2 dn = strError (position tk1) "Variable" l2 ("not found in struct/union " ++ show dn )
         l      = lexeme tk1
-        l2      = lexeme tk2
+        l2     = lexeme tk2
 
 buildPrint :: Token -> Ins -> Type -> OurMonad((Type,Ins))
 buildPrint string i t = do 
     (mem_addr,is_new) <- new_str_lex (content string)
+    -- Agregar este strings a tabla
     let dec = StrCons (position string) mem_addr (content string)
     if is_new then onStrScope $ (:) dec
               else return ()
-    let new_ins = Call "print_str" (S.singleton (ExpVar dec (content string))) [(length (lexeme string))] True
-
+    -- Pasar la direccion en vez de esta basura: (S.singleton (ExpVar dec (content string)))
+    let new_ins = Call "vamo_a_imprimi" (S.singleton (ExpVar dec (content string))) ([4]) True
     bleh <- checkOkIns new_ins i t
     return bleh
+
+buildGenPrint ::  (Type,Token,Exp) -> Ins -> Type -> OurMonad((Type,Ins))
+buildGenPrint (ty,tk,e) i  t = checkOkIns new_ins i t
+  where func_call TypeInt   = "vamo_a_imprimi_i"
+        func_call TypeBool  = "vamo_a_imprimi_i"
+        func_call TypeChar  = "vamo_a_imprimi_c"
+        func_call TypeFloat = "vamo_a_imprimi_f"
+        func_call _         = ""
+        call_str = func_call ty
+        new_ins = if (call_str /= "") then Call call_str (S.singleton e) ([4]) False else NoOp
 
 checkMain :: OurMonad()
 checkMain = do
@@ -621,8 +636,17 @@ buildRead :: Token -> (Type,Ins) -> OurMonad((Type,Ins))
 buildRead four one = do 
     itsReadable <- checkReadable four True 
     newVar      <- buildVar four
-    checkOkIns (Read newVar ) (snd one) TypeVoid
-
+    if (itsReadable == TypeVoid)
+      then checkOkIns (new_ins newVar) (snd one) TypeVoid
+      else return (TypeError,Error)
+  where 
+      func_call TypeInt   = "vamo_a_lee_i"
+      func_call TypeBool  = "vamo_a_lee_b"
+      func_call TypeChar  = "vamo_a_lee_c"
+      func_call TypeFloat = "vamo_a_lee_f"
+      func_call _         = ""
+      new_ins newVar = if (call_str /= "") then Call call_str (S.singleton newVar) ([4]) True else NoOp
+          where call_str = func_call ((storedType . dec) newVar)
 
 -- Change by a instruction type default
 adefault = undefined
@@ -816,24 +840,25 @@ addToBlock :: Ins -> OurMonad()
 addToBlock i =  undefined
 
 builtinFunctions :: SymTable
-builtinFunctions = emptyScope
--- builtinFunctions = foldl insertFunc emptyScope declarations  --REVISAR
---  where insertFunc scp (str,dec) = insert str dec 0 scp 
---        printable t    = or $ map ($t) [(==TypeString),isPointer,isBasic,(==TypeEnumCons)]          
---        makeFunc types = (Function (0,0) (makeTypeTuple types) emptyScope)
---        declarations = [
---          ("liberar"       , makeFunc [TypeSatisfies isPointer, TypeVoid] ),
---          ("vamo_a_imprimi", makeFunc [TypeSatisfies printable, TypeVoid] ),
---          ("atrapar"       , makeFunc [TypeInt      , TypeVoid  ] ),
---          ("intToFloat"    , makeFunc [TypeInt      , TypeFloat ] ),
---          ("intToChar"     , makeFunc [TypeInt      , TypeChar  ] ),
---          ("charToInt"     , makeFunc [TypeChar     , TypeInt   ] ),
---          ("floor"         , makeFunc [TypeFloat    , TypeInt   ] ),
---          ("celing"        , makeFunc [TypeFloat    , TypeInt   ] ),  
---          ("succ"          , makeFunc [TypeEnumCons , TypeEnumCons ] ),
---          ("pred"          , makeFunc [TypeEnumCons , TypeEnumCons ] ),
---          ("pidGET"        , makeFunc [TypeEnumCons , TypeInt   ] ),
---          ("SIZEther",(Function (0,0) 
---                                (makeTypeTuple 
---                                 [TypeSatisfies isBasic, TypeInt]) 
---                                emptyScope))]
+builtinFunctions = foldl insertFunc emptyScope declarations  --insertFunction :: TypeTuple -> Token -> Bool -> OurMonad ()
+ where insertFunc scp (str,dec) = insert str dec 0 scp 
+       printable t    = or $ map ($t) [(==TypeString),isPointer,isBasic,(==TypeEnumCons)]          
+       makeFunc types = (Function (-1,-1) (makeTypeTuple types) emptyScope True)
+       declarations = [
+         ("vamo_a_lee"    , makeFunc [TypeSatisfies printable] ),
+         ("liberar"       , makeFunc [TypeSatisfies isPointer, TypeVoid] ),
+         ("vamo_a_imprimi", makeFunc [TypeSatisfies printable, TypeVoid] ),
+         ("atrapar"       , makeFunc [TypeInt      , TypeVoid  ] ),
+         ("intToFloat"    , makeFunc [TypeInt      , TypeFloat ] ),
+         ("intToChar"     , makeFunc [TypeInt      , TypeChar  ] ),
+         ("charToInt"     , makeFunc [TypeChar     , TypeInt   ] ),
+         ("floor"         , makeFunc [TypeFloat    , TypeInt   ] ),
+         ("celing"        , makeFunc [TypeFloat    , TypeInt   ] ),  
+         ("succ"          , makeFunc [TypeEnumCons , TypeEnumCons ] ),
+         ("pred"          , makeFunc [TypeEnumCons , TypeEnumCons ] ),
+         ("pidGET"        , makeFunc [TypeEnumCons , TypeInt   ] ),
+         ("SIZEther",(Function (-1,-1) 
+                               (makeTypeTuple 
+                                [TypeSatisfies isBasic, TypeInt]) 
+                               emptyScope True))]
+-- builtinFunctions = emptyScope

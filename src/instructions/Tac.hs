@@ -2,6 +2,7 @@ module Tac(
     IntIns(..),
     Var(..),
     Program,
+    Label,
     pComment,
     showP,
     saveProgram,
@@ -10,7 +11,8 @@ module Tac(
     isCons,
     isTag,
     isJump,
-    getCons
+    getCons,
+    regNeeded
 ) where 
 
 import Prelude hiding(foldr)
@@ -27,6 +29,7 @@ data Var = Int_Cons   Int
          | MemAdress  String
          | Temp       Word   -- Non negative: t0, t1 ..
          | Fp   -- Frame pointer
+         deriving(Eq,Ord)
 
 getCons :: Var -> Int
 getCons (Int_Cons   c) = c
@@ -54,6 +57,13 @@ instance Binary Var where
                 2 ->  B.get >>= return . MemAdress      
                 3 ->  B.get >>= return . Temp 
                 4 ->  return Fp
+
+regNeeded :: Var -> Int
+regNeeded (Int_Cons   _) = 0
+regNeeded (Float_Cons _) = 0
+regNeeded (MemAdress  _) = 1
+regNeeded (Temp       _) = 1
+regNeeded Fp             = 0
 
 type Src1  = Var 
 type Src2  = Var
