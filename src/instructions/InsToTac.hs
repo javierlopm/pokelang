@@ -156,13 +156,12 @@ treeToTac (If    iS   ) = do
     ending <- newLabel
     ifcode <- foldM  processGuard empty (F.toList iS)
     return (ifcode |> (Tag ending))
-  where processGuard accCode (Guard exp1 ins) = do 
+  where processGuard accCode (Guard exp1 ins) = do
             (lt,lf)       <- setJumps
-
             (guardCode,_) <- expToTac exp1
             unsetJumps
             blockCode     <- treeToTac ins
-            let lastIf = (accCode <> guardCode |> (Tag lt)) <> blockCode |> (Comment "end") |> (Tag lf)
+            let lastIf = (accCode <> (guardCode |> (Comment "GUARDIA")) |> (Tag lt)) <> blockCode |> (Comment "end") |> (Tag lf)
             return lastIf 
 
         processGuard accCode (Else ins) = treeToTac ins >>= return . (accCode <>)
