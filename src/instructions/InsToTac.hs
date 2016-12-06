@@ -120,8 +120,9 @@ forestToTac' a = mapM buildFun  a
                                           -- liftIO $ putStrLn $ show lv
                                           if str == "hitMAINlee" 
                                              then  return (str, (singleton (Save lv) <> prg |> TacExit))
-                                             else  return (str, ((singleton (TagS str)) |> (Save lv) )<> prg |> (TagS (str++"_epilogue"))   |> (Clean lv) )
+                                             else  return (str, ((singleton (TagS str)) |> (Save lv) )<> prg |> (TagS (str++"_epilogue")) |> (Epilogue 1)   |> (Clean lv) )
                                           --return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TACCall "Epilogue" 42))
+
 forestToTac :: [(String,Ins,Int)] -> TreeTranslator ( [(String,Program)] )
 forestToTac [] = return mempty
 forestToTac ((str,insTree,lv):tl)  = do 

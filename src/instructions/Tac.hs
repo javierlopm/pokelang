@@ -118,6 +118,7 @@ data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
             | TACCall    String  Int
             | CallExp    Dest String  Int
             | Clean   Int
+            | Epilogue   Int
             | Param   Src1 Int    
             | ReturnE 
             | ReturnS  Src1 
@@ -175,6 +176,7 @@ instance Show      IntIns where
     show (TACCall     str  i )  = "Call " ++ str ++ " #" ++ show i
     show (CallExp   d  str  i ) = show d ++ " := Call " ++ str ++ " #" ++ show i
     show (Clean         i )  = "Clean " ++ "#" ++ show i
+    show (Epilogue i )  = "Epilogue " ++ "#" ++ show i
     show (ReturnS   s1      )  = "Return  " ++ show s1
     show (ReturnE          )  = "ReturnE "
     show (Param    par i)      = "Param " ++ show par ++" #"++show i
@@ -298,6 +300,7 @@ instance Binary IntIns where
        49 ->  B.get >>= return . ReturnS
        50 ->  return ReturnE
        51 -> B.get >>= return . Save 
+       52 -> B.get >>= return . Epilogue 
 
 -- Print auxiliaries
 showTAC  d s1 op s2 = show d ++" := "++ show s1 ++" "++ op ++ " " ++ show s2
