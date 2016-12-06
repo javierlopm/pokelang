@@ -362,10 +362,10 @@ getSize TypeString     = error "Global variable"
 getSize (TypeSatisfies _ ) = error "wtf? really?"
 -- size TypeEmptyArray = 4
 
-getSizeTT :: TypeTuple -> Int
+getSizeTT :: TypeTuple -> [Int]
 getSizeTT s = if (S.null s) 
-                 then 0
-                 else getSize( (fst . decons . S.viewl) s ) + getSizeTT ((snd . decons . S.viewl) s) 
+                 then []
+                 else getSize( (fst . decons . S.viewl) s ) : getSizeTT ((snd . decons . S.viewl) s) 
     where decons EmptyL = error "Empty sequence!"
           decons (l S.:< others) = (l,others)
 

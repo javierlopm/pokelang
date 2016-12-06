@@ -574,7 +574,7 @@ buildPrint string i t = do
     let dec = StrCons (position string) mem_addr (content string)
     if is_new then onStrScope $ (:) dec
               else return ()
-    let new_ins = Call "print_str" (S.singleton (ExpVar dec (content string))) (length (lexeme string)) True
+    let new_ins = Call "print_str" (S.singleton (ExpVar dec (content string))) [(length (lexeme string))] True
 
     bleh <- checkOkIns new_ins i t
     return bleh

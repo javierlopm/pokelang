@@ -31,7 +31,7 @@ data Ins = Assign    Exp Exp
          | AssignSum Exp Exp
          | AssignMin Exp Exp
          | AssignMul Exp Exp
-         | Call      String (Seq(Exp)) Int Bool
+         | Call      String (Seq(Exp)) [Int] Bool
          | If      { guards::Seq(Ins) }
          | Guard   { cond  :: Exp, ins :: Ins }
          | Else    { ins   :: Ins }
@@ -178,7 +178,7 @@ data Exp = Binary  Operator Exp Exp
          | ExpInt   Int
          | ExpChar  Char
          | ExpEnum  String
-         | CallVal  String (Seq(Exp)) Int Bool
+         | CallVal  String (Seq(Exp)) [Int] Bool
          | NoExp
          deriving (Show)
 
