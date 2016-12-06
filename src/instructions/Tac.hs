@@ -187,6 +187,7 @@ instance Show      IntIns where
     show Nop                  = "Nop"
     show TacExit                  = "TacExit"
     show (Save i)             = "Save #" ++ show i
+    show _                    = "FOUND SOMETHING WEIRD"
 
 -- Ewwwww, it might be improved with Generics?
 instance Binary IntIns where
