@@ -40,7 +40,7 @@ ra :: Register
 ra = 31
 
 magicReg :: Register
-magicReg = 8
+magicReg = 22
 
 -- compile :: Program -> Program -> Mips -> Mips
 -- compile globs program crt = T.concat [".data\n"
@@ -252,12 +252,12 @@ processIns :: IntIns -> MipsGenerator ()
 processIns ins = 
     case ins of 
       -- Aritmetic
-      (Addi r1 r2 (Int_Cons c))  -> get1reg "addi" r1 r2 c
-      (Subi r1 r2 (Int_Cons c))  -> get1reg "addi" r1 r2 (-c)
-      (Divi r1 r2 (Int_Cons c))  -> return () -- get1reg "div" r1 r2 (-c)
-      (Addi r1 (Int_Cons c) r2)  -> get1reg "addi" r1 r2 c
-      (Subi r1 (Int_Cons c) r2)  -> get1reg "addi" r1 r2 (-c)
-      (Divi r1 (Int_Cons c) r2)  -> return () -- get1reg "div" r1 r2 (-c)
+      (Addi r1 r2 (Int_Cons c))  -> get2reg "addi" r1 r2 c
+      (Subi r1 r2 (Int_Cons c))  -> get2reg "addi" r1 r2 (-c)
+      (Divi r1 r2 (Int_Cons c))  -> return () -- get2reg "div" r1 r2 (-c)
+      (Addi r1 (Int_Cons c) r2)  -> get2reg "addi" r1 r2 c
+      (Subi r1 (Int_Cons c) r2)  -> get2reg "addi" r1 r2 (-c)
+      (Divi r1 (Int_Cons c) r2)  -> return () -- get2reg "div" r1 r2 (-c)
       (Subi r1 r2 r3)            -> get3regs "sub" r1 r2 r3
       (Addi r1 r2 r3)            -> get3regs "add" r1 r2 r3
       (Divi r1 r2 r3)            -> get3regs "div" r1 r2 r3
@@ -300,11 +300,10 @@ processIns ins =
       (Mv           d (Int_Cons i)) -> mv d i 
       (Mv           d _ )           -> emit "#AQUI HAY UN MOVE"
       (ReadPointer  d (Int_Cons i)) -> emiti$"lw "~~(showReg magicReg)~~",0("~~(showReg magicReg)~~")\n"
-      (ReadPointer  d r1)      -> emiti$"lw "~~(showReg magicReg)~~",0("~~(showReg magicReg)~~")\n"
+      (ReadPointer  d r1)    -> emiti$"lw "~~(showReg magicReg)~~",0("~~(showReg magicReg)~~")\n"
       (StorePointer d r1)    -> storeInP d r1
-      (ReadArray    d Fp (Int_Cons c)) -> emit$"    lw "~~(showReg magicReg)~~","~~(stt c)~~"("~~(showReg fp)~~")\n"
-      (ReadArray    d (Int_Cons c) Fp) -> return () -- processIns (ReadArray d Fp (Int_Cons c))
-      (ReadArray    d r1 r2) ->  emit "#AQUI LEEMOS ARREGLO\n" --processIns (Addi d r1 r2) >> emit$"lw "~~(showReg magicReg)~~",0"~~""~~"("~~(showReg (-1))~~")\n"
+      (ReadArray    d Fp (Int_Cons c)) -> readLocal d c
+      (ReadArray    d r1 r2)           -> readArr d r1 r2
       -- (StoreArray   d r1 r2) -> 
 
       (Param      (Int_Cons s) )   -> moveSp (-4) >> emiti ("li $t0,"~~stt s~~"\n")    >> emiti "sw $t0,0($sp)\n"
@@ -325,10 +324,11 @@ processIns ins =
             dReg   <- getReg d
             emit $ build3Mips str dReg fstReg sndReg 
             -- kill and update def de r1 con d
-          get1reg str d r1 cons = do 
+          get2reg str d r1 cons = do 
             -- fstReg <- findRegister r1 Nothing
             fstReg <- getReg r1 
-            emit $ buildiMips str magicReg fstReg cons
+            dest   <- getReg d 
+            emit $ buildiMips str dest fstReg cons
           get1branch str r1 str2 lab = do 
             -- fstReg <- findRegister r1 Nothing
             fstReg <- getReg r1
@@ -345,7 +345,18 @@ processIns ins =
           storeInP d r1 = do
             op1   <- getReg r1
             dest  <- getReg d
-            emiti $ "sw "~~showReg dest~~",0("~~showReg op1~~")\n"
+            emiti $ "sw "~~ showReg op1~~",0("~~showReg dest~~")\n"
+          readLocal d c = do
+            dest  <- getReg d
+            emiti $ "lw "~~showReg dest~~","~~stt c~~"("~~(showReg fp)~~")\n"
+          readArr d r1 r2 = do
+            dest  <- getReg d
+            op1   <- getReg r1
+            op2   <- getReg r2
+            
+            emiti $ "add $t0,"~~ showReg op1 ~~ "," ~~ showReg op2 ~~ "\n" 
+            emiti $ "lw "~~showReg dest~~",0($t0)\n"
+
           moveSp n = emiti $ "addi $sp,$sp," ~~ stt n ~~ "\n"
           moveFp n = emiti $ "addi $fp,$fp," ~~ stt n ~~ "\n"
 
