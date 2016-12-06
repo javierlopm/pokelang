@@ -14,10 +14,11 @@ import Data.Foldable(toList)
 import InsToTac
 import Instructions
 import Tac(showP)
+import TacToMips(partition,showPartitions)
 
 
 myF :: String -> String -> (String,String)
-myF arg1 arg2 = if and [arg1 /= "-l",arg1/="-p",arg1/="-i",arg1/="-a",arg1/="-tac"] 
+myF arg1 arg2 = if and [arg1 /= "-l",arg1/="-p",arg1/="-i",arg1/="-a",arg1/="-tac",arg1/="-c"] 
                     then (arg1,arg2)
                     else (arg2,arg1)
 
@@ -81,6 +82,12 @@ main = do
                                 let full_prog = (("",translateStrings strs):programs)
                                 putStrLn $ foldl (\ b (string,p) -> b ++ "\n" ++ "\n" ++ showP p ) "" full_prog
                                 return ()
+                "-c"    -> do (ast,strs) <- getIns' goods False
+                              programs <- evalTree (forestToTac' ast) initTranslator
+                              let full_prog = (("",translateStrings strs):programs)
+                              putStrLn $ foldl (\ b (string,p) -> b ++ "\n\n" ++ ((showPartitions . partition) p) ) "" full_prog
+                              crt <- readFile "crt.asm"
+                              return ()
                 otherwise -> print $ "Unrecognized argument" ++ runargs
       else do mapM_ print errors
               putStrLn $ "--pkcc: "++ show errorcount ++ " errors found."
