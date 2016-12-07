@@ -310,8 +310,8 @@ processIns ins =
       (Param      (MemAdress  s) i)  -> moveSp (-4) >> emiti ("la $t0,_"~~T.pack s~~"\n") >> emiti "sw $t0,0($sp)\n"
       (Param      t0 i)              -> paramGen t0 i
       (Clean       0 ) -> return ()
-      (ReturnE       ) -> emiti ("goto FAKKETAG")
-      (ReturnS      a )-> emiti ("goto FAKKETAG")
+      (ReturnE      s ) -> emiti ("goto FAKKETAG")
+      (ReturnS      a s )-> emiti ("goto FAKKETAG")
       (Save        i ) -> moveSp (-i-8) >> emiti ("sw $fp,"~~ stt (i+4) ~~"($sp)\n") >> emiti ("sw $ra,"~~ stt i ~~"($sp)\n") >> emiti ("addi $fp,$sp,"~~ stt (i+8) ~~"\n")
       (Clean       i ) -> moveSp (i+4)
 

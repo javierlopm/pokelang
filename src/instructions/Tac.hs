@@ -120,8 +120,8 @@ data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
             | Clean   Int
             | Epilogue   Int
             | Param   Src1 Int    
-            | ReturnE 
-            | ReturnS  Src1 
+            | ReturnE  String
+            | ReturnS  Src1 String
             -- Extras
             | Comment String
             | Tag     Label
@@ -134,6 +134,7 @@ data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
             | PrintEnum String Src1 -- Print enum at label
             -- save
             | Save Int -- save on stack?
+            | SaveRet Int -- save on stack?
             
 instance Show      IntIns where
     show (Addi    r0 r1 r2)  =  showTAC r0 r1 "+" r2
@@ -177,8 +178,8 @@ instance Show      IntIns where
     show (CallExp   d  str  i ) = show d ++ " := Call " ++ str ++ " #" ++ show i
     show (Clean         i )  = "Clean " ++ "#" ++ show i
     show (Epilogue i )  = "Epilogue " ++ "#" ++ show i
-    show (ReturnS   s1      )  = "Return  " ++ show s1
-    show (ReturnE          )  = "ReturnE "
+    show (ReturnS   s1  s )  = "Return  " ++ show s1 ++" tag_"++ s  ++ "_epilogue"
+    show (ReturnE    s      )  = "ReturnE tag_" ++ show s ++ "_epilogue"
     show (Param    par i)      = "Param " ++ show par ++" #"++show i
     show (Tag      i   )      = '\n': "tag_" ++ show i ++ ":"
     show (TagS     s   )      = '\n': "tag_" ++ s ++ ":" 
@@ -189,6 +190,7 @@ instance Show      IntIns where
     show Nop                  = "Nop"
     show TacExit                  = "TacExit"
     show (Save i)             = "Save #" ++ show i
+    show (SaveRet i)          = "SaveRet #" ++ show i
     show _                    = "FOUND SOMETHING WEIRD"
 
 -- Ewwwww, it might be improved with Generics?
@@ -242,8 +244,9 @@ instance Binary IntIns where
     put TacExit              = putWord8 46
     put (TagSC     str v)    = putWord8 47 >> put str >> put v
     put (CallExp    r0 str i ) = putWord8 48 >> put r0 >> put str >> put i
-    put (ReturnS   s1  )     =  putWord8 49 >> put s1 
-    put (ReturnE      )     =  putWord8 50 
+    put (ReturnS   s1  s )     =  putWord8 49 >> put s1 >> put s 
+--    put (ReturnE    s   )     =  putWord8 52 >> put s
+    put (SaveRet    i  )     =  putWord8 53  >> put i
 
     get = do 
     key <- getWord8
@@ -297,10 +300,11 @@ instance Binary IntIns where
        46 -> return TacExit
        47 -> build2get TagSC
        48 -> buildTac CallExp
-       49 ->  B.get >>= return . ReturnS
-       50 ->  return ReturnE
+       49 ->  build2get ReturnS
+      -- 50 ->  buildTac ReturnE
        51 -> B.get >>= return . Save 
        52 -> B.get >>= return . Epilogue 
+       53 -> B.get >>= return . SaveRet 
 
 -- Print auxiliaries
 showTAC  d s1 op s2 = show d ++" := "++ show s1 ++" "++ op ++ " " ++ show s2
@@ -321,8 +325,8 @@ isJump (JEq  _ _ _) = True
 isJump (JNEq _ _ _) = True
 isJump (TACCall _  _ ) = True
 isJump (CallExp _ _ _) = True
-isJump (ReturnE )      = True
-isJump (ReturnS  _ )   = True
+isJump (ReturnE _)      = True
+isJump (ReturnS  _ _)   = True
 isJump _            = False
 
 isTag  :: IntIns -> Bool

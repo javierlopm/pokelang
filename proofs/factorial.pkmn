@@ -71,7 +71,13 @@ vamo_a_calmano
 --
     Factorial recursivo
 --
+
+funcball CHARmander hola(pINTachu n):
+    vamo_a_retorna 'c';
+vamo_a_calmano
+
 funcball pINTachu fibo_recursivo(pINTachu n):
+    hola(3);
     si (n==1):
         vamo_a_retorna n;
     y_si (n == 1):

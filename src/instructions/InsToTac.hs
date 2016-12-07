@@ -35,21 +35,28 @@ data TranlatorState  = TranlatorState { tempCount  :: Word       -- Temporal var
                                       , falseLabel :: Maybe Word -- Last false label created
                                       , beginLabel :: Word       -- to what label the jump was made
                                       , endLabel   :: Word       -- jump if true or false found
-                                      , isItLval   :: Bool}
+                                      , isItLval   :: Bool
+                                      , epilogueT  :: String}
                                       deriving(Show)      
 type TreeTranslator  = StateT TranlatorState IO 
 
 debugVar = True
 
+-- updateEpilogue :: String -> TranlatorState()
+updateEpilogue s = do 
+                    state <- get
+                    put state {epilogueT = s}
+                    return() 
+
 vpp :: TranlatorState -> TranlatorState
-vpp (TranlatorState w1 w2 w3 w4 b w5 l) = (TranlatorState (succ w1) w2 w3 w4 b w5 l)
+vpp (TranlatorState w1 w2 w3 w4 b w5 l s) = (TranlatorState (succ w1) w2 w3 w4 b w5 l s)
 
 alb :: TranlatorState -> TranlatorState
-alb (TranlatorState w1 w2 w3 w4 b w5 l) = (TranlatorState w1 (succ w2) w3 w4 b w5 l)
+alb (TranlatorState w1 w2 w3 w4 b w5 l s) = (TranlatorState w1 (succ w2) w3 w4 b w5 l s)
 
 
 initTranslator :: TranlatorState
-initTranslator = TranlatorState 0 0 Nothing Nothing 0 0 False
+initTranslator = TranlatorState 0 0 Nothing Nothing 0 0 False ""
 
 newTemp :: TreeTranslator(Word)
 newTemp = do nt <- gets tempCount
@@ -88,26 +95,26 @@ isLval :: TreeTranslator (Bool)
 isLval = gets isItLval >>= return
 
 setLval :: TreeTranslator ()
-setLval = modify (\(TranlatorState w1 w2 tl fl d w3 _) -> (TranlatorState w1 w2 fl tl d w3 True))
+setLval = modify (\(TranlatorState w1 w2 tl fl d w3 _ s) -> (TranlatorState w1 w2 fl tl d w3 True s))
 
 setRval :: TreeTranslator ()
-setRval = modify (\(TranlatorState w1 w2 tl fl d w3 _) -> (TranlatorState w1 w2 fl tl d w3 False))
+setRval = modify (\(TranlatorState w1 w2 tl fl d w3 _ s) -> (TranlatorState w1 w2 fl tl d w3 False s))
 
 swapNot :: TreeTranslator()
-swapNot = modify (\(TranlatorState w1 w2 tl fl d w3 l) -> (TranlatorState w1 w2 fl tl d w3 l))
+swapNot = modify (\(TranlatorState w1 w2 tl fl d w3 l s) -> (TranlatorState w1 w2 fl tl d w3 l s))
 
 setBegin :: Word -> TreeTranslator()
-setBegin bl = modify (\(TranlatorState w1 w2 tl fl _ w3 l) -> (TranlatorState w1 w2 tl fl bl w3 l))
+setBegin bl = modify (\(TranlatorState w1 w2 tl fl _ w3 l s) -> (TranlatorState w1 w2 tl fl bl w3 l s))
 
 setEnd :: Word -> TreeTranslator()
-setEnd el = modify (\(TranlatorState w1 w2 tl fl b _ l) -> (TranlatorState w1 w2 tl fl b el l))
+setEnd el = modify (\(TranlatorState w1 w2 tl fl b _ l s) -> (TranlatorState w1 w2 tl fl b el l s))
 
 jumpsAreSet :: TreeTranslator (Bool)
 jumpsAreSet = gets trueLabel >>= maybe (return False) ( \ _ -> return True)
 
 modJumps :: Bool -> Maybe Word -> TreeTranslator()
-modJumps True  mw = modify (\(TranlatorState a b _  c d e f)->TranlatorState a b mw c d e f)
-modJumps False mw = modify (\(TranlatorState a b c _  d e f)->TranlatorState a b c mw d e f)
+modJumps True  mw = modify (\(TranlatorState a b _  c d e f s)->TranlatorState a b mw c d e f s)
+modJumps False mw = modify (\(TranlatorState a b c _  d e f s)->TranlatorState a b c mw d e f s)
 
 totalArgs :: TypeTuple -> Int
 totalArgs a = foldl (\x y -> x + (getSize y)) 0 $ init $ F.toList a
@@ -120,12 +127,14 @@ forestToTac' a = mapM buildFun  a
                                           -- liftIO $ putStrLn $ show lv
                                           if str == "hitMAINlee" 
                                              then  return (str, (singleton (Save lv) <> prg |> TacExit))
-                                             else  return (str, ((singleton (TagS str)) |> (Save lv) )<> prg |> (TagS (str++"_epilogue")) |> (Epilogue 1)   |> (Clean lv) )
+                                             else  return (str, ((singleton (TagS str)) |> (Save lv) )<> prg |> (TagS (str++"_epilogue")) |> (Epilogue (retSize typ))   |> (Clean lv) )
                                           --return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TACCall "Epilogue" 42))
+          retSize typ = getSize (funcReturnType  typ)
 
 forestToTac :: [(String,Ins,Int)] -> TreeTranslator ( [(String,Program)] )
 forestToTac [] = return mempty
-forestToTac ((str,insTree,lv):tl)  = do 
+forestToTac ((str,insTree,lv):tl)  = do
+    updateEpilogue str
     -- liftIO $ putStrLn $ show insTree
     headTac       <- treeToTac insTree
     forestTacTail <- forestToTac tl
@@ -217,15 +226,19 @@ treeToTac (Block iS ) = do
     return $ F.foldl (><) empty progSeq
 treeToTac (Call s args sizes b) = do
                             prog <- argsToProg args b empty sizes
-                            return $ prog <> singleton (TACCall s (sum sizes)) <> singleton (Clean (sum sizes))
+                            return $ singleton (SaveRet retSize) <> prog <> singleton (TACCall s (sum sizes)) <> singleton (Clean (sum sizes))
+                        where
+                            retSize = (last sizes)
 
 treeToTac (Return v)  = do
-    maybe ( return (singleton (ReturnE) ))
+    retString <- gets epilogueT 
+    maybe ( return (singleton (ReturnE retString))) 
           ( \nVar -> do 
             (retProg,rVar) <- expToTac nVar
-            let fTac = (retProg <>  (singleton (ReturnS rVar) ) )
+            let fTac = retProg <>  (singleton (ReturnS rVar retString) ) 
             return (fTac))
           (v)
+
 treeToTac (Read e1) = do isL <- isLval
                          let goback = if isL then return () else setRval
                          -- setLval
@@ -368,7 +381,9 @@ expToTac (Binary op exp1 exp2)
 expToTac (CallVal s args sizes b ) = do
     tempLocal  <- newTemp
     prog <- argsToProg args b empty sizes
-    return ((prog <> singleton (CallExp (Temp tempLocal) s (sum sizes)) <> singleton (Clean (sum sizes))),(Temp tempLocal))    
+    return (( singleton (SaveRet retSize) <> prog <> singleton (CallExp (Temp tempLocal) s (sum sizes)) <> singleton (Clean (sum sizes))),(Temp tempLocal))    
+                            where
+                                retSize = (last sizes)
 
 expToTac (Unary op a) = do 
     tempLocal  <- newTemp
