@@ -225,10 +225,11 @@ treeToTac (Block iS ) = do
     progSeq <- M.mapM treeToTac iS
     return $ F.foldl (><) empty progSeq
 treeToTac (Call s args sizes b) = do
-                            prog <- argsToProg args b empty sizes
-                            return $ singleton (SaveRet retSize) <> prog <> singleton (TACCall s (sum sizes)) <> singleton (Clean (sum sizes))
-                        where
-                            retSize = (last sizes)
+    prog <- argsToProg args b empty sizes
+    return $ singleton (SaveRet k) <> prog <> singleton (TACCall s i k) <> singleton (Clean (i+k))
+        where
+            i = sum $ init sizes
+            k = last sizes
 
 treeToTac (Return v)  = do
     retString <- gets epilogueT 
@@ -239,12 +240,12 @@ treeToTac (Return v)  = do
             return (fTac))
           (v)
 
-treeToTac (Read e1) = do isL <- isLval
-                         let goback = if isL then return () else setRval
-                         -- setLval
-                         (var_cal,var) <- expToTac e1
-                         goback
-                         return $ var_cal |> (Param var 42) |> (TACCall "read" 1)
+-- treeToTac (Read e1) = do isL <- isLval
+--                          let goback = if isL then return () else setRval
+--                          -- setLval
+--                          (var_cal,var) <- expToTac e1
+--                          goback
+--                          return $ var_cal |> (Param var 42) |> (TACCall "read" 1)
 treeToTac _ = return (singleton Nop)
  
 argsToProg :: (Seq(Exp)) -> Bool ->  Program -> [Int] -> TreeTranslator((Program))
@@ -380,10 +381,11 @@ expToTac (Binary op exp1 exp2)
         return ((ins1 <> ins2) |> (insTranslation op (Temp nt) t1 t2) ,Temp nt)
 expToTac (CallVal s args sizes b ) = do
     tempLocal  <- newTemp
-    prog <- argsToProg args b empty sizes
-    return (( singleton (SaveRet retSize) <> prog <> singleton (CallExp (Temp tempLocal) s (sum sizes)) <> singleton (Clean (sum sizes))),(Temp tempLocal))    
-                            where
-                                retSize = (last sizes)
+    prog       <- argsToProg args b empty sizes
+    return (( singleton (SaveRet k) <> prog <> singleton (CallExp (Temp tempLocal) s i k ) <> singleton (Clean (i+k))) ,(Temp tempLocal))    
+        where
+            i = sum $ init sizes
+            k = last sizes
 
 expToTac (Unary op a) = do 
     tempLocal  <- newTemp

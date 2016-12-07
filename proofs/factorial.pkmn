@@ -1,5 +1,5 @@
-FORWARDtortle funcball pINTachu fibo_iterativo(pINTachu n);
-FORWARDtortle funcball pINTachu fibo_recursivo(pINTachu n);
+FORWARDtortle funcball pINTachu fact_iterativo(pINTachu n);
+FORWARDtortle funcball pINTachu fact_recursivo(pINTachu n);
 --
     Factorial recursivo
 --
@@ -24,7 +24,7 @@ funcball VOIDtorb hitMAINlee():
             si (res < 0 ):
                 vamo_a_imprimi("Error: no se puede calcular el factorial negativo \n");
             si_no:
-                vamo_a_imprimi(fibo_recursivo(res));
+                vamo_a_imprimi(fact_recursivo(res));
                 vamo_a_imprimi("\n");
             vamo_a_calmano
         y_si (opt == 2):
@@ -34,7 +34,7 @@ funcball VOIDtorb hitMAINlee():
             si (res < 0 ):
                 vamo_a_imprimi("Error: no se puede calcular el factorial negativo \n");
             si_no:
-                vamo_a_imprimi(fibo_iterativo(res));
+                vamo_a_imprimi(fact_iterativo(res));
                 vamo_a_imprimi("\n");
             vamo_a_calmano
 
@@ -52,7 +52,7 @@ vamo_a_calmano
 --
     Factorial iterativo
 --
-funcball pINTachu fibo_iterativo(pINTachu n):
+funcball pINTachu fact_iterativo(pINTachu n):
     pINTachu res;
 
     res = 1;
@@ -67,10 +67,10 @@ vamo_a_calmano
 --
     Factorial recursivo
 --
-funcball pINTachu fibo_recursivo(pINTachu n):
+funcball pINTachu fact_recursivo(pINTachu n):
     si (n==1):
         vamo_a_retorna n;
     y_si (n == 1):
-        vamo_a_retorna (n * fibo_recursivo(n-1));
+        vamo_a_retorna (n * fact_recursivo(n-1));
     vamo_a_calmano
 vamo_a_calmano

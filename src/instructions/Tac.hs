@@ -115,8 +115,8 @@ data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
             | ReadArray    Dest Src1 Src2
             | StoreArray   Dest Src1 Src2
             -- Function calls
-            | TACCall    String  Int
-            | CallExp    Dest String  Int
+            | TACCall    String  Int Int
+            | CallExp    Dest String  Int Int
             | Clean   Int
             | Epilogue   Int
             | Param   Src1 Int    
@@ -174,8 +174,8 @@ instance Show      IntIns where
     show (StorePointer d s1 )   = '*' : show d ++ " := " ++ show s1 
     show (ReadArray    d s1 s2) = show d ++" := "++show s1++'[' : show s2 ++ "]"
     show (StoreArray   d s1 s2) = show d ++'[':show s1 ++ "] := " ++ show s2
-    show (TACCall     str  i )  = "Call " ++ str ++ " #" ++ show i
-    show (CallExp   d  str  i ) = show d ++ " := Call " ++ str ++ " #" ++ show i
+    show (TACCall     str  i k)  = "Call " ++ str ++ " #" ++ show i ++ ", #" ++ show k
+    show (CallExp   d  str  i k) = show d ++ " := Call " ++ str ++ " #" ++ show i ++ ", #" ++ show k
     show (Clean         i )  = "Clean " ++ "#" ++ show i
     show (Epilogue i )  = "Epilogue " ++ "#" ++ show i
     show (ReturnS   s1  s )   = "Return  " ++ show s1 ++" tag_"++ s  ++ "_epilogue"
@@ -225,7 +225,7 @@ instance Binary IntIns where
     put (StorePointer r0 r1) = putWord8 27 >> put r0 >>  put r1 
     put (ReadArray  r0 r1 r2) = putWord8 28 >> put r0 >>  put r1 >> put r2 
     put (StoreArray r0 r1 r2) = putWord8 29 >> put r0 >>  put r1 >> put r2 
-    put (TACCall     str i )  = putWord8 30 >> put str >> put i
+    -- put (TACCall     str i )  = putWord8 30 >> put str >> put i
     put (Param    par i )     = putWord8 31 >> put par >> put i
     put (Comment  str )      = putWord8 32 >> put str
     put (Tag      str )      = putWord8 33 >> put str
@@ -243,7 +243,7 @@ instance Binary IntIns where
     put (TagS      str  )    = putWord8 45 >> put str 
     put TacExit              = putWord8 46
     put (TagSC     str v)    = putWord8 47 >> put str >> put v
-    put (CallExp    r0 str i ) = putWord8 48 >> put r0 >> put str >> put i
+    -- put (CallExp    r0 str i ) = putWord8 48 >> put r0 >> put str >> put i
     put (ReturnS   s1  s )     =  putWord8 49 >> put s1 >> put s 
 --    put (ReturnE    s   )     =  putWord8 52 >> put s
     put (SaveRet    i  )     =  putWord8 53  >> put i
@@ -281,7 +281,7 @@ instance Binary IntIns where
        27 ->  build2get StorePointer
        28 ->  buildTac  ReadArray
        29 ->  buildTac  StoreArray
-       30 ->  build2get TACCall 
+       -- 30 ->  build2get TACCall 
        31 ->  build2get Param
        32 ->  B.get >>= return . Comment
        33 ->  B.get >>= return . Tag
@@ -299,7 +299,7 @@ instance Binary IntIns where
        45 -> B.get >>= return . TagS
        46 -> return TacExit
        47 -> build2get TagSC
-       48 -> buildTac CallExp
+       -- 48 -> buildTac CallExp
        49 ->  build2get ReturnS
       -- 50 ->  buildTac ReturnE
        51 -> B.get >>= return . Save 
@@ -323,8 +323,8 @@ isJump (JLEq _ _ _) = True
 isJump (JGEq _ _ _) = True
 isJump (JEq  _ _ _) = True
 isJump (JNEq _ _ _) = True
-isJump (TACCall _  _ ) = True
-isJump (CallExp _ _ _) = True
+isJump (TACCall _  _ _ ) = True
+isJump (CallExp _ _ _ _) = True
 isJump (ReturnE _)      = True
 isJump (ReturnS  _ _)   = True
 isJump _            = False

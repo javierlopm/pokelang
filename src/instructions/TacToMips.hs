@@ -345,24 +345,26 @@ processIns ins =
       (ReadArray    d Fp (Int_Cons c)) -> readLocal d c
       (ReadArray    d r1 r2)           -> readArr d r1 r2
       -- (StoreArray   d r1 r2) -> 
-      (Param      (Int_Cons   s) i)  -> moveSp (-4) >> emiti ("li $t0,"~~stt s~~"\n")    >> emiti "sw $t0,0($sp)\n"
-      (Param      (Float_Cons s) i)  -> moveSp (-4) >> emiti ("li $t0,"~~stt s~~"\n")    >> emiti "sw $t0,0($sp)\n"
-      (Param      (MemAdress  s) i)  -> moveSp (-4) >> emiti ("la $t0,_"~~T.pack s~~"\n") >> emiti "sw $t0,0($sp)\n"
+      (Param      (Int_Cons   s) i)  -> moveSp (-i) >> emiti ("li $a3,"~~stt s~~"\n")     >> emiti "sw $a3,0($sp)\n"
+      (Param      (Float_Cons s) i)  -> moveSp (-i) >> emiti ("li $a3,"~~stt s~~"\n")     >> emiti "sw $a3,0($sp)\n"
+      (Param      (MemAdress  s) i)  -> moveSp (-i) >> emiti ("la $a3,_"~~T.pack s~~"\n") >> emiti "sw $a3,0($sp)\n"
       (Param      t0 i)              -> paramGen t0 i
       
-      (ReturnE      s ) -> emiti ("goto "~~T.pack s~~"_epilogue\n")
-      (ReturnS    a s ) -> getReg a >>= (\r -> emiti ("move $a3,"~~showReg r~~"\n") )>> emiti ("goto"~~T.pack s~~"\n")
+      (ReturnE      s ) -> emiti ("j  "~~T.pack s~~"_epilogue\n")
+      (ReturnS    a s ) -> getReg a >>= (\r -> emiti ("move $a3,"~~showReg r~~"\n") )>> emiti ("j "~~T.pack s~~"\n")
       -- (Save         i ) -> moveSp (-i-8) >> emiti ("sw $fp,"~~ stt (i+4) ~~"($sp)\n") >> emiti ("sw $ra,"~~ stt i ~~"($sp)\n") >> emiti ("addi $fp,$sp,"~~ stt (i+8) ~~"\n")
-      (Save        i ) -> save i
-      (SaveRet      i ) -> moveSp (-i) 
-      (Clean        i ) -> moveSp (i+4)
-      (Epilogue     i ) -> emiti (" sw $a3,"~~stt i~~"($sp)\n") >> emiti "jr\n"
+      (Save         i ) -> save i
+      (SaveRet      i ) -> moveSp (-i)
+      (Clean        i ) -> moveSp (i) -- revisar
+      (Epilogue     i ) -> emiti ("sw $a3,"~~stt i~~"($sp)\n") >> emiti "jr $ra\n"
 
       -- (Param      (Temp s))  -> moveSp (-4) >> emit ("la $t0,"~~T.pack s~~"\n") >> emit $ "    sw $t0,0($sp)" -- really? bueno, hay que buscar el registro
-      (TACCall    str_lab  i)     -> emiti $ "jal " ~~ T.pack str_lab ~~ "\n" -- Potencialmente hacer algo con ese i
-      (CallExp  dest  str_lab  i) -> emiti $ "jal " ~~ T.pack str_lab ~~ "\n" -- Mover lo que se tenga a dest
+      -- este i es k+i = tam de arg + tam de retorno
+      (TACCall    str_lab      i k) -> saveRegs >> emiti ("jal "~~T.pack str_lab~~"\n") >> restoreRegs >> emiti ("addi $sp,$sp," ~~ stt (i+k+8) ~~ "\n")  -- Potencialmente hacer algo con ese i
+      -- este i es k+i = tam de arg + tam de retorno
+      (CallExp  dest  str_lab  i k) -> saveRegs >> emiti ("jal "~~T.pack str_lab~~"\n") >> restoreRegs >> getReg dest >>= (\ r -> emiti ("lw "~~ showReg r~~","~~stt (i+8)~~"($sp)\n")) >> emiti ("addi $sp,$sp," ~~ stt (i+k+8) ~~ "\n") -- Mover lo que se tenga a dest
       TacExit                    -> emiti "li $v0,10\n" >> emiti "syscall\n"
-      Nop                        -> emit "# nop\n"
+      Nop                        -> emit "# nop\n">> restoreRegs
       a                  -> return ()
       -- (TagSC) tag para strings, usado en data, no aqui
     where get3regs str d r1 r2 = do 
@@ -412,6 +414,7 @@ processIns ins =
             emiti $ "lw "~~showReg dest~~",0($a3)\n"
           paramGen t0 i = do
             moveSp (-i)
+            -- tomar en cuenta arreglos
             source  <- getReg t0
             emiti $ "sw "~~ showReg source ~~",0($sp)\n"
           save i = do 
@@ -419,6 +422,12 @@ processIns ins =
             emiti $ "sw $fp,"~~ stt (i+4) ~~"($sp)\n"
             emiti $ "sw $ra,"~~ stt i ~~"($sp)\n"
             emiti $ "addi $fp,$sp,"~~ stt (i+8) ~~"\n"
+          saveRegs = do 
+            moveSp (-8)
+            emiti ("sw $fp,0($sp)\n")
+            emiti ("sw $ra,4($sp)\n")
+            emiti ("addi $fp,$sp,8\n")
+          restoreRegs = emiti ("lw $fp,0($sp)") >> emiti ("lw $fp,4($sp)")
 
           moveSp n = emiti $ "addi $sp,$sp," ~~ stt n ~~ "\n"
           moveFp n = emiti $ "addi $fp,$fp," ~~ stt n ~~ "\n"
