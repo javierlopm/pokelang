@@ -382,6 +382,7 @@ expToTac (Binary op exp1 exp2)
 expToTac (CallVal s args sizes b ) = do
     tempLocal  <- newTemp
     prog       <- argsToProg args b empty sizes
+    -- liftIO $ putStrLn $ show sizes
     return (( singleton (SaveRet k) <> prog <> singleton (CallExp (Temp tempLocal) s i k ) <> singleton (Clean (i+k))) ,(Temp tempLocal))    
         where
             i = sum $ init sizes

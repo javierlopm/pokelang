@@ -496,7 +496,7 @@ expIns' (Binary op a b) (TypeFloat,to) = return (TypeFloat,to,(Binary op' a b))
 expIns' ins (t,to)      = return (TypeError,to,NoExp)
 
 expInsF :: Exp -> ((Type,Token),Bool) -> OurMonad((Type,Token,Exp))
-expInsF (CallVal a b s _) (t,boolProc)   = expIns (CallVal a b s boolProc) t
+expInsF (CallVal a b s _) ((m,n),boolProc)   = expIns (CallVal a b (s++[getSize m] ) boolProc) (m,n)
 expInsF a (t,_)                      = expIns a t
 
 

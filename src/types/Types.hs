@@ -365,9 +365,7 @@ getSize (TypeSatisfies _ ) = error "wtf? really?"
 getSizeTT :: TypeTuple -> [Int]
 getSizeTT s = if (S.null s) 
                  then []
-                 else getSize( (fst . decons . S.viewl) s ) : getSizeTT ((snd . decons . S.viewl) s) 
-    where decons EmptyL = error "Empty sequence!"
-          decons (l S.:< others) = (l,others)
+                 else map getSize (F.toList s)
 
 stripPointer :: Type -> Type
 stripPointer (TypePointer t) = t
