@@ -1,0 +1,73 @@
+--
+par :: Int -> Bool
+par n = if n == 0 then True 
+                  else if n == 1 then False
+                                 else impar (n-1)
+
+impar :: Int -> Bool
+impar n = if n == 0 then False
+                    else if n == 1 then True
+                                   else par (n-1)
+--
+
+FORWARDtortle funcball BOOLbasaur par(pINTachu n);
+FORWARDtortle funcball BOOLbasaur impar(pINTachu n);
+
+funcball BOOLbasaur par(pINTachu n):
+    si (n == 0):
+        vamo_a_retorna squirtrue;
+    si_no:
+        si (n==1):
+            vamo_a_retorna squirfalse;
+        si_no:
+            vamo_a_retorna impar(n-1);
+        vamo_a_calmano
+    vamo_a_calmano
+vamo_a_calmano
+
+funcball BOOLbasaur impar(pINTachu n):
+    si (n == 0):
+        vamo_a_retorna squirfalse;
+    si_no:
+        si (n==1):
+            vamo_a_retorna squirtrue;
+        si_no:
+            vamo_a_retorna par(n-1);
+        vamo_a_calmano
+    vamo_a_calmano
+vamo_a_calmano
+
+funcball VOIDtorb hitMAINlee():
+    pINTachu opt;
+    pINTachu n;
+    BOOLbasaur res;
+    vamo_a_imprimi("Bienvenido\n");
+
+    vamo_mientra squirtrue:
+        vamo_a_imprimi("1) Calcular paridad de n\n");
+        vamo_a_imprimi("2) Salir\n> ");
+
+        vamo_a_lee(opt);
+
+        si (opt == 1):
+            vamo_a_imprimi("Introduzca el n~umero.\n> ");
+            vamo_a_lee(n);
+
+            si (n < 0 ):
+                n = -n;
+            vamo_a_calmano
+
+            si (par(n)):
+                vamo_a_imprimi("Es par!\n\n");
+            si_no:
+                vamo_a_imprimi("Es impar!\n\n");
+            vamo_a_calmano
+
+        y_si (opt == 2):
+            vamo_a_retorna;
+        si_no:
+            vamo_a_imprimi("Respuesta inesperada, intente de nuevo.\n");
+        vamo_a_calmano
+
+    vamo_a_calmano
+vamo_a_calmano

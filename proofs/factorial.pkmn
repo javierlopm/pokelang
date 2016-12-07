@@ -9,10 +9,6 @@ funcball VOIDtorb hitMAINlee():
     
     vamo_a_imprimi("Bienvenido\n");
 
-    opt = 69;
-    vamo_a_imprimi(opt);
-
-
     vamo_mientra squirtrue:
 
         vamo_a_imprimi("Que desea hacer?\n");
