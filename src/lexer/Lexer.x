@@ -52,7 +52,7 @@ tokens :-
   BOOLbasaur               { \p _ -> TkBool      (getPos p) }
   CHARmander               { \p _ -> TkChar      (getPos p) }
   VOIDtorb                 { \p _ -> TkVoid      (getPos p) }
-  butterFloat              { \p _ -> TkFloat     (getPos p) }
+  butterFLOAT              { \p _ -> TkFloat     (getPos p) }
   STRUCTabuzz              { \p _ -> TkStruct    (getPos p) }
   articUNION               { \p _ -> TkUnion     (getPos p) }
   ENUManyte                { \p _ -> TkEnum      (getPos p) }

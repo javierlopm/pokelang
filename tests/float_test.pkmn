@@ -1,0 +1,12 @@
+funcball VOIDtorb hitMAINlee():
+    butterFLOAT x;
+    butterFLOAT y;
+    butterFLOAT z;
+
+
+    x = 4.5;
+    y = 9.735;
+    z = 45.87;
+    
+
+vamo_a_calmano

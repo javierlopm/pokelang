@@ -84,6 +84,9 @@ showfReg r  = "$f" ~~ (stt r)
 build3Mips :: Mips -> Register -> Register -> Register -> Mips
 build3Mips m r1 r2 r3 = "    "~~m~~" "~~(showReg r1) ~~","~~(showReg r2)~~","~~(showReg r3)~~"\n"
 
+build3Mipsf :: Mips -> Register -> Register -> Register -> Mips
+build3Mipsf m r1 r2 r3 = "    "~~m~~" "~~(showfReg r1) ~~","~~(showfReg r2)~~","~~(showfReg r3)~~"\n"
+
 build3MipsB :: Mips -> Register -> Mips -> Word -> Mips
 build3MipsB m r1 r2 lb = "    "~~m~~" "~~(showReg r1) ~~","~~r2~~","~~(showTag lb)~~"\n"
 
@@ -173,7 +176,7 @@ getReg' var b = isInRegister
           findVec (False,x)  _ = (False,x+1)
           err1 = "Empty registers list for Ry"
           err2 = "No empty registers and no spills :( sorry Novich"
-          lowestRegister = if b then lowestRegister else 0
+          lowestRegister = if b then lowreg else 0
 
 getReg  = (flip getReg') True
 getfReg = (flip getReg') False
@@ -290,11 +293,11 @@ processIns ins =
 
       -- Float aritmetic
       (Addf r1 r2 (Float_Cons c))  -> get2regf "add.s" r1 r2 c
-      (Subf r1 r2 (Float_Cons c))  -> get2regf "sub.s" r1 r2 (-c)
-      (Divf r1 r2 (Float_Cons c))  -> get2regf "div.s" r1 r2 (-c)
+      (Subf r1 r2 (Float_Cons c))  -> get2regf "sub.s" r1 r2 c
+      (Divf r1 r2 (Float_Cons c))  -> get2regf "div.s" r1 r2 c
       (Addf r1 (Float_Cons c) r2)  -> get2regf "add.s" r1 r2 c
-      (Subf r1 (Float_Cons c) r2)  -> get2regf "sub.s" r1 r2 (-c)
-      (Divf r1 (Float_Cons c) r2)  -> get2regf "div.s" r1 r2 (-c)
+      (Subf r1 (Float_Cons c) r2)  -> get2regf "sub.s" r1 r2 c
+      (Divf r1 (Float_Cons c) r2)  -> get2regf "div.s" r1 r2 c
       (Subf r1 r2 r3)              -> get3regsf "sub.s" r1 r2 r3
       (Addf r1 r2 r3)              -> get3regsf "add.s" r1 r2 r3
       (Divf r1 r2 r3)              -> get3regsf "div.s" r1 r2 r3
@@ -358,15 +361,19 @@ processIns ins =
       otherwise                  -> return ()
       -- (TagSC) tag para strings, usado en data, no aqui
     where get3regs str d r1 r2 = do 
-            fstReg <- getReg r1 -- por param false o true
-            sndReg <- getReg r2 -- por param false o true
+            fstReg <- getReg r1
+            sndReg <- getReg r2
             dReg   <- getReg d
             emit $ build3Mips str dReg fstReg sndReg 
           get2reg str d r1 cons = do 
             fstReg <- getReg r1 
             dest   <- getReg d 
             emit $ buildiMips str dest fstReg cons
-          get3regsf str d r1 r2   = undefined
+          get3regsf str d r1 r2   = do
+            fstReg <- getfReg r1
+            sndReg <- getfReg r2
+            dReg   <- getfReg d
+            emit $ build3Mipsf str dReg fstReg sndReg 
           get2regf str d r1 cons  = do
             fstReg <- getfReg r1 
             dest   <- getfReg d 
@@ -396,8 +403,8 @@ processIns ins =
             dest  <- getReg d
             op1   <- getReg r1
             op2   <- getReg r2
-            emiti $ "add $t0,"~~ showReg op1 ~~ "," ~~ showReg op2 ~~ "\n" 
-            emiti $ "lw "~~showReg dest~~",0($t0)\n"
+            emiti $ "add $a3,"~~ showReg op1 ~~ "," ~~ showReg op2 ~~ "\n" 
+            emiti $ "lw "~~showReg dest~~",0($a3)\n"
           paramGen t0 i = do
             moveSp (-i)
             source  <- getReg t0
