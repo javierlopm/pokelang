@@ -309,11 +309,11 @@ processIns ins =
       (Param      (Float_Cons s) i)  -> moveSp (-4) >> emiti ("li $t0,"~~stt s~~"\n")    >> emiti "sw $t0,0($sp)\n"
       (Param      (MemAdress  s) i)  -> moveSp (-4) >> emiti ("la $t0,_"~~T.pack s~~"\n") >> emiti "sw $t0,0($sp)\n"
       (Param      t0 i)              -> paramGen t0 i
-      (Clean       0 ) -> return ()
-      (ReturnE      s ) -> emiti ("goto FAKKETAG")
-      (ReturnS      a s )-> emiti ("goto FAKKETAG")
-      (Save        i ) -> moveSp (-i-8) >> emiti ("sw $fp,"~~ stt (i+4) ~~"($sp)\n") >> emiti ("sw $ra,"~~ stt i ~~"($sp)\n") >> emiti ("addi $fp,$sp,"~~ stt (i+8) ~~"\n")
-      (Clean       i ) -> moveSp (i+4)
+      (Clean        0 ) -> return ()
+      (ReturnE      s ) -> emiti ("goto"~~T.pack s~~"\n")
+      (ReturnS    a s ) -> getReg a >>= (\r -> emiti ("move $a3,"~~showReg r~~"\n") )>> emiti ("goto"~~T.pack s~~"\n")
+      (Save         i ) -> moveSp (-i-8) >> emiti ("sw $fp,"~~ stt (i+4) ~~"($sp)\n") >> emiti ("sw $ra,"~~ stt i ~~"($sp)\n") >> emiti ("addi $fp,$sp,"~~ stt (i+8) ~~"\n")
+      (Clean        i ) -> moveSp (i+4)
 
       -- (Param      (Temp s))  -> moveSp (-4) >> emit ("la $t0,"~~T.pack s~~"\n") >> emit $ "    sw $t0,0($sp)" -- really? bueno, hay que buscar el registro
       (TACCall    str_lab  i)     -> emiti $ "jal " ~~ T.pack str_lab ~~ "\n" -- Potencialmente hacer algo con ese i

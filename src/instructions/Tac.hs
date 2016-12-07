@@ -178,9 +178,9 @@ instance Show      IntIns where
     show (CallExp   d  str  i ) = show d ++ " := Call " ++ str ++ " #" ++ show i
     show (Clean         i )  = "Clean " ++ "#" ++ show i
     show (Epilogue i )  = "Epilogue " ++ "#" ++ show i
-    show (ReturnS   s1  s )  = "Return  " ++ show s1 ++" tag_"++ s  ++ "_epilogue"
-    show (ReturnE    s      )  = "ReturnE tag_" ++ show s ++ "_epilogue"
-    show (Param    par i)      = "Param " ++ show par ++" #"++show i
+    show (ReturnS   s1  s )   = "Return  " ++ show s1 ++" tag_"++ s  ++ "_epilogue"
+    show (ReturnE    s      ) = "ReturnE tag_" ++ show s ++ "_epilogue"
+    show (Param    par i)     = "Param " ++ show par ++" #"++show i
     show (Tag      i   )      = '\n': "tag_" ++ show i ++ ":"
     show (TagS     s   )      = '\n': "tag_" ++ s ++ ":" 
     show (TagSC    s v )      = '\n': s ++ ": \n  \"" ++ v ++ "\""
@@ -188,7 +188,7 @@ instance Show      IntIns where
     show (Print     c  )      = "Print "      ++ show c
     show (PrintEnum c i)      = "Print enum " ++ show c ++ "[" ++ show i ++"]"
     show Nop                  = "Nop"
-    show TacExit                  = "TacExit"
+    show TacExit              = "TacExit"
     show (Save i)             = "Save #" ++ show i
     show (SaveRet i)          = "SaveRet #" ++ show i
     show _                    = "FOUND SOMETHING WEIRD"
