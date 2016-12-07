@@ -226,7 +226,7 @@ treeToTac (Block iS ) = do
     return $ F.foldl (><) empty progSeq
 treeToTac (Call s args sizes b) = do
     prog <- argsToProg args b empty sizes
-    return $ singleton (SaveRet k) <> prog <> singleton (TACCall s i k) <> singleton (Clean (i+k))
+    return $ singleton (SaveRet k) <> prog <> singleton (TACCall s i k) <> singleton (Clean (i+k+8))
         where
             i = sum $ init sizes
             k = last sizes
@@ -383,7 +383,7 @@ expToTac (CallVal s args sizes b ) = do
     tempLocal  <- newTemp
     prog       <- argsToProg args b empty sizes
     -- liftIO $ putStrLn $ show sizes
-    return (( singleton (SaveRet k) <> prog <> singleton (CallExp (Temp tempLocal) s i k ) <> singleton (Clean (i+k))) ,(Temp tempLocal))    
+    return (( singleton (SaveRet k) <> prog <> singleton (CallExp (Temp tempLocal) s i k ) <> singleton (Restore (Temp tempLocal) s i k ) <> singleton (Clean (i+k+8))) ,(Temp tempLocal))    
         where
             i = sum $ init sizes
             k = last sizes

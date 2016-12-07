@@ -117,6 +117,7 @@ data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
             -- Function calls
             | TACCall    String  Int Int
             | CallExp    Dest String  Int Int
+            | Restore    Dest String  Int Int
             | Clean   Int
             | Epilogue   Int
             | Param   Src1 Int    
@@ -175,7 +176,8 @@ instance Show      IntIns where
     show (ReadArray    d s1 s2) = show d ++" := "++show s1++'[' : show s2 ++ "]"
     show (StoreArray   d s1 s2) = show d ++'[':show s1 ++ "] := " ++ show s2
     show (TACCall     str  i k)  = "Call " ++ str ++ " #" ++ show i ++ ", #" ++ show k
-    show (CallExp   d  str  i k) = show d ++ " := Call " ++ str ++ " #" ++ show i ++ ", #" ++ show k
+    show (CallExp   d  str  i k) = "CallExp " ++ str ++ " #" ++ show i ++ ", #" ++ show k
+    show (Restore   d  str  i k) = show d ++ " := Restore " ++ str ++ " #" ++ show i ++ ", #" ++ show k
     show (Clean         i )  = "Clean " ++ "#" ++ show i
     show (Epilogue i )  = "Epilogue " ++ "#" ++ show i
     show (ReturnS   s1  s )   = "Return  " ++ show s1 ++" tag_"++ s  ++ "_epilogue"

@@ -352,20 +352,20 @@ processIns ins =
       
       (ReturnE      s ) -> emiti ("j  "~~T.pack s~~"_epilogue\n")
       (ReturnS    a s ) -> getReg a >>= (\r -> emiti ("move $a3,"~~showReg r~~"\n") )>> emiti ("j "~~T.pack s~~"\n")
-      -- (Save         i ) -> moveSp (-i-8) >> emiti ("sw $fp,"~~ stt (i+4) ~~"($sp)\n") >> emiti ("sw $ra,"~~ stt i ~~"($sp)\n") >> emiti ("addi $fp,$sp,"~~ stt (i+8) ~~"\n")
       (Save         i ) -> save i
       (SaveRet      i ) -> moveSp (-i)
-      (Clean        i ) -> moveSp (i) -- revisar
+      (Clean        i ) -> moveSp (i) -- revisar o nuevo
       (Epilogue     i ) -> emiti ("sw $a3,"~~stt i~~"($sp)\n") >> emiti "jr $ra\n"
-
-      -- (Param      (Temp s))  -> moveSp (-4) >> emit ("la $t0,"~~T.pack s~~"\n") >> emit $ "    sw $t0,0($sp)" -- really? bueno, hay que buscar el registro
       -- este i es k+i = tam de arg + tam de retorno
-      (TACCall    str_lab      i k) -> saveRegs >> emiti ("jal "~~T.pack str_lab~~"\n") >> restoreRegs >> emiti ("addi $sp,$sp," ~~ stt (i+k+8) ~~ "\n")  -- Potencialmente hacer algo con ese i
-      -- este i es k+i = tam de arg + tam de retorno
-      (CallExp  dest  str_lab  i k) -> saveRegs >> emiti ("jal "~~T.pack str_lab~~"\n") >> restoreRegs >> getReg dest >>= (\ r -> emiti ("lw "~~ showReg r~~","~~stt (i+8)~~"($sp)\n")) >> emiti ("addi $sp,$sp," ~~ stt (i+k+8) ~~ "\n") -- Mover lo que se tenga a dest
+      (TACCall    str_lab      i k) -> saveRegs >> emiti ("jal "~~T.pack str_lab~~"\n") >> restoreRegs -- >>  emiti ("addi $sp,$sp," ~~ stt (i+k+8) ~~ "\n")  -- Potencialmente hacer algo con ese i
+      (CallExp  dest  str_lab  i k) -> saveRegs >> emiti ("jal "~~T.pack str_lab~~"\n") -- >> restoreRegs >> getReg dest >>= (\ r -> emiti ("lw "~~ showReg r~~","~~stt (i+8)~~"($sp)\n")) >> emiti ("addi $sp,$sp," ~~ stt (i+k+8) ~~ "\n") -- Mover lo que se tenga a dest
+      (Restore  dest  str_lab  i k) -> restoreRegs >> getReg dest >>= (\ r -> emiti ("lw "~~ showReg r~~","~~stt (i+8)~~"($sp)\n")) -- >> emiti ("addi $sp,$sp," ~~ stt (i+k+8) ~~ "\n") -- Mover lo que se tenga a dest
       TacExit                    -> emiti "li $v0,10\n" >> emiti "syscall\n"
       Nop                        -> emit "# nop\n">> restoreRegs
       a                  -> return ()
+      -- este i es k+i = tam de arg + tam de retorno
+      -- (Save         i ) -> moveSp (-i-8) >> emiti ("sw $fp,"~~ stt (i+4) ~~"($sp)\n") >> emiti ("sw $ra,"~~ stt i ~~"($sp)\n") >> emiti ("addi $fp,$sp,"~~ stt (i+8) ~~"\n")
+      -- (Param      (Temp s))  -> moveSp (-4) >> emit ("la $t0,"~~T.pack s~~"\n") >> emit $ "    sw $t0,0($sp)" -- really? bueno, hay que buscar el registro
       -- (TagSC) tag para strings, usado en data, no aqui
     where get3regs str d r1 r2 = do 
             fstReg <- getReg r1
