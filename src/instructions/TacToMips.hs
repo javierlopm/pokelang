@@ -313,7 +313,9 @@ processIns ins =
       (ReturnE      s ) -> emiti ("goto"~~T.pack s~~"\n")
       (ReturnS    a s ) -> getReg a >>= (\r -> emiti ("move $a3,"~~showReg r~~"\n") )>> emiti ("goto"~~T.pack s~~"\n")
       (Save         i ) -> moveSp (-i-8) >> emiti ("sw $fp,"~~ stt (i+4) ~~"($sp)\n") >> emiti ("sw $ra,"~~ stt i ~~"($sp)\n") >> emiti ("addi $fp,$sp,"~~ stt (i+8) ~~"\n")
+      (SaveRet      i ) -> moveSp (-i) 
       (Clean        i ) -> moveSp (i+4)
+      (Epilogue     i ) -> emiti (" sw $a3,"~~stt i~~"($sp)\n") >> emiti "jr\n"
 
       -- (Param      (Temp s))  -> moveSp (-4) >> emit ("la $t0,"~~T.pack s~~"\n") >> emit $ "    sw $t0,0($sp)" -- really? bueno, hay que buscar el registro
       (TACCall    str_lab  i)     -> emiti $ "jal " ~~ T.pack str_lab ~~ "\n" -- Potencialmente hacer algo con ese i
