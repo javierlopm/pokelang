@@ -350,7 +350,7 @@ processIns ins =
       (Param      (MemAdress  s) i)  -> moveSp (-4) >> emiti ("la $t0,_"~~T.pack s~~"\n") >> emiti "sw $t0,0($sp)\n"
       (Param      t0 i)              -> paramGen t0 i
       
-      (ReturnE      s ) -> emiti ("goto"~~T.pack s~~"\n")
+      (ReturnE      s ) -> emiti ("goto "~~T.pack s~~"_epilogue\n")
       (ReturnS    a s ) -> getReg a >>= (\r -> emiti ("move $a3,"~~showReg r~~"\n") )>> emiti ("goto"~~T.pack s~~"\n")
       -- (Save         i ) -> moveSp (-i-8) >> emiti ("sw $fp,"~~ stt (i+4) ~~"($sp)\n") >> emiti ("sw $ra,"~~ stt i ~~"($sp)\n") >> emiti ("addi $fp,$sp,"~~ stt (i+8) ~~"\n")
       (Save        i ) -> save i
