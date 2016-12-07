@@ -94,7 +94,8 @@ main = do
                         program <- runCompiler (mapM compile prog_blocks) initDescriptor
                         crt     <- readFile "crt.asm"
                         -- putStrLn $ show $ translateStrings strs
-                        -- T.putStrLn $ stringsToMips $ translateStrings strs
+                        -- putStrLn $ ".data\n"
+                        T.putStrLn $ stringsToMips $ translateStrings strs
                         -- putStrLn $ show prog_blocks
                         putStrLn ".text\nmain:\n"
                         (T.putStrLn . assembly . snd) program

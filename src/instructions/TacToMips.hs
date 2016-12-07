@@ -355,12 +355,13 @@ processIns ins =
       (Save         i ) -> save i
       (SaveRet      i ) -> moveSp (-i)
       (Clean        i ) -> moveSp (i) -- revisar o nuevo
-      (Epilogue     i ) -> emiti ("sw $a3,"~~stt i~~"($sp)\n") >> emiti "jr $ra\n"
+      (Epilogue     i ) -> emiti ("sw $a3,"~~stt i~~"($fp)\n") >> emiti ("addi $sp,$fp,-8\n") >> emiti "jr $ra\n"
       -- este i es k+i = tam de arg + tam de retorno
       (TACCall    str_lab      i k) -> saveRegs >> emiti ("jal "~~T.pack str_lab~~"\n") >> restoreRegs -- >>  emiti ("addi $sp,$sp," ~~ stt (i+k+8) ~~ "\n")  -- Potencialmente hacer algo con ese i
       (CallExp  dest  str_lab  i k) -> saveRegs >> emiti ("jal "~~T.pack str_lab~~"\n") -- >> restoreRegs >> getReg dest >>= (\ r -> emiti ("lw "~~ showReg r~~","~~stt (i+8)~~"($sp)\n")) >> emiti ("addi $sp,$sp," ~~ stt (i+k+8) ~~ "\n") -- Mover lo que se tenga a dest
       (Restore  dest  str_lab  i k) -> restoreRegs >> getReg dest >>= (\ r -> emiti ("lw "~~ showReg r~~","~~stt (i+8)~~"($sp)\n")) -- >> emiti ("addi $sp,$sp," ~~ stt (i+k+8) ~~ "\n") -- Mover lo que se tenga a dest
       TacExit                    -> emiti "li $v0,10\n" >> emiti "syscall\n"
+      (IniFp i)                  -> emiti ("addi $fp,$sp,"~~ stt i ~~ "\n") 
       Nop                        -> emit "# nop\n">> restoreRegs
       a                  -> return ()
       -- este i es k+i = tam de arg + tam de retorno
@@ -398,7 +399,7 @@ processIns ins =
             emit $ build3MipsB str fstReg (showReg sndReg) lab
           mv d i = do
             dest <- getReg d
-            emiti $ "li " ~~ showReg dest ~~ ", " ~~ stt i
+            emiti $ "li " ~~ showReg dest ~~ ", " ~~ stt i ~~ "\n"
           storeInP d r1 = do
             op1   <- getReg r1
             dest  <- getReg d
@@ -417,17 +418,13 @@ processIns ins =
             -- tomar en cuenta arreglos
             source  <- getReg t0
             emiti $ "sw "~~ showReg source ~~",0($sp)\n"
-          save i = do 
-            moveSp (-i-8)
-            emiti $ "sw $fp,"~~ stt (i+4) ~~"($sp)\n"
-            emiti $ "sw $ra,"~~ stt i ~~"($sp)\n"
-            emiti $ "addi $fp,$sp,"~~ stt (i+8) ~~"\n"
+          save i = moveSp (-i)
           saveRegs = do 
             moveSp (-8)
             emiti ("sw $fp,0($sp)\n")
             emiti ("sw $ra,4($sp)\n")
             emiti ("addi $fp,$sp,8\n")
-          restoreRegs = emiti ("lw $fp,0($sp)") >> emiti ("lw $fp,4($sp)")
+          restoreRegs = emiti ("lw $fp,0($sp)\n") >> emiti ("lw $ra,4($sp)\n")
 
           moveSp n = emiti $ "addi $sp,$sp," ~~ stt n ~~ "\n"
           moveFp n = emiti $ "addi $fp,$fp," ~~ stt n ~~ "\n"

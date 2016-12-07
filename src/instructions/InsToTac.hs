@@ -126,10 +126,12 @@ forestToTac' a = mapM buildFun  a
           buildFun a@(str,ins,typ,lv)= do ((str,prg):_) <- forestToTac $ [dr1 a]
                                           -- liftIO $ putStrLn $ show lv
                                           if str == "hitMAINlee" 
-                                             then  return (str, (singleton (Save lv) <> prg |> (TagS (str++"_epilogue"))  |> (Clean lv) |> TacExit))
-                                             else  return (str, ((singleton (TagS str)) |> (Save lv) )<> prg |> (TagS (str++"_epilogue")) |> (Clean lv)  |> (Epilogue (retSize typ))   )
+                                             then  return (str, (singleton (Save (lv-8)) <> ( singleton (IniFp (lv))) <> prg |> (TagS (str++"_epilogue"))  |> TacExit))
+                                             else  return (str, ((singleton (TagS str)) |> (Save (lv-8)) )<> prg |> (TagS (str++"_epilogue"))  |> (Epilogue (totalArgs typ)))
                                           --return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TACCall "Epilogue" 42))
-          retSize typ = totalArgs typ + getSize (funcReturnType  typ)
+          -- i = totalArgs typ
+          -- retSize typ = totalArgs typ + getSize (funcReturnType  typ)
+          -- k = 
 
 forestToTac :: [(String,Ins,Int)] -> TreeTranslator ( [(String,Program)] )
 forestToTac [] = return mempty

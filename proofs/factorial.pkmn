@@ -72,9 +72,9 @@ vamo_a_calmano
     Factorial recursivo
 --
 funcball pINTachu fact_recursivo(pINTachu n):
-    si (n==1):
+    si (n==1 || n==0):
         vamo_a_retorna n;
-    y_si (n == 1):
+    y_si (n > 1):
         vamo_a_retorna (n * fact_recursivo(n-1));
     vamo_a_calmano
 vamo_a_calmano

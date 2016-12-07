@@ -136,6 +136,7 @@ data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
             -- save
             | Save Int -- save on stack?
             | SaveRet Int -- save on stack?
+            | IniFp Int -- save on stack?
             
 instance Show      IntIns where
     show (Addi    r0 r1 r2)  =  showTAC r0 r1 "+" r2
@@ -193,6 +194,7 @@ instance Show      IntIns where
     show TacExit              = "TacExit"
     show (Save i)             = "Save #" ++ show i
     show (SaveRet i)          = "SaveRet #" ++ show i
+    show (IniFp i)            = "IniFp " ++ show i
     show _                    = "FOUND SOMETHING WEIRD"
 
 -- Ewwwww, it might be improved with Generics?
