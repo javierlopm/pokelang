@@ -61,9 +61,16 @@ funcball pINTachu fact_iterativo(pINTachu n):
 
     res = 1;
 
-    vamo_a_itera i = 1 | n:
+    vamo_a_itera i = 1 | (n+1):
+        vamo_a_imprimi(i);
+        vamo_a_imprimi("\n");
+        vamo_a_imprimi(res);
+        vamo_a_imprimi("\n");
+
         res = res * i;
+
     vamo_a_calmano
+
 
     vamo_a_retorna res;
 vamo_a_calmano

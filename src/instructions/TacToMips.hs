@@ -351,7 +351,7 @@ processIns ins =
       (Param      t0 i)              -> paramGen t0 i
       
       (ReturnE      s ) -> emiti ("j  "~~T.pack s~~"_epilogue\n")
-      (ReturnS    a s ) -> getReg a >>= (\r -> emiti ("move $a3,"~~showReg r~~"\n") )>> emiti ("j "~~T.pack s~~"\n")
+      (ReturnS    a s ) -> getReg a >>= (\r -> emiti ("move $a3,"~~showReg r~~"\n") )>> emiti ("j "~~T.pack s~~"_epilogue\n")
       (Save         i ) -> save i
       (SaveRet      i ) -> moveSp (-i)
       (Clean        i ) -> moveSp (i) -- revisar o nuevo
@@ -361,7 +361,7 @@ processIns ins =
       (CallExp  dest  str_lab  i k) -> saveRegs >> emiti ("jal "~~T.pack str_lab~~"\n") -- >> restoreRegs >> getReg dest >>= (\ r -> emiti ("lw "~~ showReg r~~","~~stt (i+8)~~"($sp)\n")) >> emiti ("addi $sp,$sp," ~~ stt (i+k+8) ~~ "\n") -- Mover lo que se tenga a dest
       (Restore  dest  str_lab  i k) -> restoreRegs >> getReg dest >>= (\ r -> emiti ("lw "~~ showReg r~~","~~stt (i+8)~~"($sp)\n")) -- >> emiti ("addi $sp,$sp," ~~ stt (i+k+8) ~~ "\n") -- Mover lo que se tenga a dest
       TacExit                    -> emiti "li $v0,10\n" >> emiti "syscall\n"
-      (IniFp i)                  -> emiti ("addi $fp,$sp,"~~ stt i ~~ "\n") 
+      (IniFp _)                  -> emiti ("move $fp,$sp\n") 
       Nop                        -> emit "# nop\n">> restoreRegs
       a                  -> return ()
       -- este i es k+i = tam de arg + tam de retorno

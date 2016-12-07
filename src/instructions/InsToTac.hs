@@ -126,7 +126,7 @@ forestToTac' a = mapM buildFun  a
           buildFun a@(str,ins,typ,lv)= do ((str,prg):_) <- forestToTac $ [dr1 a]
                                           -- liftIO $ putStrLn $ show lv
                                           if str == "hitMAINlee" 
-                                             then  return (str, (singleton (Save (lv-8)) <> ( singleton (IniFp (lv))) <> prg |> (TagS (str++"_epilogue"))  |> TacExit))
+                                             then  return (str, ( (singleton (IniFp (lv+8))) <> singleton (Save (lv)) <> prg |> (TagS (str++"_epilogue"))  |> TacExit))
                                              else  return (str, ((singleton (TagS str)) |> (Save (lv-8)) )<> prg |> (TagS (str++"_epilogue"))  |> (Epilogue (totalArgs typ)))
                                           --return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TACCall "Epilogue" 42))
           -- i = totalArgs typ
@@ -159,7 +159,7 @@ treeToTac (Assign e1 e2) = do
     (tac1,var1) <- expToTac e1
     setRval
 
-    let finaltac = (tac1 <> tac2) <> (singleton (StorePointer var1 var2))
+    let finaltac = (tac2 <> tac1) <> (singleton (StorePointer var1 var2))
     -- liftIO $ putStrLn $ show finaltac
     
     return finaltac
