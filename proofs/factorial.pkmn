@@ -24,8 +24,8 @@ funcball VOIDtorb hitMAINlee():
             vamo_a_lee(res);
 
             si (res < 0 ):
-                vamo_a_imprimi("Error: no se puede calcular el factorial negativo uno\n");
-            si_no:
+                vamo_a_imprimi("Error: no se puede calcular el factorial negativo \n");
+            y_si ( res >= 0):
                 aux = fact_recursivo(res);
                 vamo_a_imprimi(aux);
                 vamo_a_imprimi("\n");
@@ -36,7 +36,7 @@ funcball VOIDtorb hitMAINlee():
 
             si (res < 0 ):
                 vamo_a_imprimi("Error: no se puede calcular el factorial negativo dos\n");
-            si_no:
+            y_si ( res >= 0):
                 aux = fact_iterativo(res);
                 vamo_a_imprimi(aux);
                 vamo_a_imprimi("\n");
@@ -63,9 +63,7 @@ funcball pINTachu fact_iterativo(pINTachu n):
 
     vamo_a_itera i = 1 | (n+1):
         vamo_a_imprimi(i);
-        vamo_a_imprimi("\n");
         vamo_a_imprimi(res);
-        vamo_a_imprimi("\n");
 
         res = res * i;
 
@@ -80,8 +78,14 @@ vamo_a_calmano
 --
 funcball pINTachu fact_recursivo(pINTachu n):
     si (n==1 || n==0):
-        vamo_a_retorna n;
+        vamo_a_retorna 1;
+    y_si (n < 0):
+        vamo_a_retorna 0;
     y_si (n > 1):
-        vamo_a_retorna (n * fact_recursivo(n-1));
+        pINTachu aux;
+
+        aux = fact_recursivo(n-1);
+
+        vamo_a_retorna (n * aux);
     vamo_a_calmano
 vamo_a_calmano

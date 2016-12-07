@@ -290,6 +290,7 @@ processIns ins =
       (Subi r1 r2 r3)            -> get3regs "sub" r1 r2 r3
       (Addi r1 r2 r3)            -> get3regs "add" r1 r2 r3
       (Divi r1 r2 r3)            -> get3regs "div" r1 r2 r3
+      (Multi r1 r2 r3)           -> get3regs "mul" r1 r2 r3
 
       -- Float aritmetic
       (Addf r1 r2 (Float_Cons c))  -> get2regf "add.s" r1 r2 c

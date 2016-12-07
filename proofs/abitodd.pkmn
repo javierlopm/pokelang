@@ -16,10 +16,10 @@ FORWARDtortle funcball BOOLbasaur impar(pINTachu n);
 funcball BOOLbasaur par(pINTachu n):
     si (n == 0):
         vamo_a_retorna squirtrue;
-    si_no:
+    y_si ( n != 0 ):
         si (n==1):
             vamo_a_retorna squirfalse;
-        si_no:
+        y_si ( n != 1 ):
             vamo_a_retorna impar(n-1);
         vamo_a_calmano
     vamo_a_calmano
@@ -28,10 +28,10 @@ vamo_a_calmano
 funcball BOOLbasaur impar(pINTachu n):
     si (n == 0):
         vamo_a_retorna squirfalse;
-    si_no:
+    y_si ( n != 0 ):
         si (n==1):
             vamo_a_retorna squirtrue;
-        si_no:
+        y_si ( n != 1 ):
             vamo_a_retorna par(n-1);
         vamo_a_calmano
     vamo_a_calmano
