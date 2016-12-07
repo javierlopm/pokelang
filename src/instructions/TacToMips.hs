@@ -103,7 +103,7 @@ partition program = build $ F.foldl includeInLast (S.empty,S.empty) program
             | isJump    ins = (prg |> (actualBlock |> ins), S.empty) 
             | otherwise     = (prg, actualBlock |> ins)
           build (blocks,ablock)
-            | S.null ablock = blocks |> ablock
+            | not (S.null ablock) = blocks |> ablock
             | otherwise     = blocks 
 -- despues de un jump, nuevo elemento
 -- en un tag         , nuevo elemento
@@ -128,7 +128,7 @@ data Descriptor = Descriptor { regDescriptor  :: Vector [Var]
 
 load :: Var -> Register -> Mips
 load (Int_Cons   i) reg = "    li "   ~~ showReg reg ~~ "," ~~ stt i ~~ "\n" -- Constantes
-load (Float_Cons f) reg = "    li.s " ~~ showReg reg ~~ "," ~~ stt f ~~ "\n" -- Constantes
+load (Float_Cons f) reg = "    li.s f" ~~ showReg reg ~~ "," ~~ stt f ~~ "\n" -- Constantes
 load _ _ = "" -- Globales
 
 addOffset :: Int -> Maybe Int
@@ -349,9 +349,14 @@ processIns ins =
       (Param      (Float_Cons s) i)  -> moveSp (-4) >> emiti ("li $t0,"~~stt s~~"\n")    >> emiti "sw $t0,0($sp)\n"
       (Param      (MemAdress  s) i)  -> moveSp (-4) >> emiti ("la $t0,_"~~T.pack s~~"\n") >> emiti "sw $t0,0($sp)\n"
       (Param      t0 i)              -> paramGen t0 i
-      (Clean       0 ) -> return ()
+      
+      (ReturnE      s ) -> emiti ("goto"~~T.pack s~~"\n")
+      (ReturnS    a s ) -> getReg a >>= (\r -> emiti ("move $a3,"~~showReg r~~"\n") )>> emiti ("goto"~~T.pack s~~"\n")
+      -- (Save         i ) -> moveSp (-i-8) >> emiti ("sw $fp,"~~ stt (i+4) ~~"($sp)\n") >> emiti ("sw $ra,"~~ stt i ~~"($sp)\n") >> emiti ("addi $fp,$sp,"~~ stt (i+8) ~~"\n")
       (Save        i ) -> save i
-      (Clean       i ) -> moveSp (i+4)
+      (SaveRet      i ) -> moveSp (-i) 
+      (Clean        i ) -> moveSp (i+4)
+      (Epilogue     i ) -> emiti (" sw $a3,"~~stt i~~"($sp)\n") >> emiti "jr\n"
 
       -- (Param      (Temp s))  -> moveSp (-4) >> emit ("la $t0,"~~T.pack s~~"\n") >> emit $ "    sw $t0,0($sp)" -- really? bueno, hay que buscar el registro
       (TACCall    str_lab  i)     -> emiti $ "jal " ~~ T.pack str_lab ~~ "\n" -- Potencialmente hacer algo con ese i
