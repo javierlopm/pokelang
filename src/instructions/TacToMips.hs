@@ -127,7 +127,8 @@ data Descriptor = Descriptor { regDescriptor  :: Vector [Var]
                      deriving (Show)
 
 load :: Var -> Register -> Mips
-load (Int_Cons i) reg = "    li " ~~ showReg reg ~~ "," ~~ stt i ~~ "\n" -- Constantes
+load (Int_Cons   i) reg = "    li "   ~~ showReg reg ~~ "," ~~ stt i ~~ "\n" -- Constantes
+load (Float_Cons f) reg = "    li.s " ~~ showReg reg ~~ "," ~~ stt f ~~ "\n" -- Constantes
 load _ _ = "" -- Globales
 
 addOffset :: Int -> Maybe Int
@@ -156,8 +157,7 @@ getReg' var b = isInRegister
                   (lookup var varDesc)
           updateWith i = do 
               emit (load var (i+lowestRegister))
-              if b then updateRegDescriptors  i  (const [var])
-                   else updatefRegDescriptors i  (const [var])
+              (if b then updateRegDescriptors else updatefRegDescriptors) i  (const [var])
               updateVarDescriptors var (const ([var],[i]))
               r <- gets regDescriptor
               v <- gets varDescriptor
@@ -350,7 +350,7 @@ processIns ins =
       (Param      (MemAdress  s) i)  -> moveSp (-4) >> emiti ("la $t0,_"~~T.pack s~~"\n") >> emiti "sw $t0,0($sp)\n"
       (Param      t0 i)              -> paramGen t0 i
       (Clean       0 ) -> return ()
-      (Save        i ) -> moveSp (-i-8) >> emiti ("sw $fp,"~~ stt (i+4) ~~"($sp)\n") >> emiti ("sw $ra,"~~ stt i ~~"($sp)\n") >> emiti ("addi $fp,$sp,"~~ stt (i+8) ~~"\n")
+      (Save        i ) -> save i
       (Clean       i ) -> moveSp (i+4)
 
       -- (Param      (Temp s))  -> moveSp (-4) >> emit ("la $t0,"~~T.pack s~~"\n") >> emit $ "    sw $t0,0($sp)" -- really? bueno, hay que buscar el registro
@@ -358,7 +358,7 @@ processIns ins =
       (CallExp  dest  str_lab  i) -> emiti $ "jal " ~~ T.pack str_lab ~~ "\n" -- Mover lo que se tenga a dest
       TacExit                    -> emiti "li $v0,10\n" >> emiti "syscall\n"
       Nop                        -> emit "# nop\n"
-      otherwise                  -> return ()
+      a                  -> return ()
       -- (TagSC) tag para strings, usado en data, no aqui
     where get3regs str d r1 r2 = do 
             fstReg <- getReg r1
@@ -409,6 +409,11 @@ processIns ins =
             moveSp (-i)
             source  <- getReg t0
             emiti $ "sw "~~ showReg source ~~",0($sp)\n"
+          save i = do 
+            moveSp (-i-8)
+            emiti $ "sw $fp,"~~ stt (i+4) ~~"($sp)\n"
+            emiti $ "sw $ra,"~~ stt i ~~"($sp)\n"
+            emiti $ "addi $fp,$sp,"~~ stt (i+8) ~~"\n"
 
           moveSp n = emiti $ "addi $sp,$sp," ~~ stt n ~~ "\n"
           moveFp n = emiti $ "addi $fp,$fp," ~~ stt n ~~ "\n"
