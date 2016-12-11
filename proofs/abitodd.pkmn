@@ -35,6 +35,8 @@ funcball VOIDtorb hitMAINlee():
     pINTachu opt;
     pINTachu n;
     BOOLbasaur res;
+    pINTachu padder;
+    
     vamo_a_imprimi("Bienvenido\n");
 
     vamo_mientra squirtrue:
