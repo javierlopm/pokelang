@@ -14,8 +14,16 @@ FORWARDtortle funcball BOOLbasaur par(pINTachu n);
 FORWARDtortle funcball BOOLbasaur impar(pINTachu n);
 
 funcball BOOLbasaur par(pINTachu n):
-
-
+    pINTachu mime;
+    si (n == 0):
+        vamo_a_retorna squirtrue;
+    si_no:
+        si (n==1):
+            vamo_a_retorna squirfalse;
+        si_no:
+            vamo_a_retorna impar(n-1);
+        vamo_a_calmano
+    vamo_a_calmano
 vamo_a_calmano
 
 funcball BOOLbasaur impar(pINTachu n):
