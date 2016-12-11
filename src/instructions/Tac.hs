@@ -119,7 +119,8 @@ data IntIns = Addi     Dest Src1 Src2 -- Aritmetic Operations over Ints
             | CallExp    Dest String  Int Int
             | Restore    Dest String  Int Int
             | Clean   Int
-            | Epilogue   Int
+            | Epilogue   Int Int
+            | Prologue
             | Param   Src1 Int    
             | ReturnE  String
             | ReturnS  Src1 String
@@ -180,7 +181,7 @@ instance Show      IntIns where
     show (CallExp   d  str  i k) = "CallExp " ++ str ++ " #" ++ show i ++ ", #" ++ show k
     show (Restore   d  str  i k) = show d ++ " := Restore " ++ str ++ " #" ++ show i ++ ", #" ++ show k
     show (Clean         i )  = "Clean " ++ "#" ++ show i
-    show (Epilogue i )  = "Epilogue " ++ "#" ++ show i
+    show (Epilogue i k )      = "Epilogue " ++ "#" ++ show i ++ "with return " ++ show k
     show (ReturnS   s1  s )   = "Return  " ++ show s1 ++" tag_"++ s  ++ "_epilogue"
     show (ReturnE    s      ) = "ReturnE tag_" ++ show s ++ "_epilogue"
     show (Param    par i)     = "Param " ++ show par ++" #"++show i
@@ -192,6 +193,7 @@ instance Show      IntIns where
     show (PrintEnum c i)      = "Print enum " ++ show c ++ "[" ++ show i ++"]"
     show Nop                  = "Nop"
     show TacExit              = "TacExit"
+    show Prologue              = "Prologue"
     show (Save i)             = "Save #" ++ show i
     show (SaveRet i)          = "SaveRet #" ++ show i
     show (IniFp i)            = "IniFp " ++ show i
@@ -307,7 +309,7 @@ instance Binary IntIns where
        49 ->  build2get ReturnS
       -- 50 ->  buildTac ReturnE
        51 -> B.get >>= return . Save 
-       52 -> B.get >>= return . Epilogue 
+       -- 52 -> B.get >>= return . Epilogue 
        53 -> B.get >>= return . SaveRet 
 
 -- Print auxiliaries

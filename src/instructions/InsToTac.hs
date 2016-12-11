@@ -127,8 +127,9 @@ forestToTac' a = mapM buildFun  a
                                           -- liftIO $ putStrLn $ show lv
                                           if str == "hitMAINlee" 
                                              then  return (str, ( (singleton (IniFp (lv+8))) <> singleton (Save (lv)) <> prg |> (TagS (str++"_epilogue"))  |> TacExit))
-                                             else  return (str, ((singleton (TagS str)) |> (Save (lv-8)) )<> prg |> (TagS (str++"_epilogue"))  |> (Epilogue (totalArgs typ)))
+                                             else  return (str, ((singleton (TagS str)) |> Prologue |> (Save (lv-8)) )<> prg |> (TagS (str++"_epilogue"))  |> (Clean (lv-8)) |> (Epilogue (totalArgs typ) k))
                                           --return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TACCall "Epilogue" 42))
+            where k = last $ getSizeTT typ
           -- i = totalArgs typ
           -- retSize typ = totalArgs typ + getSize (funcReturnType  typ)
           -- k = 
@@ -228,7 +229,7 @@ treeToTac (Block iS ) = do
     return $ F.foldl (><) empty progSeq
 treeToTac (Call s args sizes b) = do
     prog <- argsToProg args b empty sizes
-    return $ singleton (SaveRet k) <> prog <> singleton (TACCall s i k) <> singleton (Clean (i+k+8))
+    return $  prog <> singleton (TACCall s i k) <> singleton (Clean (i+k))
         where
             i = sum $ init sizes
             k = last sizes
@@ -385,7 +386,7 @@ expToTac (CallVal s args sizes b ) = do
     tempLocal  <- newTemp
     prog       <- argsToProg args b empty sizes
     -- liftIO $ putStrLn $ show sizes
-    return (( singleton (SaveRet k) <> prog <> singleton (CallExp (Temp tempLocal) s i k ) <> singleton (Restore (Temp tempLocal) s i k ) <> singleton (Clean (i+k+8))) ,(Temp tempLocal))    
+    return ((  prog <> singleton (CallExp (Temp tempLocal) s i k ) <> singleton (Restore (Temp tempLocal) s i k ) <> singleton (Clean (i+k))) ,(Temp tempLocal))    
         where
             i = sum $ init sizes
             k = last sizes

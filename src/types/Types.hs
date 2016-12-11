@@ -367,6 +367,7 @@ getSizeTT s = if (S.null s)
                  then []
                  else map getSize (F.toList s)
 
+
 stripPointer :: Type -> Type
 stripPointer (TypePointer t) = t
 stripPointer _ = error "trying to extract value from non pointer"

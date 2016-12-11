@@ -35,7 +35,7 @@ funcball VOIDtorb hitMAINlee():
             vamo_a_lee(res);
 
             si (res < 0 ):
-                vamo_a_imprimi("Error: no se puede calcular el factorial negativo dos\n");
+                vamo_a_imprimi("Error: no se puede calcular el factorial negativo \n");
             y_si ( res >= 0):
                 aux = fact_iterativo(res);
                 vamo_a_imprimi(aux);
@@ -62,8 +62,8 @@ funcball pINTachu fact_iterativo(pINTachu n):
     res = 1;
 
     vamo_a_itera i = 1 | (n+1):
-        vamo_a_imprimi(i);
-        vamo_a_imprimi(res);
+        # vamo_a_imprimi(i);
+        # vamo_a_imprimi(res);
 
         res = res * i;
 

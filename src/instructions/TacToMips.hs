@@ -23,6 +23,7 @@ type Register   = Int
 type Registers  = [Int]
 
 showComments = True
+debug        = False
 
 lowreg  = 8
 highreg = 23
@@ -161,9 +162,13 @@ getReg' var b = isInRegister
               updateVarDescriptors var (const ([var],[i]))
               r <- gets regDescriptor
               v <- gets varDescriptor
-  
-              liftIO(putStr "# ====")
-              liftIO(putStrLn $ (show r) ++ "   " ++ show v)
+              
+              if debug then do
+                liftIO(putStr "# ====")
+                liftIO(putStrLn $ (show r) ++ "   " ++ show v)
+              else
+                return ()
+
               return (i+lowestRegister)
           searchEmpty = do 
               vectDesc <- if b then gets regDescriptor else gets regfDescriptor
@@ -356,15 +361,16 @@ processIns ins =
       (Save         i ) -> save i
       (SaveRet      i ) -> moveSp (-i)
       (Clean        i ) -> moveSp (i) -- revisar o nuevo
-      (Epilogue     i ) -> emiti ("sw $a3,"~~stt i~~"($fp)\n") >> emiti ("addi $sp,$fp,-8\n") >> emiti "jr $ra\n"
+      (Epilogue    i k) -> restoreRegs i k
+      (Prologue       ) -> saveRegs
       -- este i es k+i = tam de arg + tam de retorno
-      (TACCall    str_lab      i k) -> saveRegs >> emiti ("jal "~~T.pack str_lab~~"\n") >> restoreRegs -- >>  emiti ("addi $sp,$sp," ~~ stt (i+k+8) ~~ "\n")  -- Potencialmente hacer algo con ese i
-      (CallExp  dest  str_lab  i k) -> saveRegs >> emiti ("jal "~~T.pack str_lab~~"\n") -- >> restoreRegs >> getReg dest >>= (\ r -> emiti ("lw "~~ showReg r~~","~~stt (i+8)~~"($sp)\n")) >> emiti ("addi $sp,$sp," ~~ stt (i+k+8) ~~ "\n") -- Mover lo que se tenga a dest
-      (Restore  dest  str_lab  i k) -> restoreRegs >> getReg dest >>= (\ r -> emiti ("lw "~~ showReg r~~","~~stt (i+8)~~"($sp)\n")) -- >> emiti ("addi $sp,$sp," ~~ stt (i+k+8) ~~ "\n") -- Mover lo que se tenga a dest
+      (TACCall    str_lab      i k) -> emiti ("jal "~~T.pack str_lab~~"\n") -- >> restoreRegs -- >>  emiti ("addi $sp,$sp," ~~ stt (i+k+8) ~~ "\n")  -- Potencialmente hacer algo con ese i
+      (CallExp  dest  str_lab  i k) -> emiti ("jal "~~T.pack str_lab~~"\n") -- >> restoreRegs >> getReg dest >>= (\ r -> emiti ("lw "~~ showReg r~~","~~stt (i+8)~~"($sp)\n")) >> emiti ("addi $sp,$sp," ~~ stt (i+k+8) ~~ "\n") -- Mover lo que se tenga a dest
+      (Restore  dest  str_lab  i k) -> getReg dest >>= (\ r -> emiti ("lw "~~ showReg r~~",0($sp)\n")) -- ultimo cambio emiti ("lw "~~ showReg r~~","~~stt i~~"($sp)\n") -- (al inicio antes tenia restoreRegs i >> ) -- >> emiti ("addi $sp,$sp," ~~ stt (i+k+8) ~~ "\n") -- Mover lo que se tenga a dest
       TacExit                    -> emiti "li $v0,10\n" >> emiti "syscall\n"
       (IniFp _)                  -> emiti ("move $fp,$sp\n") 
-      Nop                        -> emit "# nop\n">> restoreRegs
-      a                  -> return ()
+      Nop                        -> emit "# nop\n"
+      a                  -> emit "#WHATS THIS SHIT"
       -- este i es k+i = tam de arg + tam de retorno
       -- (Save         i ) -> moveSp (-i-8) >> emiti ("sw $fp,"~~ stt (i+4) ~~"($sp)\n") >> emiti ("sw $ra,"~~ stt i ~~"($sp)\n") >> emiti ("addi $fp,$sp,"~~ stt (i+8) ~~"\n")
       -- (Param      (Temp s))  -> moveSp (-4) >> emit ("la $t0,"~~T.pack s~~"\n") >> emit $ "    sw $t0,0($sp)" -- really? bueno, hay que buscar el registro
@@ -419,13 +425,22 @@ processIns ins =
             -- tomar en cuenta arreglos
             source  <- getReg t0
             emiti $ "sw "~~ showReg source ~~",0($sp)\n"
+          save 0 = return ()
           save i = moveSp (-i)
           saveRegs = do 
             moveSp (-8)
-            emiti ("sw $fp,0($sp)\n")
-            emiti ("sw $ra,4($sp)\n")
-            emiti ("addi $fp,$sp,8\n")
-          restoreRegs = emiti ("lw $fp,0($sp)\n") >> emiti ("lw $ra,4($sp)\n")
+            emiti ("sw $ra,0($sp)\n")
+            emiti ("sw $fp,4($sp)\n")
+            emiti ("addi $fp,$sp,8\n") -- apuntando a la primera variable
+          restoreRegs i k =  do 
+            emiti ("lw $ra,-8($fp)\n")
+            emiti ("lw $fp,-4($fp)\n")
+            -- moveSp i+8 -- Clean local variables,ra and fp
+            -- moveSp (-4)
+            moveSp (i+8-8)
+            -- Copiar con ciclo desde donde empieza hasta donde termina
+            emiti ("sw $a3,0($sp)\n") -- emiti ("sw $a3,"~~stt i    ~~"($fp)\n")
+            emiti "jr $ra\n"
 
           moveSp n = emiti $ "addi $sp,$sp," ~~ stt n ~~ "\n"
           moveFp n = emiti $ "addi $fp,$fp," ~~ stt n ~~ "\n"
