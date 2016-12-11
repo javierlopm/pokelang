@@ -168,16 +168,15 @@ treeToTac (If    iS   ) = do
     -- liftIO $ putStrLn $ show iS
     ending <- newLabel
     next_label <- newLabel
-    (ifcode,_) <- foldM  (processGuard ending) (empty,next_label) (F.toList iS)
+    ifcode <- foldM  (processGuard ending) (empty,next_label) (F.toList iS)
     return (ifcode |> (Tag ending))
-  where processGuard _ (accCode,next_label) (Guard exp1 ins) = do
+  where processGuard _ accCode (Guard exp1 ins) = do
             (lt,lf)       <- setJumps
-            setTheseJumps lt next_label
             (guardCode,_) <- expToTac exp1
             unsetJumps
             blockCode     <- treeToTac ins
-            let lastIf = ((accCode |> (Tag next_label)) <> (guardCode |> (Comment "GUARDIA")) |> (Tag lt)) <> blockCode |> (Comment "end") 
-            return (lastIf,lf)
+            let lastIf = (accCode <> (guardCode |> (Comment "GUARDIA")) |> (Tag lt)) <> blockCode |> (Comment "end") |> (Jump ending) |> (Tag lf)
+            return lastIf
 
         processGuard ending (accCode,nl) (Else ins) = do 
             t <- treeToTac ins
