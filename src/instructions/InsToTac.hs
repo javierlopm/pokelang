@@ -126,7 +126,7 @@ forestToTac' a = mapM buildFun  a
           buildFun a@(str,ins,typ,lv)= do ((str,prg):_) <- forestToTac $ [dr1 a]
                                           -- liftIO $ putStrLn $ show lv
                                           if str == "hitMAINlee" 
-                                             then  return (str, ( (singleton (IniFp (lv+8))) <> singleton (Save (lv)) <> prg |> (TagS (str++"_epilogue"))  |> TacExit))
+                                             then  return (str, ( (singleton (IniFp (lv+8))) <> singleton (Save lv) <> prg |> (TagS (str++"_epilogue"))  |> TacExit))
                                              else  return (str, ((singleton (TagS str)) |> Prologue |> (Save (lv-8)) )<> prg |> (TagS (str++"_epilogue"))  |> (Clean (lv-8)) |> (Epilogue (totalArgs typ) k))
                                           --return (str, ((singleton (TagS str)) |> (TACCall "Prologue" 42) )<> prg |> (TACCall "Epilogue" 42))
             where k = last $ getSizeTT typ
@@ -167,18 +167,22 @@ treeToTac (Assign e1 e2) = do
 treeToTac (If    iS   ) = do
     -- liftIO $ putStrLn $ show iS
     ending <- newLabel
-    ifcode <- foldM  processGuard empty (F.toList iS)
+    next_label <- newLabel
+    (ifcode,_) <- foldM  (processGuard ending) (empty,next_label) (F.toList iS)
     return (ifcode |> (Tag ending))
-  where processGuard accCode (Guard exp1 ins) = do
+  where processGuard _ (accCode,next_label) (Guard exp1 ins) = do
             (lt,lf)       <- setJumps
+            setTheseJumps lt next_label
             (guardCode,_) <- expToTac exp1
             unsetJumps
             blockCode     <- treeToTac ins
-            let lastIf = (accCode <> (guardCode |> (Comment "GUARDIA")) |> (Tag lt)) <> blockCode |> (Comment "end") |> (Tag lf)
-            return lastIf 
+            let lastIf = ((accCode |> (Tag next_label)) <> (guardCode |> (Comment "GUARDIA")) |> (Tag lt)) <> blockCode |> (Comment "end") 
+            return (lastIf,lf)
 
-        processGuard accCode (Else ins) = treeToTac ins >>= return . (accCode <>)
-        processGuard _       a  = error $ "errror" ++ show a
+        processGuard ending (accCode,nl) (Else ins) = do 
+            t <- treeToTac ins
+            return ( (Jump ending) <| (Tag nl) <| (accCode <> t),42)
+        processGuard _  _     a  = error $ "errror" ++ show a
 
 treeToTac (While cond ins   ) = do 
     (oldb,olde) <-getBegEnd
