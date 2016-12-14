@@ -21,7 +21,7 @@ funcball BOOLbasaur par(pINTachu n):
         si (n==1):
             vamo_a_retorna squirfalse;
         si_no:
-            vamo_a_retorna impar(n-1);
+            vamo_a_retorna 1impar(n-1);
         vamo_a_calmano
     vamo_a_calmano
 vamo_a_calmano
@@ -60,10 +60,13 @@ funcball VOIDtorb hitMAINlee():
             si (n < 0 ):
                 n = -n;
             vamo_a_calmano
-
-            si (par(n)):
-                vamo_a_imprimi("Es par!\n\n");
-            si_no:
+            res = par(n);
+            vamo_a_imprimi("Y TENEMOS:");
+            vamo_a_imprimi(res);
+            vamo_a_imprimi("\n");
+            si (res == squirtrue):
+                vamo_a_imprimi("Es ssspar!\n\n");
+            y_si (res == squirfalse):
                 vamo_a_imprimi("Es impar!\n\n");
             vamo_a_calmano
 

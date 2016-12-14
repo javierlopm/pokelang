@@ -323,7 +323,7 @@ Ent8: Reference {% checkFunctionType $1 >> return $1}
 
 
 checkComp a b c d = do 
-    res <- checkBinary nums a b c d
+    res <- checkBinary (TypeBool:nums) a b c d
     return (transformType (fst res) TypeBool , snd res)
 
 parseError [] = error $ "EOF unexpected"
